@@ -1,0 +1,1087 @@
+{
+  "config": {
+    "semanas": 4,
+    "frequencia": 3,
+    "pausaS": 120,
+    "inicio": "2026-08-24T00:00:00"
+  },
+  "divisao": {
+    "treino1": [
+      "Agachamento Livre Halter",
+      "Agachamento Frontal Halter",
+      "Agachamento Sum\u00f4 Barra"
+    ],
+    "treino2": [
+      "Agachamento Livre Halter",
+      "Agachamento Frontal Halter",
+      "Agachamento Sum\u00f4 Barra"
+    ],
+    "treino3": [
+      "Agachamento Livre Halter",
+      "Agachamento Frontal Halter",
+      "Agachamento Sum\u00f4 Barra"
+    ]
+  },
+  "progressao": {
+    "principais": [
+      {
+        "semana": 1,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "semana": 2,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "semana": 3,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "semana": 4,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    "auxiliares": [
+      {
+        "semana": 1,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "semana": 2,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "semana": 3,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "semana": 4,
+        "series": [
+          8,
+          8,
+          8,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  },
+  "semanas": [
+    {
+      "semana": 1,
+      "treinos": [
+        {
+          "treino": 1,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 2,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 3,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        }
+      ]
+    },
+    {
+      "semana": 2,
+      "treinos": [
+        {
+          "treino": 1,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 2,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 3,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        }
+      ]
+    },
+    {
+      "semana": 3,
+      "treinos": [
+        {
+          "treino": 1,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 2,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 3,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        }
+      ]
+    },
+    {
+      "semana": 4,
+      "treinos": [
+        {
+          "treino": 1,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 2,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        },
+        {
+          "treino": 3,
+          "exercicios": [
+            {
+              "pos": 1,
+              "exercicio": "Agachamento Livre Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 2,
+              "exercicio": "Agachamento Frontal Halter",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            },
+            {
+              "pos": 3,
+              "exercicio": "Agachamento Sum\u00f4 Barra",
+              "reps": [
+                8,
+                8,
+                8,
+                null,
+                null,
+                null
+              ],
+              "cargas": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "movimentos": 24,
+              "rotulo": null
+            }
+          ],
+          "tempoSessaoMin": 29.2,
+          "pausaS": 120,
+          "movimentosSessao": 72,
+          "realizado": false
+        }
+      ]
+    }
+  ],
+  "monitoramento": {
+    "semanas": [
+      {
+        "semana": 1,
+        "dataInicial": "2026-08-24T00:00:00",
+        "movimentos": 216,
+        "cargaMedia": null,
+        "volume": null,
+        "sessoesAtivas": 3,
+        "status": "Ativa"
+      },
+      {
+        "semana": 2,
+        "dataInicial": "2026-08-31T00:00:00",
+        "movimentos": 216,
+        "cargaMedia": null,
+        "volume": null,
+        "sessoesAtivas": 3,
+        "status": "Ativa"
+      },
+      {
+        "semana": 3,
+        "dataInicial": "2026-09-07T00:00:00",
+        "movimentos": 216,
+        "cargaMedia": null,
+        "volume": null,
+        "sessoesAtivas": 3,
+        "status": "Ativa"
+      },
+      {
+        "semana": 4,
+        "dataInicial": "2026-09-14T00:00:00",
+        "movimentos": 216,
+        "cargaMedia": null,
+        "volume": null,
+        "sessoesAtivas": 3,
+        "status": "Ativa"
+      }
+    ],
+    "resumo": {
+      "metaRobustaMovimentos": 864,
+      "aq66": 12,
+      "as66": 216,
+      "av66": 2592
+    }
+  }
+}

@@ -1,0 +1,1374 @@
+[
+  {
+    "grupo": "Quadríceps e Glúteos",
+    "exercicios": [
+      {
+        "id": "agachamento-livre-barra",
+        "nome": "Agachamento Livre Barra"
+      },
+      {
+        "id": "agachamento-livre-halter",
+        "nome": "Agachamento Livre Halter"
+      },
+      {
+        "id": "agachamento-frontal-barra",
+        "nome": "Agachamento Frontal Barra"
+      },
+      {
+        "id": "agachamento-frontal-halter",
+        "nome": "Agachamento Frontal Halter"
+      },
+      {
+        "id": "agachamento-sumo-barra",
+        "nome": "Agachamento Sumô Barra"
+      },
+      {
+        "id": "agachamento-sumo-cinto",
+        "nome": "Agachamento Sumô Cinto"
+      },
+      {
+        "id": "agachamento-livre-banco",
+        "nome": "Agachamento Livre Banco"
+      },
+      {
+        "id": "agachamento-halter-banco",
+        "nome": "Agachamento Halter Banco"
+      },
+      {
+        "id": "agachamento-no-smith",
+        "nome": "Agachamento no Smith"
+      },
+      {
+        "id": "agachamento-hack-35o",
+        "nome": "Agachamento Hack 35º"
+      },
+      {
+        "id": "agachamento-hack-45o",
+        "nome": "Agachamento Hack 45º"
+      },
+      {
+        "id": "agachamento-mini-hack-45o",
+        "nome": "Agachamento Mini-Hack 45º"
+      },
+      {
+        "id": "agachamento-v-squat",
+        "nome": "Agachamento V Squat"
+      },
+      {
+        "id": "agachamento-maquina",
+        "nome": "Agachamento Máquina"
+      },
+      {
+        "id": "leg-press-45",
+        "nome": "Leg Press 45"
+      },
+      {
+        "id": "leg-press-horizontal",
+        "nome": "Leg Press Horizontal"
+      },
+      {
+        "id": "leg-press-pendulo",
+        "nome": "Leg Press Pêndulo"
+      },
+      {
+        "id": "terra-romeno-barra",
+        "nome": "Terra Romeno Barra"
+      },
+      {
+        "id": "terra-romeno-halter",
+        "nome": "Terra Romeno Halter"
+      },
+      {
+        "id": "terra-barra-hexagonal",
+        "nome": "Terra Barra Hexagonal"
+      },
+      {
+        "id": "terra-barra-reta",
+        "nome": "Terra Barra Reta"
+      },
+      {
+        "id": "terra-sumo-com-barra",
+        "nome": "Terra Sumô com Barra"
+      },
+      {
+        "id": "terra-sumo-com-halter",
+        "nome": "Terra Sumô com Halter"
+      },
+      {
+        "id": "cadeira-extensora-tradicional",
+        "nome": "Cadeira Extensora Tradicional"
+      },
+      {
+        "id": "cadeira-extensora-amplitude-parcial",
+        "nome": "Cadeira Extensora (amplitude parcial)"
+      },
+      {
+        "id": "cadeira-extensora-unilateral",
+        "nome": "Cadeira Extensora Unilateral"
+      },
+      {
+        "id": "cadeira-extensora-articulada-peso-acima",
+        "nome": "Cadeira Extensora Articulada (Peso Acima)"
+      },
+      {
+        "id": "cadeira-extensora-articulada-peso-abaixo",
+        "nome": "Cadeira Extensora Articulada (Peso Abaixo)"
+      },
+      {
+        "id": "passada",
+        "nome": "Passada"
+      },
+      {
+        "id": "step-up-no-step",
+        "nome": "Step Up no Step"
+      },
+      {
+        "id": "step-up-na-caixa",
+        "nome": "Step Up na Caixa"
+      },
+      {
+        "id": "afundo-barra",
+        "nome": "Afundo Barra"
+      },
+      {
+        "id": "afundo-halter",
+        "nome": "Afundo Halter"
+      },
+      {
+        "id": "avanco-barra",
+        "nome": "Avanço Barra"
+      },
+      {
+        "id": "avanco-halter",
+        "nome": "Avanço Halter"
+      },
+      {
+        "id": "retrocesso-barra",
+        "nome": "Retrocesso Barra"
+      },
+      {
+        "id": "retrocesso-halter",
+        "nome": "Retrocesso Halter"
+      },
+      {
+        "id": "elevacao-pelvica-maquina-tradicional",
+        "nome": "Elevação Pélvica Máquina Tradicional"
+      },
+      {
+        "id": "elevacao-pelvica-maquina-articulada",
+        "nome": "Elevação Pélvica Máquina Articulada"
+      },
+      {
+        "id": "elevacao-pelvica-maquina-guiada",
+        "nome": "Elevação Pélvica Máquina Guiada"
+      },
+      {
+        "id": "elevacao-pelvica-halter-unilateral",
+        "nome": "Elevação Pélvica Halter Unilateral"
+      },
+      {
+        "id": "elevacao-pelvica-halter",
+        "nome": "Elevação Pélvica Halter"
+      },
+      {
+        "id": "elevacao-pelvica-barra",
+        "nome": "Elevação Pélvica Barra"
+      },
+      {
+        "id": "gluteo-coice-maquina",
+        "nome": "Glúteo Coice Máquina"
+      },
+      {
+        "id": "gluteo-coice-na-polia",
+        "nome": "Glúteo Coice na Polia"
+      },
+      {
+        "id": "gluteo-4-apoios-com-caneleira",
+        "nome": "Glúteo 4 apoios com Caneleira"
+      },
+      {
+        "id": "gluteo-4-apoios-na-polia-com-banco",
+        "nome": "Glúteo 4 apoios na Polia (com banco)"
+      },
+      {
+        "id": "bulgaro-com-halter",
+        "nome": "Búlgaro com Halter"
+      }
+    ]
+  },
+  {
+    "grupo": "Posterior de Coxa",
+    "exercicios": [
+      {
+        "id": "stiff-barra",
+        "nome": "Stiff Barra"
+      },
+      {
+        "id": "stiff-halter",
+        "nome": "Stiff Halter"
+      },
+      {
+        "id": "stiff-unilateral-barra",
+        "nome": "Stiff Unilateral Barra"
+      },
+      {
+        "id": "stiff-unilateral-halter",
+        "nome": "Stiff Unilateral Halter"
+      },
+      {
+        "id": "stiff-banco-romano",
+        "nome": "Stiff Banco Romano"
+      },
+      {
+        "id": "stiff-smith",
+        "nome": "Stiff Smith"
+      },
+      {
+        "id": "stiff-no-smith-com-halter",
+        "nome": "Stiff no Smith com Halter"
+      },
+      {
+        "id": "mesa-flexora",
+        "nome": "Mesa Flexora"
+      },
+      {
+        "id": "flexora-vertical",
+        "nome": "Flexora Vertical"
+      },
+      {
+        "id": "cadeira-flexora",
+        "nome": "Cadeira Flexora"
+      },
+      {
+        "id": "cadeira-flexora-corpo-a-frente",
+        "nome": "Cadeira Flexora (Corpo à Frente)"
+      },
+      {
+        "id": "flexao-nordica-maquina",
+        "nome": "Flexão Nórdica Máquina"
+      },
+      {
+        "id": "flexao-nordica-no-espaldar",
+        "nome": "Flexão Nórdica no Espaldar"
+      },
+      {
+        "id": "flexao-nordica-no-espaldar-com-elastico",
+        "nome": "Flexão Nórdica no Espaldar (com Elástico)"
+      },
+      {
+        "id": "flexao-de-joelhos-deitado-a-com-halter",
+        "nome": "Flexão de Joelhos deitado(a) com Halter"
+      },
+      {
+        "id": "flexao-de-joelhos-em-pe-com-caneleira",
+        "nome": "Flexão de Joelhos em pé com Caneleira"
+      },
+      {
+        "id": "flexao-de-joelhos-deitado-a-com-elastico",
+        "nome": "Flexão de Joelhos deitado(a) com Elástico"
+      },
+      {
+        "id": "flexao-de-joelhos-em-pe-com-elastico",
+        "nome": "Flexão de Joelhos em pé com Elástico"
+      }
+    ]
+  },
+  {
+    "grupo": "Adutores e Abdutores",
+    "exercicios": [
+      {
+        "id": "cadeira-abdutora",
+        "nome": "Cadeira Abdutora"
+      },
+      {
+        "id": "cadeira-abdutora-em-pe",
+        "nome": "Cadeira Abdutora (em pé)"
+      },
+      {
+        "id": "cadeira-adutora",
+        "nome": "Cadeira Adutora"
+      },
+      {
+        "id": "abducao-cabo",
+        "nome": "Abdução Cabo"
+      },
+      {
+        "id": "aducao-cabo",
+        "nome": "Adução Cabo"
+      },
+      {
+        "id": "monster-walk-elastico-meio-da-coxa",
+        "nome": "Monster Walk Elástico Meio da Coxa"
+      },
+      {
+        "id": "monster-walk-elastico-meio-tornozelo",
+        "nome": "Monster Walk Elástico Meio Tornozelo"
+      },
+      {
+        "id": "monster-walk-elastico-no-pe",
+        "nome": "Monster Walk Elástico no Pé"
+      }
+    ]
+  },
+  {
+    "grupo": "Peitorais",
+    "exercicios": [
+      {
+        "id": "supino-reto-barra",
+        "nome": "Supino Reto Barra"
+      },
+      {
+        "id": "supino-reto-halter",
+        "nome": "Supino Reto Halter"
+      },
+      {
+        "id": "supino-inclinado-barra",
+        "nome": "Supino Inclinado Barra"
+      },
+      {
+        "id": "supino-inclinado-halter",
+        "nome": "Supino Inclinado Halter"
+      },
+      {
+        "id": "supino-declinado-barra",
+        "nome": "Supino Declinado Barra"
+      },
+      {
+        "id": "supino-declinado-halter",
+        "nome": "Supino Declinado Halter"
+      },
+      {
+        "id": "supino-reto-maquina",
+        "nome": "Supino Reto Máquina"
+      },
+      {
+        "id": "supino-inclinado-maquina",
+        "nome": "Supino Inclinado Máquina"
+      },
+      {
+        "id": "supino-declinado-maquina",
+        "nome": "Supino Declinado Máquina"
+      },
+      {
+        "id": "supino-reto-smith-dual",
+        "nome": "Supino Reto Smith Dual"
+      },
+      {
+        "id": "supino-inclinado-smith-dual",
+        "nome": "Supino Inclinado Smith Dual"
+      },
+      {
+        "id": "supino-declinado-smith-dual",
+        "nome": "Supino Declinado Smith Dual"
+      },
+      {
+        "id": "pull-over-halter",
+        "nome": "Pull Over Halter"
+      },
+      {
+        "id": "pull-over-barra",
+        "nome": "Pull Over Barra"
+      },
+      {
+        "id": "pull-over-cabo",
+        "nome": "Pull Over Cabo"
+      },
+      {
+        "id": "peck-deck",
+        "nome": "Peck Deck"
+      },
+      {
+        "id": "peck-deck-articulado",
+        "nome": "Peck Deck Articulado"
+      },
+      {
+        "id": "crossover-no-cabo",
+        "nome": "Crossover no Cabo"
+      },
+      {
+        "id": "crucifixo-reto-halter",
+        "nome": "Crucifixo Reto Halter"
+      },
+      {
+        "id": "crucifixo-inclinado-halter",
+        "nome": "Crucifixo Inclinado Halter"
+      },
+      {
+        "id": "crucifixo-declinado-halter",
+        "nome": "Crucifixo Declinado Halter"
+      },
+      {
+        "id": "crucifixo-crossover",
+        "nome": "Crucifixo CrossOver"
+      },
+      {
+        "id": "crucifixo-inclinado-crossover",
+        "nome": "Crucifixo Inclinado CrossOver"
+      },
+      {
+        "id": "flexao-de-bracos",
+        "nome": "Flexão de Braços"
+      }
+    ]
+  },
+  {
+    "grupo": "Dorsais",
+    "exercicios": [
+      {
+        "id": "puxada-frente-aberta",
+        "nome": "Puxada Frente Aberta"
+      },
+      {
+        "id": "puxada-fechado-triangulo",
+        "nome": "Puxada Fechado Triângulo"
+      },
+      {
+        "id": "puxada-frente-neutra",
+        "nome": "Puxada Frente Neutra"
+      },
+      {
+        "id": "puxada-frente-supinada",
+        "nome": "Puxada Frente Supinada"
+      },
+      {
+        "id": "puxada-articulada-supinada",
+        "nome": "Puxada Articulada Supinada"
+      },
+      {
+        "id": "puxada-aberta-maquina",
+        "nome": "Puxada Aberta Máquina"
+      },
+      {
+        "id": "puxada-articulada-peso-acima",
+        "nome": "Puxada Articulada (Peso Acima)"
+      },
+      {
+        "id": "puxada-articulada-peso-abaixo",
+        "nome": "Puxada Articulada (Peso Abaixo)"
+      },
+      {
+        "id": "puxada-articulada-cross",
+        "nome": "Puxada Articulada Cross"
+      },
+      {
+        "id": "remada-linear-45o-guiada",
+        "nome": "Remada Linear 45º Guiada"
+      },
+      {
+        "id": "remada-alta-articulada-pronada",
+        "nome": "Remada Alta Articulada Pronada"
+      },
+      {
+        "id": "remada-sentada-aberta",
+        "nome": "Remada Sentada Aberta"
+      },
+      {
+        "id": "remada-baixa-barra-aberta",
+        "nome": "Remada Baixa Barra Aberta"
+      },
+      {
+        "id": "remada-baixa-com-triangulo",
+        "nome": "Remada Baixa com Triângulo"
+      },
+      {
+        "id": "remada-baixa-barra-neutra",
+        "nome": "Remada Baixa Barra Neutra"
+      },
+      {
+        "id": "remada-articulada-tradicional-aberta",
+        "nome": "Remada Articulada Tradicional Aberta"
+      },
+      {
+        "id": "remada-articulada-tradicional-fechada",
+        "nome": "Remada Articulada Tradicional Fechada"
+      },
+      {
+        "id": "remada-baixa-articulada-fechada",
+        "nome": "Remada Baixa Articulada Fechada"
+      },
+      {
+        "id": "remada-baixa-articulada-aberta",
+        "nome": "Remada Baixa Articulada Aberta"
+      },
+      {
+        "id": "remada-articulada-supinada",
+        "nome": "Remada Articulada Supinada"
+      },
+      {
+        "id": "remada-tradicional-maquina-pegada-pronada-alta",
+        "nome": "Remada Tradicional Máquina (Pegada Pronada Alta)"
+      },
+      {
+        "id": "remada-tradicional-maquina-pegada-neutra",
+        "nome": "Remada Tradicional Máquina (Pegada Neutra)"
+      },
+      {
+        "id": "remada-tradicional-maquina-pegada-supinada",
+        "nome": "Remada Tradicional Máquina (Pegada Supinada)"
+      },
+      {
+        "id": "remada-unilateral-serrote",
+        "nome": "Remada Unilateral (serrote)"
+      },
+      {
+        "id": "remada-cavalinho",
+        "nome": "Remada Cavalinho"
+      },
+      {
+        "id": "remada-curvada-com-barra",
+        "nome": "Remada Curvada com Barra"
+      },
+      {
+        "id": "remada-curvada-fechada",
+        "nome": "Remada Curvada Fechada"
+      },
+      {
+        "id": "remada-curvada-no-smith",
+        "nome": "Remada Curvada no Smith"
+      },
+      {
+        "id": "remada-curvada-pronada",
+        "nome": "Remada Curvada Pronada"
+      },
+      {
+        "id": "remada-curvada-supinada",
+        "nome": "Remada Curvada Supinada"
+      },
+      {
+        "id": "barra-fixa-aberta",
+        "nome": "Barra Fixa Aberta"
+      },
+      {
+        "id": "barra-fixa-supinada",
+        "nome": "Barra Fixa Supinada"
+      },
+      {
+        "id": "barra-fixa-fechada",
+        "nome": "Barra Fixa Fechada"
+      }
+    ]
+  },
+  {
+    "grupo": "Panturrilha",
+    "exercicios": [
+      {
+        "id": "panturrilha-em-pe-maquina",
+        "nome": "Panturrilha em Pé Máquina"
+      },
+      {
+        "id": "panturrilha-em-pe-no-smith",
+        "nome": "Panturrilha em Pé no Smith"
+      },
+      {
+        "id": "panturrilha-em-pe-unilateral",
+        "nome": "Panturrilha em Pé Unilateral"
+      },
+      {
+        "id": "panturrilha-leg-press-45",
+        "nome": "Panturrilha Leg Press 45"
+      },
+      {
+        "id": "panturrilha-leg-press-horizontal",
+        "nome": "Panturrilha Leg Press Horizontal"
+      },
+      {
+        "id": "panturrilha-sentado-maquina",
+        "nome": "Panturrilha Sentado Máquina"
+      },
+      {
+        "id": "panturrilha-sentado-unilateral",
+        "nome": "Panturrilha Sentado Unilateral"
+      }
+    ]
+  },
+  {
+    "grupo": "Abdome e Lombar",
+    "exercicios": [
+      {
+        "id": "abdominal-no-solo-peso-acima",
+        "nome": "Abdominal no Solo Peso Acima"
+      },
+      {
+        "id": "abdominal-no-solo-peso-atras-braco-estendido",
+        "nome": "Abdominal no Solo Peso Atrás (Braço Estendido)"
+      },
+      {
+        "id": "abdominal-declinado-peso-acima",
+        "nome": "Abdominal Declinado Peso Acima"
+      },
+      {
+        "id": "abdominal-declinado-peso-atras",
+        "nome": "Abdominal Declinado Peso Atrás"
+      },
+      {
+        "id": "abdominal-no-cabo-em-pe",
+        "nome": "Abdominal no Cabo (em Pé)"
+      },
+      {
+        "id": "abdominal-no-cabo-ajoelhado",
+        "nome": "Abdominal no Cabo (Ajoelhado)"
+      },
+      {
+        "id": "abdominal-paralela",
+        "nome": "Abdominal Paralela"
+      },
+      {
+        "id": "abdominal-paralela-completo",
+        "nome": "Abdominal Paralela completo"
+      },
+      {
+        "id": "abdominal-paralela-caneleira",
+        "nome": "Abdominal Paralela Caneleira"
+      },
+      {
+        "id": "abdominal-paralela-completo-caneleira",
+        "nome": "Abdominal Paralela completo Caneleira"
+      },
+      {
+        "id": "abdominal-maquina-multiarticular",
+        "nome": "Abdominal Máquina Multiarticular"
+      },
+      {
+        "id": "abdominal-maquina-crunch",
+        "nome": "Abdominal Máquina Crunch"
+      },
+      {
+        "id": "abdominal-maquina-com-alcas",
+        "nome": "Abdominal Máquina com Alças"
+      },
+      {
+        "id": "abdominal-infra-no-solo",
+        "nome": "Abdominal Infra no Solo"
+      },
+      {
+        "id": "abdominal-infra-no-solo-completo",
+        "nome": "Abdominal Infra no Solo Completo"
+      },
+      {
+        "id": "abdominal-tesoura",
+        "nome": "Abdominal Tesoura"
+      },
+      {
+        "id": "abdominal-recolhimento",
+        "nome": "Abdominal Recolhimento"
+      },
+      {
+        "id": "abdominal-recolhimento-lateral",
+        "nome": "Abdominal Recolhimento Lateral"
+      },
+      {
+        "id": "abdominal-obliquo-polia-baixa",
+        "nome": "Abdominal Oblíquo (Polia Baixa)"
+      },
+      {
+        "id": "abdominal-obliquo-halter",
+        "nome": "Abdominal Oblíquo Halter"
+      },
+      {
+        "id": "abdominal-obliquo-anilha",
+        "nome": "Abdominal Oblíquo Anilha"
+      },
+      {
+        "id": "lombar-banco-romano",
+        "nome": "Lombar Banco Romano"
+      },
+      {
+        "id": "lombar-maquina",
+        "nome": "Lombar Máquina"
+      },
+      {
+        "id": "superman",
+        "nome": "Superman"
+      },
+      {
+        "id": "perdigueiro-alternado",
+        "nome": "Perdigueiro Alternado"
+      },
+      {
+        "id": "perdigueiro-unilateral",
+        "nome": "Perdigueiro Unilateral"
+      }
+    ]
+  },
+  {
+    "grupo": "Ombros",
+    "exercicios": [
+      {
+        "id": "elevacao-lateral-halter",
+        "nome": "Elevação Lateral Halter"
+      },
+      {
+        "id": "elevacao-lateral-halter-sentado-a",
+        "nome": "Elevação Lateral Halter (sentado(a))"
+      },
+      {
+        "id": "elevacao-diagonal-halter",
+        "nome": "Elevação Diagonal Halter"
+      },
+      {
+        "id": "elevacao-diagonal-halter-sentado-a",
+        "nome": "Elevação Diagonal Halter (sentado(a))"
+      },
+      {
+        "id": "elevacao-frontal-halter",
+        "nome": "Elevação Frontal Halter"
+      },
+      {
+        "id": "elevacao-frontal-halter-sentado-a",
+        "nome": "Elevação Frontal Halter (sentado(a))"
+      },
+      {
+        "id": "elevacao-frontal-halter-alternado",
+        "nome": "Elevação Frontal Halter Alternado"
+      },
+      {
+        "id": "elevacao-frontal-halter-com-giro",
+        "nome": "Elevação Frontal Halter com Giro"
+      },
+      {
+        "id": "elevacao-frontal-halter-alternado-com-giro",
+        "nome": "Elevação Frontal Halter Alternado com Giro"
+      },
+      {
+        "id": "elevacao-frontal-halter-alternado-com-giro-sentado-a",
+        "nome": "Elevação Frontal Halter Alternado com Giro (sentado(a))"
+      },
+      {
+        "id": "elevacao-frontal-barra",
+        "nome": "Elevação Frontal Barra"
+      },
+      {
+        "id": "elevacao-lateral-no-cabo",
+        "nome": "Elevação Lateral no Cabo"
+      },
+      {
+        "id": "elevacao-lateral-inclinado",
+        "nome": "Elevação Lateral Inclinado"
+      },
+      {
+        "id": "elevacao-lateral-maquina-sentado-a",
+        "nome": "Elevação Lateral Máquina Sentado(a)"
+      },
+      {
+        "id": "elevacao-lateral-maquina-em-pe",
+        "nome": "Elevação Lateral Máquina em pé"
+      },
+      {
+        "id": "elevacao-frontal-maquina-em-pe",
+        "nome": "Elevação Frontal Máquina em pé"
+      },
+      {
+        "id": "elevacao-frontal-no-cabo",
+        "nome": "Elevação Frontal no Cabo"
+      },
+      {
+        "id": "manguito-externo-na-polia",
+        "nome": "Manguito Externo na Polia"
+      },
+      {
+        "id": "manguito-interno-na-polia",
+        "nome": "Manguito Interno na Polia"
+      },
+      {
+        "id": "desenvolvimento-barra",
+        "nome": "Desenvolvimento Barra"
+      },
+      {
+        "id": "desenvolvimento-com-halter-sentado",
+        "nome": "Desenvolvimento com Halter Sentado"
+      },
+      {
+        "id": "desenvolvimento-halter",
+        "nome": "Desenvolvimento Halter"
+      },
+      {
+        "id": "desenvolvimento-maquina",
+        "nome": "Desenvolvimento Máquina"
+      },
+      {
+        "id": "remada-alta-barra",
+        "nome": "Remada Alta Barra"
+      },
+      {
+        "id": "remada-alta-smith",
+        "nome": "Remada Alta Smith"
+      },
+      {
+        "id": "remada-alta-barra-w",
+        "nome": "Remada Alta Barra W"
+      },
+      {
+        "id": "remada-alta-na-polia-com-barra",
+        "nome": "Remada Alta na Polia com Barra"
+      },
+      {
+        "id": "remada-alta-na-polia-com-corda",
+        "nome": "Remada Alta na Polia com Corda"
+      },
+      {
+        "id": "encolhimento-barra",
+        "nome": "Encolhimento Barra"
+      },
+      {
+        "id": "encolhimento-cabo",
+        "nome": "Encolhimento Cabo"
+      },
+      {
+        "id": "encolhimento-halter",
+        "nome": "Encolhimento Halter"
+      },
+      {
+        "id": "crucifixo-inverso-com-halter-em-pe",
+        "nome": "Crucifixo Inverso com Halter (em pé)"
+      },
+      {
+        "id": "crucifixo-inverso-com-halter-sentado-a",
+        "nome": "Crucifixo Inverso com Halter (sentado(a))"
+      },
+      {
+        "id": "crucifixo-inverso-com-halter-no-banco-inclinado-deitado-a",
+        "nome": "Crucifixo Inverso com Halter no Banco Inclinado (deitado(a))"
+      },
+      {
+        "id": "crucifixo-inverso-na-polia-alta-unilateral",
+        "nome": "Crucifixo Inverso na Polia Alta Unilateral"
+      },
+      {
+        "id": "crucifixo-inverso-na-polia-media-unilateral",
+        "nome": "Crucifixo Inverso na Polia Média Unilateral"
+      },
+      {
+        "id": "crucifixo-inverso-na-polia-baixa-unilateral",
+        "nome": "Crucifixo Inverso na Polia Baixa Unilateral"
+      },
+      {
+        "id": "crucifixo-inverso-no-crossover-alto",
+        "nome": "Crucifixo Inverso no CrossOver Alto"
+      },
+      {
+        "id": "crucifixo-inverso-no-crossover-medio",
+        "nome": "Crucifixo Inverso no CrossOver Médio"
+      },
+      {
+        "id": "crucifixo-inverso-no-crossover-baixo",
+        "nome": "Crucifixo Inverso no CrossOver Baixo"
+      },
+      {
+        "id": "crucifixo-inverso-peck-deck",
+        "nome": "Crucifixo Inverso Peck Deck"
+      }
+    ]
+  },
+  {
+    "grupo": "Antebraço",
+    "exercicios": [
+      {
+        "id": "rosca-punho-barra-reta",
+        "nome": "Rosca Punho Barra Reta"
+      },
+      {
+        "id": "rosca-punho-barra-w",
+        "nome": "Rosca Punho Barra W"
+      },
+      {
+        "id": "rosca-punho-halter",
+        "nome": "Rosca Punho Halter"
+      },
+      {
+        "id": "rosca-punho-anilha",
+        "nome": "Rosca Punho Anilha"
+      },
+      {
+        "id": "rosca-punho-cabo-barra-reta-polia-baixa",
+        "nome": "Rosca Punho Cabo Barra Reta (Polia Baixa)"
+      },
+      {
+        "id": "rosca-punho-cabo-unilateral-polia-baixa",
+        "nome": "Rosca Punho Cabo Unilateral (Polia Baixa)"
+      },
+      {
+        "id": "rosca-punho-inversa-barra-reta",
+        "nome": "Rosca Punho Inversa Barra Reta"
+      },
+      {
+        "id": "rosca-punho-inversa-barra-w",
+        "nome": "Rosca Punho Inversa Barra W"
+      },
+      {
+        "id": "rosca-punho-inversa-halter",
+        "nome": "Rosca Punho Inversa Halter"
+      },
+      {
+        "id": "rosca-punho-inversa-anilha",
+        "nome": "Rosca Punho Inversa Anilha"
+      },
+      {
+        "id": "rosca-inversa-barra-reta",
+        "nome": "Rosca Inversa Barra Reta"
+      },
+      {
+        "id": "rosca-inversa-barra-w",
+        "nome": "Rosca Inversa Barra W"
+      },
+      {
+        "id": "rosca-zottman",
+        "nome": "Rosca Zottman"
+      },
+      {
+        "id": "supinacao-com-halter",
+        "nome": "Supinação com Halter"
+      },
+      {
+        "id": "pronacao-com-halter",
+        "nome": "Pronação com Halter"
+      },
+      {
+        "id": "supinacao-e-pronacao-com-halter",
+        "nome": "Supinação e Pronação com Halter"
+      },
+      {
+        "id": "flexao-palmar-maquina",
+        "nome": "Flexão Palmar Máquina"
+      },
+      {
+        "id": "rosca-punho-maquina",
+        "nome": "Rosca Punho Máquina"
+      },
+      {
+        "id": "rosca-punho-inversa-maquina",
+        "nome": "Rosca Punho Inversa Máquina"
+      },
+      {
+        "id": "supinacao-maquina",
+        "nome": "Supinação Máquina"
+      },
+      {
+        "id": "pronacao-maquina",
+        "nome": "Pronação Máquina"
+      }
+    ]
+  },
+  {
+    "grupo": "Bíceps",
+    "exercicios": [
+      {
+        "id": "rosca-direta-barra",
+        "nome": "Rosca Direta Barra"
+      },
+      {
+        "id": "rosca-direta-halter",
+        "nome": "Rosca Direta Halter"
+      },
+      {
+        "id": "rosca-direta-cabo",
+        "nome": "Rosca Direta Cabo"
+      },
+      {
+        "id": "rosca-scott-barra-reta",
+        "nome": "Rosca Scott Barra Reta"
+      },
+      {
+        "id": "rosca-scott-barra-w",
+        "nome": "Rosca Scott Barra W"
+      },
+      {
+        "id": "rosca-scott-halter",
+        "nome": "Rosca Scott Halter"
+      },
+      {
+        "id": "rosca-scott-maquina",
+        "nome": "Rosca Scott Máquina"
+      },
+      {
+        "id": "rosca-superman-cabo-barra-reta",
+        "nome": "Rosca Superman Cabo Barra Reta"
+      },
+      {
+        "id": "rosca-superman-cabo-unilateral",
+        "nome": "Rosca Superman Cabo Unilateral"
+      },
+      {
+        "id": "rosca-concentrada-barra-cabo-agachado",
+        "nome": "Rosca Concentrada Barra Cabo (Agachado)"
+      },
+      {
+        "id": "rosca-concentrada-halter",
+        "nome": "Rosca Concentrada Halter"
+      },
+      {
+        "id": "rosca-inclinada-halter-deitado",
+        "nome": "Rosca Inclinada Halter Deitado"
+      },
+      {
+        "id": "rosca-inclinada-cabo-unilateral",
+        "nome": "Rosca Inclinada Cabo Unilateral"
+      },
+      {
+        "id": "rosca-inclinada-cabo",
+        "nome": "Rosca Inclinada Cabo"
+      },
+      {
+        "id": "rosca-com-giro-halter-simultanea",
+        "nome": "Rosca com Giro Halter Simultânea"
+      },
+      {
+        "id": "rosca-com-giro-halter-alternada",
+        "nome": "Rosca Com Giro Halter Alternada"
+      },
+      {
+        "id": "rosca-martelo-halter",
+        "nome": "Rosca Martelo Halter"
+      },
+      {
+        "id": "rosca-martelo-cabo",
+        "nome": "Rosca Martelo Cabo"
+      }
+    ]
+  },
+  {
+    "grupo": "Tríceps",
+    "exercicios": [
+      {
+        "id": "triceps-pulley-barra-reta",
+        "nome": "Tríceps Pulley Barra Reta"
+      },
+      {
+        "id": "triceps-pulley-barra-v",
+        "nome": "Tríceps Pulley Barra V"
+      },
+      {
+        "id": "triceps-pulley-corda",
+        "nome": "Tríceps Pulley Corda"
+      },
+      {
+        "id": "triceps-pulley-invertida",
+        "nome": "Tríceps Pulley Invertida"
+      },
+      {
+        "id": "triceps-pulley-invertida-unilateral",
+        "nome": "Tríceps Pulley Invertida Unilateral"
+      },
+      {
+        "id": "triceps-testa-barra-reta",
+        "nome": "Tríceps Testa Barra Reta"
+      },
+      {
+        "id": "triceps-testa-barra-w",
+        "nome": "Tríceps Testa Barra W"
+      },
+      {
+        "id": "triceps-testa-cabo",
+        "nome": "Tríceps Testa Cabo"
+      },
+      {
+        "id": "triceps-testa-halter",
+        "nome": "Tríceps Testa Halter"
+      },
+      {
+        "id": "triceps-frances-em-pe-halter",
+        "nome": "Tríceps Francês em Pé Halter"
+      },
+      {
+        "id": "triceps-frances-sentado-halter",
+        "nome": "Tríceps Francês Sentado Halter"
+      },
+      {
+        "id": "triceps-frances-em-pe-com-barra",
+        "nome": "Tríceps Francês em Pé com Barra"
+      },
+      {
+        "id": "triceps-frances-cabo-unilateral",
+        "nome": "Tríceps Francês Cabo Unilateral"
+      },
+      {
+        "id": "triceps-frances-cabo",
+        "nome": "Tríceps Francês Cabo"
+      },
+      {
+        "id": "triceps-maquina",
+        "nome": "Tríceps Máquina"
+      },
+      {
+        "id": "triceps-banco",
+        "nome": "Tríceps Banco"
+      },
+      {
+        "id": "triceps-barra-paralela",
+        "nome": "Tríceps Barra Paralela"
+      },
+      {
+        "id": "triceps-coice-apoiado",
+        "nome": "Tríceps Coice Apoiado"
+      },
+      {
+        "id": "triceps-paralela-maquina",
+        "nome": "Tríceps Paralela Máquina"
+      },
+      {
+        "id": "supino-fechado",
+        "nome": "Supino Fechado"
+      },
+      {
+        "id": "flexao-de-bracos-militar",
+        "nome": "Flexão de Braços Militar"
+      }
+    ]
+  },
+  {
+    "grupo": "Power Exercises",
+    "exercicios": [
+      {
+        "id": "snatch",
+        "nome": "Snatch"
+      },
+      {
+        "id": "clean-and-jerk",
+        "nome": "Clean and Jerk"
+      },
+      {
+        "id": "power-snatch",
+        "nome": "Power Snatch"
+      },
+      {
+        "id": "hang-snatch",
+        "nome": "Hang Snatch"
+      },
+      {
+        "id": "snatch-balance",
+        "nome": "Snatch Balance"
+      },
+      {
+        "id": "heaving-snatch-balance",
+        "nome": "Heaving Snatch Balance"
+      },
+      {
+        "id": "drop-snatch",
+        "nome": "Drop Snatch"
+      },
+      {
+        "id": "overhead-squat",
+        "nome": "Overhead Squat"
+      },
+      {
+        "id": "snatch-pull",
+        "nome": "Snatch Pull"
+      },
+      {
+        "id": "snatch-deadlift",
+        "nome": "Snatch Deadlift"
+      },
+      {
+        "id": "muscle-snatch",
+        "nome": "Muscle Snatch"
+      },
+      {
+        "id": "block-snatch",
+        "nome": "Block Snatch"
+      },
+      {
+        "id": "deficit-snatch",
+        "nome": "Deficit Snatch"
+      },
+      {
+        "id": "power-clean",
+        "nome": "Power Clean"
+      },
+      {
+        "id": "hang-clean",
+        "nome": "Hang Clean"
+      },
+      {
+        "id": "clean-pull",
+        "nome": "Clean Pull"
+      },
+      {
+        "id": "clean-deadlift",
+        "nome": "Clean Deadlift"
+      },
+      {
+        "id": "muscle-clean",
+        "nome": "Muscle Clean"
+      },
+      {
+        "id": "block-clean",
+        "nome": "Block Clean"
+      },
+      {
+        "id": "deficit-clean",
+        "nome": "Deficit Clean"
+      },
+      {
+        "id": "jerk-from-rack",
+        "nome": "Jerk (from rack)"
+      },
+      {
+        "id": "power-jerk",
+        "nome": "Power Jerk"
+      },
+      {
+        "id": "split-jerk",
+        "nome": "Split Jerk"
+      },
+      {
+        "id": "push-jerk",
+        "nome": "Push Jerk"
+      },
+      {
+        "id": "jerk-balance",
+        "nome": "Jerk Balance"
+      },
+      {
+        "id": "jerk-recovery",
+        "nome": "Jerk Recovery"
+      },
+      {
+        "id": "clean-and-jerk-complexes",
+        "nome": "Clean and Jerk Complexes"
+      },
+      {
+        "id": "box-jumps",
+        "nome": "Box Jumps"
+      },
+      {
+        "id": "drop-jump",
+        "nome": "Drop Jump"
+      },
+      {
+        "id": "lateral-jumps",
+        "nome": "Lateral Jumps"
+      },
+      {
+        "id": "lunge-jumps",
+        "nome": "Lunge Jumps"
+      },
+      {
+        "id": "hurdle-jumps",
+        "nome": "Hurdle Jumps"
+      },
+      {
+        "id": "bounding",
+        "nome": "Bounding"
+      },
+      {
+        "id": "box-jump",
+        "nome": "Box Jump"
+      },
+      {
+        "id": "kneetuck-jump",
+        "nome": "Kneetuck Jump"
+      },
+      {
+        "id": "scissors-jump",
+        "nome": "Scissors Jump"
+      },
+      {
+        "id": "single-leg-vertical-jump",
+        "nome": "Single Leg Vertical Jump"
+      },
+      {
+        "id": "stride-jump",
+        "nome": "Stride Jump"
+      },
+      {
+        "id": "vertical-cmj-jump",
+        "nome": "Vertical CMJ Jump"
+      },
+      {
+        "id": "vertical-sj-jump",
+        "nome": "Vertical SJ Jump"
+      },
+      {
+        "id": "horizontal-cmj-jump",
+        "nome": "Horizontal CMJ Jump"
+      },
+      {
+        "id": "horizontal-sj-jump",
+        "nome": "Horizontal SJ Jump"
+      },
+      {
+        "id": "jump-squat",
+        "nome": "Jump Squat"
+      },
+      {
+        "id": "clap-push-ups",
+        "nome": "Clap Push-Ups"
+      },
+      {
+        "id": "medicine-ball-throws",
+        "nome": "Medicine Ball Throws"
+      },
+      {
+        "id": "plyometric-push-ups",
+        "nome": "Plyometric Push-Ups"
+      },
+      {
+        "id": "medicine-ball-slams",
+        "nome": "Medicine Ball Slams"
+      },
+      {
+        "id": "medicine-ball-sit-up-throw",
+        "nome": "Medicine Ball Sit-Up Throw"
+      },
+      {
+        "id": "medicine-ball-russian-twists",
+        "nome": "Medicine Ball Russian Twists"
+      },
+      {
+        "id": "medicine-ball-plank-passes",
+        "nome": "Medicine Ball Plank Passes"
+      },
+      {
+        "id": "chest-pass-pushup",
+        "nome": "Chest Pass Pushup"
+      },
+      {
+        "id": "cross-over-plyometric-pushup",
+        "nome": "Cross Over Plyometric Pushup"
+      },
+      {
+        "id": "drop-pushup",
+        "nome": "Drop Pushup"
+      },
+      {
+        "id": "medicineball-side-throw",
+        "nome": "MedicineBall Side Throw"
+      },
+      {
+        "id": "crossover-bound",
+        "nome": "Crossover Bound"
+      },
+      {
+        "id": "diagonal-bound",
+        "nome": "Diagonal Bound"
+      },
+      {
+        "id": "power-skip",
+        "nome": "Power Skip"
+      },
+      {
+        "id": "hurdlehop",
+        "nome": "Hurdlehop"
+      },
+      {
+        "id": "hurdlehop-and-bounce",
+        "nome": "Hurdlehop and Bounce"
+      },
+      {
+        "id": "lateral-hurdlehop-and-bounce",
+        "nome": "Lateral Hurdlehop and Bounce"
+      },
+      {
+        "id": "lateral-jump-and-stick",
+        "nome": "Lateral jump and Stick"
+      },
+      {
+        "id": "single-leg-barrierhop",
+        "nome": "Single Leg Barrierhop"
+      },
+      {
+        "id": "single-leg-hurdlehop-and-bounce",
+        "nome": "Single Leg Hurdlehop and Bounce"
+      }
+    ]
+  }
+]
