@@ -284,4 +284,31 @@ describe('prescreverSessao — tempo da sessão', () => {
     const tres = { ...biset, metodos: [...biset.metodos, met({ exercicio: 2 }), met({ ativo: false })] }
     expect(prescreverSessao(tres, 1, 1)!.tempoMin).toBeCloseTo(14, 6)
   })
+
+  describe('economia de pausa [DECIDIDO]: Biset/Superset/Triset/Circuito dividem uma pausa', () => {
+    // 4 exercícios de 3×10, pausa 60, sem extras: tempo = 10 + (120 + 3·60·(4 − econ))/60 = 12 + 3·(4 − econ)
+    const quatro: Meso = { ...umEx, divisao: [[slot('A'), slot('B'), slot('C'), slot('D')]] }
+    const econ = (...metodos: Partial<AplicacaoMetodo>[]) =>
+      (12 + 12 - prescreverSessao({ ...quatro, metodos: metodos.map(met) }, 1, 1)!.tempoMin) / 3
+    const em = (metodo: AplicacaoMetodo['metodo'], pos: number[], extra: Partial<AplicacaoMetodo> = {}) =>
+      pos.map((exercicio) => ({ metodo, exercicio, ...extra }))
+
+    it('sem métodos não economiza', () => expect(econ()).toBeCloseTo(0, 6))
+    it('Triset de 3 → 2', () => expect(econ(...em('Triset', [1, 2, 3]))).toBeCloseTo(2, 6))
+    it('Superset de 2 → 1', () => expect(econ(...em('Superset', [1, 2]))).toBeCloseTo(1, 6))
+    it('Circuito de 4 → 3', () => expect(econ(...em('Circuito', [1, 2, 3, 4]))).toBeCloseTo(3, 6))
+    it('dois Bisets por grupo (1 e 2) → 2', () =>
+      expect(econ(...em('Biset', [1, 2], { grupo: 1 }), ...em('Biset', [3, 4], { grupo: 2 }))).toBeCloseTo(2, 6))
+    it('4 linhas Biset sem grupo → 2', () => expect(econ(...em('Biset', [1, 2, 3, 4]))).toBeCloseTo(2, 6))
+    it('mesma posição listada duas vezes conta uma', () => {
+      expect(econ(...em('Triset', [1, 2, 3, 3]))).toBeCloseTo(2, 6)
+      expect(econ(...em('Biset', [1, 1]))).toBeCloseTo(0, 6)
+      expect(econ(...em('Biset', [1, 1, 2], { grupo: 1 }))).toBeCloseTo(1, 6)
+    })
+    it('ignora linhas inativas', () =>
+      expect(econ(...em('Triset', [1, 2]), { metodo: 'Triset', exercicio: 3, ativo: false })).toBeCloseTo(0, 6))
+    it('ignora outra semana/treino', () =>
+      expect(econ(...em('Superset', [1]), ...em('Superset', [2], { semana: 2 }), ...em('Superset', [3], { treino: 2 }))).toBeCloseTo(0, 6))
+    it('métodos de outro tipo não economizam', () => expect(econ(...em('Dropset', [1, 2]))).toBeCloseTo(0, 6))
+  })
 })

@@ -65,18 +65,22 @@ Ex.: `Dropset [últimas 2]; Biset [todas]`.
 ## 8. Tempo da sessão (min) — coluna `Q`
 ```
 tempo = 10 + ( Σ reps de todas as colunas da sessão
-             + nSeries · pausaS · max(0, nExercicios − paresBiset)
+             + nSeries · pausaS · max(0, nExercicios − economizados)
              + extraMetodos(semana, treino) ) / 60
 ```
 - `nSeries` = maior nº de séries da sessão (cabeçalho `MAX(D4:I4)`, que na planilha olha só o 1º exercício — no app use o maior `n` entre os exercícios).
-- `nExercicios` = posições preenchidas; `paresBiset = INT(nº de linhas Biset ativas da semana+treino / 2)` (bloco "EXTRAS").
+- `nExercicios` = posições preenchidas. A planilha usa `paresBiset = INT(nº de linhas Biset ativas da semana+treino / 2)` (bloco "EXTRAS"); o app troca por `economizados` (abaixo).
 - As reps entram como segundos (≈1 s por rep) — manter.
 - `extraMetodos` (`AvTempo`) = soma por linha ativa da semana+treino, com `p = pausaInternaS`, `b = blocos`, `rp = repsPadrao > 0 ? repsPadrao : repsPorBloco`, `ad = adicional`, `et = etapas`:
   - Clusterset: `rp·(b−1) + p·(b−1)` se `b > 1`, senão 0. **[CORRIGIDO]** a planilha testa `"Cluster"`, nome que não existe na lista, e cai na regra genérica.
   - Dropset: `p · et`
   - Rest-pause: `ad + p · (b > 1 ? b−1 : 1)`
   - Demais: `ad + p · (b > 1 ? b−1 : 0)`
-- **A confirmar com o Victor:** Triset, Superset e Circuito também deveriam economizar pausa como o Biset? (Hoje só o Biset economiza.)
+- `economizados` **[DECIDIDO pelo Victor]** — exercícios do mesmo grupo dividem uma pausa só (Biset, Superset, Triset e Circuito):
+  - Considera só linhas ativas da semana+treino com método ∈ {Biset, Superset, Triset, Circuito}, contando **posições distintas** (a mesma posição listada duas vezes conta uma).
+  - Linhas com `grupo`: agrupa por (método, grupo); cada grupo economiza `posições − 1`.
+  - Linhas sem `grupo`: agrupa por método; `tamanho` = 2 (Biset/Superset), 3 (Triset), todas as posições (Circuito); economiza `INT(posições / tamanho) · (tamanho − 1)` (Circuito: `posições − 1`).
+  - `economizados` = soma dos grupos. Mantém o comportamento da planilha para Biset (2 linhas → 1).
 
 ## 9. Registro do aluno
 - Por treino: `realizado` (checkbox) + carga (kg) de cada série/etapa (`J:O`).

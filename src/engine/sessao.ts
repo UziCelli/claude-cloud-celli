@@ -19,6 +19,9 @@ function sufixo(m: AplicacaoMetodo): string {
   return m.escopo.replace(' séries', '').toLowerCase() // 'Últimas 2 séries' → 'últimas 2'
 }
 
+// §8 — tamanho do bloco que divide uma pausa (Circuito: todas as posições)
+const TAMANHO: Record<string, number> = { Biset: 2, Superset: 2, Triset: 3, Circuito: 0 }
+
 // §8 — segundos extras de uma linha de método (AvTempo)
 function extraTempo(m: AplicacaoMetodo): number {
   const p = m.pausaInternaS ?? 0
@@ -74,10 +77,23 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
 
   // §8 — tempo
   const series = Math.max(0, ...exercicios.map((e) => e.n))
-  const paresBiset = Math.floor(doTreino.filter((m) => m.metodo === 'Biset').length / 2)
+  // [DECIDIDO] exercícios do mesmo grupo dividem uma pausa só: com `grupo`, economiza (posições − 1);
+  // sem `grupo`, agrupa por método em blocos de 2 (Biset/Superset), 3 (Triset) ou todos (Circuito).
+  const grupos = new Map<string, Set<number>>()
+  for (const m of doTreino) {
+    if (!(m.metodo in TAMANHO)) continue
+    const chave = `${m.metodo}|${m.grupo ?? ''}`
+    grupos.set(chave, (grupos.get(chave) ?? new Set()).add(m.exercicio))
+  }
+  let economizados = 0
+  for (const [chave, pos] of grupos) {
+    const [metodo, grupo] = chave.split('|')
+    const t = grupo || metodo === 'Circuito' ? pos.size : TAMANHO[metodo]
+    economizados += Math.floor(pos.size / t) * (t - 1)
+  }
   const somaReps = exercicios.reduce((s, e) => s + e.reps.reduce((a, r) => a + r, 0), 0)
   const extras = doTreino.reduce((s, m) => s + extraTempo(m), 0)
-  const pausas = series * meso.pausaS * Math.max(0, exercicios.length - paresBiset)
+  const pausas = series * meso.pausaS * Math.max(0, exercicios.length - economizados)
   const tempoMin = 10 + (somaReps + pausas + extras) / 60
 
   return { semana, treino, inicioSemana, pausaS: meso.pausaS, series, exercicios, tempoMin }
