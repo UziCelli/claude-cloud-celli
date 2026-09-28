@@ -3,10 +3,12 @@ export default function LoadInput({
   valor,
   placeholder,
   onSalvar,
+  className = 'w-16',
 }: {
   valor: number | null
   placeholder?: number | string | null
   onSalvar: (v: number | null) => void
+  className?: string
 }) {
   function commit(texto: string) {
     const t = texto.trim().replace(',', '.')
@@ -22,7 +24,7 @@ export default function LoadInput({
       placeholder={placeholder == null ? undefined : String(placeholder)}
       onBlur={(e) => commit(e.target.value)}
       onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-      className="w-16 rounded border border-slate-700 bg-slate-950 px-1 py-0.5 text-center text-xs text-slate-100 outline-none focus:border-orange-500"
+      className={`${className} rounded border border-slate-700 bg-slate-950 px-1 py-1 text-center text-base text-slate-100 outline-none focus:border-orange-500`}
     />
   )
 }

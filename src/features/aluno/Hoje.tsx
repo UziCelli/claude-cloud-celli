@@ -62,7 +62,7 @@ function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: str
               onClick={() => ir(`/treino/${mesoId}/${semana}/${treino}`)}
               className="flex w-full min-h-[64px] items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-4 text-left active:bg-slate-800"
             >
-              <div>
+              <div className="min-w-0">
                 <div className="font-semibold">
                   Treino {treino} {feitos.has(`${semana}-${treino}`) && <span className="text-emerald-400">✓</span>}
                 </div>

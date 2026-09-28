@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+html {
+  @apply bg-slate-950;
+}
+
+/* PWA em tela cheia no iPhone: conteúdo não pode ficar sob a Dynamic Island / barra inicial. */
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }

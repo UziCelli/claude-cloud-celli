@@ -39,7 +39,7 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
       <select
         value={nome}
         onChange={(e) => setNome(e.target.value)}
-        className="mb-4 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500"
+        className="mb-4 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-orange-500"
       >
         {lista.map((n) => (
           <option key={n} value={n}>
@@ -50,6 +50,7 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
       {pontos.length === 0 ? (
         <p className="text-sm text-slate-400">Sem registros ainda.</p>
       ) : (
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-slate-800 text-slate-400">
             <tr>
@@ -70,6 +71,7 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </main>
   )

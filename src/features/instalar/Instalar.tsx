@@ -22,7 +22,7 @@ const Passo = ({ n, children }: { n: number; children: React.ReactNode }) => (
     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-slate-950">
       {n}
     </span>
-    <span>{children}</span>
+    <span className="min-w-0">{children}</span>
   </li>
 )
 
@@ -51,7 +51,7 @@ export default function Instalar() {
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-4 px-4 py-8">
+    <main className="mx-auto max-w-md space-y-4 px-4 pb-8 pt-[calc(2rem+env(safe-area-inset-top))]">
       <h1 className="text-center text-2xl font-bold">
         Instalar o <span className="text-orange-500">Força</span>
       </h1>
