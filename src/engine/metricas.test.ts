@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evolucaoExercicio, metricasExercicio, metricasSemana, metricasSessao } from './metricas'
+import { evolucaoExercicio, metricasExercicio, metricasSemana, metricasSessao, repsEfetivas } from './metricas'
 import { prescreverSessao } from './sessao'
 import type { Meso, Slot } from './tipos'
 
@@ -116,5 +116,29 @@ describe('evolucaoExercicio', () => {
     expect(evolucaoExercicio(comTroca, registros, 'Remada')).toEqual([
       { ocorrencia: 1, semana: 2, treino: 1, cargaMax: 99, cargaMedia: 99, volume: 99 * 20 },
     ])
+  })
+})
+
+describe('reps feitas (§9) [DECIDIDO pelo Victor]', () => {
+  it('repsEfetivas: feitas quando anotadas, senão prescritas', () => {
+    expect(repsEfetivas([10, 9, 8], [12, null])).toEqual([12, 9, 8])
+    expect(repsEfetivas([10, 9], undefined)).toEqual([10, 9])
+    expect(repsEfetivas([10, 9], [0, 7, 5])).toEqual([0, 7]) // 0 é valor anotado; extra ignorado
+  })
+
+  const s12 = prescreverSessao(meso, 1, 2)! // D [10,9,8,7]
+  const cargas = { D: [100, 100, null, null] }
+  const reps = { D: [12, null] } // série 1 fez 12 → [12,9,8,7]
+
+  it('sessão e semana usam as reps efetivas', () => {
+    const m = metricasSessao(s12, cargas, reps)
+    expect([m.movimentos, m.volume]).toEqual([36, 2100]) // 12+9+8+7; 12·100 + 9·100
+    const w = metricasSemana([{ sessao: s12, cargas, reps }])
+    expect([w.movimentos, w.volume]).toEqual([36, 2100])
+  })
+
+  it('evolução usa as reps efetivas', () => {
+    const [p] = evolucaoExercicio(meso, { '1-2': cargas }, 'Supino', { '1-2': reps }).filter((x) => x.treino === 2)
+    expect(p.volume).toBe(2100)
   })
 })

@@ -85,6 +85,7 @@ tempo = 10 + ( Σ reps de todas as colunas da sessão
 ## 9. Registro do aluno
 - Por treino: `realizado` (checkbox) + carga (kg) de cada série/etapa (`J:O`).
 - Cargas são digitadas pelo aluno; nada é calculado a partir delas além do monitoramento.
+- Reps feitas (opcional) por série/etapa: o aluno anota só quando fizer diferente do prescrito. As métricas (§10, §12) usam as **reps efetivas** = feitas quando anotadas, senão as prescritas (`repsEfetivas`). **[DECIDIDO pelo Victor]**
 
 ## 10. Monitoramento
 Por exercício (linha):

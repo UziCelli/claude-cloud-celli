@@ -1,0 +1,27 @@
+// Ajudas da tela do aluno. Funções puras.
+import type { Meso, Registros } from '../engine'
+import { diaSP } from './acesso'
+
+// Semana w cobre os dias [inicio + 7(w−1), inicio + 7w), contados no calendário de São Paulo.
+export function semanaAtual(meso: Meso, hoje: Date) {
+  const d = diaSP(hoje.getTime()) - diaSP(Date.parse(`${meso.inicio.slice(0, 10)}T00:00-03:00`))
+  if (d < 0) return { estado: 'antes' as const, semana: 1, diasParaComecar: -d }
+  const semana = Math.floor(d / 7) + 1
+  if (semana > meso.semanas) return { estado: 'depois' as const, semana: meso.semanas }
+  return { estado: 'durante' as const, semana }
+}
+
+// Cargas da semana anterior mais recente em que a mesma posição do treino tinha o mesmo
+// exercício (pelo nome, já com trocas) e alguma carga anotada. Lida pelo slotId daquela semana.
+export function cargaAnterior(meso: Meso, registros: Registros, semana: number, treino: number, pos: number) {
+  const slot = (w: number) => meso.trocas?.[`${w}-${treino}-${pos}`] ?? meso.divisao[treino - 1]?.[pos - 1]
+  const alvo = slot(semana)
+  if (!alvo) return null
+  for (let w = semana - 1; w >= 1; w--) {
+    const s = slot(w)
+    if (s?.nome !== alvo.nome) continue
+    const cargas = registros[`${w}-${treino}`]?.[s.slotId]
+    if (cargas?.some((c) => c != null)) return cargas
+  }
+  return null
+}

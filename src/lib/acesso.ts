@@ -23,7 +23,8 @@ export function liberado(u: Usuario | null, agora: Date) {
   return u.status === 'ativo' && !!u.pagoAte && agora.getTime() < u.pagoAte.toMillis()
 }
 
-const diaSP = (ms: number) => Math.floor((ms + SP) / DIA)
+// Nº do dia de calendário em São Paulo (independe do fuso do aparelho).
+export const diaSP = (ms: number) => Math.floor((ms + SP) / DIA)
 
 // Dias de calendário (São Paulo) até o vencimento: 0 no próprio dia, negativo se vencido.
 export const diasParaVencer = (pagoAte: Timestamp, agora: Date) =>

@@ -60,6 +60,7 @@ export interface RegistroDoc {
   semana: number
   treino: number
   cargas?: CargasDoc
+  reps?: CargasDoc // reps feitas (opcional), mesmo formato das cargas
 }
 
 export function docParaCargas(cargas: CargasDoc | undefined): Cargas {
@@ -75,5 +76,10 @@ export function docParaCargas(cargas: CargasDoc | undefined): Cargas {
   return r
 }
 
+export const docParaReps = docParaCargas
+
 export const docsParaRegistros = (docs: RegistroDoc[]): Registros =>
   Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaCargas(d.cargas)]))
+
+export const docsParaRegistrosReps = (docs: RegistroDoc[]): Registros =>
+  Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaReps(d.reps)]))

@@ -16,9 +16,15 @@ export function metricasExercicio(reps: number[], cargas: (number | null)[]) {
   }
 }
 
+// §9 — reps feitas (opcionais) substituem as prescritas onde foram anotadas.
+export const repsEfetivas = (prescritas: number[], feitas?: (number | null)[]) =>
+  prescritas.map((r, i) => feitas?.[i] ?? r)
+
 // §10 — por sessão: cargaMedia = média das cargaMedia > 0 dos exercícios.
-export function metricasSessao(sessao: Sessao, cargas: Cargas) {
-  const exercicios = sessao.exercicios.map((e) => metricasExercicio(e.reps, cargas[e.slot.slotId] ?? []))
+export function metricasSessao(sessao: Sessao, cargas: Cargas, reps: Cargas = {}) {
+  const exercicios = sessao.exercicios.map((e) =>
+    metricasExercicio(repsEfetivas(e.reps, reps[e.slot.slotId]), cargas[e.slot.slotId] ?? []),
+  )
   return {
     exercicios,
     movimentos: soma(exercicios.map((e) => e.movimentos)),
@@ -28,8 +34,8 @@ export function metricasSessao(sessao: Sessao, cargas: Cargas) {
 }
 
 // §10 — por semana (tblMonitoramento)
-export function metricasSemana(sessoes: { sessao: Sessao; cargas: Cargas }[]) {
-  const ms = sessoes.map((s) => metricasSessao(s.sessao, s.cargas))
+export function metricasSemana(sessoes: { sessao: Sessao; cargas: Cargas; reps?: Cargas }[]) {
+  const ms = sessoes.map((s) => metricasSessao(s.sessao, s.cargas, s.reps))
   const movimentos = soma(ms.map((m) => m.movimentos))
   const cargaMedia = media(numeros(ms.map((m) => m.cargaMedia)))
   const volume = soma(ms.map((m) => m.volume ?? 0)) || null
@@ -38,7 +44,7 @@ export function metricasSemana(sessoes: { sessao: Sessao; cargas: Cargas }[]) {
 }
 
 // §12 — cada ocorrência do exercício (pelo nome, já com trocas) em ordem de semana/treino/posição
-export function evolucaoExercicio(meso: Meso, registros: Registros, nome: string) {
+export function evolucaoExercicio(meso: Meso, registros: Registros, nome: string, reps: Registros = {}) {
   const pontos: {
     ocorrencia: number
     semana: number
@@ -52,7 +58,8 @@ export function evolucaoExercicio(meso: Meso, registros: Registros, nome: string
       for (const e of prescreverSessao(meso, semana, treino)!.exercicios)
         if (e.slot.nome === nome) {
           const cargas = registros[`${semana}-${treino}`]?.[e.slot.slotId] ?? []
-          const { cargaMax, cargaMedia, volume } = metricasExercicio(e.reps, cargas)
+          const feitas = reps[`${semana}-${treino}`]?.[e.slot.slotId]
+          const { cargaMax, cargaMedia, volume } = metricasExercicio(repsEfetivas(e.reps, feitas), cargas)
           pontos.push({ ocorrencia: pontos.length + 1, semana, treino, cargaMax, cargaMedia, volume })
         }
   return pontos
