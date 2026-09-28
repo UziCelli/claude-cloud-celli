@@ -50,9 +50,12 @@ service cloud.firestore {
         && request.resource.data.papel == 'aluno'
         && request.resource.data.status == 'aguardando';
 
-      // Só o nome; papel/status/pagoAte só o coach muda.
+      // Só nome e e-mail (e-mail só igual ao do login, após troca confirmada no Auth);
+      // papel/status/pagoAte só o coach muda.
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'email'])
+        && (request.resource.data.email == resource.data.email
+            || request.resource.data.email == request.auth.token.email);
     }
 
     match /mesos/{mesoId} {
