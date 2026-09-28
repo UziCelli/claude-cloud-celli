@@ -1,5 +1,5 @@
 // Banner para lembrar alunos no iPhone/iPad de instalar o app (evita perder treinos).
-// Outro agente monta este componente no app do aluno.
+// Montado no topo do app do aluno (src/features/aluno/AlunoApp.tsx).
 const iOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
 const standalone = () => matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
 
