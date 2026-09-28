@@ -104,8 +104,8 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
 function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => void }) {
   return (
     <>
-      <Cartao className="space-y-3 border-l-4 border-orange-500 bg-orange-50">
-        <p className="text-sm font-semibold text-orange-900">
+      <Cartao className="space-y-3 border-l-4 border-orange-500 bg-orange-950/40">
+        <p className="text-sm font-semibold text-orange-200">
           Abriu pelo WhatsApp ou Instagram? Toque na bússola do Safari 🧭 (canto de baixo) para abrir no Safari — ou copie o link e cole no Safari.
         </p>
         <Botao tipo="primario" className="w-full" onClick={onCopiar}>
