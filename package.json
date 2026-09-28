@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc",
     "test": "vitest run",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-forca 'vitest run --config vitest.rules.config.ts'"
+    "test:rules": "firebase emulators:exec --only firestore --project demo-forca 'vitest run --config vitest.rules.config.ts'",
+    "emuladores": "firebase emulators:start --only auth,firestore --project demo-forca"
   },
   "dependencies": {
     "firebase": "^12.19.0",

@@ -5,6 +5,7 @@ coverage
 .firebase
 *.log
 .env*
+!.env.example
 *.xlsx
 *.keystore
 *.jks
