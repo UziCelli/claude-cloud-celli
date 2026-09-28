@@ -130,5 +130,6 @@ jobs:
           gh release create apk --title "App Android" --notes "APK do app Força" || true
           gh release upload apk forca.apk --clobber
 
-      - name: Republicar o site (com APK e assetlinks atualizados)
+      # O plano gratuito do Firebase (Spark) não hospeda .apk: o APK fica só na Release "apk".
+      - name: Republicar o site (leva o assetlinks.json criado no 1º run)
         run: gh workflow run deploy.yml --ref main

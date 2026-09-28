@@ -27,10 +27,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - name: Baixar APK do release (se já existir)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release download apk --pattern forca.apk --dir dist --clobber || echo "sem APK ainda"
       - name: Publicar no Firebase
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
