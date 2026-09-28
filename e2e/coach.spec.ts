@@ -1,0 +1,99 @@
+import { expect, test } from '@playwright/test'
+import { criarCoach, limparEmuladores } from './seed'
+
+const COACH = { nome: 'Victor', email: 'victor.e2e@teste.com', senha: 'senha123' }
+const ALUNO = { nome: 'Aluno Teste', email: 'aluno.e2e@teste.com', senha: 'senha123' }
+
+const NOMES = ['Agachamento Livre Halter', 'Agachamento Frontal Halter', 'Agachamento Sumô Barra']
+
+test.describe.configure({ mode: 'serial' })
+
+test.beforeAll(async () => {
+  await limparEmuladores()
+  await criarCoach(COACH.nome, COACH.email, COACH.senha)
+})
+
+test('fluxo completo do painel do coach', async ({ page }) => {
+  await test.step('aluno se cadastra e vê a tela de espera', async () => {
+    await page.goto('/')
+    await page.getByText('Não tenho conta — Criar conta').click()
+    await page.getByLabel('Nome').fill(ALUNO.nome)
+    await page.getByLabel('E-mail').fill(ALUNO.email)
+    await page.getByLabel('Senha').fill(ALUNO.senha)
+    await page.getByRole('button', { name: 'Criar conta', exact: true }).click()
+
+    await expect(page.getByRole('heading', { name: 'Cadastro recebido!' })).toBeVisible()
+    // Sair logo em seguida (como um aluno real faria) não pode perder o cadastro:
+    // sair() espera as gravações pendentes chegarem ao servidor.
+    await page.getByRole('button', { name: 'Sair' }).click()
+  })
+
+  await test.step('coach entra e libera o aluno', async () => {
+    await expect(page.getByLabel('E-mail')).toBeVisible()
+    await page.getByLabel('E-mail').fill(COACH.email)
+    await page.getByLabel('Senha').fill(COACH.senha)
+    await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+
+    await expect(page.getByRole('heading', { name: 'Alunos' })).toBeVisible()
+    const linha = page.locator('tbody tr').filter({ hasText: ALUNO.nome })
+    await expect(linha.getByText('Aguardando')).toBeVisible({ timeout: 10_000 })
+
+    await linha.getByRole('button', { name: 'Liberar' }).click()
+    await linha.getByRole('button', { name: 'Confirmar' }).click()
+    await expect(linha.getByText('Ativo')).toBeVisible()
+
+    await page.screenshot({ path: 'test-results/prints/01-alunos.png' })
+  })
+
+  await test.step('coach cria o mesociclo e preenche a divisão', async () => {
+    await page.locator('tbody tr').filter({ hasText: ALUNO.nome }).locator('td').first().locator('button').click()
+    await expect(page.getByRole('heading', { name: `Mesociclos de ${ALUNO.nome}` })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Novo mesociclo' }).click()
+    await page.waitForURL(/#\/meso\//)
+
+    await page.getByRole('button', { name: 'Divisão', exact: true }).click()
+    const tabela = page.locator('table').filter({ hasText: 'Posição' })
+    for (let t = 1; t <= 3; t++) {
+      for (let p = 1; p <= 3; p++) {
+        const linha = tabela.locator('tbody tr').nth(p - 1)
+        const input = linha.locator('input[list="catalogo"]').nth(t - 1)
+        await input.fill(NOMES[p - 1])
+        await input.press('Tab')
+      }
+    }
+
+    await page.screenshot({ path: 'test-results/prints/02-editor-divisao.png' })
+
+    await page.getByRole('button', { name: 'Salvar' }).click()
+    await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
+  })
+
+  await test.step('semana 1 mostra o tempo estimado do treino 1', async () => {
+    await page.getByRole('button', { name: 'Ver semanas' }).click()
+    await page.waitForURL(/#\/meso\/.+\/semana\/1/)
+
+    await expect(page.getByText(/~29,2 min/).first()).toBeVisible()
+
+    await page.screenshot({ path: 'test-results/prints/03-semana.png' })
+  })
+
+  await test.step('carga registrada sobrevive a um reload', async () => {
+    const tabelaTreino1 = page.locator('table').first()
+    const linhaExercicio1 = tabelaTreino1.locator('tbody tr').first()
+    const inputSerie1 = linhaExercicio1.locator('input[type="number"]').first()
+
+    await inputSerie1.fill('20')
+    await inputSerie1.press('Enter')
+
+    await expect(linhaExercicio1.locator('td:nth-last-child(2)')).toHaveText('20', { timeout: 10_000 })
+
+    await page.reload()
+    await page.waitForURL(/#\/meso\/.+\/semana\/1/)
+
+    const tabelaTreino1Depois = page.locator('table').first()
+    const linhaExercicio1Depois = tabelaTreino1Depois.locator('tbody tr').first()
+    await expect(linhaExercicio1Depois.locator('input[type="number"]').first()).toHaveValue('20')
+    await expect(linhaExercicio1Depois.locator('td:nth-last-child(2)')).toHaveText('20')
+  })
+})

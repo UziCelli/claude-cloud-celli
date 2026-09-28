@@ -1,7 +1,7 @@
 // Gravações no Firestore. Offline, a promessa só resolve quando o servidor confirma:
 // a tela não deve esperar (await) para mostrar o valor — o cache local já tem.
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { collection, doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc, waitForPendingWrites } from 'firebase/firestore'
 import type { Meso } from '../engine'
 import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
@@ -80,4 +80,10 @@ export async function cadastrar(nome: string, email: string, senha: string) {
   return user
 }
 
-export const sair = () => signOut(auth)
+// Antes de sair, espera as gravações pendentes chegarem ao servidor (ex.: o cadastro recém-feito);
+// trocar de usuário com escrita na fila a deixaria presa. Offline, desiste em 5 s: o que ficou na
+// fila continua salvo no aparelho e sobe quando essa pessoa entrar de novo.
+export async function sair() {
+  await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
+  await signOut(auth)
+}
