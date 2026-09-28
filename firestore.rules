@@ -1,0 +1,83 @@
+rules_version = '2';
+
+// Força — regras de segurança do Firestore (testes: tests/rules.test.ts).
+//
+// Não existe forma de criar um coach pelo app: o primeiro coach é promovido
+// manualmente no console do Firebase, editando usuarios/{uid} para
+// papel = 'coach' (e status = 'ativo').
+//
+// Aluno "liberado" = papel 'aluno', status 'ativo' e pagoAte no futuro.
+// Aluno bloqueado, vencido ou aguardando não lê nem escreve mesos/registros.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function me() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function isCoach() {
+      return signedIn() && me().papel == 'coach';
+    }
+
+    function liberado() {
+      return signedIn()
+        && me().papel == 'aluno'
+        && me().status == 'ativo'
+        && request.time < me().pagoAte;
+    }
+
+    function own(data) {
+      return signedIn() && data.alunoId == request.auth.uid;
+    }
+
+    // Coach: acesso total.
+    match /{document=**} {
+      allow read, write: if isCoach();
+    }
+
+    match /usuarios/{uid} {
+      // Lê o próprio mesmo bloqueado (o app mostra a tela "bloqueado").
+      allow read: if signedIn() && request.auth.uid == uid;
+
+      // Cadastro próprio: sempre aluno aguardando, sem pagoAte.
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['papel', 'status', 'nome', 'email', 'criadoEm'])
+        && request.resource.data.papel == 'aluno'
+        && request.resource.data.status == 'aguardando';
+
+      // Só o nome; papel/status/pagoAte só o coach muda.
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome']);
+    }
+
+    match /mesos/{mesoId} {
+      allow read: if own(resource.data) && liberado();
+    }
+
+    // Id: {mesoId}_s{WW}_t{T}, ex.: abc_s01_t1.
+    match /registros/{regId} {
+      allow read: if own(resource.data) && liberado();
+
+      allow create: if own(request.resource.data) && liberado()
+        && request.resource.data.keys().hasOnly(
+             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'cargas', 'atualizadoEm'])
+        && request.resource.data.semana is int
+        && request.resource.data.treino is int
+        && regId == request.resource.data.mesoId
+             + '_s' + (request.resource.data.semana < 10 ? '0' : '') + string(request.resource.data.semana)
+             + '_t' + string(request.resource.data.treino)
+        && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId
+             == request.auth.uid;
+
+      // Gravação campo a campo (merge): identidade do registro não muda.
+      allow update: if own(resource.data) && liberado()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'atualizadoEm']);
+    }
+  }
+}
