@@ -117,26 +117,17 @@ describe('usuarios', () => {
     await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { nome: 'Hack' }));
   });
 
-  // Troca de e-mail (sincronizarEmail): só para o e-mail do próprio login (token).
+  // Troca de e-mail: só coaches (tela Minha conta). Aluno troca por manutenção (Admin SDK).
   describe('e-mail', () => {
-    const comToken = (email: string) =>
-      doc(env.authenticatedContext('ana', { email }).firestore() as unknown as Firestore, 'usuarios', 'ana');
+    const comToken = (uid: string, email: string) =>
+      doc(env.authenticatedContext(uid, { email }).firestore() as unknown as Firestore, 'usuarios', uid);
 
-    it('permite quando igual ao e-mail do login', () =>
-      assertSucceeds(updateDoc(comToken('nova@x.com'), { email: 'nova@x.com' })));
-    it('permite junto com o nome', () =>
-      assertSucceeds(updateDoc(comToken('nova@x.com'), { email: 'nova@x.com', nome: 'Ana M' })));
-    it('nega quando diferente do e-mail do login', async () => {
-      await assertFails(updateDoc(comToken('nova@x.com'), { email: 'outra@x.com' }));
-      await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'ana'), { email: 'nova@x.com' }));
+    it('aluno não altera o próprio e-mail, nem igual ao do login', async () => {
+      await assertFails(updateDoc(comToken('ana', 'nova@x.com'), { email: 'nova@x.com' }));
+      await assertFails(updateDoc(comToken('ana', 'nova@x.com'), { email: 'nova@x.com', nome: 'Ana M' }));
     });
-    it('nega junto com status ou pagoAte', async () => {
-      await assertFails(updateDoc(comToken('nova@x.com'), { email: 'nova@x.com', status: 'bloqueado' }));
-      await assertFails(
-        updateDoc(comToken('nova@x.com'), { email: 'nova@x.com', pagoAte: Timestamp.fromMillis(Date.now() + 365 * DIA) }),
-      );
-      await assertFails(updateDoc(comToken('nova@x.com'), { email: 'nova@x.com', papel: 'coach' }));
-    });
+    it('coach altera o próprio e-mail', () =>
+      assertSucceeds(updateDoc(comToken('coach', 'novo@x.com'), { email: 'novo@x.com' })));
   });
 
   it('usuário não altera papel, status ou pagoAte', async () => {

@@ -28,3 +28,7 @@ npm run build
 ```
 - Especificação das fórmulas: [`docs/logica-planilha.md`](docs/logica-planilha.md)
 - Regras para o Claude Code (agentes, plugins, economia de tokens): [`CLAUDE.md`](CLAUDE.md)
+
+## Manutenção
+- **Trocar e-mail de aluno** (o aluno não troca sozinho): GitHub → **Actions** → **Alterar e-mail de aluno** → **Run workflow** → e-mail atual e e-mail novo. A conta, a senha e o histórico continuam. Coaches trocam o próprio e-mail no app (clique no seu nome → Minha conta).
+- **Gerar APK**: ver [`docs/apk.md`](docs/apk.md).

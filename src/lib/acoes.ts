@@ -99,7 +99,7 @@ export async function alterarEmail(senhaAtual: string, novoEmail: string) {
 }
 
 // Depois da confirmação (e de entrar de novo), copia o e-mail do login para o perfil.
-// A regra só aceita e-mail igual ao do token. Não precisa de await: se falhar, tenta na próxima vez.
+// Só coaches (a regra reserva o e-mail ao coach). Não precisa de await: se falhar, tenta na próxima vez.
 export function sincronizarEmail(uid: string, perfilEmail: string) {
   const email = auth.currentUser?.email
   if (email && email !== perfilEmail) updateDoc(doc(db, 'usuarios', uid), { email }).catch(() => {})
