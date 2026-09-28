@@ -4,6 +4,8 @@ import { useUsuarioAtual } from './lib/hooks'
 import { casar, useRota } from './rota'
 import { Botao, Centro } from './ui'
 import Entrar from './features/auth/Entrar'
+import Inicio from './features/coach/inicio/Inicio'
+import NovoAluno from './features/coach/alunos/NovoAluno'
 import Alunos from './features/coach/alunos/Alunos'
 import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
@@ -30,8 +32,10 @@ function Principal() {
 function Coach({ uid, nome, email }: { uid: string; nome: string; email: string }) {
   const rota = useRota()
   let p: Record<string, string> | null
-  let tela = <Alunos />
-  if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno uid={p.uid} />
+  let tela = <Inicio />
+  if (rota === '/alunos') tela = <Alunos />
+  else if (rota === '/alunos/novo') tela = <NovoAluno />
+  else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
@@ -42,6 +46,10 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
           <a href="#/" className="shrink-0 text-lg font-bold">
             Força <span className="text-orange-500">coach</span>
           </a>
+          <nav className="flex shrink-0 gap-3 text-sm text-slate-300">
+            <a href="#/" className="hover:text-orange-400">Início</a>
+            <a href="#/alunos" className="hover:text-orange-400">Alunos</a>
+          </nav>
           <div className="flex min-w-0 items-center gap-3 text-sm text-slate-400">
             <a href="#/conta" className="min-w-0 truncate hover:text-orange-400">
               {nome}

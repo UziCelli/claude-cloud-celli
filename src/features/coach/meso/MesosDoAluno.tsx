@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
-import { duplicarMeso, salvarMeso } from '../../../lib/acoes'
+import { darAcessoAoApp, duplicarMeso, salvarMeso } from '../../../lib/acoes'
 import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Botao, Campo, Cartao, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
+import { flash, hojeMaisDias } from '../alunos/NovoAluno'
 import { mesoPadrao } from './mesoPadrao'
 
 const dataBr = (iso: string) => {
@@ -19,6 +20,11 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
   const mesosQ = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
   const mesos = useLista<MesoSalvo>(mesosQ)
   const [erro, setErro] = useState<string | null>(null)
+  const [aviso] = useState(() => {
+    const t = flash.texto
+    flash.texto = ''
+    return t
+  })
 
   function novoMeso() {
     setErro(null)
@@ -32,6 +38,8 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       titulo={`Mesociclos de ${aluno.dados?.nome ?? '…'}`}
       acoes={<Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>}
     >
+      {aviso && <p className="mb-3 text-sm text-green-400">{aviso}</p>}
+      {aluno.dados?.presencial && <DarAcesso id={uid} />}
       {erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}
       {mesos.carregando && <p className="text-slate-400">Carregando…</p>}
       {!mesos.carregando && mesos.dados.length === 0 && <p className="text-slate-400">Nenhum mesociclo ainda.</p>}
@@ -109,6 +117,49 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
       </div>
+    </div>
+  )
+}
+
+function DarAcesso({ id }: { id: string }) {
+  const [aberto, setAberto] = useState(false)
+  const [email, setEmail] = useState('')
+  const [pagoAte, setPagoAte] = useState(hojeMaisDias(30))
+  const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    setErro('')
+    try {
+      flash.texto = 'Acesso criado. O aluno recebeu um e-mail para criar a senha.'
+      ir('/aluno/' + (await darAcessoAoApp(id, { email: email.trim(), pagoAte })))
+    } catch (err) {
+      flash.texto = ''
+      setErro(err instanceof Error ? err.message : 'Não foi possível dar acesso.')
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <div className="mb-4 space-y-3">
+      <Aviso>Aluno presencial: você anota as cargas em Ver semanas.</Aviso>
+      {aberto ? (
+        <Cartao className="max-w-md">
+          <form onSubmit={enviar} className="space-y-3">
+            <Campo rotulo="E-mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Campo rotulo="Pago até" type="date" required value={pagoAte} onChange={(e) => setPagoAte(e.target.value)} />
+            {erro && <Aviso>{erro}</Aviso>}
+            <div className="flex gap-2">
+              <Botao tipo="primario" type="submit" disabled={enviando}>{enviando ? 'Criando…' : 'Criar acesso'}</Botao>
+              <Botao type="button" onClick={() => setAberto(false)}>Cancelar</Botao>
+            </div>
+          </form>
+        </Cartao>
+      ) : (
+        <Botao onClick={() => setAberto(true)}>Dar acesso ao app</Botao>
+      )}
     </div>
   )
 }

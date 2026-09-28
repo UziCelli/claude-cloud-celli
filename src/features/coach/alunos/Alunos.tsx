@@ -6,14 +6,9 @@ import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
+import { hojeMaisDias } from './NovoAluno'
 
 type Aluno = Usuario & { id: string }
-
-const hojeMaisDias = (dias: number) => {
-  const d = new Date()
-  d.setDate(d.getDate() + dias)
-  return d.toISOString().slice(0, 10)
-}
 
 const dataPadrao = (a: Aluno) => {
   if (a.status === 'ativo' && a.pagoAte && diasParaVencer(a.pagoAte, new Date()) >= 0) {
@@ -78,7 +73,7 @@ export default function Alunos() {
   }
 
   const acoes = (a: Aluno) =>
-    editando === a.id ? (
+    a.presencial ? null : editando === a.id ? (
       <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
     ) : (
       <div className="flex flex-wrap gap-2">
@@ -97,7 +92,7 @@ export default function Alunos() {
     )
 
   return (
-    <Pagina titulo="Alunos">
+    <Pagina titulo="Alunos" acoes={<Botao tipo="primario" onClick={() => ir('/alunos/novo')}>Novo aluno</Botao>}>
       <div className="mb-4">
         <Campo rotulo="Buscar" placeholder="Nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} />
       </div>
@@ -108,7 +103,7 @@ export default function Alunos() {
       )}
       {alunos.length === 0 ? (
         <Cartao className="text-slate-400">
-          Nenhum aluno ainda. Peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
+          Nenhum aluno ainda. Use Novo aluno, ou peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
         </Cartao>
       ) : (
         <>
@@ -122,8 +117,8 @@ export default function Alunos() {
                   <div className="truncate text-xs text-slate-500">{a.email}</div>
                 </button>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
-                  <span className="text-sm text-slate-300">{textoVencimento(a)}</span>
+                  <Chip a={a} s={s} />
+                  {!a.presencial && <span className="text-sm text-slate-300">{textoVencimento(a)}</span>}
                 </div>
                 {acoes(a)}
               </Cartao>
@@ -152,9 +147,9 @@ export default function Alunos() {
                       </button>
                     </td>
                     <td className="p-3">
-                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
+                      <Chip a={a} s={s} />
                     </td>
-                    <td className="p-3 text-slate-300">{textoVencimento(a)}</td>
+                    <td className="p-3 text-slate-300">{a.presencial ? '' : textoVencimento(a)}</td>
                     <td className="p-3">
                       {acoes(a)}
                     </td>
@@ -167,6 +162,14 @@ export default function Alunos() {
         </>
       )}
     </Pagina>
+  )
+}
+
+function Chip({ a, s }: { a: Aluno; s: { texto: string; cor: string } }) {
+  return a.presencial ? (
+    <span className="rounded-full bg-sky-900/50 px-2 py-1 text-xs font-semibold text-sky-300">Presencial</span>
+  ) : (
+    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
   )
 }
 
