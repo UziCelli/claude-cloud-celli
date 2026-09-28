@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
-import { darAcessoAoApp, duplicarMeso, salvarMeso } from '../../../lib/acoes'
+import { darAcessoAoApp, duplicarMeso, excluirMeso, salvarMeso } from '../../../lib/acoes'
 import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
@@ -53,7 +53,8 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
 }
 
 function CartaoMeso({ meso }: { meso: MesoSalvo & { id: string } }) {
-  const [duplicando, setDuplicando] = useState(false)
+  const [aberto, setAberto] = useState<'duplicar' | 'excluir' | null>(null)
+  const alternar = (q: 'duplicar' | 'excluir') => setAberto((v) => (v === q ? null : q))
   return (
     <Cartao>
       <h2 className="font-semibold">{meso.nome}</h2>
@@ -63,10 +64,47 @@ function CartaoMeso({ meso }: { meso: MesoSalvo & { id: string } }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Botao onClick={() => ir(`/meso/${meso.id}`)}>Editar</Botao>
         <Botao onClick={() => ir(`/meso/${meso.id}/semana/1`)}>Ver semanas</Botao>
-        <Botao onClick={() => setDuplicando((v) => !v)}>Duplicar</Botao>
+        <Botao onClick={() => alternar('duplicar')}>Duplicar</Botao>
+        <Botao tipo="perigo" onClick={() => alternar('excluir')}>Excluir</Botao>
       </div>
-      {duplicando && <FormDuplicar mesoId={meso.id} onFechar={() => setDuplicando(false)} />}
+      {aberto === 'duplicar' && <FormDuplicar mesoId={meso.id} onFechar={() => setAberto(null)} />}
+      {aberto === 'excluir' && <ConfirmarExclusao meso={meso} onFechar={() => setAberto(null)} />}
     </Cartao>
+  )
+}
+
+function ConfirmarExclusao({ meso, onFechar }: { meso: MesoSalvo & { id: string }; onFechar: () => void }) {
+  const regsQ = useMemo(() => query(collection(db, 'registros'), where('mesoId', '==', meso.id)), [meso.id])
+  const treinos = useLista(regsQ).dados.length
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  function excluir() {
+    setEnviando(true)
+    setErro(null)
+    // Sucesso: o cartão some da lista sozinho.
+    excluirMeso(meso.id).catch(() => {
+      setErro('Não foi possível excluir. Confira a internet e tente de novo.')
+      setEnviando(false)
+    })
+  }
+
+  return (
+    <div className="mt-3 space-y-2 border-t border-slate-800 pt-3">
+      <p className="text-sm">Tem certeza que quer excluir “{meso.nome}”? Não dá para desfazer.</p>
+      {treinos > 0 && (
+        <Aviso>
+          O aluno já registrou {treinos} treino{treinos === 1 ? '' : 's'} neste mesociclo. As cargas também serão apagadas.
+        </Aviso>
+      )}
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Botao tipo="perigo" disabled={enviando} onClick={excluir}>
+          {enviando ? 'Excluindo…' : 'Sim, excluir'}
+        </Botao>
+        <Botao onClick={onFechar}>Cancelar</Botao>
+      </div>
+    </div>
   )
 }
 

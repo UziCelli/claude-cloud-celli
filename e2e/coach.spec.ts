@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { criarCoach, limparEmuladores } from './seed'
+import { criarCoach, lerDoc, limparEmuladores } from './seed'
 
 const COACH = { nome: 'Victor', email: 'victor.e2e@teste.com', senha: 'senha123' }
 const ALUNO = { nome: 'Aluno Teste', email: 'aluno.e2e@teste.com', senha: 'senha123' }
@@ -119,6 +119,7 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
 
   await page.getByRole('button', { name: 'Novo mesociclo' }).click()
   await page.waitForURL(/#\/meso\//)
+  const mesoId = page.url().split('#/meso/')[1]
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
   const tabela = page.locator('table').filter({ hasText: 'Posição' })
   for (let t = 1; t <= 3; t++) {
@@ -144,6 +145,18 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
   await expect(page.getByRole('heading', { name: 'Mesociclos de Pres Teste' })).toBeVisible()
   await expect(page.getByText('Mesociclo 1')).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('Aluno presencial')).toHaveCount(0)
+
+  // Excluir mesociclo: Cancelar mantém; "Sim, excluir" apaga o meso e as cargas dele.
+  expect(await lerDoc(`registros/${mesoId}_s01_t1`)).not.toBeNull()
+  await page.getByRole('button', { name: 'Excluir' }).click()
+  await expect(page.getByText('O aluno já registrou 1 treino neste mesociclo.', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(page.getByRole('button', { name: 'Sim, excluir' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Excluir' }).click()
+  await page.getByRole('button', { name: 'Sim, excluir' }).click()
+  await expect(page.getByText('Nenhum mesociclo ainda.')).toBeVisible({ timeout: 10_000 })
+  expect(await lerDoc(`mesos/${mesoId}`)).toBeNull()
+  expect(await lerDoc(`registros/${mesoId}_s01_t1`)).toBeNull()
 
   await page.getByRole('link', { name: 'Início' }).click()
   await page.getByRole('button', { name: 'Novo aluno' }).click()

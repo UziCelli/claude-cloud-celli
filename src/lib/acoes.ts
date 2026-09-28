@@ -128,6 +128,18 @@ export function salvarMeso(mesoId: string | null, alunoId: string, nome: string,
   return { id: ref.id, gravado: setDoc(ref, { ...dados, alunoId, criadoEm: serverTimestamp() }) }
 }
 
+// Apaga o meso e os registros (cargas) dele. Registros primeiro: se cair no meio, o meso continua
+// na lista e é só excluir de novo. Lê do servidor (nunca do cache): offline dá erro sem apagar nada.
+export async function excluirMeso(mesoId: string) {
+  const regs = (await getDocsFromServer(query(collection(db, 'registros'), where('mesoId', '==', mesoId)))).docs
+  for (let i = 0; i < regs.length; i += 400) {
+    const b = writeBatch(db)
+    for (const d of regs.slice(i, i + 400)) b.delete(d.ref)
+    await b.commit()
+  }
+  await deleteDoc(doc(db, 'mesos', mesoId))
+}
+
 // Copia só a prescrição; registros (cargas) nunca são copiados.
 export async function duplicarMeso(mesoId: string, novoAlunoId: string, novoNome: string) {
   const s = await getDoc(doc(db, 'mesos', mesoId))
