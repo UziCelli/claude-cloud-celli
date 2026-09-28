@@ -35,6 +35,14 @@ jobs:
 
       - name: Configurar Bubblewrap (sem prompts, sem baixar SDK)
         run: |
+          # Build-tools/plataforma que o Bubblewrap 1.25 usa (BUILD_TOOLS_VERSION e compileSdk 36).
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" --install "build-tools;36.1.0" "platforms;android-36" > /dev/null
+          # O Bubblewrap exige <sdk>/bin/sdkmanager (layout do SDK que ele mesmo baixa);
+          # no runner o sdkmanager fica em cmdline-tools/latest/bin.
+          ln -sfn "$ANDROID_HOME/cmdline-tools/latest/bin" "$ANDROID_HOME/bin" \
+            || sudo ln -sfn "$ANDROID_HOME/cmdline-tools/latest/bin" "$ANDROID_HOME/bin"
           mkdir -p ~/.bubblewrap
           cat > ~/.bubblewrap/config.json <<EOF
           {
