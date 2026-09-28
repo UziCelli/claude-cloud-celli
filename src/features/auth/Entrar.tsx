@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { cadastrar, entrar } from '../../lib/acoes'
+import { cadastrar, entrar, recuperarSenha } from '../../lib/acoes'
 import { Aviso, Botao, Campo, Cartao, Centro } from '../../ui'
 
 const erros: Record<string, string> = {
@@ -16,6 +16,14 @@ const erros: Record<string, string> = {
 const mensagemErro = (e: unknown) =>
   (e instanceof FirebaseError && erros[e.code]) || 'Não deu para entrar. Tente de novo.'
 
+const mensagemRecuperar = (e: unknown) => {
+  if (e instanceof FirebaseError && e.code === 'auth/invalid-email') return 'E-mail inválido'
+  if (e instanceof FirebaseError && e.code === 'auth/network-request-failed')
+    return 'Sem internet. Verifique sua conexão e tente de novo.'
+  // user-not-found (e qualquer outro erro) mostra a mesma mensagem de sucesso, para não revelar contas.
+  return ''
+}
+
 export default function Entrar() {
   const [cadastro, setCadastro] = useState(false)
   const [nome, setNome] = useState('')
@@ -23,6 +31,7 @@ export default function Entrar() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [msgRecuperar, setMsgRecuperar] = useState('')
 
   async function enviar() {
     setErro('')
@@ -34,6 +43,20 @@ export default function Entrar() {
       setErro(mensagemErro(e))
     } finally {
       setEnviando(false)
+    }
+  }
+
+  async function esqueciSenha() {
+    setErro('')
+    setMsgRecuperar('')
+    if (!email) return setErro('Digite seu e-mail para recuperar a senha')
+    try {
+      await recuperarSenha(email)
+      setMsgRecuperar('Enviamos um link para seu e-mail (confira o spam)')
+    } catch (e) {
+      const erroEspecifico = mensagemRecuperar(e)
+      setMsgRecuperar(erroEspecifico ? '' : 'Enviamos um link para seu e-mail (confira o spam)')
+      if (erroEspecifico) setErro(erroEspecifico)
     }
   }
 
@@ -54,20 +77,34 @@ export default function Entrar() {
           <Campo rotulo="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Campo rotulo="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
           {erro && <Aviso>{erro}</Aviso>}
+          {msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}
           <Botao tipo="primario" className="w-full" disabled={enviando}>
             {enviando ? 'Enviando…' : cadastro ? 'Criar conta' : 'Entrar'}
           </Botao>
         </form>
+        {!cadastro && (
+          <button
+            type="button"
+            className="mt-3 w-full text-center text-sm text-slate-400 hover:text-slate-200"
+            onClick={esqueciSenha}
+          >
+            Esqueci minha senha
+          </button>
+        )}
         <button
           type="button"
-          className="mt-4 w-full text-center text-sm text-slate-400 hover:text-slate-200"
+          className="mt-2 w-full text-center text-sm text-slate-400 hover:text-slate-200"
           onClick={() => {
             setErro('')
+            setMsgRecuperar('')
             setCadastro((c) => !c)
           }}
         >
           {cadastro ? 'Já tenho conta — Entrar' : 'Não tenho conta — Criar conta'}
         </button>
+        <a href="/instalar" className="mt-4 block text-center text-xs text-slate-500 hover:text-slate-300">
+          Como instalar o app
+        </a>
       </Cartao>
     </Centro>
   )
