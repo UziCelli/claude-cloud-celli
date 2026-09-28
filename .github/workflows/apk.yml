@@ -1,0 +1,126 @@
+name: Gerar APK
+
+# Gera o APK Android (TWA) do site publicado e sobe como release "apk".
+# Rodar manualmente: Actions -> Gerar APK -> Run workflow.
+# Secrets usados: APK_SENHA (senha do keystore), FIREBASE_SERVICE_ACCOUNT (não usado aqui).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gerar-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APK_SENHA: ${{ secrets.APK_SENHA }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Configurar Bubblewrap (sem prompts, sem baixar SDK)
+        run: |
+          mkdir -p ~/.bubblewrap
+          cat > ~/.bubblewrap/config.json <<EOF
+          {
+            "jdkPath": "${JAVA_HOME}",
+            "androidSdkPath": "${ANDROID_HOME}"
+          }
+          EOF
+
+      - name: Preparar keystore
+        working-directory: twa
+        run: |
+          if [ -f forca.keystore.enc ]; then
+            echo "Keystore já existe, descriptografando..."
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 \
+              -in forca.keystore.enc -out forca.keystore -pass env:APK_SENHA
+          else
+            echo "Gerando novo keystore..."
+            keytool -genkeypair -v \
+              -keystore forca.keystore \
+              -alias forca \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$APK_SENHA" -keypass "$APK_SENHA" \
+              -dname "CN=Victor Celli, O=Forca, C=BR"
+
+            openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
+              -in forca.keystore -out forca.keystore.enc -pass env:APK_SENHA
+
+            echo "Calculando fingerprint SHA-256..."
+            FINGERPRINT=$(keytool -list -v -keystore forca.keystore -alias forca -storepass "$APK_SENHA" \
+              | grep 'SHA256:' | sed 's/.*SHA256: //')
+
+            mkdir -p ../public/.well-known
+            cat > ../public/.well-known/assetlinks.json <<EOF
+          [{
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+              "namespace": "android_app",
+              "package_name": "br.com.victorcelli.forca",
+              "sha256_cert_fingerprints": ["$FINGERPRINT"]
+            }
+          }]
+          EOF
+
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            # Estamos dentro de twa/: caminhos relativos à raiz via -C ..
+            git -C .. add twa/forca.keystore.enc public/.well-known/assetlinks.json
+            git commit -m "Gerar keystore de assinatura do APK e assetlinks.json"
+            git push origin HEAD:main
+          fi
+
+      - name: Ajustar versão do app
+        working-directory: twa
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = './twa-manifest.json';
+            const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+            m.appVersionCode = ${{ github.run_number }};
+            m.appVersion = String(${{ github.run_number }});
+            m.appVersionName = String(${{ github.run_number }});
+            fs.writeFileSync(p, JSON.stringify(m, null, 2));
+          "
+
+      - name: Build com Bubblewrap
+        working-directory: twa
+        timeout-minutes: 15
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.APK_SENHA }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.APK_SENHA }}
+        run: |
+          npx --yes @bubblewrap/cli@1.25.0 update \
+            --skipVersionUpgrade --manifest ./twa-manifest.json
+          npx --yes @bubblewrap/cli@1.25.0 build --skipPwaValidation
+
+      - name: Publicar APK como release
+        working-directory: twa
+        run: |
+          APK=$(find . -maxdepth 2 -iname "*-release-signed.apk" -o -iname "app-release-signed.apk" | head -n1)
+          if [ -z "$APK" ]; then
+            APK=$(find . -maxdepth 2 -iname "*.apk" | head -n1)
+          fi
+          cp "$APK" forca.apk
+
+          gh release create apk --title "App Android" --notes "APK do app Força" || true
+          gh release upload apk forca.apk --clobber
+
+      - name: Republicar o site (com APK e assetlinks atualizados)
+        run: gh workflow run deploy.yml --ref main
