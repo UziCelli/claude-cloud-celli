@@ -91,7 +91,7 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
         <select
           value={alunoId}
           onChange={(e) => setAlunoId(e.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
         >
           <option value="">Selecione…</option>
           {alunos.dados.map((a) => (
@@ -103,7 +103,7 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
       </label>
       <Campo rotulo="Nome do novo mesociclo" value={nome} onChange={(e) => setNome(e.target.value)} />
       {erro && <p className="text-sm text-red-400">{erro}</p>}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Botao tipo="primario" disabled={!alunoId || !nome.trim() || enviando} onClick={confirmar}>
           Confirmar
         </Botao>

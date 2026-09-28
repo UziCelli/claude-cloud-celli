@@ -37,16 +37,16 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
   return (
     <>
-      <header className="border-b border-slate-800 bg-slate-900">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <a href="#/" className="text-lg font-bold">
+      <header className="border-b border-slate-800 bg-slate-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <a href="#/" className="shrink-0 text-lg font-bold">
             Força <span className="text-orange-500">coach</span>
           </a>
-          <div className="flex items-center gap-3 text-sm text-slate-400">
-            <a href="#/conta" className="hover:text-orange-400">
+          <div className="flex min-w-0 items-center gap-3 text-sm text-slate-400">
+            <a href="#/conta" className="min-w-0 truncate hover:text-orange-400">
               {nome}
             </a>
-            <Botao onClick={sair}>Sair</Botao>
+            <Botao className="shrink-0" onClick={sair}>Sair</Botao>
           </div>
         </div>
       </header>

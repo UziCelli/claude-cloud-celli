@@ -2,8 +2,9 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react
 
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
 
+// Sempre abaixo do cabeçalho do coach, que já tem a margem de segurança do topo (notch).
 export const Pagina = ({ titulo, acoes, children }: { titulo: ReactNode; acoes?: ReactNode; children: ReactNode }) => (
-  <main className="mx-auto max-w-6xl px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
+  <main className="mx-auto max-w-6xl px-4 py-6">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 className="text-2xl font-bold">{titulo}</h1>
       {acoes && <div className="flex flex-wrap gap-2">{acoes}</div>}

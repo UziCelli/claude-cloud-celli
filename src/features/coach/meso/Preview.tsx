@@ -6,12 +6,12 @@ import { Cartao } from '../../../ui'
 export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana: number; onSemana: (w: number) => void }) {
   return (
     <Cartao className="space-y-3">
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-slate-400">Pré-visualização — semana</span>
         <select
           value={semana}
           onChange={(e) => onSemana(Number(e.target.value))}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-slate-100"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100"
         >
           {Array.from({ length: meso.semanas }, (_, i) => i + 1).map((w) => (
             <option key={w} value={w}>

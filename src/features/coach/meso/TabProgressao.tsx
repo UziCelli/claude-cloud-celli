@@ -49,7 +49,7 @@ function TabelaProgressao({
   const linhas = meso.progressao[tabela]
   return (
     <Cartao className="overflow-x-auto">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">{titulo}</h3>
         <Botao onClick={() => aplicarSemana1(tabela)}>Aplicar semana 1 em todas</Botao>
       </div>
@@ -77,7 +77,7 @@ function TabelaProgressao({
                       type="number"
                       value={v ?? ''}
                       onChange={(e) => setCelula(tabela, w, j + 1, e.target.value === '' ? null : Number(e.target.value))}
-                      className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-slate-100 outline-none focus:border-orange-500"
+                      className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
                     />
                   </td>
                 ))}

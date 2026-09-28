@@ -77,6 +77,25 @@ export default function Alunos() {
     definirAcesso(uid, { status: 'bloqueado' }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
   }
 
+  const acoes = (a: Aluno) =>
+    editando === a.id ? (
+      <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
+    ) : (
+      <div className="flex flex-wrap gap-2">
+        {(a.status === 'aguardando' || a.status === 'bloqueado') && (
+          <Botao tipo="primario" onClick={() => setEditando(a.id)}>
+            Liberar
+          </Botao>
+        )}
+        {a.status === 'ativo' && <Botao onClick={() => setEditando(a.id)}>Renovar</Botao>}
+        {a.status !== 'bloqueado' && (
+          <Botao tipo="perigo" onClick={() => bloquear(a.id)}>
+            Bloquear
+          </Botao>
+        )}
+      </div>
+    )
+
   return (
     <Pagina titulo="Alunos">
       <div className="mb-4">
@@ -92,7 +111,26 @@ export default function Alunos() {
           Nenhum aluno ainda. Peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
         </Cartao>
       ) : (
-        <Cartao className="overflow-x-auto p-0">
+        <>
+        <div className="space-y-3 md:hidden">
+          {filtrados.map((a) => {
+            const s = statusAluno(a)
+            return (
+              <Cartao key={a.id} className="space-y-2">
+                <button className="block w-full min-w-0 text-left" onClick={() => ir('/aluno/' + a.id)}>
+                  <div className="truncate font-medium">{a.nome}</div>
+                  <div className="truncate text-xs text-slate-500">{a.email}</div>
+                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
+                  <span className="text-sm text-slate-300">{textoVencimento(a)}</span>
+                </div>
+                {acoes(a)}
+              </Cartao>
+            )
+          })}
+        </div>
+        <Cartao className="hidden overflow-x-auto p-0 md:block">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-800 text-slate-400">
               <tr>
@@ -118,21 +156,7 @@ export default function Alunos() {
                     </td>
                     <td className="p-3 text-slate-300">{textoVencimento(a)}</td>
                     <td className="p-3">
-                      {editando === a.id ? (
-                        <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
-                      ) : (
-                        <div className="flex gap-2">
-                          {(a.status === 'aguardando' || a.status === 'bloqueado') && (
-                            <Botao tipo="primario" onClick={() => setEditando(a.id)}>
-                              Liberar
-                            </Botao>
-                          )}
-                          {a.status === 'ativo' && (
-                            <Botao onClick={() => setEditando(a.id)}>Renovar</Botao>
-                          )}
-                          {a.status !== 'bloqueado' && <Botao tipo="perigo" onClick={() => bloquear(a.id)}>Bloquear</Botao>}
-                        </div>
-                      )}
+                      {acoes(a)}
                     </td>
                   </tr>
                 )
@@ -140,6 +164,7 @@ export default function Alunos() {
             </tbody>
           </table>
         </Cartao>
+        </>
       )}
     </Pagina>
   )
@@ -156,12 +181,12 @@ function FormularioData({
 }) {
   const [valor, setValor] = useState(padrao)
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <input
         type="date"
         value={valor}
         onChange={(e) => setValor(e.target.value)}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none focus:border-orange-500"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
       />
       <Botao tipo="primario" onClick={() => onConfirmar(valor)}>
         Confirmar
