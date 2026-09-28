@@ -22,7 +22,7 @@ const Passo = ({ n, children }: { n: number; children: React.ReactNode }) => (
     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-slate-950">
       {n}
     </span>
-    <span>{children}</span>
+    <span className="min-w-0">{children}</span>
   </li>
 )
 
@@ -51,7 +51,7 @@ export default function Instalar() {
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-4 px-4 py-8">
+    <main className="mx-auto max-w-md space-y-4 px-4 pb-8 pt-[calc(2rem+env(safe-area-inset-top))]">
       <h1 className="text-center text-2xl font-bold">
         Instalar o <span className="text-orange-500">Força</span>
       </h1>
@@ -73,25 +73,15 @@ function copiarLink(setCopiado: (v: boolean) => void) {
 function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }) {
   return (
     <>
-      <a
-        href="/forca.apk"
-        download
-        className="block rounded-xl bg-orange-500 px-4 py-4 text-center text-lg font-bold text-slate-950 hover:bg-orange-400"
-      >
-        Baixar o app (Android)
-      </a>
-      <p className="text-center text-xs text-slate-500">Precisa do Google Chrome instalado (já vem na maioria dos celulares)</p>
-
       <Cartao>
         <ol className="space-y-3 text-sm">
-          <Passo n={1}>Toque em "Baixar o app"</Passo>
-          <Passo n={2}>Abra o arquivo baixado</Passo>
-          <Passo n={3}>
-            Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (Chrome, WhatsApp ou
-            Arquivos). É uma permissão só para esse app — normal em celulares Android.
-          </Passo>
-          <Passo n={4}>Abra o Força e entre com seu e-mail</Passo>
+          <Passo n={1}>Abra o arquivo <strong>forca.apk</strong> que seu coach enviou no WhatsApp.</Passo>
+          <Passo n={2}>Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (WhatsApp ou Arquivos).</Passo>
+          <Passo n={3}>Toque em <strong>Instalar</strong> e depois abra o <strong>Força</strong>.</Passo>
+          <Passo n={4}>Entre com seu e-mail e senha.</Passo>
         </ol>
+        <p className="mt-3 text-xs text-slate-500">Não recebeu o arquivo? Peça ao seu coach.</p>
+        <p className="text-xs text-slate-500">Precisa do Google Chrome instalado (já vem na maioria dos celulares).</p>
       </Cartao>
 
       <Cartao>
@@ -112,32 +102,31 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
 }
 
 function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => void }) {
-  if (navegadorEmbutido()) {
-    return (
-      <Cartao className="space-y-3">
-        <p className="text-sm">
-          Para instalar, abra este link no <strong>Safari</strong> (não neste app).
+  return (
+    <>
+      <Cartao className="space-y-3 border-l-4 border-orange-500 bg-orange-950/40">
+        <p className="text-sm font-semibold text-orange-200">
+          Abriu pelo WhatsApp ou Instagram? Toque na bússola do Safari 🧭 (canto de baixo) para abrir no Safari — ou copie o link e cole no Safari.
         </p>
         <Botao tipo="primario" className="w-full" onClick={onCopiar}>
           {copiado ? 'Link copiado ✓' : 'Copiar link'}
         </Botao>
-        <p className="text-xs text-slate-500">Copie e cole o link no Safari.</p>
       </Cartao>
-    )
-  }
 
-  return (
-    <Cartao>
-      <ol className="space-y-3 text-sm">
-        <Passo n={1}>
-          Toque no botão Compartilhar <IconeCompartilhar />
-        </Passo>
-        <Passo n={2}>Toque em "Adicionar à Tela de Início"</Passo>
-        <Passo n={3}>Toque em "Adicionar"</Passo>
-        <Passo n={4}>Sempre abra o Força pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
-      </ol>
-      <p className="mt-3 text-xs text-slate-500">Precisa do iOS 16.4 ou mais novo.</p>
-    </Cartao>
+      <Cartao>
+        <ol className="space-y-3 text-sm">
+          <Passo n={1}>
+            Toque em Compartilhar: o quadrado com a seta ⬆️ na barra de baixo — ou, nos iPhones mais novos, toque nos três pontinhos ⋯ ao lado do endereço e depois em Compartilhar. <IconeCompartilhar />
+          </Passo>
+          <Passo n={2}>
+            Role a lista para baixo e toque em "Adicionar à Tela de Início". Não apareceu? Toque em "Ver mais" ou "Editar ações" e procure lá.
+          </Passo>
+          <Passo n={3}>Toque em "Adicionar"</Passo>
+          <Passo n={4}>Sempre abra o Força pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
+        </ol>
+        <p className="mt-3 text-xs text-slate-500">Precisa do iOS 16.4 ou mais novo.</p>
+      </Cartao>
+    </>
   )
 }
 

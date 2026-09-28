@@ -1,0 +1,36 @@
+name: Alterar e-mail de aluno
+
+# Manutenção manual (o aluno não troca o e-mail sozinho): Actions -> "Alterar e-mail de aluno"
+# -> Run workflow -> informe o e-mail atual e o novo. A conta, a senha e o histórico continuam.
+on:
+  workflow_dispatch:
+    inputs:
+      email_atual:
+        description: E-mail atual do aluno
+        required: true
+      email_novo:
+        description: E-mail novo
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  alterar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Alterar no Firebase (Auth + perfil)
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          EMAIL_ATUAL: ${{ inputs.email_atual }}
+          EMAIL_NOVO: ${{ inputs.email_novo }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/alterar-email.mjs "$RUNNER_TEMP/adm/"
+          cd "$RUNNER_TEMP/adm"
+          npm init -y > /dev/null && npm install --silent firebase-admin@14
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node alterar-email.mjs

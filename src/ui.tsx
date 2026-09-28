@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
 
 export const Pagina = ({ titulo, acoes, children }: { titulo: ReactNode; acoes?: ReactNode; children: ReactNode }) => (
-  <main className="mx-auto max-w-6xl px-4 py-6">
+  <main className="mx-auto max-w-6xl px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 className="text-2xl font-bold">{titulo}</h1>
       {acoes && <div className="flex flex-wrap gap-2">{acoes}</div>}
@@ -34,11 +34,11 @@ export const Botao = ({
 )
 
 export const Campo = ({ rotulo, className = '', ...p }: InputHTMLAttributes<HTMLInputElement> & { rotulo: string }) => (
-  <label className={`flex flex-col gap-1 text-sm ${className}`}>
+  <label className={`flex min-w-0 flex-col gap-1 text-sm ${className}`}>
     <span className="text-slate-400">{rotulo}</span>
     <input
       {...p}
-      className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-orange-500"
+      className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-orange-500"
     />
   </label>
 )
@@ -48,7 +48,7 @@ export const Aviso = ({ children }: { children: ReactNode }) => (
 )
 
 export const Centro = ({ children }: { children: ReactNode }) => (
-  <div className="flex min-h-screen items-center justify-center p-6 text-center">
-    <div className="max-w-sm space-y-4">{children}</div>
+  <div className="flex min-h-dvh items-center justify-center px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] text-center">
+    <div className="w-full max-w-sm min-w-0 space-y-4">{children}</div>
   </div>
 )

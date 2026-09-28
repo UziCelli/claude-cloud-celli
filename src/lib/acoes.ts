@@ -2,9 +2,12 @@
 // a tela não deve esperar (await) para mostrar o valor — o cache local já tem.
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  verifyBeforeUpdateEmail,
 } from 'firebase/auth'
 import { collection, doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc, waitForPendingWrites } from 'firebase/firestore'
 import type { Meso } from '../engine'
@@ -85,6 +88,22 @@ export const entrar = (email: string, senha: string) => signInWithEmailAndPasswo
 
 // E-mail em pt-BR (auth.languageCode em firebase.ts).
 export const recuperarSenha = (email: string) => sendPasswordResetEmail(auth, email)
+
+// Troca de e-mail: confirma a senha e manda o link para o e-mail NOVO. A troca só acontece
+// quando a pessoa clica no link (até lá o login continua com o e-mail antigo).
+export async function alterarEmail(senhaAtual: string, novoEmail: string) {
+  const user = auth.currentUser
+  if (!user?.email) throw new Error('Sem login')
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, senhaAtual))
+  await verifyBeforeUpdateEmail(user, novoEmail)
+}
+
+// Depois da confirmação (e de entrar de novo), copia o e-mail do login para o perfil.
+// Só coaches (a regra reserva o e-mail ao coach). Não precisa de await: se falhar, tenta na próxima vez.
+export function sincronizarEmail(uid: string, perfilEmail: string) {
+  const email = auth.currentUser?.email
+  if (email && email !== perfilEmail) updateDoc(doc(db, 'usuarios', uid), { email }).catch(() => {})
+}
 
 // Cria o perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
 export async function cadastrar(nome: string, email: string, senha: string) {

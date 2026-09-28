@@ -50,7 +50,8 @@ service cloud.firestore {
         && request.resource.data.papel == 'aluno'
         && request.resource.data.status == 'aguardando';
 
-      // Só o nome; papel/status/pagoAte só o coach muda.
+      // Só o nome. E-mail, papel, status e pagoAte: só o coach (o coach troca o próprio
+      // e-mail em Minha conta; aluno troca por manutenção — workflow "Alterar e-mail de aluno").
       allow update: if signedIn() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome']);
     }

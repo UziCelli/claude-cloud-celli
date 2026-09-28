@@ -117,6 +117,19 @@ describe('usuarios', () => {
     await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { nome: 'Hack' }));
   });
 
+  // Troca de e-mail: só coaches (tela Minha conta). Aluno troca por manutenção (Admin SDK).
+  describe('e-mail', () => {
+    const comToken = (uid: string, email: string) =>
+      doc(env.authenticatedContext(uid, { email }).firestore() as unknown as Firestore, 'usuarios', uid);
+
+    it('aluno não altera o próprio e-mail, nem igual ao do login', async () => {
+      await assertFails(updateDoc(comToken('ana', 'nova@x.com'), { email: 'nova@x.com' }));
+      await assertFails(updateDoc(comToken('ana', 'nova@x.com'), { email: 'nova@x.com', nome: 'Ana M' }));
+    });
+    it('coach altera o próprio e-mail', () =>
+      assertSucceeds(updateDoc(comToken('coach', 'novo@x.com'), { email: 'novo@x.com' })));
+  });
+
   it('usuário não altera papel, status ou pagoAte', async () => {
     const ana = doc(db('ana'), 'usuarios', 'ana');
     await assertFails(updateDoc(ana, { papel: 'coach' }));

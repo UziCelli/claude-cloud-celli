@@ -12,6 +12,11 @@
 3. Clique em **Run workflow** → **Run workflow**.
 4. Espere terminar (uns 10 a 20 minutos). O APK fica em **Releases → apk**.
 
+## Como mandar para o aluno
+1. Abra https://github.com/UziCelli/claude-cloud-celli/releases/tag/apk (logado no GitHub).
+2. Clique em **forca.apk** para baixar.
+3. Envie o arquivo pelo WhatsApp (ou WhatsApp Web) ao aluno, junto com o link **forca--app.web.app/instalar**.
+
 ## Segredo importante
 - A senha `APK_SENHA` protege o keystore. Sem ela, não dá para gerar uma
   atualização do mesmo app — os celulares que já instalaram o APK antigo

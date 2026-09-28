@@ -11,6 +11,11 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <title>Força — Treino</title>
+    <script>
+      // iOS dá zoom automático ao focar campos; maximum-scale=1 evita (pinça continua funcionando).
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)))
+        document.querySelector('meta[name=viewport]').content += ', maximum-scale=1'
+    </script>
   </head>
   <body>
     <div id="root"></div>

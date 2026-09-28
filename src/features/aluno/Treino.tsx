@@ -58,18 +58,18 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-28 pt-4">
+    <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
       <button onClick={() => ir('/')} className="mb-2 text-sm text-slate-400">
         ← Hoje
       </button>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-lg font-bold">Treino {treino}</h1>
           <p className="text-xs text-slate-400">
             Semana {semana} · ~{fmt(sessao.tempoMin)} min · pausa {sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
           </p>
         </div>
-        {pendente && <span className="text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
+        {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
       <div className="space-y-4">
@@ -93,10 +93,11 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                       ? `sem. passada: ${fmt(anterior[k])} kg`
                       : null
                   return (
-                    <div key={k} className="flex items-center gap-2">
-                      <span className="w-8 shrink-0 text-xs text-slate-400">{rotuloCol}</span>
-                      <span className="w-14 shrink-0 text-xs text-slate-400">{repAlvo} reps</span>
+                    <div key={k} className="grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5">
+                      <span className="text-xs text-slate-400">{rotuloCol}</span>
+                      <span className="truncate text-xs text-slate-400">{repAlvo} reps</span>
                       <LoadInput
+                        className="w-full min-w-0"
                         valor={colunasCargas[k] ?? null}
                         placeholder={placeholderKg}
                         onSalvar={(v) => {
@@ -106,6 +107,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                       />
                       <span className="text-xs text-slate-600">kg</span>
                       <LoadInput
+                        className="w-full min-w-0"
                         valor={colunasReps[k] ?? null}
                         placeholder={repAlvo}
                         onSalvar={(v) => registrarReps(mesoId, uid, semana, treino, e.slot.slotId, k, v)}
@@ -141,7 +143,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       </div>
 
       {descanso.ativo && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 py-3">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
           <div className="mx-auto flex max-w-md items-center justify-between">
             <div>
               <div className="text-xs text-slate-400">Descanso</div>

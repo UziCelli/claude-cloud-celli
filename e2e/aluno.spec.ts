@@ -119,7 +119,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
 })
 
 test('/instalar mostra o passo certo por sistema', async ({ browser }) => {
-  await test.step('Android: link para o .apk', async () => {
+  await test.step('Android: instruções com WhatsApp', async () => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       userAgent:
@@ -127,8 +127,10 @@ test('/instalar mostra o passo certo por sistema', async ({ browser }) => {
     })
     const page = await context.newPage()
     await page.goto('/instalar')
-    const link = page.getByRole('link', { name: /Baixar o app/ })
-    await expect(link).toHaveAttribute('href', '/forca.apk')
+    await expect(page.getByText('forca.apk')).toBeVisible()
+    await expect(page.getByText(/WhatsApp ou Arquivos/)).toBeVisible()
+    const apkLink = page.locator('a[href="/forca.apk"]')
+    await expect(apkLink).toHaveCount(0)
     await page.screenshot({ path: 'test-results/prints/12-instalar-android.png' })
     await context.close()
   })
