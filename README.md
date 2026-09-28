@@ -10,8 +10,8 @@ Substitui a planilha de treino "Força 2027.1" por um app que funciona **sem int
 ## Fases
 | Fase | Entrega | Status |
 |---|---|---|
-| 0 | Fundação: motor de cálculo, regras de segurança, catálogo, CI | em andamento |
-| 1 | Painel do coach | — |
+| 0 | Fundação: motor de cálculo, regras de segurança, catálogo, CI | ✅ |
+| 1 | Painel do coach (alunos, acesso, mesociclos, visão semanal) | ✅ falta publicar ([guia do Firebase](docs/firebase-setup.md)) |
 | 2 | App do aluno + APK + página `/instalar` | — |
 | 3 | Avaliação física | — |
 | 4 | Extras (rotina, importação, PDF) | — |
@@ -22,6 +22,8 @@ npm install
 npm run dev          # app local
 npm test             # motor de cálculo
 npm run test:rules   # regras do Firestore (precisa de Java; usa o emulador)
+npm run test:e2e     # fluxo completo no navegador (emuladores)
+npm run emuladores   # banco de teste local; rode o app com VITE_USE_EMULATOR=1
 npm run build
 ```
 - Especificação das fórmulas: [`docs/logica-planilha.md`](docs/logica-planilha.md)
