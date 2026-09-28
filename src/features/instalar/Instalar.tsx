@@ -102,32 +102,31 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
 }
 
 function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => void }) {
-  if (navegadorEmbutido()) {
-    return (
-      <Cartao className="space-y-3">
-        <p className="text-sm">
-          Para instalar, abra este link no <strong>Safari</strong> (não neste app).
+  return (
+    <>
+      <Cartao className="space-y-3 border-l-4 border-orange-500 bg-orange-50">
+        <p className="text-sm font-semibold text-orange-900">
+          Abriu pelo WhatsApp ou Instagram? Toque na bússola do Safari 🧭 (canto de baixo) para abrir no Safari — ou copie o link e cole no Safari.
         </p>
         <Botao tipo="primario" className="w-full" onClick={onCopiar}>
           {copiado ? 'Link copiado ✓' : 'Copiar link'}
         </Botao>
-        <p className="text-xs text-slate-500">Copie e cole o link no Safari.</p>
       </Cartao>
-    )
-  }
 
-  return (
-    <Cartao>
-      <ol className="space-y-3 text-sm">
-        <Passo n={1}>
-          Toque no botão Compartilhar <IconeCompartilhar />
-        </Passo>
-        <Passo n={2}>Toque em "Adicionar à Tela de Início"</Passo>
-        <Passo n={3}>Toque em "Adicionar"</Passo>
-        <Passo n={4}>Sempre abra o Força pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
-      </ol>
-      <p className="mt-3 text-xs text-slate-500">Precisa do iOS 16.4 ou mais novo.</p>
-    </Cartao>
+      <Cartao>
+        <ol className="space-y-3 text-sm">
+          <Passo n={1}>
+            Toque em Compartilhar: o quadrado com a seta ⬆️ na barra de baixo — ou, nos iPhones mais novos, toque nos três pontinhos ⋯ ao lado do endereço e depois em Compartilhar. <IconeCompartilhar />
+          </Passo>
+          <Passo n={2}>
+            Role a lista para baixo e toque em "Adicionar à Tela de Início". Não apareceu? Toque em "Ver mais" ou "Editar ações" e procure lá.
+          </Passo>
+          <Passo n={3}>Toque em "Adicionar"</Passo>
+          <Passo n={4}>Sempre abra o Força pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
+        </ol>
+        <p className="mt-3 text-xs text-slate-500">Precisa do iOS 16.4 ou mais novo.</p>
+      </Cartao>
+    </>
   )
 }
 
