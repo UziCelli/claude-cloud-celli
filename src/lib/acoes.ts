@@ -16,16 +16,14 @@ export const definirAcesso = (uid: string, a: { status: Usuario['status']; pagoA
   })
 
 // Cria (mesoId null) ou substitui a prescrição. updateDoc troca cada campo de topo inteiro
-// (sem mesclar mapas), então treinos/semanas/trocas removidos não sobram. Devolve o id.
-export async function salvarMeso(mesoId: string | null, alunoId: string, nome: string, meso: Meso) {
+// (sem mesclar mapas), então treinos/semanas/trocas removidos não sobram.
+// O id sai na hora (gerado no aparelho); `gravado` só resolve quando o servidor confirma —
+// offline, não espere por ele para navegar.
+export function salvarMeso(mesoId: string | null, alunoId: string, nome: string, meso: Meso) {
   const dados = { alunoId, nome, ...mesoParaDoc(meso), atualizadoEm: serverTimestamp() }
-  if (mesoId) {
-    await updateDoc(doc(db, 'mesos', mesoId), dados)
-    return mesoId
-  }
+  if (mesoId) return { id: mesoId, gravado: updateDoc(doc(db, 'mesos', mesoId), dados) }
   const ref = doc(collection(db, 'mesos'))
-  await setDoc(ref, { ...dados, criadoEm: serverTimestamp() })
-  return ref.id
+  return { id: ref.id, gravado: setDoc(ref, { ...dados, criadoEm: serverTimestamp() }) }
 }
 
 // Copia só a prescrição; registros (cargas) nunca são copiados.
