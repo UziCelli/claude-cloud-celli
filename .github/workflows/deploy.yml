@@ -1,0 +1,33 @@
+name: Publicar
+
+# Toda mudança aprovada na main vai ao ar: site (Hosting) + regras e índices do Firestore.
+# Credencial: secret FIREBASE_SERVICE_ACCOUNT (JSON de uma conta de serviço com o papel
+# "Administrador do Firebase" no projeto forca--app).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Publicar no Firebase
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase deploy --only hosting,firestore:rules,firestore:indexes --project forca--app --non-interactive

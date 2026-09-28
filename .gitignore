@@ -1,0 +1,14 @@
+node_modules
+dist
+dev-dist
+coverage
+.firebase
+*.log
+.env*
+!.env.example
+!.env.production
+*.xlsx
+*.keystore
+*.jks
+test-results
+playwright-report
