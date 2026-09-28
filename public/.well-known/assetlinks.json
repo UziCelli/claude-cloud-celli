@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "br.com.victorcelli.forca",
+    "sha256_cert_fingerprints": ["93:DA:62:38:0A:33:57:2F:02:E5:3F:13:AB:4F:39:66:17:D9:F7:CF:91:D4:0F:F9:4A:4E:E3:D9:8A:3A:22:AD"]
+  }
+}]
