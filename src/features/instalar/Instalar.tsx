@@ -1,0 +1,151 @@
+import { useEffect, useState } from 'react'
+import { Botao, Cartao, Centro } from '../../ui'
+
+type EventoInstalar = Event & { prompt: () => Promise<void> }
+
+const ua = () => navigator.userAgent
+const eAndroid = () => /Android/.test(ua())
+const eIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua()))
+const navegadorEmbutido = () => /CriOS|FxiOS|FBAN|FBAV|Instagram|WhatsApp/.test(ua())
+const jaInstalado = () =>
+  matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
+
+const IconeCompartilhar = () => (
+  <svg viewBox="0 0 24 24" className="inline h-5 w-5 -translate-y-0.5" fill="none" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0-4 4m4-4 4 4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 10H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1" />
+  </svg>
+)
+
+const Passo = ({ n, children }: { n: number; children: React.ReactNode }) => (
+  <li className="flex gap-3">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-slate-950">
+      {n}
+    </span>
+    <span>{children}</span>
+  </li>
+)
+
+export default function Instalar() {
+  const [promptEvento, setPromptEvento] = useState<EventoInstalar | null>(null)
+  const [copiado, setCopiado] = useState(false)
+
+  useEffect(() => {
+    const ouvir = (e: Event) => {
+      e.preventDefault()
+      setPromptEvento(e as EventoInstalar)
+    }
+    addEventListener('beforeinstallprompt', ouvir)
+    return () => removeEventListener('beforeinstallprompt', ouvir)
+  }, [])
+
+  if (jaInstalado()) {
+    return (
+      <Centro>
+        <h1 className="text-2xl font-bold">O app já está instalado ✓</h1>
+        <Botao tipo="primario" className="w-full" onClick={() => (location.href = '/')}>
+          Abrir o Força
+        </Botao>
+      </Centro>
+    )
+  }
+
+  return (
+    <main className="mx-auto max-w-md space-y-4 px-4 py-8">
+      <h1 className="text-center text-2xl font-bold">
+        Instalar o <span className="text-orange-500">Força</span>
+      </h1>
+
+      {eAndroid() && <PassosAndroid promptEvento={promptEvento} />}
+      {eIOS() && <PassosIOS copiado={copiado} onCopiar={() => copiarLink(setCopiado)} />}
+      {!eAndroid() && !eIOS() && <PassosDesktop />}
+    </main>
+  )
+}
+
+function copiarLink(setCopiado: (v: boolean) => void) {
+  navigator.clipboard?.writeText(location.href).then(() => {
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  })
+}
+
+function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }) {
+  return (
+    <>
+      <a
+        href="/forca.apk"
+        download
+        className="block rounded-xl bg-orange-500 px-4 py-4 text-center text-lg font-bold text-slate-950 hover:bg-orange-400"
+      >
+        Baixar o app (Android)
+      </a>
+      <p className="text-center text-xs text-slate-500">Precisa do Google Chrome instalado (já vem na maioria dos celulares)</p>
+
+      <Cartao>
+        <ol className="space-y-3 text-sm">
+          <Passo n={1}>Toque em "Baixar o app"</Passo>
+          <Passo n={2}>Abra o arquivo baixado</Passo>
+          <Passo n={3}>
+            Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (Chrome, WhatsApp ou
+            Arquivos). É uma permissão só para esse app — normal em celulares Android.
+          </Passo>
+          <Passo n={4}>Abra o Força e entre com seu e-mail</Passo>
+        </ol>
+      </Cartao>
+
+      <Cartao>
+        <p className="mb-3 text-sm font-semibold">Ou instale direto pelo Chrome</p>
+        {promptEvento ? (
+          <Botao tipo="secundario" className="w-full" onClick={() => promptEvento.prompt()}>
+            Instalar pelo Chrome
+          </Botao>
+        ) : (
+          <p className="text-sm text-slate-400">
+            No Chrome, toque no menu <strong>⋮</strong> (três pontinhos) e escolha <strong>"Instalar app"</strong> ou{' '}
+            <strong>"Adicionar à tela inicial"</strong>.
+          </p>
+        )}
+      </Cartao>
+    </>
+  )
+}
+
+function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => void }) {
+  if (navegadorEmbutido()) {
+    return (
+      <Cartao className="space-y-3">
+        <p className="text-sm">
+          Para instalar, abra este link no <strong>Safari</strong> (não neste app).
+        </p>
+        <Botao tipo="primario" className="w-full" onClick={onCopiar}>
+          {copiado ? 'Link copiado ✓' : 'Copiar link'}
+        </Botao>
+        <p className="text-xs text-slate-500">Copie e cole o link no Safari.</p>
+      </Cartao>
+    )
+  }
+
+  return (
+    <Cartao>
+      <ol className="space-y-3 text-sm">
+        <Passo n={1}>
+          Toque no botão Compartilhar <IconeCompartilhar />
+        </Passo>
+        <Passo n={2}>Toque em "Adicionar à Tela de Início"</Passo>
+        <Passo n={3}>Toque em "Adicionar"</Passo>
+        <Passo n={4}>Sempre abra o Força pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
+      </ol>
+      <p className="mt-3 text-xs text-slate-500">Precisa do iOS 16.4 ou mais novo.</p>
+    </Cartao>
+  )
+}
+
+function PassosDesktop() {
+  return (
+    <Cartao className="space-y-3 text-center">
+      <p className="text-sm">Abra este link no celular para instalar o app:</p>
+      <p className="break-all text-lg font-bold text-orange-500">forca--app.web.app/instalar</p>
+    </Cartao>
+  )
+}

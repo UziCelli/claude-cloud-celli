@@ -2,10 +2,13 @@ import { metaCiclo, metaRobusta, metricasSemana, prescreverSessao, type Cargas, 
 import { Cartao } from '../../../ui'
 import { fmt } from './format'
 
-export default function Monitoramento({ meso, registros }: { meso: Meso; registros: Registros }) {
+export default function Monitoramento({ meso, registros, reps = {} }: { meso: Meso; registros: Registros; reps?: Registros }) {
   const semanas = Array.from({ length: meso.semanas }, (_, i) => i + 1).map((semana) => {
-    const sessoes = Array.from({ length: meso.frequencia }, (_, i) => i + 1)
-      .map((treino) => ({ sessao: prescreverSessao(meso, semana, treino)!, cargas: (registros[`${semana}-${treino}`] ?? {}) as Cargas }))
+    const sessoes = Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((treino) => ({
+      sessao: prescreverSessao(meso, semana, treino)!,
+      cargas: (registros[`${semana}-${treino}`] ?? {}) as Cargas,
+      reps: (reps[`${semana}-${treino}`] ?? {}) as Cargas,
+    }))
     return { semana, ...metricasSemana(sessoes) }
   })
 

@@ -1,7 +1,7 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
-import { docParaMeso, docsParaRegistros, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
+import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
@@ -24,6 +24,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
 
   const meso = docParaMeso(dados)
   const registros = docsParaRegistros(docsRegistros)
+  const reps = docsParaRegistrosReps(docsRegistros)
   const realizados = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, !!d.realizado]))
 
   const semanaAtual = Math.min(Math.max(1, semana), meso.semanas)
@@ -69,6 +70,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               alunoId={dados.alunoId}
               sessao={sessao}
               cargas={registros[chave] ?? {}}
+              reps={reps[chave] ?? {}}
               realizado={!!realizados[chave]}
               onRealizado={(v) => marcarRealizado(id, dados.alunoId, semanaAtual, treino, v)}
             />
@@ -77,8 +79,8 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
       </div>
 
       <div className="mt-6 space-y-4">
-        <Monitoramento meso={meso} registros={registros} />
-        <Evolucao meso={meso} registros={registros} />
+        <Monitoramento meso={meso} registros={registros} reps={reps} />
+        <Evolucao meso={meso} registros={registros} reps={reps} />
       </div>
     </Pagina>
   )

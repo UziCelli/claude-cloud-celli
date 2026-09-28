@@ -1,6 +1,11 @@
 // Gravações no Firestore. Offline, a promessa só resolve quando o servidor confirma:
 // a tela não deve esperar (await) para mostrar o valor — o cache local já tem.
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth'
 import { collection, doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc, waitForPendingWrites } from 'firebase/firestore'
 import type { Meso } from '../engine'
 import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
@@ -60,12 +65,26 @@ export const registrarCarga = (
   kg: number | null,
 ) => registro(mesoId, alunoId, semana, treino, { cargas: { [slotId]: { [`s${coluna + 1}`]: kg } } })
 
+// Reps feitas (opcional): mesmo caminho campo a campo das cargas (reps.<slotId>.sN).
+export const registrarReps = (
+  mesoId: string,
+  alunoId: string,
+  semana: number,
+  treino: number,
+  slotId: string,
+  coluna: number, // 0-based, como no motor
+  n: number | null,
+) => registro(mesoId, alunoId, semana, treino, { reps: { [slotId]: { [`s${coluna + 1}`]: n } } })
+
 export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean) =>
   registro(mesoId, alunoId, semana, treino, { realizado, realizadoEm: realizado ? serverTimestamp() : null })
 
 // ---------- login ----------
 
 export const entrar = (email: string, senha: string) => signInWithEmailAndPassword(auth, email, senha)
+
+// E-mail em pt-BR (auth.languageCode em firebase.ts).
+export const recuperarSenha = (email: string) => sendPasswordResetEmail(auth, email)
 
 // Cria o perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
 export async function cadastrar(nome: string, email: string, senha: string) {

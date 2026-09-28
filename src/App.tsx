@@ -8,15 +8,22 @@ import Alunos from './features/coach/alunos/Alunos'
 import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
+import AlunoApp from './features/aluno/AlunoApp'
+import Instalar from './features/instalar/Instalar'
 
+// /instalar é pública (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
+  return location.pathname === '/instalar' ? <Instalar /> : <Principal />
+}
+
+function Principal() {
   const { user, perfil, carregando } = useUsuarioAtual()
   if (carregando) return <Centro>Carregando…</Centro>
   if (!user) return <Entrar />
   if (!perfil) return <Centro>Preparando sua conta…</Centro>
   if (perfil.papel === 'coach') return <Coach nome={perfil.nome} />
   if (!liberado(perfil, new Date())) return <SemAcesso perfil={perfil} />
-  return <Centro>Olá, {perfil.nome}! Seu treino chega aqui na próxima fase.</Centro>
+  return <AlunoApp uid={user.uid} nome={perfil.nome} />
 }
 
 function Coach({ nome }: { nome: string }) {

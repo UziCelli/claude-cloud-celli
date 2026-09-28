@@ -65,7 +65,7 @@ service cloud.firestore {
 
       allow create: if own(request.resource.data) && liberado()
         && request.resource.data.keys().hasOnly(
-             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'cargas', 'atualizadoEm'])
+             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm'])
         && request.resource.data.semana is int
         && request.resource.data.treino is int
         && regId == request.resource.data.mesoId
@@ -75,9 +75,10 @@ service cloud.firestore {
              == request.auth.uid;
 
       // Gravação campo a campo (merge): identidade do registro não muda.
+      // reps = reps feitas (opcional), mesmo formato das cargas.
       allow update: if own(resource.data) && liberado()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'atualizadoEm']);
+             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm']);
     }
   }
 }

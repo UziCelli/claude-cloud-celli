@@ -194,6 +194,8 @@ describe('registros', () => {
       await assertFails(criar({ ...registro('ana', 2, 1), semana: 1.5 }, 'm_ana_s01.5_t1'));
       await assertFails(criar({ ...registro('ana', 2, 1), treino: 1.5 }, 'm_ana_s02_t1.5'));
     });
+    it('permite reps feitas junto', () =>
+      assertSucceeds(criar({ ...registro('ana', 2, 1), reps: { sup: { s1: 12 } } })));
     it('nega campo extra', () => assertFails(criar({ ...registro('ana', 2, 1), nota: 10 })));
     it('nega id que não bate com meso/semana/treino', async () => {
       await assertFails(criar(registro('ana', 2, 1), 'qualquer'));
@@ -210,6 +212,19 @@ describe('registros', () => {
       assertSucceeds(
         setDoc(reg('ana', 'm_ana_s01_t1'), { ...registro('ana'), cargas: { agach: { s1: 80 } } }, { merge: true }),
       ));
+
+    it('permite reps feitas por setDoc merge (como registrarReps)', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      const id = { alunoId: 'ana', mesoId: 'm_ana', semana: 1, treino: 1 };
+      await assertSucceeds(setDoc(r, { ...id, reps: { sup: { s1: 12 } }, atualizadoEm: serverTimestamp() }, { merge: true }));
+      await assertSucceeds(setDoc(r, { ...id, reps: { sup: { s2: null } } }, { merge: true }));
+    });
+
+    it('reps não liberam mudar alunoId ou semana', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      await assertFails(setDoc(r, { alunoId: 'bia', reps: { sup: { s1: 12 } } }, { merge: true }));
+      await assertFails(setDoc(r, { semana: 2, reps: { sup: { s1: 12 } } }, { merge: true }));
+    });
 
     it('permite marcar realizado', () =>
       assertSucceeds(updateDoc(reg('ana', 'm_ana_s01_t1'), { realizado: true, realizadoEm: serverTimestamp() })));

@@ -30,11 +30,22 @@ function Chips({ rotulo }: { rotulo: string }) {
   )
 }
 
+// Reps feitas ≠ prescritas: mostra "alvo→feita" em destaque.
+function RepsFeitas({ alvo, feita }: { alvo: number; feita: number | null | undefined }) {
+  if (feita == null || feita === alvo) return <div className="mb-1 text-slate-400">{alvo}</div>
+  return (
+    <div className="mb-1 font-semibold text-amber-400">
+      {alvo}→{feita}
+    </div>
+  )
+}
+
 export default function SessaoCard({
   mesoId,
   alunoId,
   sessao,
   cargas,
+  reps = {},
   realizado,
   onRealizado,
 }: {
@@ -42,10 +53,11 @@ export default function SessaoCard({
   alunoId: string
   sessao: Sessao
   cargas: Cargas
+  reps?: Cargas
   realizado: boolean
   onRealizado: (v: boolean) => void
 }) {
-  const m = metricasSessao(sessao, cargas)
+  const m = metricasSessao(sessao, cargas, reps)
   const nEtapas = Math.max(0, ...sessao.exercicios.map((e) => e.reps.length - e.n))
 
   return (
@@ -85,6 +97,7 @@ export default function SessaoCard({
         <tbody>
           {sessao.exercicios.map((e, i) => {
             const cs = cargas[e.slot.slotId] ?? []
+            const rs = reps[e.slot.slotId] ?? []
             return (
               <tr key={e.slot.slotId} className="border-b border-slate-800 last:border-0 align-top">
                 <td className="p-2">{e.pos}</td>
@@ -95,7 +108,7 @@ export default function SessaoCard({
                 {Array.from({ length: sessao.series }, (_, k) =>
                   k < e.n ? (
                     <td key={k} className="p-2 text-center">
-                      <div className="mb-1 text-slate-400">{e.reps[k]}</div>
+                      <RepsFeitas alvo={e.reps[k]} feita={rs[k]} />
                       <LoadInput
                         valor={cs[k] ?? null}
                         onSalvar={(v) => registrarCarga(mesoId, alunoId, sessao.semana, sessao.treino, e.slot.slotId, k, v)}
@@ -114,7 +127,7 @@ export default function SessaoCard({
                     <td key={j} className="p-2 text-center">
                       {tem ? (
                         <>
-                          <div className="mb-1 text-slate-400">{e.reps[coluna]}</div>
+                          <RepsFeitas alvo={e.reps[coluna]} feita={rs[coluna]} />
                           <LoadInput
                             valor={cs[coluna] ?? null}
                             placeholder={e.cargaSugerida[coluna] ?? null}

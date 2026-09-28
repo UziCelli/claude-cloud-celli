@@ -25,6 +25,7 @@ const app = initializeApp(
 )
 
 export const auth = getAuth(app)
+auth.languageCode = 'pt-BR' // e-mails do Firebase (ex.: recuperar senha) em português
 // Cache persistente (IndexedDB) = funciona offline, em várias abas.
 // ignoreUndefinedProperties: campos opcionais do motor (ex.: metodos[].serie) podem vir undefined.
 export const db = initializeFirestore(app, {

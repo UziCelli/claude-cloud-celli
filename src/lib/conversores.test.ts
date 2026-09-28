@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { Meso, Slot } from '../engine'
-import { caminhoCarga, docParaCargas, docParaMeso, docsParaRegistros, mesoParaDoc, registroId } from './conversores'
+import {
+  caminhoCarga,
+  docParaCargas,
+  docParaMeso,
+  docParaReps,
+  docsParaRegistros,
+  docsParaRegistrosReps,
+  mesoParaDoc,
+  registroId,
+} from './conversores'
 
 const slot = (slotId: string): Slot => ({ slotId, nome: `Ex ${slotId}` })
 const linha = (n: number) => Array.from({ length: n }, (_, i) => (i === 1 ? null : 8 + i))
@@ -65,5 +74,21 @@ describe('registros', () => {
         { semana: 10, treino: 1 },
       ]),
     ).toEqual({ '1-2': { a: [null, 30] }, '10-1': {} })
+  })
+})
+
+describe('reps feitas', () => {
+  it('mesmo formato das cargas', () => {
+    expect(docParaReps({ a: { s1: 12, s3: 8 } })).toEqual({ a: [12, null, 8] })
+    expect(docParaReps(undefined)).toEqual({})
+  })
+
+  it('documentos viram Registros de reps por `${semana}-${treino}`', () => {
+    expect(
+      docsParaRegistrosReps([
+        { semana: 1, treino: 2, cargas: { a: { s1: 30 } }, reps: { a: { s2: 9 } } },
+        { semana: 3, treino: 1 },
+      ]),
+    ).toEqual({ '1-2': { a: [null, 9] }, '3-1': {} })
   })
 })

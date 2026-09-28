@@ -3,14 +3,14 @@ import { evolucaoExercicio, type Meso, type Registros } from '../../../engine'
 import { Cartao } from '../../../ui'
 import { fmt } from './format'
 
-export default function Evolucao({ meso, registros }: { meso: Meso; registros: Registros }) {
+export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; registros: Registros; reps?: Registros }) {
   const nomes = new Set<string>()
   meso.divisao.flat().forEach((s) => nomes.add(s.nome))
   Object.values(meso.trocas ?? {}).forEach((s) => nomes.add(s.nome))
   const lista = [...nomes].sort((a, b) => a.localeCompare(b))
   const [nome, setNome] = useState(lista[0] ?? '')
 
-  const pontos = nome ? evolucaoExercicio(meso, registros, nome) : []
+  const pontos = nome ? evolucaoExercicio(meso, registros, nome, reps) : []
 
   return (
     <Cartao className="overflow-x-auto">
