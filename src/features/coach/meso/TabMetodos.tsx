@@ -127,7 +127,7 @@ function LinhaMetodo({
           <select
             value={m.exercicio}
             onChange={(e) => onSet({ exercicio: Number(e.target.value) })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-slate-100"
+            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
           >
             {exerciciosDoTreino.map((s, i) => (
               <option key={s.slotId} value={i + 1}>
@@ -142,7 +142,7 @@ function LinhaMetodo({
           <select
             value={m.metodo}
             onChange={(e) => onSet(padrao(e.target.value as Metodo, meso, m.semana, m.treino, m.exercicio))}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-slate-100"
+            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
           >
             {METODOS.map((op) => (
               <option key={op} value={op}>
@@ -156,7 +156,7 @@ function LinhaMetodo({
           <select
             value={m.escopo}
             onChange={(e) => onSet({ escopo: e.target.value as Escopo })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-slate-100"
+            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
           >
             {ESCOPOS.map((op) => (
               <option key={op} value={op}>
@@ -175,7 +175,7 @@ function LinhaMetodo({
           <>
             <Selecao rotulo="Etapas" valor={m.etapas ?? 1} opcoes={[1, 2, 3]} onChange={(v) => onSet({ etapas: v })} />
             {Array.from({ length: m.etapas ?? 1 }, (_, i) => i + 1).map((e) => (
-              <div key={e} className="flex gap-1">
+              <div key={e} className="flex flex-wrap gap-1">
                 <CampoNum rotulo={`Carga etapa ${e} (kg)`} valor={m.cargaEtapa?.[e - 1] ?? null} onChange={(v) => {
                   const arr = [...(m.cargaEtapa ?? [])]
                   arr[e - 1] = v ?? null
@@ -214,7 +214,7 @@ function LinhaMetodo({
         <CampoNum rotulo="Reps padrão (opcional)" valor={m.repsPadrao ?? null} onChange={(v) => onSet({ repsPadrao: v ?? undefined })} />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Botao onClick={onCopiar}>Copiar para todas as semanas</Botao>
         <Botao tipo="perigo" onClick={onRemover}>
           Remover
@@ -243,7 +243,7 @@ function Selecao({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor: n
       <select
         value={valor}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-slate-100"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
       >
         {opcoes.map((o) => (
           <option key={o} value={o}>

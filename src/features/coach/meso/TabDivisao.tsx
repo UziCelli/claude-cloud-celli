@@ -102,7 +102,7 @@ export default function TabDivisao({
                           key={slot?.slotId ?? `novo-${t}-${p}`}
                           placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
                           onBlur={(e) => commit(t, p, e.target.value)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-slate-100 outline-none focus:border-orange-500"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
                         />
                         {slot && p === arr.length && (
                           <button
@@ -164,7 +164,7 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
         {Object.entries(trocas).map(([chave, slot]) => {
           const [w, t, p] = chave.split('-')
           return (
-            <li key={chave} className="flex items-center justify-between gap-2 rounded-lg bg-slate-950 px-3 py-2">
+            <li key={chave} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-950 px-3 py-2">
               <span>
                 Semana {w}, treino {t}, posição {p}: <b>{slot.nome}</b>
               </span>
@@ -186,7 +186,7 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
             list="catalogo"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
           />
         </label>
         <Botao tipo="primario" onClick={adicionar}>
@@ -204,7 +204,7 @@ function Seletor({ rotulo, valor, max, onChange }: { rotulo: string; valor: numb
       <select
         value={valor}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-slate-100"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
       >
         {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
           <option key={n} value={n}>

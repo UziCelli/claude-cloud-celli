@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
-import { duplicarMeso, salvarMeso } from '../../../lib/acoes'
+import { darAcessoAoApp, duplicarMeso, excluirMeso, salvarMeso } from '../../../lib/acoes'
 import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Botao, Campo, Cartao, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
+import { flash, hojeMaisDias } from '../alunos/NovoAluno'
 import { mesoPadrao } from './mesoPadrao'
 
 const dataBr = (iso: string) => {
@@ -19,6 +20,11 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
   const mesosQ = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
   const mesos = useLista<MesoSalvo>(mesosQ)
   const [erro, setErro] = useState<string | null>(null)
+  const [aviso] = useState(() => {
+    const t = flash.texto
+    flash.texto = ''
+    return t
+  })
 
   function novoMeso() {
     setErro(null)
@@ -32,6 +38,8 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       titulo={`Mesociclos de ${aluno.dados?.nome ?? '…'}`}
       acoes={<Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>}
     >
+      {aviso && <p className="mb-3 text-sm text-green-400">{aviso}</p>}
+      {aluno.dados?.presencial && <DarAcesso id={uid} />}
       {erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}
       {mesos.carregando && <p className="text-slate-400">Carregando…</p>}
       {!mesos.carregando && mesos.dados.length === 0 && <p className="text-slate-400">Nenhum mesociclo ainda.</p>}
@@ -45,7 +53,8 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
 }
 
 function CartaoMeso({ meso }: { meso: MesoSalvo & { id: string } }) {
-  const [duplicando, setDuplicando] = useState(false)
+  const [aberto, setAberto] = useState<'duplicar' | 'excluir' | null>(null)
+  const alternar = (q: 'duplicar' | 'excluir') => setAberto((v) => (v === q ? null : q))
   return (
     <Cartao>
       <h2 className="font-semibold">{meso.nome}</h2>
@@ -55,10 +64,47 @@ function CartaoMeso({ meso }: { meso: MesoSalvo & { id: string } }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Botao onClick={() => ir(`/meso/${meso.id}`)}>Editar</Botao>
         <Botao onClick={() => ir(`/meso/${meso.id}/semana/1`)}>Ver semanas</Botao>
-        <Botao onClick={() => setDuplicando((v) => !v)}>Duplicar</Botao>
+        <Botao onClick={() => alternar('duplicar')}>Duplicar</Botao>
+        <Botao tipo="perigo" onClick={() => alternar('excluir')}>Excluir</Botao>
       </div>
-      {duplicando && <FormDuplicar mesoId={meso.id} onFechar={() => setDuplicando(false)} />}
+      {aberto === 'duplicar' && <FormDuplicar mesoId={meso.id} onFechar={() => setAberto(null)} />}
+      {aberto === 'excluir' && <ConfirmarExclusao meso={meso} onFechar={() => setAberto(null)} />}
     </Cartao>
+  )
+}
+
+function ConfirmarExclusao({ meso, onFechar }: { meso: MesoSalvo & { id: string }; onFechar: () => void }) {
+  const regsQ = useMemo(() => query(collection(db, 'registros'), where('mesoId', '==', meso.id)), [meso.id])
+  const treinos = useLista(regsQ).dados.length
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  function excluir() {
+    setEnviando(true)
+    setErro(null)
+    // Sucesso: o cartão some da lista sozinho.
+    excluirMeso(meso.id).catch(() => {
+      setErro('Não foi possível excluir. Confira a internet e tente de novo.')
+      setEnviando(false)
+    })
+  }
+
+  return (
+    <div className="mt-3 space-y-2 border-t border-slate-800 pt-3">
+      <p className="text-sm">Tem certeza que quer excluir “{meso.nome}”? Não dá para desfazer.</p>
+      {treinos > 0 && (
+        <Aviso>
+          O aluno já registrou {treinos} treino{treinos === 1 ? '' : 's'} neste mesociclo. As cargas também serão apagadas.
+        </Aviso>
+      )}
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Botao tipo="perigo" disabled={enviando} onClick={excluir}>
+          {enviando ? 'Excluindo…' : 'Sim, excluir'}
+        </Botao>
+        <Botao onClick={onFechar}>Cancelar</Botao>
+      </div>
+    </div>
   )
 }
 
@@ -91,7 +137,7 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
         <select
           value={alunoId}
           onChange={(e) => setAlunoId(e.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
         >
           <option value="">Selecione…</option>
           {alunos.dados.map((a) => (
@@ -103,12 +149,55 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
       </label>
       <Campo rotulo="Nome do novo mesociclo" value={nome} onChange={(e) => setNome(e.target.value)} />
       {erro && <p className="text-sm text-red-400">{erro}</p>}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Botao tipo="primario" disabled={!alunoId || !nome.trim() || enviando} onClick={confirmar}>
           Confirmar
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
       </div>
+    </div>
+  )
+}
+
+function DarAcesso({ id }: { id: string }) {
+  const [aberto, setAberto] = useState(false)
+  const [email, setEmail] = useState('')
+  const [pagoAte, setPagoAte] = useState(hojeMaisDias(30))
+  const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    setErro('')
+    try {
+      flash.texto = 'Acesso criado. O aluno recebeu um e-mail para criar a senha.'
+      ir('/aluno/' + (await darAcessoAoApp(id, { email: email.trim(), pagoAte })))
+    } catch (err) {
+      flash.texto = ''
+      setErro(err instanceof Error ? err.message : 'Não foi possível dar acesso.')
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <div className="mb-4 space-y-3">
+      <Aviso>Aluno presencial: você anota as cargas em Ver semanas.</Aviso>
+      {aberto ? (
+        <Cartao className="max-w-md">
+          <form onSubmit={enviar} className="space-y-3">
+            <Campo rotulo="E-mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Campo rotulo="Pago até" type="date" required value={pagoAte} onChange={(e) => setPagoAte(e.target.value)} />
+            {erro && <Aviso>{erro}</Aviso>}
+            <div className="flex gap-2">
+              <Botao tipo="primario" type="submit" disabled={enviando}>{enviando ? 'Criando…' : 'Criar acesso'}</Botao>
+              <Botao type="button" onClick={() => setAberto(false)}>Cancelar</Botao>
+            </div>
+          </form>
+        </Cartao>
+      ) : (
+        <Botao onClick={() => setAberto(true)}>Dar acesso ao app</Botao>
+      )}
     </div>
   )
 }

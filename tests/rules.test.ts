@@ -19,6 +19,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 
@@ -95,6 +96,11 @@ describe('usuarios', () => {
     await assertFails(getDocs(collection(db('ana'), 'usuarios')));
   });
 
+  it('coach consulta registros por atualizadoEm (painel)', () =>
+    assertSucceeds(
+      getDocs(query(collection(db('coach'), 'registros'), where('atualizadoEm', '>=', Timestamp.fromMillis(Date.now() - 14 * DIA)))),
+    ));
+
   it('coach lê e lista todos', async () => {
     await assertSucceeds(getDoc(doc(db('coach'), 'usuarios', 'bia')));
     await assertSucceeds(getDocs(collection(db('coach'), 'usuarios')));
@@ -144,6 +150,47 @@ describe('usuarios', () => {
     await assertSucceeds(updateDoc(doc(db('coach'), 'usuarios', 'agu'), { status: 'ativo', pagoAte: futuro }));
     await assertFails(deleteDoc(doc(db('ana'), 'usuarios', 'ana')));
     await assertSucceeds(deleteDoc(doc(db('coach'), 'usuarios', 'ana')));
+  });
+});
+
+// Aluno presencial (sem login): criarAlunoPresencial / darAcessoAoApp em src/lib/acoes.ts.
+describe('aluno presencial', () => {
+  const pres = { papel: 'aluno', status: 'ativo', presencial: true, nome: 'Pres', email: '', criadoEm: serverTimestamp() };
+  beforeEach(async () => {
+    const c = db('coach');
+    await setDoc(doc(c, 'usuarios', 'pres'), pres);
+    await setDoc(doc(c, 'mesos', 'm_pres'), { alunoId: 'pres', nome: 'Meso 1', semanas: 8 });
+    await setDoc(doc(c, 'registros', 'm_pres_s01_t1'), registro('pres'));
+  });
+
+  it('coach cria, lê e anota cargas', async () => {
+    await assertSucceeds(getDoc(doc(db('coach'), 'usuarios', 'pres')));
+    await assertSucceeds(updateDoc(reg('coach', 'm_pres_s01_t1'), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
+  });
+
+  it('nenhum aluno lê o perfil, os mesos ou os registros do presencial', async () => {
+    await assertFails(getDoc(doc(db('ana'), 'usuarios', 'pres')));
+    await assertFails(getDoc(doc(db('ana'), 'mesos', 'm_pres')));
+    await assertFails(getDoc(reg('ana', 'm_pres_s01_t1')));
+    await assertFails(getDocs(query(collection(db('ana'), 'mesos'), where('alunoId', '==', 'pres'))));
+    await assertFails(getDocs(query(collection(db('ana'), 'registros'), where('alunoId', '==', 'pres'))));
+  });
+
+  it('coach dá acesso ao app: perfil novo, troca alunoId em lote, apaga o antigo', async () => {
+    const c = db('coach');
+    await assertSucceeds(updateDoc(doc(c, 'usuarios', 'pres'), { migradoPara: 'nova' }));
+    await assertSucceeds(
+      setDoc(doc(c, 'usuarios', 'nova'), { papel: 'aluno', status: 'ativo', pagoAte: futuro, nome: 'Pres', email: 'p@x.com' }),
+    );
+    const b = writeBatch(c);
+    b.update(doc(c, 'mesos', 'm_pres'), { alunoId: 'nova' });
+    b.update(doc(c, 'registros', 'm_pres_s01_t1'), { alunoId: 'nova' });
+    await assertSucceeds(b.commit());
+    await assertSucceeds(deleteDoc(doc(c, 'usuarios', 'pres')));
+    // A aluna nova vê o histórico e continua anotando no mesmo registro.
+    await assertSucceeds(getDoc(doc(db('nova'), 'mesos', 'm_pres')));
+    await assertSucceeds(updateDoc(reg('nova', 'm_pres_s01_t1'), { 'cargas.sup.s3': 55 }));
+    await assertFails(getDoc(doc(db('ana'), 'mesos', 'm_pres')));
   });
 });
 

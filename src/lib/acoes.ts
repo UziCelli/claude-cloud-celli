@@ -9,11 +9,27 @@ import {
   signOut,
   verifyBeforeUpdateEmail,
 } from 'firebase/auth'
-import { collection, doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc, waitForPendingWrites } from 'firebase/firestore'
+import { FirebaseError } from 'firebase/app'
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocsFromServer,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  waitForPendingWrites,
+  where,
+  writeBatch,
+} from 'firebase/firestore'
 import type { Meso } from '../engine'
 import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
-import { auth, db } from './firebase'
+import { auth, authCadastro, db } from './firebase'
+import { inicioJanela } from './resumo'
 
 // ---------- coach ----------
 
@@ -23,15 +39,105 @@ export const definirAcesso = (uid: string, a: { status: Usuario['status']; pagoA
     ...(a.pagoAte && { pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(a.pagoAte)) }),
   })
 
+export const ERRO_EMAIL_EM_USO = 'Esse e-mail já tem conta — peça para o aluno entrar ou usar Esqueci minha senha'
+
+// Cria a conta do aluno na instância secundária (o coach continua logado) com senha aleatória.
+// O aluno cria a própria senha pelo link de sendPasswordResetEmail. Precisa de internet.
+async function criarConta(email: string) {
+  const a = authCadastro()
+  try {
+    const { user } = await createUserWithEmailAndPassword(a, email, `${crypto.randomUUID()}Aa1!`)
+    return user.uid
+  } catch (e) {
+    if (e instanceof FirebaseError && e.code === 'auth/email-already-in-use') throw new Error(ERRO_EMAIL_EM_USO)
+    throw e
+  } finally {
+    await signOut(a)
+  }
+}
+
+const perfilApp = (nome: string, email: string, pagoAte: string) => ({
+  papel: 'aluno',
+  status: 'ativo',
+  pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(pagoAte)),
+  nome,
+  email,
+})
+
+// Aluno que usa o app. Devolve o uid.
+export async function criarAlunoComApp(a: { nome: string; email: string; pagoAte: string /* YYYY-MM-DD */ }) {
+  const uid = await criarConta(a.email)
+  await setDoc(doc(db, 'usuarios', uid), { ...perfilApp(a.nome, a.email, a.pagoAte), criadoEm: serverTimestamp() })
+  await sendPasswordResetEmail(auth, a.email)
+  return uid
+}
+
+// Aluno presencial: sem login, o coach anota as cargas. email '' (a lista de alunos busca por e-mail).
+// Funciona offline: o id sai na hora; `gravado` só resolve quando o servidor confirma (como salvarMeso).
+export function criarAlunoPresencial(a: { nome: string }) {
+  const ref = doc(collection(db, 'usuarios'))
+  const gravado = setDoc(ref, { papel: 'aluno', status: 'ativo', presencial: true, nome: a.nome, email: '', criadoEm: serverTimestamp() })
+  return { id: ref.id, gravado }
+}
+
+// Presencial -> aluno com app, mantendo o histórico. Ordem pensada para nunca perder dados;
+// se falhar no meio, chamar de novo continua de onde parou:
+// 1. cria a conta (ou reaproveita a anotada em migradoPara) e anota migradoPara no perfil antigo;
+// 2. cria o perfil novo; 3. troca alunoId de mesos e registros (lotes de 400; os ids dos
+// registros só têm o mesoId, continuam válidos); 4. apaga o perfil antigo; 5. e-mail de senha.
+export async function darAcessoAoApp(idPresencial: string, a: { email: string; pagoAte: string /* YYYY-MM-DD */ }) {
+  const antigo = doc(db, 'usuarios', idPresencial)
+  const s = await getDoc(antigo)
+  if (!s.exists()) throw new Error('Aluno não encontrado')
+  const p = s.data() as Usuario & { migradoPara?: string }
+  if (!p.presencial) throw new Error('Esse aluno já usa o app')
+  let uid = p.migradoPara
+  if (!uid) {
+    uid = await criarConta(a.email)
+    await updateDoc(antigo, { migradoPara: uid })
+  }
+  await setDoc(doc(db, 'usuarios', uid), { ...perfilApp(p.nome, a.email, a.pagoAte), criadoEm: p.criadoEm ?? serverTimestamp() })
+  for (const col of ['mesos', 'registros']) {
+    // Do servidor (nunca do cache): offline dá erro antes de apagar o perfil antigo.
+    const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', idPresencial)))).docs
+    for (let i = 0; i < docs.length; i += 400) {
+      const b = writeBatch(db)
+      for (const d of docs.slice(i, i + 400)) b.update(d.ref, { alunoId: uid })
+      await b.commit()
+    }
+  }
+  await deleteDoc(antigo)
+  await sendPasswordResetEmail(auth, a.email)
+  return uid
+}
+
+// Painel: registros atualizados nos últimos 14 dias (desde o início do dia em São Paulo).
+// Filtro de um campo só: usa o índice automático, sem índice composto. Estável durante o dia.
+export const consultaRegistrosRecentes = (agora: Date) =>
+  query(collection(db, 'registros'), where('atualizadoEm', '>=', Timestamp.fromMillis(inicioJanela(agora, 14))))
+
 // Cria (mesoId null) ou substitui a prescrição. updateDoc troca cada campo de topo inteiro
 // (sem mesclar mapas), então treinos/semanas/trocas removidos não sobram.
 // O id sai na hora (gerado no aparelho); `gravado` só resolve quando o servidor confirma —
 // offline, não espere por ele para navegar.
+// Edição não regrava alunoId: um editor aberto durante darAcessoAoApp devolveria o id antigo.
 export function salvarMeso(mesoId: string | null, alunoId: string, nome: string, meso: Meso) {
-  const dados = { alunoId, nome, ...mesoParaDoc(meso), atualizadoEm: serverTimestamp() }
+  const dados = { nome, ...mesoParaDoc(meso), atualizadoEm: serverTimestamp() }
   if (mesoId) return { id: mesoId, gravado: updateDoc(doc(db, 'mesos', mesoId), dados) }
   const ref = doc(collection(db, 'mesos'))
-  return { id: ref.id, gravado: setDoc(ref, { ...dados, criadoEm: serverTimestamp() }) }
+  return { id: ref.id, gravado: setDoc(ref, { ...dados, alunoId, criadoEm: serverTimestamp() }) }
+}
+
+// Apaga o meso e os registros (cargas) dele. Registros primeiro: se cair no meio, o meso continua
+// na lista e é só excluir de novo. Lê do servidor (nunca do cache): offline dá erro sem apagar nada.
+export async function excluirMeso(mesoId: string) {
+  const regs = (await getDocsFromServer(query(collection(db, 'registros'), where('mesoId', '==', mesoId)))).docs
+  for (let i = 0; i < regs.length; i += 400) {
+    const b = writeBatch(db)
+    for (const d of regs.slice(i, i + 400)) b.delete(d.ref)
+    await b.commit()
+  }
+  await deleteDoc(doc(db, 'mesos', mesoId))
 }
 
 // Copia só a prescrição; registros (cargas) nunca são copiados.

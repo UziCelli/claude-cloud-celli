@@ -45,7 +45,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
         </>
       }
     >
-      <div className="mb-4 flex items-center justify-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
         <Botao disabled={semanaAtual <= 1} onClick={() => ir(`/meso/${id}/semana/${semanaAtual - 1}`)}>
           ← Semana
         </Botao>

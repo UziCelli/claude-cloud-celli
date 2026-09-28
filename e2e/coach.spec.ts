@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { criarCoach, limparEmuladores } from './seed'
+import { criarCoach, lerDoc, limparEmuladores } from './seed'
 
 const COACH = { nome: 'Victor', email: 'victor.e2e@teste.com', senha: 'senha123' }
 const ALUNO = { nome: 'Aluno Teste', email: 'aluno.e2e@teste.com', senha: 'senha123' }
@@ -34,6 +34,10 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByLabel('Senha').fill(COACH.senha)
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
 
+    await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+    const aguardando = page.locator('div').filter({ has: page.getByRole('heading', { name: /Aguardando aprovação/ }) }).last()
+    await expect(aguardando.getByRole('link', { name: ALUNO.nome })).toBeVisible({ timeout: 10_000 })
+    await page.getByRole('link', { name: 'Alunos', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Alunos' })).toBeVisible()
     const linha = page.locator('tbody tr').filter({ hasText: ALUNO.nome })
     await expect(linha.getByText('Aguardando')).toBeVisible({ timeout: 10_000 })
@@ -96,4 +100,72 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await expect(linhaExercicio1Depois.locator('input[type="number"]').first()).toHaveValue('20')
     await expect(linhaExercicio1Depois.locator('td:nth-last-child(2)')).toHaveText('20')
   })
+})
+
+test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com app', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Novo aluno' }).click()
+  await page.getByRole('button', { name: 'Presencial (sem app)' }).click()
+  await page.getByLabel('Nome').fill('Pres Teste')
+  await page.getByRole('button', { name: 'Cadastrar' }).click()
+  await expect(page.getByRole('heading', { name: 'Mesociclos de Pres Teste' })).toBeVisible()
+  await expect(page.getByText('Aluno presencial: você anota as cargas em Ver semanas.')).toBeVisible()
+  const urlPres = page.url()
+
+  await page.getByRole('button', { name: 'Novo mesociclo' }).click()
+  await page.waitForURL(/#\/meso\//)
+  const mesoId = page.url().split('#/meso/')[1]
+  await page.getByRole('button', { name: 'Divisão', exact: true }).click()
+  const tabela = page.locator('table').filter({ hasText: 'Posição' })
+  for (let t = 1; t <= 3; t++) {
+    const input = tabela.locator('tbody tr').first().locator('input[list="catalogo"]').nth(t - 1)
+    await input.fill(NOMES[0])
+    await input.press('Tab')
+  }
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'Ver semanas' }).click()
+  await page.waitForURL(/#\/meso\/.+\/semana\/1/)
+  const linha = page.locator('table').first().locator('tbody tr').first()
+  const serie1 = linha.locator('input[type="number"]').first()
+  await serie1.fill('30')
+  await serie1.press('Enter')
+  await expect(linha.locator('td:nth-last-child(2)')).toHaveText('30', { timeout: 10_000 })
+
+  await page.goto(urlPres)
+  await page.getByRole('button', { name: 'Dar acesso ao app' }).click()
+  await page.getByLabel('E-mail').fill('pres.e2e@teste.com')
+  await page.getByRole('button', { name: 'Criar acesso' }).click()
+  await expect(page).not.toHaveURL(urlPres, { timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: 'Mesociclos de Pres Teste' })).toBeVisible()
+  await expect(page.getByText('Mesociclo 1')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('Aluno presencial')).toHaveCount(0)
+
+  // Excluir mesociclo: Cancelar mantém; "Sim, excluir" apaga o meso e as cargas dele.
+  expect(await lerDoc(`registros/${mesoId}_s01_t1`)).not.toBeNull()
+  await page.getByRole('button', { name: 'Excluir' }).click()
+  await expect(page.getByText('O aluno já registrou 1 treino neste mesociclo.', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(page.getByRole('button', { name: 'Sim, excluir' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Excluir' }).click()
+  await page.getByRole('button', { name: 'Sim, excluir' }).click()
+  await expect(page.getByText('Nenhum mesociclo ainda.')).toBeVisible({ timeout: 10_000 })
+  expect(await lerDoc(`mesos/${mesoId}`)).toBeNull()
+  expect(await lerDoc(`registros/${mesoId}_s01_t1`)).toBeNull()
+
+  await page.getByRole('link', { name: 'Início' }).click()
+  await page.getByRole('button', { name: 'Novo aluno' }).click()
+  await page.getByLabel('Nome').fill('App Teste')
+  await page.getByLabel('E-mail').fill('app.e2e@teste.com')
+  await page.getByRole('button', { name: 'Cadastrar' }).click()
+  await expect(page.getByRole('heading', { name: 'Mesociclos de App Teste' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText('Conta criada. O aluno recebeu um e-mail para criar a senha.')).toBeVisible()
+  const r = await fetch('http://127.0.0.1:9099/emulator/v1/projects/demo-forca/oobCodes')
+  const codes = (await r.json()).oobCodes as { email: string; requestType: string }[]
+  expect(codes.some((c) => c.email === 'app.e2e@teste.com' && c.requestType === 'PASSWORD_RESET')).toBe(true)
 })

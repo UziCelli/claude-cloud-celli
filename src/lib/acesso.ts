@@ -8,6 +8,7 @@ export interface Usuario {
   status: 'aguardando' | 'ativo' | 'bloqueado'
   pagoAte?: Timestamp
   criadoEm?: Timestamp
+  presencial?: boolean // aluno sem app/login (o coach anota as cargas); email '' e sem pagoAte
 }
 
 // São Paulo = UTC−03:00 fixo: o Brasil não tem horário de verão desde 2019.
@@ -25,6 +26,9 @@ export function liberado(u: Usuario | null, agora: Date) {
 
 // Nº do dia de calendário em São Paulo (independe do fuso do aparelho).
 export const diaSP = (ms: number) => Math.floor((ms + SP) / DIA)
+
+// Instante (ms) em que começa o dia `dia` (número de diaSP) em São Paulo.
+export const inicioDoDiaSP = (dia: number) => dia * DIA - SP
 
 // Dias de calendário (São Paulo) até o vencimento: 0 no próprio dia, negativo se vencido.
 export const diasParaVencer = (pagoAte: Timestamp, agora: Date) =>

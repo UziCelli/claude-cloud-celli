@@ -6,14 +6,9 @@ import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
+import { hojeMaisDias } from './NovoAluno'
 
 type Aluno = Usuario & { id: string }
-
-const hojeMaisDias = (dias: number) => {
-  const d = new Date()
-  d.setDate(d.getDate() + dias)
-  return d.toISOString().slice(0, 10)
-}
 
 const dataPadrao = (a: Aluno) => {
   if (a.status === 'ativo' && a.pagoAte && diasParaVencer(a.pagoAte, new Date()) >= 0) {
@@ -77,8 +72,27 @@ export default function Alunos() {
     definirAcesso(uid, { status: 'bloqueado' }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
   }
 
+  const acoes = (a: Aluno) =>
+    a.presencial ? null : editando === a.id ? (
+      <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
+    ) : (
+      <div className="flex flex-wrap gap-2">
+        {(a.status === 'aguardando' || a.status === 'bloqueado') && (
+          <Botao tipo="primario" onClick={() => setEditando(a.id)}>
+            Liberar
+          </Botao>
+        )}
+        {a.status === 'ativo' && <Botao onClick={() => setEditando(a.id)}>Renovar</Botao>}
+        {a.status !== 'bloqueado' && (
+          <Botao tipo="perigo" onClick={() => bloquear(a.id)}>
+            Bloquear
+          </Botao>
+        )}
+      </div>
+    )
+
   return (
-    <Pagina titulo="Alunos">
+    <Pagina titulo="Alunos" acoes={<Botao tipo="primario" onClick={() => ir('/alunos/novo')}>Novo aluno</Botao>}>
       <div className="mb-4">
         <Campo rotulo="Buscar" placeholder="Nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} />
       </div>
@@ -89,10 +103,29 @@ export default function Alunos() {
       )}
       {alunos.length === 0 ? (
         <Cartao className="text-slate-400">
-          Nenhum aluno ainda. Peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
+          Nenhum aluno ainda. Use Novo aluno, ou peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
         </Cartao>
       ) : (
-        <Cartao className="overflow-x-auto p-0">
+        <>
+        <div className="space-y-3 md:hidden">
+          {filtrados.map((a) => {
+            const s = statusAluno(a)
+            return (
+              <Cartao key={a.id} className="space-y-2">
+                <button className="block w-full min-w-0 text-left" onClick={() => ir('/aluno/' + a.id)}>
+                  <div className="truncate font-medium">{a.nome}</div>
+                  <div className="truncate text-xs text-slate-500">{a.email}</div>
+                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Chip a={a} s={s} />
+                  {!a.presencial && <span className="text-sm text-slate-300">{textoVencimento(a)}</span>}
+                </div>
+                {acoes(a)}
+              </Cartao>
+            )
+          })}
+        </div>
+        <Cartao className="hidden overflow-x-auto p-0 md:block">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-800 text-slate-400">
               <tr>
@@ -114,25 +147,11 @@ export default function Alunos() {
                       </button>
                     </td>
                     <td className="p-3">
-                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
+                      <Chip a={a} s={s} />
                     </td>
-                    <td className="p-3 text-slate-300">{textoVencimento(a)}</td>
+                    <td className="p-3 text-slate-300">{a.presencial ? '' : textoVencimento(a)}</td>
                     <td className="p-3">
-                      {editando === a.id ? (
-                        <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
-                      ) : (
-                        <div className="flex gap-2">
-                          {(a.status === 'aguardando' || a.status === 'bloqueado') && (
-                            <Botao tipo="primario" onClick={() => setEditando(a.id)}>
-                              Liberar
-                            </Botao>
-                          )}
-                          {a.status === 'ativo' && (
-                            <Botao onClick={() => setEditando(a.id)}>Renovar</Botao>
-                          )}
-                          {a.status !== 'bloqueado' && <Botao tipo="perigo" onClick={() => bloquear(a.id)}>Bloquear</Botao>}
-                        </div>
-                      )}
+                      {acoes(a)}
                     </td>
                   </tr>
                 )
@@ -140,8 +159,17 @@ export default function Alunos() {
             </tbody>
           </table>
         </Cartao>
+        </>
       )}
     </Pagina>
+  )
+}
+
+function Chip({ a, s }: { a: Aluno; s: { texto: string; cor: string } }) {
+  return a.presencial ? (
+    <span className="rounded-full bg-sky-900/50 px-2 py-1 text-xs font-semibold text-sky-300">Presencial</span>
+  ) : (
+    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
   )
 }
 
@@ -156,12 +184,12 @@ function FormularioData({
 }) {
   const [valor, setValor] = useState(padrao)
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <input
         type="date"
         value={valor}
         onChange={(e) => setValor(e.target.value)}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none focus:border-orange-500"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
       />
       <Botao tipo="primario" onClick={() => onConfirmar(valor)}>
         Confirmar
