@@ -45,7 +45,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/forca\.apk$/, /^\/\.well-known\//],
+        navigateFallbackDenylist: [/^\/\.well-known\//],
       },
     }),
   ],

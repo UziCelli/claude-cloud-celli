@@ -73,25 +73,15 @@ function copiarLink(setCopiado: (v: boolean) => void) {
 function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }) {
   return (
     <>
-      <a
-        href="/forca.apk"
-        download
-        className="block rounded-xl bg-orange-500 px-4 py-4 text-center text-lg font-bold text-slate-950 hover:bg-orange-400"
-      >
-        Baixar o app (Android)
-      </a>
-      <p className="text-center text-xs text-slate-500">Precisa do Google Chrome instalado (já vem na maioria dos celulares)</p>
-
       <Cartao>
         <ol className="space-y-3 text-sm">
-          <Passo n={1}>Toque em "Baixar o app"</Passo>
-          <Passo n={2}>Abra o arquivo baixado</Passo>
-          <Passo n={3}>
-            Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (Chrome, WhatsApp ou
-            Arquivos). É uma permissão só para esse app — normal em celulares Android.
-          </Passo>
-          <Passo n={4}>Abra o Força e entre com seu e-mail</Passo>
+          <Passo n={1}>Abra o arquivo <strong>forca.apk</strong> que seu coach enviou no WhatsApp.</Passo>
+          <Passo n={2}>Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (WhatsApp ou Arquivos).</Passo>
+          <Passo n={3}>Toque em <strong>Instalar</strong> e depois abra o <strong>Força</strong>.</Passo>
+          <Passo n={4}>Entre com seu e-mail e senha.</Passo>
         </ol>
+        <p className="mt-3 text-xs text-slate-500">Não recebeu o arquivo? Peça ao seu coach.</p>
+        <p className="text-xs text-slate-500">Precisa do Google Chrome instalado (já vem na maioria dos celulares).</p>
       </Cartao>
 
       <Cartao>
