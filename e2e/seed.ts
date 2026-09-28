@@ -20,24 +20,92 @@ async function criarConta(email: string, senha: string): Promise<string> {
   return localId as string
 }
 
-// Grava usuarios/{uid} direto via REST do Firestore emulator (Bearer owner ignora as regras).
-async function gravarUsuario(uid: string, dados: Record<string, unknown>) {
-  const fields: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(dados)) fields[k] = { stringValue: v as string }
-  const r = await fetch(
-    `${FIRESTORE}/v1/projects/${PROJETO}/databases/(default)/documents/usuarios/${uid}`,
-    {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
-      body: JSON.stringify({ fields }),
-    },
-  )
-  if (!r.ok) throw new Error(`gravar usuario falhou: ${r.status} ${await r.text()}`)
+// Converte um valor JS para o formato de campo do Firestore REST (recursivo).
+// Date -> timestampValue; null -> nullValue; number inteiro -> integerValue, senão doubleValue;
+// array -> arrayValue; objeto -> mapValue.
+function valorFirestore(v: unknown): unknown {
+  if (v === null || v === undefined) return { nullValue: null }
+  if (v instanceof Date) return { timestampValue: v.toISOString() }
+  if (typeof v === 'string') return { stringValue: v }
+  if (typeof v === 'boolean') return { booleanValue: v }
+  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v }
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(valorFirestore) } }
+  return { mapValue: { fields: paraCampos(v as Record<string, unknown>) } }
+}
+
+const paraCampos = (dados: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(dados).map(([k, v]) => [k, valorFirestore(v)]))
+
+// Grava um documento direto via REST do Firestore emulator (Bearer owner ignora as regras).
+async function gravarDoc(caminho: string, dados: Record<string, unknown>) {
+  const r = await fetch(`${FIRESTORE}/v1/projects/${PROJETO}/databases/(default)/documents/${caminho}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ fields: paraCampos(dados) }),
+  })
+  if (!r.ok) throw new Error(`gravar ${caminho} falhou: ${r.status} ${await r.text()}`)
+}
+
+// Lê um documento direto via REST do Firestore emulator (Bearer owner ignora as regras).
+export async function lerDoc(caminho: string): Promise<Record<string, unknown> | null> {
+  const r = await fetch(`${FIRESTORE}/v1/projects/${PROJETO}/databases/(default)/documents/${caminho}`, {
+    headers: { Authorization: 'Bearer owner' },
+  })
+  if (r.status === 404) return null
+  if (!r.ok) throw new Error(`ler ${caminho} falhou: ${r.status} ${await r.text()}`)
+  return r.json()
 }
 
 // Cria a conta do coach (Auth + Firestore), pronta e ativa.
 export async function criarCoach(nome: string, email: string, senha: string): Promise<string> {
   const uid = await criarConta(email, senha)
-  await gravarUsuario(uid, { papel: 'coach', status: 'ativo', nome, email })
+  await gravarDoc(`usuarios/${uid}`, { papel: 'coach', status: 'ativo', nome, email })
   return uid
+}
+
+// Cria a conta do aluno (Auth + Firestore), já ativa e paga por 30 dias.
+export async function criarAluno(nome: string, email: string, senha: string): Promise<string> {
+  const uid = await criarConta(email, senha)
+  const pagoAte = new Date(Date.now() + 30 * 86_400_000)
+  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte })
+  return uid
+}
+
+// Hoje (YYYY-MM-DD) no calendário de São Paulo (UTC-03:00 fixo).
+export function hojeSaoPaulo(): string {
+  const d = new Date(Date.now() - 3 * 3600_000)
+  return d.toISOString().slice(0, 10)
+}
+
+export interface MesoSeed {
+  alunoId: string
+  nome: string
+  frequencia: number
+  semanas: number
+  inicio: string // YYYY-MM-DD
+  pausaS: number
+  divisao: Record<string, { slotId: string; nome: string }[]>
+  progressao: { principais: Record<string, (number | null)[]>; auxiliares: Record<string, (number | null)[]> }
+  trocas?: Record<string, unknown>
+  metodos?: unknown[]
+}
+
+// Cria mesos/{id} direto no formato gravado por salvarMeso (ver src/lib/conversores.ts).
+export async function criarMeso(m: MesoSeed): Promise<string> {
+  const id = Math.random().toString(36).slice(2, 10)
+  await gravarDoc(`mesos/${id}`, {
+    alunoId: m.alunoId,
+    nome: m.nome,
+    frequencia: m.frequencia,
+    semanas: m.semanas,
+    inicio: m.inicio,
+    pausaS: m.pausaS,
+    divisao: m.divisao,
+    progressao: m.progressao,
+    trocas: m.trocas ?? {},
+    metodos: m.metodos ?? [],
+    criadoEm: new Date(),
+    atualizadoEm: new Date(),
+  })
+  return id
 }
