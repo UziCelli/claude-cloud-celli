@@ -11,7 +11,10 @@ export type MesoDoc = Omit<Meso, 'divisao' | 'progressao'> & {
   progressao: { principais: Linhas<number | null>; auxiliares: Linhas<number | null> }
 }
 
-const paraMapa = <T>(linhas: T[][], p: string): Linhas<T> =>
+// Documento completo em mesos/{id}, como gravado por salvarMeso.
+export type MesoSalvo = MesoDoc & { alunoId: string; nome: string }
+
+const paraMapa =<T>(linhas: T[][], p: string): Linhas<T> =>
   Object.fromEntries(linhas.map((l, i) => [`${p}${i + 1}`, l]))
 // Pelo índice (não pela ordem das chaves): w10 vem depois de w9.
 const deMapa = <T>(m: Linhas<T>, p: string): T[][] => Object.keys(m).map((_, i) => m[`${p}${i + 1}`])
