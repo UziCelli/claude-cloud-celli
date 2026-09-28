@@ -6,7 +6,7 @@ import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Botao, Campo, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, Pagina } from '../../../ui'
 import Preview from './Preview'
 import TabDivisao from './TabDivisao'
 import TabMetodos from './TabMetodos'
@@ -17,6 +17,12 @@ const ABAS = ['config', 'divisao', 'progressao', 'metodos'] as const
 type Aba = (typeof ABAS)[number]
 const TITULO_ABA: Record<Aba, string> = { config: 'Config', divisao: 'Divisão', progressao: 'Progressão', metodos: 'Métodos' }
 
+// JSON com chaves ordenadas: o servidor pode devolver os mapas em outra ordem.
+const estavel = (v: unknown) =>
+  JSON.stringify(v, (_, x) =>
+    x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x,
+  )
+
 export default function EditorMeso({ id }: { id: string }) {
   const ref = useMemo(() => doc(db, 'mesos', id), [id])
   const mesoDoc = useDoc<MesoSalvo>(ref)
@@ -24,7 +30,8 @@ export default function EditorMeso({ id }: { id: string }) {
   const registrosDocs = useLista<RegistroDoc>(registrosQ)
   const registros = useMemo(() => docsParaRegistros(registrosDocs.dados), [registrosDocs.dados])
 
-  const carregado = useRef(false)
+  const base = useRef('') // versão remota que o editor carregou (sem carimbos de data)
+  const [conflito, setConflito] = useState(false)
   const [meso, setMeso] = useState<Meso | null>(null)
   const [nome, setNome] = useState('')
   const [alunoId, setAlunoId] = useState('')
@@ -33,13 +40,21 @@ export default function EditorMeso({ id }: { id: string }) {
   const [semana, setSemana] = useState(1)
   const [erro, setErro] = useState<string | null>(null)
 
+  // Acompanha o documento remoto: sem edições locais, recarrega; com edições, avisa do conflito
+  // (evita que uma aba antiga sobrescreva mudanças feitas em outra aba/aparelho).
   useEffect(() => {
-    if (carregado.current || !mesoDoc.dados) return
-    carregado.current = true
-    setMeso(docParaMeso(mesoDoc.dados))
-    setNome(mesoDoc.dados.nome)
-    setAlunoId(mesoDoc.dados.alunoId)
-  }, [mesoDoc.dados])
+    const d = mesoDoc.dados
+    if (!d) return
+    const { atualizadoEm: _a, criadoEm: _c, ...resto } = d as MesoSalvo & { atualizadoEm?: unknown; criadoEm?: unknown }
+    const json = estavel(resto)
+    if (json === base.current) return
+    if (dirty) return setConflito(true)
+    base.current = json
+    setMeso(docParaMeso(d))
+    setNome(d.nome)
+    setAlunoId(d.alunoId)
+    setConflito(false)
+  }, [mesoDoc.dados, dirty])
 
   if (mesoDoc.carregando || !meso) return <Pagina titulo="Carregando…">{null}</Pagina>
 
@@ -55,11 +70,21 @@ export default function EditorMeso({ id }: { id: string }) {
     salvarMeso(id, alunoId, nome, meso).gravado.catch(() => setErro('Não foi possível salvar. Tentando de novo quando houver internet.'))
   }
 
+  // Há carga registrada em algum treino/semana que satisfaz o filtro?
+  const temCargas = (filtro: (w: number, t: number) => boolean) =>
+    Object.entries(registros).some(([k, c]) => {
+      const [w, t] = k.split('-').map(Number)
+      return filtro(w, t) && Object.values(c).some((a) => a.some((x) => x != null))
+    })
+  const AVISO_CORTE = 'já têm cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?'
+
   function setFrequencia(n: number) {
+    if (n < meso!.frequencia && temCargas((_, t) => t > n) && !confirm(`Os treinos removidos ${AVISO_CORTE}`)) return
     atualizar({ frequencia: n, divisao: redimensionar(meso!.divisao, n, () => []) })
   }
 
   function setSemanas(n: number) {
+    if (n < meso!.semanas && temCargas((w) => w > n) && !confirm(`As semanas removidas ${AVISO_CORTE}`)) return
     atualizar({
       semanas: n,
       progressao: {
@@ -95,6 +120,16 @@ export default function EditorMeso({ id }: { id: string }) {
       }
     >
       {erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}
+      {conflito && (
+        <div className="mb-3">
+          <Aviso>
+            Este mesociclo foi alterado em outra aba ou aparelho. Salvar agora substitui aquela versão.{' '}
+            <button className="underline" onClick={() => setDirty(false)}>
+              Descartar minhas mudanças e carregar a versão atual
+            </button>
+          </Aviso>
+        </div>
+      )}
       <div className="mb-4 flex gap-2 border-b border-slate-800 pb-2">
         {ABAS.map((a) => (
           <button
