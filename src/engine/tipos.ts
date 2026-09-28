@@ -1,0 +1,69 @@
+export type Metodo = 'Dropset' | 'Biset' | 'Triset' | 'Superset' | 'Circuito' | 'Rest-pause' | 'Clusterset'
+
+export type Escopo =
+  | 'Todas as séries'
+  | 'Série específica'
+  | 'Primeiras 2 séries'
+  | 'Últimas 2 séries'
+  | 'Primeiras 3 séries'
+  | 'Últimas 3 séries'
+  | 'Primeiras 4 séries'
+  | 'Últimas 4 séries'
+
+export interface AplicacaoMetodo {
+  ativo: boolean
+  semana: number
+  treino: number
+  exercicio: number // posição 1–10
+  metodo: Metodo
+  escopo: Escopo
+  serie?: number
+  grupo?: number
+  reducaoCarga?: number
+  pausaInternaS?: number
+  blocos?: number
+  repsPorBloco?: number
+  adicional?: number
+  etapas?: number
+  cargaEtapa?: (number | null)[]
+  repsPadrao?: number
+  repsEtapa?: (number | null)[]
+}
+
+export interface Slot {
+  slotId: string
+  nome: string
+}
+
+export interface Meso {
+  frequencia: number
+  semanas: number
+  inicio: string // YYYY-MM-DD
+  pausaS: number
+  divisao: Slot[][] // [treino-1][pos-1]
+  trocas?: Record<string, Slot> // chave `${semana}-${treino}-${pos}`
+  progressao: { principais: (number | null)[][]; auxiliares: (number | null)[][] } // [semana-1][serie-1]
+  metodos: AplicacaoMetodo[]
+}
+
+export type Cargas = Record<string /* slotId */, (number | null)[]> // índice = coluna: séries e depois etapas do dropset
+export type Registros = Record<string /* `${semana}-${treino}` */, Cargas>
+
+export interface ExercicioPrescrito {
+  pos: number
+  slot: Slot
+  n: number // séries da progressão
+  reps: number[] // n séries + etapas do dropset
+  rotulo: string // '' sem método
+  cargaSugerida: (number | null)[] // null nas séries; carga da etapa nas etapas do dropset
+}
+
+export interface Sessao {
+  semana: number
+  treino: number
+  inicioSemana: string // YYYY-MM-DD
+  pausaS: number
+  series: number // maior n entre os exercícios
+  exercicios: ExercicioPrescrito[]
+  tempoMin: number
+}
