@@ -1,6 +1,6 @@
 {
   "packageId": "br.com.victorcelli.forca",
-  "host": "forca--app.web.app",
+  "host": "app.vfitcoachapp.com",
   "name": "VFITCOACH",
   "launcherName": "VFITCOACH",
   "display": "standalone",
@@ -9,9 +9,9 @@
   "backgroundColor": "#0A1424",
   "enableNotifications": false,
   "startUrl": "/",
-  "iconUrl": "https://forca--app.web.app/pwa-512x512.png",
-  "maskableIconUrl": "https://forca--app.web.app/maskable-icon-512x512.png",
-  "webManifestUrl": "https://forca--app.web.app/manifest.webmanifest",
+  "iconUrl": "https://app.vfitcoachapp.com/pwa-512x512.png",
+  "maskableIconUrl": "https://app.vfitcoachapp.com/maskable-icon-512x512.png",
+  "webManifestUrl": "https://app.vfitcoachapp.com/manifest.webmanifest",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./forca.keystore",
@@ -22,6 +22,6 @@
   "appVersionCode": 1,
   "fallbackType": "customtabs",
   "minSdkVersion": 21,
-  "fullScopeUrl": "https://forca--app.web.app/",
+  "fullScopeUrl": "https://app.vfitcoachapp.com/",
   "generatorApp": "@bubblewrap/cli"
 }

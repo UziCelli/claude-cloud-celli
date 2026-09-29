@@ -136,7 +136,7 @@ function PassosDesktop() {
   return (
     <Cartao className="space-y-3 text-center">
       <p className="text-sm">Abra este link no celular para instalar o app:</p>
-      <p className="break-all text-lg font-bold text-marca-300">forca--app.web.app/instalar</p>
+      <p className="break-all text-lg font-bold text-marca-300">app.vfitcoachapp.com/instalar</p>
     </Cartao>
   )
 }
