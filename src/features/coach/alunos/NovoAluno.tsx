@@ -38,7 +38,7 @@ export default function NovoAluno() {
     }
   }
 
-  const aba = (ativo: boolean) => `flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${ativo ? 'bg-orange-500 text-slate-950' : 'bg-slate-800'}`
+  const aba = (ativo: boolean) => `flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${ativo ? 'bg-marca-500 text-white' : 'bg-slate-800'}`
   return (
     <Pagina titulo="Novo aluno">
       <Cartao className="max-w-md">

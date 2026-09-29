@@ -102,7 +102,7 @@ export default function TabDivisao({
                           key={slot?.slotId ?? `novo-${t}-${p}`}
                           placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
                           onBlur={(e) => commit(t, p, e.target.value)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
+                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-marca-500"
                         />
                         {slot && p === arr.length && (
                           <button

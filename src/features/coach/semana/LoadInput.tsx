@@ -24,7 +24,7 @@ export default function LoadInput({
       placeholder={placeholder == null ? undefined : String(placeholder)}
       onBlur={(e) => commit(e.target.value)}
       onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-      className={`${className} rounded border border-slate-700 bg-slate-950 px-1 py-1 text-center text-base text-slate-100 outline-none focus:border-orange-500`}
+      className={`${className} rounded border border-slate-700 bg-slate-950 px-1 py-1 text-center font-display text-base font-bold text-slate-100 outline-none focus:border-marca-500`}
     />
   )
 }

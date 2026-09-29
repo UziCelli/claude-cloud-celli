@@ -3,6 +3,7 @@ import { sair } from './lib/acoes'
 import { useUsuarioAtual } from './lib/hooks'
 import { casar, useRota } from './rota'
 import { Botao, Centro } from './ui'
+import Logo from './Logo'
 import Entrar from './features/auth/Entrar'
 import Inicio from './features/coach/inicio/Inicio'
 import NovoAluno from './features/coach/alunos/NovoAluno'
@@ -41,17 +42,17 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
   return (
     <>
-      <header className="border-b border-slate-800 bg-slate-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
+      <header className="border-b border-slate-800 bg-marca-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <a href="#/" className="shrink-0 text-lg font-bold">
-            Força <span className="text-orange-500">coach</span>
+          <a href="#/" className="shrink-0 text-white" aria-label="VFITCOACH">
+            <Logo className="h-5" faixa="#3F72A6" />
           </a>
           <nav className="flex shrink-0 gap-3 text-sm text-slate-300">
-            <a href="#/" className="hover:text-orange-400">Início</a>
-            <a href="#/alunos" className="hover:text-orange-400">Alunos</a>
+            <a href="#/" className="hover:text-marca-400">Início</a>
+            <a href="#/alunos" className="hover:text-marca-400">Alunos</a>
           </nav>
           <div className="flex min-w-0 items-center gap-3 text-sm text-slate-400">
-            <a href="#/conta" className="min-w-0 truncate hover:text-orange-400">
+            <a href="#/conta" className="min-w-0 truncate hover:text-marca-400">
               {nome}
             </a>
             <Botao className="shrink-0" onClick={sair}>Sair</Botao>

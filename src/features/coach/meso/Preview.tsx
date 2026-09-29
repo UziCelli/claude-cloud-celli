@@ -32,7 +32,7 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
                 {sessao?.exercicios.map((e) => (
                   <li key={e.pos}>
                     {e.pos}. {e.slot.nome || <span className="text-slate-500">(vazio)</span>} — {e.reps.join('/')} reps
-                    {e.rotulo && <span className="text-orange-400"> · {e.rotulo}</span>}
+                    {e.rotulo && <span className="text-marca-300"> · {e.rotulo}</span>}
                   </li>
                 ))}
                 {!sessao?.exercicios.length && <li className="text-slate-500">Nenhum exercício.</li>}

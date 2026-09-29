@@ -106,7 +106,7 @@ export default function EditorMeso({ id }: { id: string }) {
             setNome(e.target.value)
             setDirty(true)
           }}
-          className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1 text-2xl font-bold text-slate-100 outline-none focus:border-orange-500"
+          className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1 text-2xl font-bold text-slate-100 outline-none focus:border-marca-500"
         />
       }
       acoes={
@@ -135,7 +135,7 @@ export default function EditorMeso({ id }: { id: string }) {
           <button
             key={a}
             onClick={() => setAba(a)}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${aba === a ? 'bg-orange-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'}`}
+            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${aba === a ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
           >
             {TITULO_ABA[a]}
           </button>

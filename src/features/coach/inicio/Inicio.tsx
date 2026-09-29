@@ -46,7 +46,7 @@ export default function Inicio() {
         {blocos.map(([titulo, lista, vazio]) => (
           <Cartao key={titulo} className="space-y-2">
             <h2 className="font-semibold">
-              {titulo} <span className="text-slate-500">({lista.length})</span>
+              {titulo} <span className="font-display text-lg font-bold text-marca-300">{lista.length}</span>
             </h2>
             {lista.length === 0 ? (
               <p className="text-sm text-slate-500">{vazio}</p>

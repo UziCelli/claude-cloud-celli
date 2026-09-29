@@ -66,7 +66,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
         <div className="min-w-0">
           <h1 className="text-lg font-bold">Treino {treino}</h1>
           <p className="text-xs text-slate-400">
-            Semana {semana} · ~{fmt(sessao.tempoMin)} min · pausa {sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
+            Semana {semana} · <b className="font-display text-slate-200">~{fmt(sessao.tempoMin)} min</b> · pausa {sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
           </p>
         </div>
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
@@ -147,7 +147,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           <div className="mx-auto flex max-w-md items-center justify-between">
             <div>
               <div className="text-xs text-slate-400">Descanso</div>
-              <div className="text-2xl font-bold tabular-nums">{mmss(descanso.restante)}</div>
+              <div className="font-display text-2xl font-bold tabular-nums">{mmss(descanso.restante)}</div>
             </div>
             <Botao onClick={descanso.parar}>Pular</Botao>
           </div>

@@ -13,14 +13,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       manifest: {
         id: '/',
-        name: 'Força — Treino',
-        short_name: 'Força',
+        name: 'VFITCOACH — Treino',
+        short_name: 'VFITCOACH',
         lang: 'pt-BR',
         display: 'standalone',
         scope: '/',
         start_url: '/',
-        background_color: '#0b0b0f',
-        theme_color: '#0b0b0f',
+        background_color: '#0A1424',
+        theme_color: '#0B1E3D',
         icons: [
           {
             src: '/pwa-192x192.png',
@@ -43,7 +43,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,json,woff2}'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/\.well-known\//],
       },

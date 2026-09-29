@@ -77,7 +77,7 @@ function TabelaProgressao({
                       type="number"
                       value={v ?? ''}
                       onChange={(e) => setCelula(tabela, w, j + 1, e.target.value === '' ? null : Number(e.target.value))}
-                      className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
+                      className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-marca-500"
                     />
                   </td>
                 ))}
