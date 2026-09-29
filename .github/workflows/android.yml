@@ -4,9 +4,6 @@ name: Testar APK no Android
 # prints em docs/android/. Sem barra de endereço no print = o app abriu como app (TWA verificado).
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/fervent-brahmagupta-y5vri5]
-    paths: [.github/workflows/android.yml, tools/android-teste.sh]
 
 permissions:
   contents: write
