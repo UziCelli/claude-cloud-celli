@@ -16,6 +16,7 @@ export default function TabDivisao({
 }) {
   const [aviso, setAviso] = useState<string | null>(null)
   const [hint, setHint] = useState<string | null>(null)
+  const [treinoSel, setTreinoSel] = useState(1)
 
   function commit(t: number, p: number, nomeBruto: string) {
     const arr = meso.divisao[t - 1] ?? []
@@ -68,60 +69,92 @@ export default function TabDivisao({
     }
   }
 
+  const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1)
+  const posicoes = Array.from({ length: 10 }, (_, i) => i + 1)
+
+  // Campo + "×" de uma posição; usado pela grade (md+) e pela lista (celular).
+  function celula(t: number, p: number) {
+    const arr = meso.divisao[t - 1] ?? []
+    if (p > arr.length + 1) return null
+    const slot = arr[p - 1]
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          list="catalogo"
+          defaultValue={slot?.nome ?? ''}
+          key={slot?.slotId ?? `novo-${t}-${p}`}
+          placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
+          onBlur={(e) => commit(t, p, e.target.value)}
+          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100 outline-none focus:border-marca-500 md:py-1"
+        />
+        {slot && p === arr.length && (
+          <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="px-2 py-1 text-lg text-slate-500 hover:text-red-400">
+            ×
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {aviso && <Aviso>{aviso}</Aviso>}
-      <Cartao className="overflow-x-auto">
-        <table className="w-full min-w-[500px] border-separate border-spacing-2 text-sm">
-          <thead>
-            <tr>
-              <th className="text-left text-slate-400">Posição</th>
-              {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((t) => (
-                <th key={t} className="text-left text-slate-400">
-                  Treino {t}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((p) => (
-              <tr key={p}>
-                <td className="whitespace-nowrap text-slate-400">
-                  {p} · {rotuloPos(p)}
-                </td>
-                {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((t) => {
-                  const arr = meso.divisao[t - 1] ?? []
-                  if (p > arr.length + 1) return <td key={t} />
-                  const slot = arr[p - 1]
-                  return (
-                    <td key={t}>
-                      <div className="flex items-center gap-1">
-                        <input
-                          list="catalogo"
-                          defaultValue={slot?.nome ?? ''}
-                          key={slot?.slotId ?? `novo-${t}-${p}`}
-                          placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
-                          onBlur={(e) => commit(t, p, e.target.value)}
-                          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-marca-500"
-                        />
-                        {slot && p === arr.length && (
-                          <button
-                            type="button"
-                            title="Remover"
-                            onClick={() => commit(t, p, '')}
-                            className="px-1 text-slate-500 hover:text-red-400"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )
-                })}
-              </tr>
+      <Cartao>
+        <div className="md:hidden">
+          <div className="mb-3 flex gap-2 overflow-x-auto">
+            {treinos.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTreinoSel(Math.min(t, meso.frequencia))}
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${Math.min(treinoSel, meso.frequencia) === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+              >
+                Treino {t}
+              </button>
             ))}
-          </tbody>
-        </table>
+          </div>
+          <ul className="space-y-3">
+            {posicoes.map((p) => {
+              const c = celula(Math.min(treinoSel, meso.frequencia), p)
+              return (
+                c && (
+                  <li key={p}>
+                    <p className="mb-1 text-xs text-slate-400">
+                      {p} · {rotuloPos(p)}
+                    </p>
+                    {c}
+                  </li>
+                )
+              )
+            })}
+          </ul>
+        </div>
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full min-w-[500px] border-separate border-spacing-2 text-sm">
+            <thead>
+              <tr>
+                <th className="text-left text-slate-400">Posição</th>
+                {treinos.map((t) => (
+                  <th key={t} className="text-left text-slate-400">
+                    Treino {t}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {posicoes.map((p) => (
+                <tr key={p}>
+                  <td className="whitespace-nowrap text-slate-400">
+                    {p} · {rotuloPos(p)}
+                  </td>
+                  {treinos.map((t) => (
+                    <td key={t}>{celula(t, p)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <datalist id="catalogo">
           {nomesCatalogo.map((n) => (
             <option key={n} value={n} />
@@ -165,8 +198,9 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
           const [w, t, p] = chave.split('-')
           return (
             <li key={chave} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-950 px-3 py-2">
-              <span>
-                Semana {w}, treino {t}, posição {p}: <b>{slot.nome}</b>
+              <span className="min-w-0">
+                Semana {w} · Treino {t} · Pos. {p}
+                <b className="block text-base">{slot.nome}</b>
               </span>
               <Botao tipo="perigo" onClick={() => remover(chave)}>
                 Remover
@@ -180,13 +214,13 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
         <Seletor rotulo="Semana" valor={semana} max={meso.semanas} onChange={setSemana} />
         <Seletor rotulo="Treino" valor={treino} max={meso.frequencia} onChange={(v) => { setTreino(v); setPos(1) }} />
         <Seletor rotulo="Posição" valor={pos} max={Math.max(1, tamanhoTreino)} onChange={setPos} />
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex w-full flex-col gap-1 text-sm md:w-auto">
           <span className="text-slate-400">Exercício</span>
           <input
             list="catalogo"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
           />
         </label>
         <Botao tipo="primario" onClick={adicionar}>

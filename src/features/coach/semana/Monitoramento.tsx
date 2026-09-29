@@ -33,8 +33,9 @@ export default function Monitoramento({ meso, registros, reps = {} }: { meso: Me
   const metaVolume = metaRobusta(volumes)
 
   return (
-    <Cartao className="overflow-x-auto">
+    <Cartao>
       <h2 className="mb-3 font-semibold">Monitoramento</h2>
+      <div className="overflow-x-auto">
       <table className="w-full text-left text-xs">
         <thead className="border-b border-slate-800 text-slate-400">
           <tr>
@@ -83,6 +84,7 @@ export default function Monitoramento({ meso, registros, reps = {} }: { meso: Me
           </tr>
         </tbody>
       </table>
+</div>
     </Cartao>
   )
 }

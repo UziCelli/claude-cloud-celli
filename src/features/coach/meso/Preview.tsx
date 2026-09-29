@@ -20,22 +20,31 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
           ))}
         </select>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((t) => {
           const sessao = prescreverSessao(meso, semana, t)
           return (
-            <div key={t} className="rounded-lg border border-slate-800 p-3 text-sm">
-              <p className="font-semibold">
-                Treino {t} <span className="font-normal text-slate-400">· {sessao ? sessao.tempoMin.toFixed(1) : '0.0'} min</span>
-              </p>
-              <ul className="mt-1 space-y-1 text-slate-300">
+            <div key={t} className="rounded-lg border border-slate-800 bg-slate-950 text-sm">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-800 px-3 py-2">
+                <p className="font-semibold">Treino {t}</p>
+                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
+                  {(sessao?.tempoMin ?? 0).toFixed(1).replace('.', ',')} min
+                </span>
+              </div>
+              <ul className="divide-y divide-slate-800">
                 {sessao?.exercicios.map((e) => (
-                  <li key={e.pos}>
-                    {e.pos}. {e.slot.nome || <span className="text-slate-500">(vazio)</span>} — {e.reps.join('/')} reps
-                    {e.rotulo && <span className="text-marca-300"> · {e.rotulo}</span>}
+                  <li key={e.pos} className="flex gap-3 px-3 py-2">
+                    <span className="w-4 shrink-0 text-slate-500">{e.pos}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">{e.slot.nome || <span className="text-slate-500">(vazio)</span>}</p>
+                      <p className="text-slate-400">{e.reps.join('/')} reps</p>
+                      {e.rotulo && (
+                        <span className="mt-1 inline-block rounded-full bg-marca-500/20 px-2 py-0.5 text-xs text-marca-300">{e.rotulo}</span>
+                      )}
+                    </div>
                   </li>
                 ))}
-                {!sessao?.exercicios.length && <li className="text-slate-500">Nenhum exercício.</li>}
+                {!sessao?.exercicios.length && <li className="px-3 py-2 text-xs text-slate-500">Nenhum exercício</li>}
               </ul>
             </div>
           )

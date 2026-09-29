@@ -61,7 +61,7 @@ export default function SessaoCard({
   const nEtapas = Math.max(0, ...sessao.exercicios.map((e) => e.reps.length - e.n))
 
   return (
-    <Cartao className="overflow-x-auto">
+    <Cartao>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">Treino {sessao.treino}</h3>
@@ -74,6 +74,7 @@ export default function SessaoCard({
           Realizado
         </label>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-left text-xs">
         <thead className="border-b border-slate-800 text-slate-400">
           <tr>
@@ -156,6 +157,7 @@ export default function SessaoCard({
           </tr>
         </tbody>
       </table>
+</div>
     </Cartao>
   )
 }

@@ -13,7 +13,7 @@ export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; r
   const pontos = nome ? evolucaoExercicio(meso, registros, nome, reps) : []
 
   return (
-    <Cartao className="overflow-x-auto">
+    <Cartao>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold">Evolução</h2>
         <select
@@ -31,6 +31,7 @@ export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; r
       {pontos.length === 0 ? (
         <p className="text-sm text-slate-400">Sem ocorrências ainda.</p>
       ) : (
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-slate-800 text-slate-400">
             <tr>
@@ -55,6 +56,7 @@ export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; r
             ))}
           </tbody>
         </table>
+</div>
       )}
     </Cartao>
   )
