@@ -1,0 +1,41 @@
+name: Testar APK no Android
+
+# Instala o APK da Release "apk" num emulador Android (Google Play, API 34), abre o app e guarda
+# prints em docs/android/. Sem barra de endereço no print = o app abriu como app (TWA verificado).
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/fervent-brahmagupta-y5vri5]
+    paths: [.github/workflows/android.yml, tools/android-teste.sh]
+
+permissions:
+  contents: write
+
+jobs:
+  emulador:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Liberar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Baixar o APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download apk --pattern forca.apk
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis_playstore
+          arch: x86_64
+          script: bash tools/android-teste.sh
+      - name: Guardar prints
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/android
+          git commit -m "Prints do APK no emulador Android"
+          git push
