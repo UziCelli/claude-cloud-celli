@@ -12,6 +12,7 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
 - `src/engine/` — motor de cálculo puro (sem React/Firebase). TDD obrigatório.
 - `firestore.rules` — segurança e bloqueio por pagamento. TDD obrigatório (emulador).
 - `tools/extrair_planilha.py` — lê o .xlsx original (só biblioteca padrão). O .xlsx nunca vai para o repositório.
+- `docs/marca/` — logo VFITCOACH em SVG. `docs/plano-app-gislane.md` — plano pronto do app da Gislane (segunda marca).
 
 ## Comandos
 `npm run dev` · `npm run typecheck` · `npm test` · `npm run build`
