@@ -5,6 +5,8 @@ adb install -r forca.apk
 # Chrome sem as telas de boas-vindas (só no emulador).
 adb shell am set-debug-app --persistent com.android.chrome
 adb shell "echo 'chrome --disable-fre --no-default-browser-check --no-first-run' > /data/local/tmp/chrome-command-line"
+# Celular virtual recém-ligado: espera o Google Play Services terminar de iniciar (senão ele trava e derruba o Chrome).
+sleep 120
 adb logcat -c
 adb shell monkey -p br.com.victorcelli.forca -c android.intent.category.LAUNCHER 1
 mkdir -p docs/android
