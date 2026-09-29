@@ -1,0 +1,41 @@
+name: Importar mesociclo
+
+# Manutenção manual: traz um mesociclo da planilha para o app, com as cargas já registradas.
+# 1. python3 tools/planilha_para_meso.py planilha.xlsx "M (6)" > meso.json
+# 2. Actions -> "Importar mesociclo" -> Run workflow -> aluno (e-mail ou nome), nome do meso e o conteúdo de meso.json.
+on:
+  workflow_dispatch:
+    inputs:
+      aluno:
+        description: E-mail do aluno no app (ou o nome; nome sem cadastro vira aluno presencial)
+        required: true
+      nome:
+        description: Nome do mesociclo no app
+        required: true
+      meso:
+        description: Conteúdo do JSON gerado por tools/planilha_para_meso.py
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gravar no Firebase
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          ALUNO: ${{ inputs.aluno }}
+          NOME: ${{ inputs.nome }}
+          MESO: ${{ inputs.meso }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/importar-meso.mjs "$RUNNER_TEMP/adm/"
+          cd "$RUNNER_TEMP/adm"
+          npm init -y > /dev/null && npm install --silent firebase-admin@14
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node importar-meso.mjs
