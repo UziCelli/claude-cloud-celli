@@ -31,6 +31,8 @@ jobs:
           api-level: 34
           target: google_apis_playstore
           arch: x86_64
+          ram-size: 4096M
+          disable-animations: true
           script: bash tools/android-teste.sh
       - name: Guardar prints
         run: |
