@@ -30,3 +30,6 @@
   gerar um APK novo — o app é uma "casca" que abre o site.
 - Só gere um APK novo se quiser mudar o nome ou o ícone que aparecem
   no celular (o app não passa por loja nenhuma).
+
+## Testar sem ter Android
+GitHub → **Actions → Testar APK no Android → Run workflow**. Um celular Android virtual instala o APK da Release, abre o app e salva prints em `docs/android/` (sem barra de endereço = tudo certo). Exemplo: `docs/android/apk-login.png`.
