@@ -65,7 +65,7 @@ export default function Monitoramento({ meso, registros, reps = {} }: { meso: Me
             <td className="p-2 text-right">{resumo.sessoesAtivas}</td>
             <td className="p-2">—</td>
           </tr>
-          <tr className="text-orange-300">
+          <tr className="text-marca-300">
             <td className="p-2">Meta semanal (robusta)</td>
             <td className="p-2 text-right">{fmt(metaMovimentos)}</td>
             <td className="p-2 text-right">{fmt(metaCarga)}</td>
@@ -73,7 +73,7 @@ export default function Monitoramento({ meso, registros, reps = {} }: { meso: Me
             <td className="p-2 text-right">—</td>
             <td className="p-2">—</td>
           </tr>
-          <tr className="text-orange-300">
+          <tr className="text-marca-300">
             <td className="p-2">Meta do ciclo</td>
             <td className="p-2 text-right">{fmt(metaCiclo(metaMovimentos, meso.semanas))}</td>
             <td className="p-2 text-right">{fmt(metaCiclo(metaCarga, meso.semanas))}</td>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { cadastrar, entrar, recuperarSenha } from '../../lib/acoes'
 import { Aviso, Botao, Campo, Cartao, Centro } from '../../ui'
+import Logo from '../../Logo'
 
 const erros: Record<string, string> = {
   'auth/wrong-password': 'E-mail ou senha incorretos',
@@ -63,8 +64,9 @@ export default function Entrar() {
   return (
     <Centro>
       <Cartao className="text-left">
-        <h1 className="mb-4 text-center text-2xl font-bold">
-          Força <span className="text-orange-500">{cadastro ? 'criar conta' : 'coach'}</span>
+        <h1 className="mb-4 flex flex-col items-center gap-3 text-center">
+          <Logo className="h-10 text-white" faixa="#3F72A6" />
+          <span className="text-sm font-semibold text-slate-400">{cadastro ? 'Criar conta' : 'Área do aluno e do coach'}</span>
         </h1>
         <form
           className="space-y-3"

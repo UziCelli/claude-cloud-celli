@@ -16,11 +16,11 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b pt-[env(safe-area-inset-top)] border-slate-800 bg-slate-900">
+      <header className="sticky top-0 z-30 border-b pt-[env(safe-area-inset-top)] border-slate-800 bg-marca-900">
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
           <span className="font-bold">Olá, {nome}</span>
           <div className="flex items-center gap-3 text-sm text-slate-300">
-            <a href="#/evolucao" className="hover:text-orange-400">
+            <a href="#/evolucao" className="hover:text-marca-400">
               Evolução
             </a>
             <Botao onClick={sair}>Sair</Botao>

@@ -189,7 +189,7 @@ function FormularioData({
         type="date"
         value={valor}
         onChange={(e) => setValor(e.target.value)}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-orange-500"
+        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-marca-500"
       />
       <Botao tipo="primario" onClick={() => onConfirmar(valor)}>
         Confirmar

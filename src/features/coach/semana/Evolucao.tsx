@@ -19,7 +19,7 @@ export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; r
         <select
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-orange-500"
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-marca-500"
         >
           {lista.map((n) => (
             <option key={n} value={n}>

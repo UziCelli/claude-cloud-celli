@@ -155,7 +155,8 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
   await page.getByRole('button', { name: 'Excluir' }).click()
   await page.getByRole('button', { name: 'Sim, excluir' }).click()
   await expect(page.getByText('Nenhum mesociclo ainda.')).toBeVisible({ timeout: 10_000 })
-  expect(await lerDoc(`mesos/${mesoId}`)).toBeNull()
+  // A tela atualiza pelo cache local antes de o servidor confirmar: espera o servidor.
+  await expect.poll(() => lerDoc(`mesos/${mesoId}`), { timeout: 10_000 }).toBeNull()
   expect(await lerDoc(`registros/${mesoId}_s01_t1`)).toBeNull()
 
   await page.getByRole('link', { name: 'Início' }).click()

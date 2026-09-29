@@ -18,7 +18,7 @@ export const Cartao = ({ children, className = '' }: { children: ReactNode; clas
 )
 
 const estilos = {
-  primario: 'bg-orange-500 text-slate-950 hover:bg-orange-400',
+  primario: 'bg-marca-500 text-white hover:bg-marca-400',
   secundario: 'bg-slate-800 text-slate-100 hover:bg-slate-700',
   perigo: 'bg-red-600 text-white hover:bg-red-500',
 }
@@ -39,7 +39,7 @@ export const Campo = ({ rotulo, className = '', ...p }: InputHTMLAttributes<HTML
     <span className="text-slate-400">{rotulo}</span>
     <input
       {...p}
-      className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-orange-500"
+      className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-marca-500"
     />
   </label>
 )
