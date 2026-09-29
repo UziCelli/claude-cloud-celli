@@ -41,8 +41,8 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 ## Checklist antes de começar (Victor/Gislane)
 - [ ] **Nome certo:** "Gislane" ou "Gislaine"? No Canva está "Gislane Personal Trainer".
 - [ ] **Nome do app** embaixo do ícone (curto, até 12 letras).
-- [ ] **Logo** em PNG com fundo transparente (ou SVG), anexado na conversa, como você fez com o da VFIT.
-- [ ] **Cores e fontes:** estão no Canva, no kit de marca "Gislane Personal Trainer". O Claude lê pelas miniaturas dos designs ("Cópia de Portfólio Gislane", "Proposta Comercial - Gislane") e pede confirmação.
+- [x] **Logo:** já vetorizado em `docs/marca/gislane-logo.svg` (vermelho `#E21E27`, feito a partir do PNG oficial em fonte Gatwick).
+- [ ] **Cores e fontes** (paleta da prévia, a confirmar com o Victor: fundo preto quente, botões vermelho `#E21E27`, destaques rosé `#D4A79C`; escalas usadas na prévia: slate 950 `#0e0a09` · 900 `#1a1311` · 800 `#2c211e` · 700 `#3d2e2a` · 600 `#54423c` · 500 `#85706a` · 400 `#b89a92` · 300 `#d4b8b0` · 200 `#e8d7d2` · 100 `#f6eeeb`; marca 300 `#d4a79c` · 400 `#ea4a50` · 500 `#e21e27` · 600 `#b81a22` · 700 `#5a2a24` · 900 `#1a0f0d`): estão no Canva, no kit de marca "Gislane Personal Trainer". O Claude lê pelas miniaturas dos designs ("Cópia de Portfólio Gislane", "Proposta Comercial - Gislane") e pede confirmação.
 - [ ] **Endereço** escolhido (tabela acima). Se for domínio próprio, já comprado.
 - [ ] **Projeto Firebase novo** (o Claude guia na hora):
   1. Criar o projeto (ex.: `gislane-app`) e ativar Authentication (e-mail/senha) e Firestore em `southamerica-east1`.
