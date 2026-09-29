@@ -48,21 +48,26 @@ function TabelaProgressao({
 }) {
   const linhas = meso.progressao[tabela]
   return (
-    <Cartao className="overflow-x-auto">
+    <Cartao>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">{titulo}</h3>
         <Botao onClick={() => aplicarSemana1(tabela)}>Aplicar semana 1 em todas</Botao>
       </div>
-      <table className="w-full min-w-[500px] border-separate border-spacing-2 text-sm">
+      <div className="overflow-x-auto">
+      <table className="mx-auto border-separate border-spacing-x-0.5 border-spacing-y-1 text-sm md:mx-0 md:w-full md:border-spacing-2">
         <thead>
           <tr>
-            <th className="text-left text-slate-400">Semana</th>
+            <th className="text-left text-slate-400">
+              <span className="md:hidden">Sem</span>
+              <span className="hidden md:inline">Semana</span>
+            </th>
             {Array.from({ length: 6 }, (_, i) => i + 1).map((s) => (
-              <th key={s} className="text-left text-slate-400">
-                Série {s}
+              <th key={s} className="text-center font-normal text-slate-400 md:text-left">
+                <span className="md:hidden">S{s}</span>
+                <span className="hidden md:inline">Série {s}</span>
               </th>
             ))}
-            <th />
+            <th className="hidden md:table-cell" />
           </tr>
         </thead>
         <tbody>
@@ -70,18 +75,26 @@ function TabelaProgressao({
             const w = i + 1
             return (
               <tr key={w}>
-                <td className="text-slate-400">{w}</td>
+                <td className="text-slate-400">
+                  <span className="md:hidden">S{w}</span>
+                  <span className="hidden md:inline">{w}</span>
+                  {w > 1 && (
+                    <button type="button" aria-label="Copiar anterior" onClick={() => copiarAnterior(tabela, w)} className="block px-1 text-marca-300 md:hidden">
+                      ↑
+                    </button>
+                  )}
+                </td>
                 {linha.map((v, j) => (
                   <td key={j}>
                     <input
                       type="number"
                       value={v ?? ''}
                       onChange={(e) => setCelula(tabela, w, j + 1, e.target.value === '' ? null : Number(e.target.value))}
-                      className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-marca-500"
+                      className="w-11 rounded-lg border border-slate-700 bg-slate-950 px-0 py-1 text-center text-base md:w-16 md:px-2 md:text-left text-slate-100 outline-none focus:border-marca-500"
                     />
                   </td>
                 ))}
-                <td>
+                <td className="hidden md:table-cell">
                   {w > 1 && (
                     <Botao onClick={() => copiarAnterior(tabela, w)} className="text-xs">
                       Copiar anterior
@@ -93,6 +106,7 @@ function TabelaProgressao({
           })}
         </tbody>
       </table>
+      </div>
     </Cartao>
   )
 }

@@ -42,12 +42,32 @@ async function confere(page: Page) {
   }))
   expect(r.sw).toBeLessThanOrEqual(r.iw)
   for (const f of r.fontes) expect(f).toBeGreaterThanOrEqual(16)
+  await semTransbordar(page)
   return r.fontes.length
+}
+
+// Nada visível (tabela, linha, campo) pode ser mais largo que o cartão que o contém.
+async function semTransbordar(page: Page) {
+  const ruins = await page.evaluate(() =>
+    [...document.querySelectorAll('main table, main input, main select, main li, main .overflow-x-auto')]
+      .filter((e) => (e as HTMLElement).offsetParent !== null)
+      .filter((e) => {
+        if (!e.matches('.overflow-x-auto') && e.closest('.overflow-x-auto')) return false // rolagem interna é permitida
+        const cartao = e.closest('.rounded-xl')
+        if (!cartao || cartao === e) return false
+        const a = e.getBoundingClientRect()
+        const b = cartao.getBoundingClientRect()
+        return a.right > b.right + 0.5 || a.left < b.left - 0.5
+      })
+      .map((e) => e.tagName + ':' + (e.textContent ?? '').slice(0, 20)),
+  )
+  expect(ruins).toEqual([])
 }
 
 for (const vp of [
   { width: 390, height: 844 },
   { width: 375, height: 667 },
+  { width: 360, height: 800 },
 ]) {
   test(`iPhone ${vp.width}x${vp.height}: sem overflow e inputs >= 16px`, async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: vp, userAgent: UA_IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 3 })
@@ -88,12 +108,13 @@ for (const vp of [
 for (const vp of [
   { width: 390, height: 844 },
   { width: 375, height: 667 },
+  { width: 360, height: 800 },
 ]) {
   test(`coach iPhone ${vp.width}x${vp.height}: sem overflow e inputs >= 16px`, async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: vp, userAgent: UA_IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 3 })
     const page = await ctx.newPage()
     const prints = vp.width === 390
-    const foto = (n: string) => prints && page.screenshot({ path: `test-results/prints/${n}.png` })
+    const foto = (n: string) => prints && page.screenshot({ path: `test-results/prints/${n}.png`, fullPage: n.startsWith('3') && n > '33' })
 
     await page.goto('/')
     await page.getByLabel('E-mail').fill(COACH.email)
@@ -127,8 +148,14 @@ for (const vp of [
     for (const aba of ['Divisão', 'Progressão', 'Métodos', 'Config']) {
       await page.getByRole('button', { name: aba, exact: true }).click()
       await confere(page)
+      await semTransbordar(page)
       if (aba === 'Métodos') await foto('32-coach-editor-iphone')
+      if (aba === 'Divisão') await foto('34-meso-divisao-iphone')
+      if (aba === 'Progressão') await foto('35-meso-progressao-iphone')
     }
+    await page.getByText('Pré-visualização').scrollIntoViewIfNeeded()
+    await semTransbordar(page)
+    await foto('36-meso-preview-iphone')
 
     await page.goto(`/#/meso/${mesoId}/semana/1`)
     await expect(page.getByText('Semana 1 de 4')).toBeVisible()
