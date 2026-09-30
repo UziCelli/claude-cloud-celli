@@ -1,4 +1,4 @@
-import { m } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Meso } from '../../../engine'
@@ -7,7 +7,7 @@ import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, Msg, Pagina } from '../../../ui'
 import Preview from './Preview'
 import TabDivisao from './TabDivisao'
 import TabMetodos from './TabMetodos'
@@ -120,7 +120,8 @@ export default function EditorMeso({ id }: { id: string }) {
         </>
       }
     >
-      {erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}
+      <Msg>{erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}</Msg>
+      <Msg>
       {conflito && (
         <div className="mb-3">
           <Aviso>
@@ -131,6 +132,7 @@ export default function EditorMeso({ id }: { id: string }) {
           </Aviso>
         </div>
       )}
+      </Msg>
       <div className="mb-4 flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
         {ABAS.map((a) => (
           <button
@@ -154,6 +156,13 @@ export default function EditorMeso({ id }: { id: string }) {
         <Preview meso={meso} semana={semana} onSemana={setSemana} />
       </div>
 
+      <AnimatePresence mode="wait" initial={false}>
+        <m.div
+          key={aba}
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0, transition: { duration: 0.18, ease: 'easeOut' } }}
+          exit={{ opacity: 0, transition: { duration: 0.08 } }}
+        >
       {aba === 'config' && (
         <div className="grid max-w-md gap-3">
           <Campo
@@ -207,6 +216,8 @@ export default function EditorMeso({ id }: { id: string }) {
       {aba === 'divisao' && <TabDivisao meso={meso} registros={registros} onAtualizar={atualizar} />}
       {aba === 'progressao' && <TabProgressao meso={meso} onAtualizar={atualizar} />}
       {aba === 'metodos' && <TabMetodos meso={meso} onAtualizar={atualizar} />}
+        </m.div>
+      </AnimatePresence>
     </Pagina>
   )
 }

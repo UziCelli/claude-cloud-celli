@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
-import { Aviso, Botao, campoBase, Cartao } from '../../../ui'
+import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import { nomesCatalogo, semanasComHistorico } from './util'
 
 const rotuloPos = (p: number) => (p <= 2 ? 'Principal' : 'Auxiliar')
@@ -98,7 +98,7 @@ export default function TabDivisao({
 
   return (
     <div className="space-y-4">
-      {aviso && <Aviso>{aviso}</Aviso>}
+      <Msg>{aviso && <Aviso>{aviso}</Aviso>}</Msg>
       <Cartao>
         <div className="md:hidden">
           <div className="mb-3 flex gap-2 overflow-x-auto">
@@ -161,7 +161,7 @@ export default function TabDivisao({
           ))}
         </datalist>
       </Cartao>
-      {hint && <Aviso>{hint}</Aviso>}
+      <Msg>{hint && <Aviso>{hint}</Aviso>}</Msg>
       <TrocasPontuais meso={meso} onAtualizar={onAtualizar} />
     </div>
   )

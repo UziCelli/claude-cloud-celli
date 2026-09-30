@@ -10,7 +10,7 @@ import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
 import { cargaAnterior } from '../../lib/treino'
 import { ir } from '../../rota'
-import { Botao, Centro, Painel } from '../../ui'
+import { Botao, cascata, Centro, item, Painel } from '../../ui'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
 
@@ -186,7 +186,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       </div>
 
       <Novidades />
-      <div className="space-y-4">
+      <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
         {sessao.exercicios.map((e) => {
           const colunasCargas = cs[e.slot.slotId] ?? []
           const colunasReps = rs[e.slot.slotId] ?? []
@@ -210,7 +210,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
             grava(Math.round(peso * frac * 10) / 10)
           }
           return (
-            <div key={e.slot.slotId} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <m.div key={e.slot.slotId} variants={item} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
               <div className="mb-2">
                 <div className="font-semibold">{e.slot.nome}</div>
                 {e.rotulo && <div className="mt-1 text-[11px] text-slate-400">{e.rotulo}</div>}
@@ -259,10 +259,10 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                   )
                 })}
               </div>
-            </div>
+            </m.div>
           )
         })}
-      </div>
+      </m.div>
 
       <div className="mt-6">
         {realizado ? (

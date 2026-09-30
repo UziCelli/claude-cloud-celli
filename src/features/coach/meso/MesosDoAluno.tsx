@@ -1,3 +1,4 @@
+import { m } from 'motion/react'
 import { useMemo, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
@@ -6,7 +7,7 @@ import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, campoBase, Cartao, flash, Pagina, Painel } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagina, Painel } from '../../../ui'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { mesoPadrao } from './mesoPadrao'
 
@@ -38,16 +39,18 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       titulo={`Mesociclos de ${aluno.dados?.nome ?? '…'}`}
       acoes={<Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>}
     >
-      {aviso && <p className="mb-3 text-sm text-green-400">{aviso}</p>}
+      <Msg>{aviso && <p className="mb-3 text-sm text-green-400">{aviso}</p>}</Msg>
       {aluno.dados?.presencial && <DarAcesso id={uid} />}
-      {erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}
+      <Msg>{erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}</Msg>
       {mesos.carregando && <p className="text-slate-400">Carregando…</p>}
       {!mesos.carregando && mesos.dados.length === 0 && <p className="text-slate-400">Nenhum mesociclo ainda.</p>}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {mesos.dados.map((m) => (
-          <CartaoMeso key={m.id} meso={m} />
+      <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
+        {mesos.dados.map((d) => (
+          <m.div key={d.id} variants={item}>
+            <CartaoMeso meso={d} />
+          </m.div>
         ))}
-      </div>
+      </m.div>
     </Pagina>
   )
 }
@@ -101,9 +104,9 @@ function ConfirmarExclusao({ meso, onFechar }: { meso: MesoSalvo & { id: string 
           O aluno já registrou {treinos} treino{treinos === 1 ? '' : 's'} neste mesociclo. As cargas também serão apagadas.
         </Aviso>
       )}
-      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <Msg>{erro && <p className="text-sm text-red-400">{erro}</p>}</Msg>
       <div className="flex flex-wrap gap-2">
-        <Botao tipo="perigo" disabled={enviando} onClick={excluir}>
+        <Botao tipo="perigo" disabled={enviando} carregando={enviando} onClick={excluir}>
           {enviando ? 'Excluindo…' : 'Sim, excluir'}
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
@@ -152,9 +155,9 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
         </select>
       </label>
       <Campo rotulo="Nome do novo mesociclo" value={nome} onChange={(e) => setNome(e.target.value)} />
-      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <Msg>{erro && <p className="text-sm text-red-400">{erro}</p>}</Msg>
       <div className="flex flex-wrap gap-2">
-        <Botao tipo="primario" disabled={!alunoId || !nome.trim() || enviando} onClick={confirmar}>
+        <Botao tipo="primario" disabled={!alunoId || !nome.trim() || enviando} carregando={enviando} onClick={confirmar}>
           Confirmar
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
@@ -187,21 +190,22 @@ function DarAcesso({ id }: { id: string }) {
   return (
     <div className="mb-4 space-y-3">
       <Aviso>Aluno presencial: você anota as cargas em Ver semanas.</Aviso>
-      {aberto ? (
+      <Painel aberto={aberto}>
         <Cartao className="max-w-md">
           <form onSubmit={enviar} className="space-y-3">
             <Campo rotulo="E-mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             <Campo rotulo="Pago até" type="date" required value={pagoAte} onChange={(e) => setPagoAte(e.target.value)} />
-            {erro && <Aviso>{erro}</Aviso>}
+            <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
             <div className="flex gap-2">
-              <Botao tipo="primario" type="submit" disabled={enviando}>{enviando ? 'Criando…' : 'Criar acesso'}</Botao>
+              <Botao tipo="primario" type="submit" disabled={enviando} carregando={enviando}>{enviando ? 'Criando…' : 'Criar acesso'}</Botao>
               <Botao type="button" onClick={() => setAberto(false)}>Cancelar</Botao>
             </div>
           </form>
         </Cartao>
-      ) : (
+      </Painel>
+      <Painel aberto={!aberto}>
         <Botao onClick={() => setAberto(true)}>Dar acesso ao app</Botao>
-      )}
+      </Painel>
     </div>
   )
 }

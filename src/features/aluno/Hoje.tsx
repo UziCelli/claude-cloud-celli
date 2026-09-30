@@ -6,7 +6,7 @@ import type { RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
 import { ir } from '../../rota'
-import { Botao, cascata, Centro, item } from '../../ui'
+import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
 import { fmt, fmtData } from '../coach/semana/format'
 import { mesoAtual } from './mesoAtual'
 import type { MesoSalvo } from '../../lib/conversores'
@@ -57,6 +57,7 @@ function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: str
           →
         </Botao>
       </div>
+      <Deslizar chave={semana}>
       {atual && (
         <p className="mb-3 text-center font-semibold text-emerald-400">
           {proximo ? `▶ Faça hoje: Treino ${proximo}` : 'Semana concluída ✓'}
@@ -116,6 +117,7 @@ function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: str
           )
         })}
       </m.div>
+      </Deslizar>
     </>
   )
 }
