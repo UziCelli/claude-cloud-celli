@@ -8,6 +8,7 @@ export interface Usuario {
   status: 'aguardando' | 'ativo' | 'bloqueado'
   pagoAte?: Timestamp
   criadoEm?: Timestamp
+  pesoKg?: number // peso corporal do aluno (20..300), usado no checkbox PC
   presencial?: boolean // aluno sem app/login (o coach anota as cargas); email '' e sem pagoAte
 }
 

@@ -38,6 +38,9 @@ function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: str
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   const feitos = new Set(registros.filter((r) => r.realizado).map((r) => `${r.semana}-${r.treino}`))
+  const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1).filter((t) => prescreverSessao(meso, semana, t))
+  const proximo = treinos.find((t) => !feitos.has(`${semana}-${t}`))
+  const atual = semana === semanaInicial
 
   return (
     <>
@@ -52,15 +55,21 @@ function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: str
           →
         </Botao>
       </div>
+      {atual && (
+        <p className="mb-3 text-center font-semibold text-emerald-400">
+          {proximo ? `▶ Faça hoje: Treino ${proximo}` : 'Semana concluída ✓'}
+        </p>
+      )}
       <div className="space-y-3">
-        {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((treino) => {
+        {treinos.map((treino) => {
           const sessao = prescreverSessao(meso, semana, treino)
           if (!sessao) return null
+          const destaque = atual && treino === proximo
           return (
             <button
               key={treino}
               onClick={() => ir(`/treino/${mesoId}/${semana}/${treino}`)}
-              className="flex w-full min-h-[64px] items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-4 text-left active:bg-slate-800"
+              className={`flex w-full min-h-[64px] items-center justify-between rounded-xl border p-4 text-left active:bg-slate-800 ${destaque ? 'border-emerald-500 bg-slate-800' : 'border-slate-800 bg-slate-900'}`}
             >
               <div className="min-w-0">
                 <div className="font-semibold">

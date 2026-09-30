@@ -172,6 +172,27 @@ export default function EditorMeso({ id }: { id: string }) {
             value={meso.pausaS}
             onChange={(e) => atualizar({ pausaS: Number(e.target.value) || 0 })}
           />
+          <Campo
+            rotulo="Progressão por semana (%)"
+            type="number"
+            min={0}
+            value={meso.progressaoPct ?? 5}
+            onChange={(e) => atualizar({ progressaoPct: Math.max(0, Number(e.target.value) || 0) })}
+          />
+          <Campo
+            rotulo="Limite de reps por série"
+            type="number"
+            min={1}
+            value={meso.limiteReps ?? 15}
+            onChange={(e) => atualizar({ limiteReps: Math.max(1, Number(e.target.value) || 1) })}
+          />
+          <Campo
+            rotulo="Tempo limite do aluno (min) — vazio = sem aviso"
+            type="number"
+            min={1}
+            value={meso.tempoLimiteMin ?? ''}
+            onChange={(e) => atualizar({ tempoLimiteMin: e.target.value === '' ? undefined : Number(e.target.value) })}
+          />
         </div>
       )}
 

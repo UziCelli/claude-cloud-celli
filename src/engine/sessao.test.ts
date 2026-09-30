@@ -311,4 +311,35 @@ describe('prescreverSessao — tempo da sessão', () => {
       expect(econ(...em('Superset', [1]), ...em('Superset', [2], { semana: 2 }), ...em('Superset', [3], { treino: 2 }))).toBeCloseTo(0, 6))
     it('métodos de outro tipo não economizam', () => expect(econ(...em('Dropset', [1, 2]))).toBeCloseTo(0, 6))
   })
+
+  describe('override por exercício (progressaoExercicio)', () => {
+    const over = { '1-2': [[5, 5, null, null, null, null], [6, 6, 6, 6, null, null]] }
+
+    it('substitui a linha do grupo só daquele exercício', () => {
+      const s = prescreverSessao({ ...base, progressaoExercicio: over }, 1, 1)!
+      expect(s.exercicios[1].reps).toEqual([5, 5])
+      expect(s.exercicios[1].n).toBe(2)
+      expect(s.exercicios[0].reps).toEqual([10, 9, 8, 7]) // principal sem override
+      expect(s.exercicios[2].reps).toEqual([15, 14, 13, 12]) // auxiliar sem override
+    })
+
+    it('vale por semana e por treino; semana sem linha cai no grupo', () => {
+      const m = { ...base, progressaoExercicio: over }
+      expect(prescreverSessao(m, 2, 1)!.exercicios[1].reps).toEqual([6, 6, 6, 6])
+      expect(prescreverSessao(m, 1, 2)!.exercicios[0].reps).toEqual([10, 9, 8, 7]) // t2, não t1
+      const curto = { ...base, progressaoExercicio: { '1-2': [[5, 5, null, null, null, null]] } }
+      expect(prescreverSessao(curto, 2, 1)!.exercicios[1].reps).toEqual([12, 10, 8]) // grupo
+    })
+
+    it('vale também para auxiliar e se combina com método', () => {
+      const m = com([met({ exercicio: 3, metodo: 'Dropset', etapas: 1, repsPadrao: 0 })], {
+        progressaoExercicio: { '1-3': [[20, 20, null, null, null, null]] },
+      })
+      expect(prescreverSessao(m, 1, 1)!.exercicios[2].reps).toEqual([20, 20, 20]) // etapa usa a última série
+    })
+
+    it('sem override = comportamento idêntico', () => {
+      expect(prescreverSessao({ ...base, progressaoExercicio: {} }, 1, 1)).toEqual(prescreverSessao(base, 1, 1))
+    })
+  })
 })

@@ -45,6 +45,25 @@ describe('meso <-> documento', () => {
     expect(docParaMeso(mesoParaDoc(meso))).toEqual(meso)
   })
 
+  it('config e progressaoExercicio: ida e volta, sem array dentro de array', () => {
+    const m: Meso = {
+      ...meso,
+      progressaoPct: 5,
+      limiteReps: 15,
+      tempoLimiteMin: 75,
+      progressaoExercicio: { '1-3': [[8, 8, 8, null, null, null], [9, 9, 8, null, null, null]] },
+    }
+    const doc = mesoParaDoc(m)
+    expect(doc.progressaoExercicio).toEqual({ '1-3': { w1: [8, 8, 8, null, null, null], w2: [9, 9, 8, null, null, null] } })
+    expect(temArrayDeArray(doc)).toBe(false)
+    expect(docParaMeso(doc)).toEqual(m)
+  })
+
+  it('sem overrides: o documento leva {} (para limpar no updateDoc) e o meso volta sem o campo', () => {
+    expect(mesoParaDoc(meso).progressaoExercicio).toEqual({})
+    expect(docParaMeso(mesoParaDoc(meso)).progressaoExercicio).toBeUndefined()
+  })
+
   it('ignora campos do documento que não são do motor', () => {
     const doc = { ...mesoParaDoc(meso), alunoId: 'ana', nome: 'Meso 1', criadoEm: 1, atualizadoEm: 2 }
     expect(docParaMeso(doc)).toEqual(meso)

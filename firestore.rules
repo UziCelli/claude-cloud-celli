@@ -44,7 +44,13 @@ service cloud.firestore {
       return d.atualizadoEm == request.time
         && d.get('realizado', false) is bool
         && d.get('cargas', {}) is map
-        && d.get('reps', {}) is map;
+        && d.get('reps', {}) is map
+        && d.get('pc', {}) is map;
+    }
+
+    // Peso corporal do aluno (kg): número entre 20 e 300.
+    function pesoValido(p) {
+      return p is number && p >= 20 && p <= 300;
     }
 
     match /usuarios/{uid} {
@@ -66,11 +72,13 @@ service cloud.firestore {
         && nomeValido(request.resource.data.nome)
         && request.resource.data.email == request.auth.token.email;
 
-      // Só o nome. E-mail, papel, status e pagoAte: só o coach (o coach troca o próprio
+      // Só nome e pesoKg. E-mail, papel, status e pagoAte: só o coach (o coach troca o próprio
       // e-mail em Minha conta; aluno troca por manutenção — workflow "Alterar e-mail de aluno").
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome'])
-        && nomeValido(request.resource.data.nome);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg'])
+        && nomeValido(request.resource.data.nome)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['pesoKg'])
+            || pesoValido(request.resource.data.pesoKg));
     }
 
     match /mesos/{mesoId} {
@@ -85,7 +93,7 @@ service cloud.firestore {
 
       allow create: if own(request.resource.data) && liberado()
         && request.resource.data.keys().hasOnly(
-             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm'])
+             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'cargas', 'reps', 'pc', 'atualizadoEm'])
         && request.resource.data.semana is int
         && request.resource.data.treino is int
         && registroValido(request.resource.data)
@@ -104,9 +112,10 @@ service cloud.firestore {
 
       // Gravação campo a campo (merge): identidade do registro não muda.
       // reps = reps feitas (opcional), mesmo formato das cargas.
+      // pc = kg do corpo usado por exercício (slotId → número; 0 = desligado).
       allow update: if own(resource.data) && liberado()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm'])
+             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'reps', 'pc', 'atualizadoEm'])
         && registroValido(request.resource.data)
         && request.resource.data.get('realizadoEm', null)
              in [resource.data.get('realizadoEm', null), null, request.time];

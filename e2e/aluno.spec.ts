@@ -8,11 +8,12 @@ test.describe.configure({ mode: 'serial' })
 test.use({ ...devices['Pixel 7'] })
 
 let mesoId: string
+let alunoId: string
 
 test.beforeAll(async () => {
   await limparEmuladores()
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
-  const alunoId = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  alunoId = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
 
   const progressaoSemana = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null], w3: [8, 8, 8, null, null, null], w4: [8, 8, 8, null, null, null] }
   mesoId = await criarMeso({
@@ -116,6 +117,10 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await cartao.getByRole('button', { name: /Anotação/ }).click()
     await cartao.getByRole('textbox').fill('banco na posição 3')
     await cartao.getByRole('button', { name: 'Salvar' }).click()
+    // Só recarrega depois que a nota chegou ao servidor: recarregar no meio da gravação perde a nota (corrida do teste, lenta no CI).
+    await expect
+      .poll(async () => JSON.stringify(await lerDoc(`notas/${alunoId}`)), { timeout: 15_000 })
+      .toContain('banco na posição 3')
     await page.reload()
     await expect(page.getByText('banco na posição 3')).toBeVisible()
     await cartao.scrollIntoViewIfNeeded()
@@ -126,6 +131,31 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await page.getByRole('button', { name: 'Concluir treino' }).click()
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()
     await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
+  })
+
+  await test.step('destaca o próximo treino da semana', async () => {
+    await expect(page.getByText('▶ Faça hoje: Treino 2')).toBeVisible()
+  })
+
+  await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
+    await page.getByRole('button', { name: /Treino 2/ }).click()
+    const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
+    page.once('dialog', (d) => d.accept('80'))
+    await cartao.getByRole('checkbox').check()
+    await expect(cartao.getByText('PC: 80 kg (100% de 80 kg)')).toBeVisible()
+
+    const kg = cartao.locator('input[type="number"]').first()
+    await kg.fill('10')
+    await kg.blur()
+
+    const regId = `${mesoId}_s01_t2`
+    await expect
+      .poll(async () => {
+        const f = ((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>
+        const v = f.cargas?.mapValue?.fields?.b?.mapValue?.fields?.s1
+        return v ? Number(v.integerValue ?? v.doubleValue) : null
+      }, { timeout: 15_000 })
+      .toBe(90)
   })
 })
 

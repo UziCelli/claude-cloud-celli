@@ -164,6 +164,26 @@ describe('usuarios', () => {
     });
   });
 
+  it('aluno grava o próprio pesoKg (20 a 300, int ou float), sozinho ou com o nome', async () => {
+    const ana = doc(db('ana'), 'usuarios', 'ana');
+    await assertSucceeds(updateDoc(ana, { pesoKg: 70 }));
+    await assertSucceeds(updateDoc(ana, { pesoKg: 70.5 }));
+    await assertSucceeds(updateDoc(ana, { pesoKg: 20 }));
+    await assertSucceeds(updateDoc(ana, { pesoKg: 300 }));
+    await assertSucceeds(updateDoc(ana, { nome: 'Ana M', pesoKg: 65 }));
+  });
+
+  it('pesoKg fora da faixa ou não numérico é negado; nome segue validado junto', async () => {
+    const ana = doc(db('ana'), 'usuarios', 'ana');
+    await assertFails(updateDoc(ana, { pesoKg: 19.9 }));
+    await assertFails(updateDoc(ana, { pesoKg: 301 }));
+    await assertFails(updateDoc(ana, { pesoKg: '70' }));
+    await assertFails(updateDoc(ana, { pesoKg: null }));
+    await assertFails(updateDoc(ana, { nome: '', pesoKg: 70 }));
+    await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { pesoKg: 70 }));
+    await assertFails(updateDoc(ana, { pesoKg: 70, status: 'bloqueado', pagoAte: Timestamp.fromMillis(Date.now() + 365 * DIA) }));
+  });
+
   it('usuário altera só o próprio nome', async () => {
     await assertSucceeds(updateDoc(doc(db('ana'), 'usuarios', 'ana'), { nome: 'Ana Maria' }));
     await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { nome: 'Hack' }));
@@ -304,6 +324,12 @@ describe('registros', () => {
     });
     it('permite reps feitas junto', () =>
       assertSucceeds(criar({ ...registro('ana', 2, 1), reps: { sup: { s1: 12 } } })));
+    it('permite pc (kg do corpo por exercício) junto', () =>
+      assertSucceeds(criar({ ...registro('ana', 2, 1), pc: { sup: 70, rem: 0 } })));
+    it('nega pc que não é mapa', async () => {
+      await assertFails(criar({ ...registro('ana', 2, 1), pc: 70 }));
+      await assertFails(criar({ ...registro('ana', 2, 1), pc: 'x' }));
+    });
     it('nega campo extra', () => assertFails(criar({ ...registro('ana', 2, 1), nota: 10 })));
     it('nega id que não bate com meso/semana/treino', async () => {
       await assertFails(criar(registro('ana', 2, 1), 'qualquer'));
@@ -356,6 +382,16 @@ describe('registros', () => {
       const r = reg('ana', 'm_ana_s01_t1');
       await assertFails(setDoc(r, { alunoId: 'bia', reps: { sup: { s1: 12 } } }, { merge: true }));
       await assertFails(setDoc(r, { semana: 2, reps: { sup: { s1: 12 } } }, { merge: true }));
+    });
+
+    it('permite pc por campo e por setDoc merge; nega pc não-mapa', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      const id = { alunoId: 'ana', mesoId: 'm_ana', semana: 1, treino: 1 };
+      await assertSucceeds(updateDoc(r, { 'pc.sup': 70, atualizadoEm: serverTimestamp() }));
+      await assertSucceeds(updateDoc(r, { 'pc.sup': 0, atualizadoEm: serverTimestamp() }));
+      await assertSucceeds(setDoc(r, { ...id, pc: { rem: 70 }, atualizadoEm: serverTimestamp() }, { merge: true }));
+      await assertFails(updateDoc(r, { pc: 70, atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(r, { ...id, pc: 'x', atualizadoEm: serverTimestamp() }, { merge: true }));
     });
 
     it('permite marcar realizado', () =>

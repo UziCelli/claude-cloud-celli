@@ -1,4 +1,5 @@
 export * from './tipos'
-export { prescreverSessao } from './sessao'
+export { prescreverSessao, linhaPrescrita } from './sessao'
+export { ajustarSeries, progressaoAutomatica, reduzirVolume, tempoPorSemana } from './volume'
 export { metricasExercicio, metricasSessao, metricasSemana, evolucaoExercicio, repsEfetivas } from './metricas'
 export { metaRobusta, metaCiclo } from './meta'

@@ -73,6 +73,23 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
   })
 
+  await test.step('ajustar volume: +10% na semana 2 para todos', async () => {
+    await page.getByRole('button', { name: 'Progressão', exact: true }).click()
+    await page.getByLabel('% por semana').fill('10')
+    await page.getByLabel('Da semana').fill('2')
+    await page.getByLabel('Até a semana').fill('2')
+    await page.getByRole('button', { name: 'Calcular prévia' }).click()
+    await expect(page.getByText('Movimentos')).toBeVisible()
+    await page.screenshot({ path: 'test-results/prints/41-ajustar-volume.png', fullPage: true })
+    await page.getByRole('button', { name: 'Aplicar', exact: true }).click()
+    // 8 reps +10% = 8,8 -> arredonda para 9 em alguma série da semana 2 (prévia some após aplicar)
+    await expect(page.getByText('Movimentos')).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: /Principais/ })).toBeVisible()
+    expect(await page.locator('input[type="number"][value]').count()).toBeGreaterThan(0)
+    await page.getByRole('button', { name: 'Salvar' }).click()
+    await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
+  })
+
   await test.step('semana 1 mostra o tempo estimado do treino 1', async () => {
     await page.getByRole('button', { name: 'Ver semanas' }).click()
     await page.waitForURL(/#\/meso\/.+\/semana\/1/)

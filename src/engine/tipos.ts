@@ -44,7 +44,18 @@ export interface Meso {
   trocas?: Record<string, Slot> // chave `${semana}-${treino}-${pos}`
   progressao: { principais: (number | null)[][]; auxiliares: (number | null)[][] } // [semana-1][serie-1]
   metodos: AplicacaoMetodo[]
+  progressaoPct?: number // % de volume por semana (padrão 5)
+  limiteReps?: number // máximo de reps por série (padrão 15)
+  tempoLimiteMin?: number // sem valor = sem aviso de tempo
+  // Substitui a linha do grupo de um exercício: chave `${treino}-${pos}`, valor [semana-1][serie-1]
+  progressaoExercicio?: Record<string, (number | null)[][]>
 }
+
+// Onde um ajuste de volume se aplica.
+export type AlvoVolume =
+  | { tipo: 'todos' }
+  | { tipo: 'treino'; treino: number }
+  | { tipo: 'exercicio'; treino: number; pos: number }
 
 export type Cargas = Record<string /* slotId */, (number | null)[]> // índice = coluna: séries e depois etapas do dropset
 export type Registros = Record<string /* `${semana}-${treino}` */, Cargas>

@@ -6,8 +6,10 @@ import type { Cargas, Meso, Registros, Slot } from '../engine'
 //   progressao: (number|null)[][]   -> { principais: { w1: […], w2: […] }, auxiliares: { w1: … } } (w = semana)
 // Array dentro de mapa dentro de array (metodos[].cargaEtapa) é permitido e fica como está.
 type Linhas<T> = Record<string, T[]>
-export type MesoDoc = Omit<Meso, 'divisao' | 'progressao'> & {
+//   progressaoExercicio: Record<'t-p', (number|null)[][]> -> { 't1-3': { w1: […], w2: … } }
+export type MesoDoc = Omit<Meso, 'divisao' | 'progressao' | 'progressaoExercicio'> & {
   divisao: Linhas<Slot>
+  progressaoExercicio?: Record<string, Linhas<number | null>>
   progressao: { principais: Linhas<number | null>; auxiliares: Linhas<number | null> }
 }
 
@@ -24,6 +26,10 @@ export function mesoParaDoc(meso: Meso): MesoDoc {
     ...meso,
     // Sempre presente: ao editar (updateDoc), trocas removidas não podem sobrar no documento.
     trocas: meso.trocas ?? {},
+    // Idem: "Voltar ao padrão" precisa apagar o override do documento.
+    progressaoExercicio: Object.fromEntries(
+      Object.entries(meso.progressaoExercicio ?? {}).map(([k, l]) => [k, paraMapa(l, 'w')]),
+    ),
     divisao: paraMapa(meso.divisao, 't'),
     progressao: {
       principais: paraMapa(meso.progressao.principais, 'w'),
@@ -45,6 +51,14 @@ export function docParaMeso(d: MesoDoc): Meso {
       auxiliares: deMapa(d.progressao.auxiliares, 'w'),
     },
     metodos: d.metodos,
+    ...(d.progressaoPct != null && { progressaoPct: d.progressaoPct }),
+    ...(d.limiteReps != null && { limiteReps: d.limiteReps }),
+    ...(d.tempoLimiteMin != null && { tempoLimiteMin: d.tempoLimiteMin }),
+    ...(Object.keys(d.progressaoExercicio ?? {}).length > 0 && {
+      progressaoExercicio: Object.fromEntries(
+        Object.entries(d.progressaoExercicio!).map(([k, m]) => [k, deMapa(m, 'w')]),
+      ),
+    }),
   }
 }
 
