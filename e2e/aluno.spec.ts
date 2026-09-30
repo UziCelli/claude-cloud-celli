@@ -111,6 +111,17 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
       .toEqual({ s1: 40, s2: 42, reps1: 6 })
   })
 
+  await test.step('anotação do exercício sobrevive ao recarregar', async () => {
+    const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' })
+    await cartao.getByRole('button', { name: /Anotação/ }).click()
+    await cartao.getByRole('textbox').fill('banco na posição 3')
+    await cartao.getByRole('button', { name: 'Salvar' }).click()
+    await page.reload()
+    await expect(page.getByText('banco na posição 3')).toBeVisible()
+    await cartao.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: 'test-results/prints/40-anotacao.png' })
+  })
+
   await test.step('conclui o treino e vê o ✓ na tela Hoje', async () => {
     await page.getByRole('button', { name: 'Concluir treino' }).click()
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()

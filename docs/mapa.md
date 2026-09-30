@@ -138,6 +138,11 @@ Comece por aqui para achar onde mexer.
 - `reps`: idem (reps feitas, opcional)
 - `realizado`: bool, `realizadoEm`, `atualizadoEm`
 
+### `notas/{alunoId}`
+- `alunoId`, `exercicios`: `{ [nome do exercício]: texto (até 300) }`, `atualizadoEm`
+- Vale em todas as semanas/mesos (chave = nome). `''` = sem nota.
+- Gravação: `salvarNota()` em `src/lib/acoes.ts`. UI: aluno edita em `Treino.tsx` (`Nota`); coach lê em `semana/SessaoCard.tsx`.
+
 ---
 
 ## Comandos e workflows
