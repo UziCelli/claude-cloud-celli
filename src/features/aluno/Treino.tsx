@@ -1,4 +1,5 @@
 import { collection, doc, query, where } from 'firebase/firestore'
+import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { prescreverSessao } from '../../engine'
 import { marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
@@ -9,7 +10,7 @@ import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
 import { cargaAnterior } from '../../lib/treino'
 import { ir } from '../../rota'
-import { Botao, Centro } from '../../ui'
+import { Botao, Centro, Painel } from '../../ui'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
 
@@ -28,7 +29,6 @@ function Novidades() {
     }
     return true
   })
-  if (!ver) return null
   const fechar = () => {
     try {
       localStorage.setItem(CHAVE_NOVIDADES, '2')
@@ -38,6 +38,7 @@ function Novidades() {
     setVer(false)
   }
   return (
+    <Painel aberto={ver}>
     <div className="mb-4 rounded-xl border border-marca-500 bg-slate-900 p-4 text-sm">
       <div className="mb-1 font-semibold">Novidades</div>
       <ul className="mb-3 space-y-1 text-slate-300">
@@ -48,6 +49,7 @@ function Novidades() {
       </ul>
       <Botao onClick={fechar}>Entendi</Botao>
     </div>
+    </Painel>
   )
 }
 
@@ -57,6 +59,8 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 function useDescanso() {
   const [fimEm, setFimEm] = useState<number | null>(null)
   const [restante, setRestante] = useState(0)
+  const [total, setTotal] = useState(1)
+  const [ciclo, setCiclo] = useState(0)
   useEffect(() => {
     if (fimEm == null) return
     const tick = () => {
@@ -71,15 +75,19 @@ function useDescanso() {
     const id = setInterval(tick, 250)
     return () => clearInterval(id)
   }, [fimEm])
-  return { ativo: fimEm != null, restante, iniciar: (segundos: number) => setFimEm(Date.now() + segundos * 1000), parar: () => setFimEm(null) }
+  return { ativo: fimEm != null, restante, total, ciclo, iniciar: (segundos: number) => {
+      setTotal(Math.max(1, segundos))
+      setCiclo((c) => c + 1)
+      setRestante(segundos)
+      setFimEm(Date.now() + segundos * 1000)
+    }, parar: () => setFimEm(null) }
 }
 
 
 function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
-  if (editando)
-    return (
+  const conteudo = editando ? (
       <div className="mb-2">
         <textarea
           autoFocus
@@ -104,12 +112,12 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
           <Botao onClick={() => setEditando(false)}>Cancelar</Botao>
         </div>
       </div>
-    )
+    ) : null
   const abrir = () => {
     setRascunho(texto)
     setEditando(true)
   }
-  return texto ? (
+  const fechado = texto ? (
     <p className="mb-2 break-words text-xs italic text-slate-400">
       {texto}{' '}
       <button onClick={abrir} className="not-italic text-slate-300 underline">
@@ -120,6 +128,20 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     <button onClick={abrir} className="mb-2 text-xs text-slate-500">
       📝 Anotação
     </button>
+  )
+  return (
+    <AnimatePresence initial={false} mode="wait">
+      <m.div
+        key={editando ? 'e' : 'v'}
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+        className="overflow-hidden"
+      >
+        {conteudo ?? fechado}
+      </m.div>
+    </AnimatePresence>
   )
 }
 
@@ -245,7 +267,17 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       <div className="mt-6">
         {realizado ? (
           <div className="space-y-2 text-center">
-            <p className="font-semibold text-emerald-400">Treino concluído ✓</p>
+            <p className="font-semibold text-emerald-400">
+              Treino concluído{' '}
+              <m.span
+                className="inline-block"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 14 }}
+              >
+                ✓
+              </m.span>
+            </p>
             <Botao onClick={() => marcarRealizado(mesoId, uid, semana, treino, false)}>Desfazer</Botao>
           </div>
         ) : (
@@ -262,8 +294,24 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
         )}
       </div>
 
+      <AnimatePresence>
       {descanso.ativo && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+        <m.div
+          initial={{ y: 24, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 24, opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
+        >
+          <div className="mx-auto mb-2 h-1.5 max-w-md overflow-hidden rounded bg-slate-800">
+            <m.div
+              key={descanso.ciclo}
+              className="h-full rounded bg-marca-500"
+              initial={{ width: '100%' }}
+              animate={{ width: '0%' }}
+              transition={{ duration: descanso.total, ease: 'linear' }}
+            />
+          </div>
           <div className="mx-auto flex max-w-md items-center justify-between">
             <div>
               <div className="text-xs text-slate-400">Descanso</div>
@@ -271,8 +319,9 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
             </div>
             <Botao onClick={descanso.parar}>Pular</Botao>
           </div>
-        </div>
+        </m.div>
       )}
+      </AnimatePresence>
     </main>
   )
 }

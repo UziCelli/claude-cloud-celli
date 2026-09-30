@@ -70,6 +70,7 @@ Comece por aqui para achar onde mexer.
 - `rota.ts` — `useRota()`, `ir()`, `casar()`: hash routing
 - `main.tsx` — entry point React
 - `ui.tsx` — componentes comuns: `Botao`, `Centro`, `Tab`, etc.
+- `motionFeatures.ts` — recursos da biblioteca Motion carregados sob demanda; animações e componentes `Tela`, `Painel`, `Barra`, `cascata`/`item` ficam em `src/ui.tsx`
 - `index.css` — Tailwind, cores marca, fontes
 - `Logo.tsx` — marca VFITCOACH
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { linhaPrescrita, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
-import { Botao, campoBase, Cartao } from '../../../ui'
+import { Botao, campoBase, Cartao, Painel } from '../../../ui'
 
 type Tabela = 'principais' | 'auxiliares'
 type Previa = { mov: number; tempo: number }[]
@@ -150,6 +150,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
         <Botao onClick={calcular}>Calcular prévia</Botao>
         {previa && <Botao tipo="primario" onClick={aplicar}>Aplicar</Botao>}
       </div>
+      <Painel aberto={!!previa}>
       {previa && (
         <table className="mt-3 w-full text-sm">
           <thead>
@@ -170,6 +171,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
           </tbody>
         </table>
       )}
+      </Painel>
     </Cartao>
   )
 }

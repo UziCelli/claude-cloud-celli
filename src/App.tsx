@@ -2,7 +2,7 @@ import { liberado, type Usuario } from './lib/acesso'
 import { sair } from './lib/acoes'
 import { useUsuarioAtual } from './lib/hooks'
 import { casar, useRota } from './rota'
-import { Botao, Centro } from './ui'
+import { Botao, Centro, Tela } from './ui'
 import Logo from './Logo'
 import Entrar from './features/auth/Entrar'
 import Inicio from './features/coach/inicio/Inicio'
@@ -59,7 +59,7 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
           </div>
         </div>
       </header>
-      {tela}
+      <Tela chave={rota}>{tela}</Tela>
     </>
   )
 }

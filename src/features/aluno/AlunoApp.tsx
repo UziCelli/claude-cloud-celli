@@ -1,6 +1,6 @@
 import { sair } from '../../lib/acoes'
 import { casar, useRota } from '../../rota'
-import { Botao } from '../../ui'
+import { Botao, Tela } from '../../ui'
 import AvisoIOS from '../instalar/AvisoIOS'
 import EvolucaoAluno from './EvolucaoAluno'
 import Hoje from './Hoje'
@@ -28,7 +28,7 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
         </div>
       </header>
       <AvisoIOS />
-      {tela}
+      <Tela chave={rota}>{tela}</Tela>
     </>
   )
 }

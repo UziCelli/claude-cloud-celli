@@ -1,3 +1,4 @@
+import { AnimatePresence, m } from 'motion/react'
 import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
@@ -37,6 +38,14 @@ function textoVencimento(a: Aluno) {
   if (dias > 0) return `${data} · vence em ${dias} dia${dias === 1 ? '' : 's'}`
   return `${data} · vencido há ${-dias} dia${-dias === 1 ? '' : 's'}`
 }
+
+// Entrada em cascata (máx. 8 passos) e saída deslizando.
+const linha = (i: number) => ({
+  layout: 'position' as const,
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.2, delay: Math.min(i, 8) * 0.04 } },
+  exit: { opacity: 0, x: 60, transition: { duration: 0.2 } },
+})
 
 const ordem = { aguardando: 0, ativo: 1, bloqueado: 2, arquivado: 3 }
 
@@ -130,10 +139,12 @@ export default function Alunos() {
       ) : (
         <>
         <div className="space-y-3 md:hidden">
-          {filtrados.map((a) => {
+          <AnimatePresence initial={false}>
+          {filtrados.map((a, i) => {
             const s = statusAluno(a)
             return (
-              <Cartao key={a.id} className="space-y-2">
+              <m.div key={a.id} {...linha(i)}>
+              <Cartao className="space-y-2">
                 <button className="block w-full min-w-0 text-left" onClick={() => ir('/aluno/' + a.id)}>
                   <div className="truncate font-medium">{a.nome}</div>
                   <div className="truncate text-xs text-slate-500">{a.email}</div>
@@ -144,8 +155,10 @@ export default function Alunos() {
                 </div>
                 {acoes(a)}
               </Cartao>
+              </m.div>
             )
           })}
+          </AnimatePresence>
         </div>
         <Cartao className="hidden overflow-x-auto p-0 md:block">
           <table className="w-full text-left text-sm">
@@ -158,10 +171,11 @@ export default function Alunos() {
               </tr>
             </thead>
             <tbody>
-              {filtrados.map((a) => {
+              <AnimatePresence initial={false}>
+              {filtrados.map((a, i) => {
                 const s = statusAluno(a)
                 return (
-                  <tr key={a.id} className="border-b border-slate-800 last:border-0">
+                  <m.tr key={a.id} {...linha(i)} className="border-b border-slate-800 last:border-0">
                     <td className="p-3">
                       <button className="text-left hover:underline" onClick={() => ir('/aluno/' + a.id)}>
                         <div className="font-medium">{a.nome}</div>
@@ -175,9 +189,10 @@ export default function Alunos() {
                     <td className="p-3">
                       {acoes(a)}
                     </td>
-                  </tr>
+                  </m.tr>
                 )
               })}
+              </AnimatePresence>
             </tbody>
           </table>
         </Cartao>
@@ -204,7 +219,12 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
   }
 
   return (
-    <div className="w-full space-y-2">
+    <m.div
+      className="w-full space-y-2 overflow-hidden"
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
       <p className="text-sm">
         {apagar
           ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas e anotações. Não dá para desfazer.`
@@ -217,7 +237,7 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
       </div>
-    </div>
+    </m.div>
   )
 }
 

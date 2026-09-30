@@ -55,6 +55,8 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await expect(page.getByRole('button', { name: /Treino 3/ })).toBeVisible()
 
     await page.screenshot({ path: 'test-results/prints/10-aluno-hoje.png' })
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'test-results/prints/50-hoje-animado.png' })
   })
 
   await test.step('registra carga e vê o timer de descanso', async () => {
@@ -70,6 +72,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await expect(page.getByText('Pular')).toBeVisible({ timeout: 5000 })
     await expect(page.getByText(/^\d:\d\d$/)).toBeVisible()
     await page.screenshot({ path: 'test-results/prints/11-aluno-treino.png' })
+    await page.screenshot({ path: 'test-results/prints/50-treino-animado.png' })
     await page.getByRole('button', { name: 'Pular' }).click()
 
     // Reps feitas da série 1 (segundo input do par).

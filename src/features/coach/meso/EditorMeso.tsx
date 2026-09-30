@@ -1,3 +1,4 @@
+import { m } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Meso } from '../../../engine'
@@ -135,9 +136,16 @@ export default function EditorMeso({ id }: { id: string }) {
           <button
             key={a}
             onClick={() => setAba(a)}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${aba === a ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            className={`relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${aba === a ? 'text-white' : 'text-slate-300 hover:bg-slate-800'}`}
           >
-            {TITULO_ABA[a]}
+            {aba === a && (
+              <m.span
+                layoutId="aba-ativa"
+                className="absolute inset-0 rounded-lg bg-marca-500"
+                transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+              />
+            )}
+            <span className="relative">{TITULO_ABA[a]}</span>
           </button>
         ))}
       </div>
