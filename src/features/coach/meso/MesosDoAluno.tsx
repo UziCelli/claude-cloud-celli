@@ -6,8 +6,8 @@ import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
-import { flash, hojeMaisDias } from '../alunos/NovoAluno'
+import { Aviso, Botao, Campo, campoBase, Cartao, flash, Pagina } from '../../../ui'
+import { hojeMaisDias } from '../../../lib/acesso'
 import { mesoPadrao } from './mesoPadrao'
 
 const dataBr = (iso: string) => {
@@ -137,7 +137,7 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
         <select
           value={alunoId}
           onChange={(e) => setAlunoId(e.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
+          className={`${campoBase} px-3 py-2`}
         >
           <option value="">Selecione…</option>
           {alunos.dados.map((a) => (

@@ -2,7 +2,7 @@ name: Gerar APK
 
 # Gera o APK Android (TWA) do site publicado e sobe como release "apk".
 # Rodar manualmente: Actions -> Gerar APK -> Run workflow.
-# Secrets usados: APK_SENHA (senha do keystore), FIREBASE_SERVICE_ACCOUNT (não usado aqui).
+# Secret usado: APK_SENHA (senha do keystore).
 on:
   workflow_dispatch:
 

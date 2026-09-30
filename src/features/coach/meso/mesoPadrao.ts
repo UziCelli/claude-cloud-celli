@@ -1,4 +1,5 @@
 import type { Meso } from '../../../engine'
+import { hojeMaisDias } from '../../../lib/acesso'
 
 // Valores iniciais de um mesociclo novo.
 export function mesoPadrao(): Meso {
@@ -8,7 +9,7 @@ export function mesoPadrao(): Meso {
   return {
     frequencia,
     semanas,
-    inicio: new Date().toISOString().slice(0, 10),
+    inicio: hojeMaisDias(0),
     pausaS: 120,
     divisao: Array.from({ length: frequencia }, () => []),
     trocas: {},

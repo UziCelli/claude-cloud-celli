@@ -55,7 +55,7 @@ export const registroId = (mesoId: string, semana: number, treino: number) =>
 // Coluna do motor (0-based) -> campo do documento (s1, s2, …).
 export const caminhoCarga = (slotId: string, coluna: number) => `cargas.${slotId}.s${coluna + 1}`
 
-export type CargasDoc = Record<string, Record<string, number | null>>
+type CargasDoc = Record<string, Record<string, number | null>>
 export interface RegistroDoc {
   semana: number
   treino: number

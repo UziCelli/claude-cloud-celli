@@ -1,5 +1,5 @@
 import type { Meso } from '../../../engine'
-import { Botao, Cartao } from '../../../ui'
+import { Botao, campoBase, Cartao } from '../../../ui'
 
 type Tabela = 'principais' | 'auxiliares'
 
@@ -90,7 +90,7 @@ function TabelaProgressao({
                       type="number"
                       value={v ?? ''}
                       onChange={(e) => setCelula(tabela, w, j + 1, e.target.value === '' ? null : Number(e.target.value))}
-                      className="w-11 rounded-lg border border-slate-700 bg-slate-950 px-0 py-1 text-center text-base md:w-16 md:px-2 md:text-left text-slate-100 outline-none focus:border-marca-500"
+                      className={`${campoBase} w-11 px-0 py-1 text-center md:w-16 md:px-2 md:text-left outline-none focus:border-marca-500`}
                     />
                   </td>
                 ))}

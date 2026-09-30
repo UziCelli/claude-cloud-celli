@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { evolucaoExercicio, type Meso, type Registros } from '../../../engine'
-import { Cartao } from '../../../ui'
+import { campoBase, Cartao } from '../../../ui'
 import { fmt } from './format'
 
-export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; registros: Registros; reps?: Registros }) {
+export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Meso; registros: Registros; reps?: Registros }) {
   const nomes = new Set<string>()
   meso.divisao.flat().forEach((s) => nomes.add(s.nome))
   Object.values(meso.trocas ?? {}).forEach((s) => nomes.add(s.nome))
@@ -19,7 +19,7 @@ export default function Evolucao({ meso, registros, reps = {} }: { meso: Meso; r
         <select
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-marca-500"
+          className={`${campoBase} px-3 py-2 outline-none focus:border-marca-500`}
         >
           {lista.map((n) => (
             <option key={n} value={n}>

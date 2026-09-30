@@ -2,7 +2,7 @@ import { sair } from '../../lib/acoes'
 import { casar, useRota } from '../../rota'
 import { Botao } from '../../ui'
 import AvisoIOS from '../instalar/AvisoIOS'
-import Evolucao from './Evolucao'
+import EvolucaoAluno from './EvolucaoAluno'
 import Hoje from './Hoje'
 import Treino from './Treino'
 
@@ -12,7 +12,7 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
   let tela = <Hoje uid={uid} />
   if ((p = casar('/treino/:mesoId/:semana/:treino', rota)))
     tela = <Treino uid={uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
-  else if (rota === '/evolucao') tela = <Evolucao uid={uid} />
+  else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} />
 
   return (
     <>

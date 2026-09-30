@@ -39,7 +39,7 @@ export const definirAcesso = (uid: string, a: { status: Usuario['status']; pagoA
     ...(a.pagoAte && { pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(a.pagoAte)) }),
   })
 
-export const ERRO_EMAIL_EM_USO = 'Esse e-mail já tem conta — peça para o aluno entrar ou usar Esqueci minha senha'
+const ERRO_EMAIL_EM_USO = 'Esse e-mail já tem conta — peça para o aluno entrar ou usar Esqueci minha senha'
 
 // Cria a conta do aluno na instância secundária (o coach continua logado) com senha aleatória.
 // O aluno cria a própria senha pelo link de sendPasswordResetEmail. Precisa de internet.
@@ -218,7 +218,7 @@ export async function cadastrar(nome: string, email: string, senha: string) {
     papel: 'aluno',
     status: 'aguardando',
     nome,
-    email,
+    email: (user.email ?? email).toLowerCase(), // o da regra: igual ao do login
     criadoEm: serverTimestamp(),
   })
   return user

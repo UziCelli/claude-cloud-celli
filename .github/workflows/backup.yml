@@ -1,0 +1,40 @@
+name: Backup semanal
+
+# Copia todo o Firestore (usuarios, mesos, registros) para um JSON e guarda como artifact por 90 dias.
+# Restaurar: baixe o artifact em Actions -> execução -> Artifacts e regrave cada documento com firebase-admin
+# (db.collection(c).doc(id).set(dados)); datas estão em ISO e voltam a Timestamp com Timestamp.fromDate.
+# ATENÇÃO: o artifact contém dados pessoais dos alunos. Mantenha o repositório privado.
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ler o Firestore
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/backup.mjs "$RUNNER_TEMP/adm/"
+          cd "$RUNNER_TEMP/adm"
+          npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node backup.mjs "$GITHUB_WORKSPACE/backup.json"
+          rm -f "$RUNNER_TEMP/sa.json"
+      - name: Data
+        id: data
+        run: echo "d=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-firestore-${{ steps.data.outputs.d }}
+          path: backup.json
+          retention-days: 90

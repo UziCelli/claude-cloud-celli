@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { AplicacaoMetodo, Escopo, Meso, Metodo } from '../../../engine'
-import { Aviso, Botao, Campo, Cartao } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao } from '../../../ui'
 import { seriesDaPosicao } from './util'
 
 const METODOS: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
@@ -127,7 +127,7 @@ function LinhaMetodo({
           <select
             value={m.exercicio}
             onChange={(e) => onSet({ exercicio: Number(e.target.value) })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
+            className={`${campoBase} px-2 py-2`}
           >
             {exerciciosDoTreino.map((s, i) => (
               <option key={s.slotId} value={i + 1}>
@@ -142,7 +142,7 @@ function LinhaMetodo({
           <select
             value={m.metodo}
             onChange={(e) => onSet(padrao(e.target.value as Metodo, meso, m.semana, m.treino, m.exercicio))}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
+            className={`${campoBase} px-2 py-2`}
           >
             {METODOS.map((op) => (
               <option key={op} value={op}>
@@ -156,7 +156,7 @@ function LinhaMetodo({
           <select
             value={m.escopo}
             onChange={(e) => onSet({ escopo: e.target.value as Escopo })}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
+            className={`${campoBase} px-2 py-2`}
           >
             {ESCOPOS.map((op) => (
               <option key={op} value={op}>
@@ -243,7 +243,7 @@ function Selecao({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor: n
       <select
         value={valor}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
+        className={`${campoBase} px-2 py-2`}
       >
         {opcoes.map((o) => (
           <option key={o} value={o}>

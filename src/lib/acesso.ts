@@ -33,3 +33,7 @@ export const inicioDoDiaSP = (dia: number) => dia * DIA - SP
 // Dias de calendário (São Paulo) até o vencimento: 0 no próprio dia, negativo se vencido.
 export const diasParaVencer = (pagoAte: Timestamp, agora: Date) =>
   diaSP(pagoAte.toMillis()) - diaSP(agora.getTime())
+
+// YYYY-MM-DD no calendário de São Paulo, daqui a `dias` (toISOString seria UTC: +1 dia depois das 21h).
+export const hojeMaisDias = (dias: number) =>
+  new Date(Date.now() + dias * DIA).toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' })

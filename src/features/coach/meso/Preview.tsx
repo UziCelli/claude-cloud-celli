@@ -1,6 +1,6 @@
 import type { Meso } from '../../../engine'
 import { prescreverSessao } from '../../../engine'
-import { Cartao } from '../../../ui'
+import { campoBase, Cartao } from '../../../ui'
 
 // Painel de pré-visualização: mostra o que o aluno vai ver numa semana, em todos os treinos.
 export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana: number; onSemana: (w: number) => void }) {
@@ -11,7 +11,7 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
         <select
           value={semana}
           onChange={(e) => onSemana(Number(e.target.value))}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100"
+          className={`${campoBase} px-2 py-1`}
         >
           {Array.from({ length: meso.semanas }, (_, i) => i + 1).map((w) => (
             <option key={w} value={w}>

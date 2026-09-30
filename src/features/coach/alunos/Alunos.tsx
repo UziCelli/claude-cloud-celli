@@ -1,21 +1,17 @@
 import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
-import { diasParaVencer, type Usuario } from '../../../lib/acesso'
+import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
 import { definirAcesso } from '../../../lib/acoes'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
-import { hojeMaisDias } from './NovoAluno'
+import { Aviso, Botao, Campo, campoBase, Cartao, Pagina } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
 
 const dataPadrao = (a: Aluno) => {
-  if (a.status === 'ativo' && a.pagoAte && diasParaVencer(a.pagoAte, new Date()) >= 0) {
-    const d = a.pagoAte.toDate()
-    d.setDate(d.getDate() + 30)
-    return d.toISOString().slice(0, 10)
-  }
+  const dias = a.pagoAte ? diasParaVencer(a.pagoAte, new Date()) : -1
+  if (a.status === 'ativo' && dias >= 0) return hojeMaisDias(dias + 30)
   return hojeMaisDias(30)
 }
 
@@ -35,7 +31,7 @@ function statusAluno(a: Aluno): { texto: string; cor: string } {
 function textoVencimento(a: Aluno) {
   if (!a.pagoAte) return '—'
   const dias = diasParaVencer(a.pagoAte, new Date())
-  const data = formatarData(a.pagoAte.toDate().toISOString().slice(0, 10))
+  const data = formatarData(hojeMaisDias(dias))
   if (dias === 0) return `${data} · vence hoje`
   if (dias > 0) return `${data} · vence em ${dias} dia${dias === 1 ? '' : 's'}`
   return `${data} · vencido há ${-dias} dia${-dias === 1 ? '' : 's'}`
@@ -189,7 +185,7 @@ function FormularioData({
         type="date"
         value={valor}
         onChange={(e) => setValor(e.target.value)}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-base text-slate-100 outline-none focus:border-marca-500"
+        className={`${campoBase} px-2 py-1 outline-none focus:border-marca-500`}
       />
       <Botao tipo="primario" onClick={() => onConfirmar(valor)}>
         Confirmar
