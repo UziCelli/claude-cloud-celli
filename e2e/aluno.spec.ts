@@ -8,11 +8,12 @@ test.describe.configure({ mode: 'serial' })
 test.use({ ...devices['Pixel 7'] })
 
 let mesoId: string
+let alunoId: string
 
 test.beforeAll(async () => {
   await limparEmuladores()
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
-  const alunoId = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  alunoId = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
 
   const progressaoSemana = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null], w3: [8, 8, 8, null, null, null], w4: [8, 8, 8, null, null, null] }
   mesoId = await criarMeso({
@@ -116,6 +117,10 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await cartao.getByRole('button', { name: /Anotação/ }).click()
     await cartao.getByRole('textbox').fill('banco na posição 3')
     await cartao.getByRole('button', { name: 'Salvar' }).click()
+    // Só recarrega depois que a nota chegou ao servidor: recarregar no meio da gravação perde a nota (corrida do teste, lenta no CI).
+    await expect
+      .poll(async () => JSON.stringify(await lerDoc(`notas/${alunoId}`)), { timeout: 15_000 })
+      .toContain('banco na posição 3')
     await page.reload()
     await expect(page.getByText('banco na posição 3')).toBeVisible()
     await cartao.scrollIntoViewIfNeeded()
