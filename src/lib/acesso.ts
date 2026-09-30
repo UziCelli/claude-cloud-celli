@@ -5,7 +5,7 @@ export interface Usuario {
   papel: 'coach' | 'aluno'
   nome: string
   email: string
-  status: 'aguardando' | 'ativo' | 'bloqueado'
+  status: 'aguardando' | 'ativo' | 'bloqueado' | 'arquivado'
   pagoAte?: Timestamp
   criadoEm?: Timestamp
   pesoKg?: number // peso corporal do aluno (20..300), usado no checkbox PC

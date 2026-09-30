@@ -26,6 +26,13 @@ describe('resumoCoach', () => {
     expect(ids(r.aguardando)).toEqual(['a'])
   })
 
+  it('arquivado fica fora de tudo', () => {
+    const a = aluno('a', { status: 'arquivado', pagoAte: paga('2026-10-12') })
+    const reg = [{ alunoId: 'a', atualizadoEm: ts('2026-10-10T07:00') }]
+    const r = resumoCoach([a], reg, agora)
+    expect(Object.values(r).flat()).toEqual([])
+  })
+
   it('vencendo: ativo, de 0 a 7 dias (dia de São Paulo), sem presencial', () => {
     const r = resumoCoach(
       [

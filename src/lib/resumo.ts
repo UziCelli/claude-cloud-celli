@@ -15,7 +15,8 @@ export interface RegistroResumo {
 // a consulta montada com ele fica igual entre renders (useLista não reinscreve).
 export const inicioJanela = (agora: Date, dias: number) => inicioDoDiaSP(diaSP(agora.getTime()) - dias)
 
-export function resumoCoach(alunos: AlunoComId[], registros: RegistroResumo[], agora: Date) {
+export function resumoCoach(todos: AlunoComId[], registros: RegistroResumo[], agora: Date) {
+  const alunos = todos.filter((a) => a.status !== 'arquivado')
   const hoje = diaSP(agora.getTime())
   const treinouHoje = new Set<string>()
   const ultimo = new Map<string, number>() // alunoId -> dia (SP) do registro atualizado mais recente
