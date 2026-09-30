@@ -44,3 +44,10 @@ jobs:
             echo
             echo "Use como \`VITE_PUSH_URL\` no app (veja docs/push.md)."
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Conferir o Worker no ar
+        run: |
+          url="https://vfit-descanso.$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | jq -r '.result.subdomain').workers.dev"
+          curl -fsS "$url/vapid" | jq -e '.publicKey | length > 80'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$url/agendar" -H 'Content-Type: application/json' -d '{}')" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$url/agendar" -H 'Origin: https://app.vfitcoachapp.com' -H 'Access-Control-Request-Method: POST')" = 204

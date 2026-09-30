@@ -25,7 +25,7 @@ Avisa "Descanso acabou / Volte para o treino 💪" na hora certa, mesmo com o ap
 ## Publicar e trocar a URL
 - O workflow `.github/workflows/push.yml` publica o Worker a cada mudança em `push/` (ou em "Run workflow"). No final, mostra a URL (`https://vfit-descanso.<subdomínio>.workers.dev`) no log e no resumo.
 - Essa URL vai em `VITE_PUSH_URL` (arquivo `.env.production`, publicado com o app). **Sem ela o app não faz nada de push.**
-- Em `firebase.json`, o `connect-src` da CSP hoje libera `https://*.workers.dev`. Depois do primeiro deploy, troque pela URL exata.
+- URL publicada: `https://vfit-descanso.vfitcoach-site.workers.dev`. Ela está em `.env.production` (`VITE_PUSH_URL`) e no `connect-src` da CSP em `firebase.json`; se o subdomínio da conta mudar, troque nos dois.
 - Para ver o Worker localmente: `cd push && npx wrangler@4 deploy --dry-run` (só empacota, não precisa de conta).
 
 ## Testes
