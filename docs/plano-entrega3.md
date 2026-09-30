@@ -89,7 +89,16 @@ Status: **rascunho, aguardando o Victor**. Todos os textos da interface em pt-BR
   - Todos os bipes são **agendados no toque do ▶**, então tocam no tempo certo mesmo se o app ficar lento.
   - Tocam por cima da música, sem parar o Spotify. No iPhone, a música abaixa um instante quando o iOS permite.
 - **Vibração:** pulsos curtos em 3, 2, 1 e um longo no fim.
-- **Notificação** "Descanso acabou, volte para o treino 💪" quando a pessoa está fora do app. O app pede a permissão no 1º ▶.
+- **Notificação** "Descanso acabou, volte para o treino 💪" quando a pessoa está fora do app.
+  - Fica para a **Entrega 3b**: push pela Cloudflare (Worker + alarme de Durable Object, plano grátis), no iPhone e no Android.
+- **Aviso persistente para permitir notificações** (entra já na 3a):
+  - Um cartão no topo das telas Hoje e Treino: "🔔 Permita as notificações para o cronômetro te chamar de volta ao treino". Botão **"Permitir notificações"**.
+  - Some só quando a permissão é concedida.
+  - Se a pessoa negou, o cartão continua e ensina a liberar:
+    - iPhone: Ajustes → Notificações → VFITCOACH.
+    - Android: segure o ícone do app → Informações do app → Notificações.
+  - Se o celular não oferece notificações (iPhone fora da Tela de Início ou iOS antigo), o cartão não aparece; o aviso de instalar que já existe cuida disso.
+  - Arquivo: `src/features/aluno/AvisoNotificacoes.tsx`.
 - **Tela acesa** enquanto o descanso corre (Wake Lock). Isso ajuda muito no iPhone.
 - **Botão 🔔/🔕** ao lado do cronômetro para ligar e desligar o som (guardado no celular).
 - **O que funciona em cada celular** (limite do sistema, dito com honestidade):
@@ -104,9 +113,8 @@ Status: **rascunho, aguardando o Victor**. Todos os textos da interface em pt-BR
 
 - A notificação no iPhone precisaria de um servidor que dispare o aviso na hora certa: Cloud Functions, plano **Blaze** do Firebase, com cartão cadastrado. Para o volume atual o custo deve ficar perto de zero. **Fica fora desta entrega**, a menos que o Victor peça.
 - Arquivos:
-  - `src/lib/descanso.ts`: hook `useDescanso` com persistência, sons, vibração, notificação e tela acesa, com teste da parte de tempo;
-  - `public/sw-descanso.js`: a notificação no Android, pelo service worker;
-  - `vite.config.ts`: `workbox.importScripts`.
+  - `src/lib/descanso.ts`: hook `useDescanso` com persistência, sons, vibração e tela acesa, com teste da parte de tempo;
+  - a notificação (push) fica para a 3b.
 
 ## Divisão (agentes Sonnet; nunca dois no mesmo arquivo)
 - **A (dev):**

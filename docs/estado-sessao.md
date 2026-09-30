@@ -11,10 +11,21 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 
 ## Entregas
 - **Entrega 1** (`docs/plano-entrega1.md`): PR #20, juntado pelo Victor.
-- **Entrega 2** (`docs/plano-entrega2.md`): feita (motor, coach e aluno); typecheck, 247 testes, build e e2e passaram.
-  - Está no PR próprio. Esperar o "pode juntar" do Victor.
+- **Entrega 2** (`docs/plano-entrega2.md`): PR #21, juntado e publicado.
   - Padrão adotado: os 2 primeiros exercícios de cada treino ficam fora do biset automático (`incluirPrincipais=false`).
   - O motor ainda lê as chaves antigas `'t-p'` de `progressaoExercicio` como reserva para mesos não migrados.
+- **Entrega 3a** (`docs/plano-entrega3.md`): em andamento no PR #23.
+  - Aprovada pelo Victor ("vamos gerar a 3a"), com borda rosa e botão 🔔/🔕.
+  - Agentes Sonnet:
+    - A: `src/data/metodos.ts`, `src/lib/notasMetodo.ts`, `features/metodos/*`, rota `#/metodos`, links;
+    - C: `src/lib/descanso.ts`;
+    - B (depois de A e C): `Treino.tsx` (selos, nota, bordas, `useDescanso` novo), `metodoSeries.ts`, `AvisoNotificacoes.tsx` e e2e.
+- **Entrega 3b** (depois): push pela Cloudflare (Worker + alarme de Durable Object, grátis).
+  - O Victor está criando os secrets `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` no GitHub.
+  - Plano técnico:
+    - chaves VAPID geradas e guardadas no próprio Durable Object;
+    - o Worker confere o ID token do Firebase;
+    - adicionar o domínio do Worker no `connect-src` da CSP.
 - **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
