@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { agendarPush, cancelarPush } from './push'
 
 export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
@@ -178,11 +179,14 @@ export function useDescanso() {
     setTotal(Math.max(1, segundos))
     setCiclo((c) => c + 1)
     setRestante(segundos)
-    setFimEm(Date.now() + segundos * 1000)
+    const fim = Date.now() + segundos * 1000
+    setFimEm(fim)
     agendarSons(segundos)
+    agendarPush(fim)
   }
   const parar = () => {
     cancelarSons()
+    cancelarPush()
     setFimEm(null)
     setPausado(null)
     setSlot(null)
@@ -192,11 +196,14 @@ export function useDescanso() {
     if (slot !== s) return iniciar(segundos, s)
     if (fimEm != null) {
       cancelarSons()
+      cancelarPush()
       setPausado(restante)
       setFimEm(null)
     } else if (pausado != null) {
-      setFimEm(Date.now() + pausado * 1000)
+      const fim = Date.now() + pausado * 1000
+      setFimEm(fim)
       agendarSons(pausado)
+      agendarPush(fim)
       setPausado(null)
     } else iniciar(segundos, s)
   }

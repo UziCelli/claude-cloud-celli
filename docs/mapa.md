@@ -18,6 +18,7 @@ Comece por aqui para achar onde mexer.
 | Importar mesociclo de planilha | `tools/planilha_para_meso.py` + `tools/importar-meso.mjs` + workflow `.github/workflows/importar-meso.yml` |
 | Offline/sync Firebase | `src/lib/firebase.ts` + `firestore.rules` |
 | Roteamento (hash, /aluno/123, etc.) | `src/rota.ts` + `src/App.tsx` |
+| Notificação "Descanso acabou" (push, app fechado) | `src/lib/push.ts` + `public/sw-push.js` + `push/` (Worker Cloudflare) — veja `docs/push.md` |
 
 ## Árvore por pasta
 
@@ -35,9 +36,17 @@ Comece por aqui para achar onde mexer.
 - `acoes.ts` — `salvarRegistro()`, `atualizarRegistro()`: grava no Firestore campo a campo
 - `conversores.ts` — `mesoParaDoc()`, `docParaMeso()`, `registroId()`: serialização
 - `hooks.ts` — `useUsuarioAtual()`, `useMeso()`, etc.: React hooks
+- `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada)
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
 - `*.test.ts` — testes
+
+### `push/` — Worker Cloudflare (notificação do descanso)
+- `wrangler.toml` — Worker `vfit-descanso`, Durable Object `Descanso` (SQLite)
+- `src/index.ts` — rotas `/vapid`, `/agendar`, `/cancelar`, CORS e a classe `Descanso` (alarme)
+- `src/jwt.ts` — confere o ID token do Firebase; `src/validar.ts` — inscrição e `fimEm`
+- `src/webpush.ts` — chaves VAPID, criptografia aes128gcm e envio; `src/b64.ts` — base64url
+- `src/*.test.ts` — testes (rodam com o `npm test` da raiz); tsconfig próprio (`npm run typecheck` confere)
 
 ### `src/features/auth/` — Autenticação
 - `Entrar.tsx` — login Google/e-mail, cadastro
@@ -74,6 +83,9 @@ Comece por aqui para achar onde mexer.
 - `Instalar.tsx` — página de instalação
 - `AvisoIOS.tsx` — instrução iOS
 
+### `public/`
+- `sw-push.js` — trata o push e o clique na notificação (importado pelo service worker via `workbox.importScripts`)
+
 ### `src/` — Raiz
 - `App.tsx` — roteador principal: rotas, verificação de permissão
 - `rota.ts` — `useRota()`, `ir()`, `casar()`: hash routing
@@ -100,6 +112,7 @@ Comece por aqui para achar onde mexer.
 
 ### `.github/workflows/` — CI/CD
 - `ci.yml` — typecheck, lint, testes
+- `push.yml` — publica o Worker `push/` na Cloudflare (push em `push/**` ou manual) e mostra a URL
 - `deploy.yml` — build e deploy Firebase Hosting
 - `android.yml`, `apk.yml` — gera APK (TWA)
 - `importar-meso.yml` — workflow: `/importar` trigger (auth: token)

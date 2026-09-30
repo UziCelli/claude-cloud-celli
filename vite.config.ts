@@ -56,6 +56,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['sw-push.js'], // notificação de fim do descanso (push)
         globPatterns: ['**/*.{js,css,html,svg,png,ico,json,woff2}'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/\.well-known\//],
