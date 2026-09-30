@@ -1,8 +1,8 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { prescreverSessao } from '../../engine'
-import { marcarRealizado, registrarCarga, registrarReps } from '../../lib/acoes'
-import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../lib/conversores'
+import { marcarRealizado, registrarCarga, registrarReps, salvarNota } from '../../lib/acoes'
+import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
 import { cargaAnterior } from '../../lib/treino'
@@ -36,11 +36,61 @@ function useDescanso() {
   return { ativo: fimEm != null, restante, iniciar: (segundos: number) => setFimEm(Date.now() + segundos * 1000), parar: () => setFimEm(null) }
 }
 
+
+function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
+  const [editando, setEditando] = useState(false)
+  const [rascunho, setRascunho] = useState('')
+  if (editando)
+    return (
+      <div className="mb-2">
+        <textarea
+          autoFocus
+          maxLength={300}
+          rows={3}
+          value={rascunho}
+          onChange={(ev) => setRascunho(ev.target.value)}
+          placeholder="Ex.: banco na posição 3, aparelho Life"
+          aria-label={`Anotação de ${nome}`}
+          className="w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-sm"
+        />
+        <div className="mt-1 flex gap-2">
+          <Botao
+            tipo="primario"
+            onClick={() => {
+              salvarNota(uid, nome, rascunho)
+              setEditando(false)
+            }}
+          >
+            Salvar
+          </Botao>
+          <Botao onClick={() => setEditando(false)}>Cancelar</Botao>
+        </div>
+      </div>
+    )
+  const abrir = () => {
+    setRascunho(texto)
+    setEditando(true)
+  }
+  return texto ? (
+    <p className="mb-2 break-words text-xs italic text-slate-400">
+      {texto}{' '}
+      <button onClick={abrir} className="not-italic text-slate-300 underline">
+        editar
+      </button>
+    </p>
+  ) : (
+    <button onClick={abrir} className="mb-2 text-xs text-slate-500">
+      📝 Anotação
+    </button>
+  )
+}
+
 export default function Treino({ uid, mesoId, semana, treino }: { uid: string; mesoId: string; semana: number; treino: number }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', mesoId))
   const { dados: docsRegistros, pendente } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
+  const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', uid))
   const descanso = useDescanso()
 
   if (carregando) return <Centro>Carregando…</Centro>
@@ -83,6 +133,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                 <div className="font-semibold">{e.slot.nome}</div>
                 {e.rotulo && <div className="mt-1 text-[11px] text-slate-400">{e.rotulo}</div>}
               </div>
+              <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} />
               <div className="space-y-2">
                 {e.reps.map((repAlvo, k) => {
                   const dropStage = k >= e.n

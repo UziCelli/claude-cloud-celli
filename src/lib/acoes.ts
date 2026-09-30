@@ -188,6 +188,14 @@ export const registrarReps = (
 export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean) =>
   registro(mesoId, alunoId, semana, treino, { realizado, realizadoEm: realizado ? serverTimestamp() : null })
 
+// Anotação do aluno por exercício (vale em todas as semanas/mesos). '' = sem nota.
+export const salvarNota = (alunoId: string, exercicio: string, texto: string) =>
+  setDoc(
+    doc(db, 'notas', alunoId),
+    { alunoId, exercicios: { [exercicio]: texto.trim().slice(0, 300) }, atualizadoEm: serverTimestamp() },
+    { merge: true },
+  )
+
 // ---------- login ----------
 
 export const entrar = (email: string, senha: string) => signInWithEmailAndPassword(auth, email, senha)

@@ -1,6 +1,10 @@
 import { metricasSessao, type Cargas, type Sessao } from '../../../engine'
 import { registrarCarga } from '../../../lib/acoes'
+import { doc } from 'firebase/firestore'
+import { db } from '../../../lib/firebase'
+import { useDoc } from '../../../lib/hooks'
 import { Cartao } from '../../../ui'
+import type { NotasDoc } from '../../../lib/conversores'
 import { fmt } from './format'
 import LoadInput from './LoadInput'
 
@@ -57,6 +61,7 @@ export default function SessaoCard({
   realizado: boolean
   onRealizado: (v: boolean) => void
 }) {
+  const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', alunoId))
   const m = metricasSessao(sessao, cargas, reps)
   const nEtapas = Math.max(0, ...sessao.exercicios.map((e) => e.reps.length - e.n))
 
@@ -104,6 +109,11 @@ export default function SessaoCard({
                 <td className="p-2">{e.pos}</td>
                 <td className="p-2">
                   {e.slot.nome}
+                  {notas?.exercicios?.[e.slot.nome.trim()] && (
+                    <div className="mt-0.5 max-w-[14rem] whitespace-normal break-words text-[11px] text-slate-400">
+                      {notas.exercicios[e.slot.nome.trim()]}
+                    </div>
+                  )}
                   <Chips rotulo={e.rotulo} />
                 </td>
                 {Array.from({ length: sessao.series }, (_, k) =>
