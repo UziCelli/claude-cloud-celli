@@ -10,6 +10,9 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
 ## Onde está cada coisa
 - `docs/estado-sessao.md` — **retomada**: o que está em andamento e os próximos passos (leia primeiro ao voltar).
 - `docs/mapa.md` — mapa do código: comece por aqui para achar onde mexer (atualize ao criar/mover arquivos).
+  - A seção "Pontos sensíveis" guia auditorias e investigações de bug.
+  - Todo agente lê essa seção antes de mexer.
+  - Quem corrigir um bug acrescenta uma linha nela.
 - `docs/logica-planilha.md` — especificação das fórmulas (fonte da verdade do motor).
 - `src/engine/` — motor de cálculo puro (sem React/Firebase). TDD obrigatório.
 - `firestore.rules` — segurança e bloqueio por pagamento. TDD obrigatório (emulador).
