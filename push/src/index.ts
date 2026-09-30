@@ -20,7 +20,10 @@ export class Descanso extends DurableObject<Env> {
       const novo = await gerarParVapid()
       await this.ctx.storage.put('vapid', novo)
       return novo
-    })()
+    })().catch((e) => {
+      this.par = undefined // falha temporária não fica presa no cache até o DO reiniciar
+      throw e
+    })
     return this.par
   }
 

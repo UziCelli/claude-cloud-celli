@@ -14,18 +14,20 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Entrega 2** (`docs/plano-entrega2.md`): PR #21, juntado e publicado.
   - Padrão adotado: os 2 primeiros exercícios de cada treino ficam fora do biset automático (`incluirPrincipais=false`).
   - O motor ainda lê as chaves antigas `'t-p'` de `progressaoExercicio` como reserva para mesos não migrados.
-- **Entrega 3a** (`docs/plano-entrega3.md`): em andamento no PR #23.
-  - Aprovada pelo Victor ("vamos gerar a 3a"), com borda rosa e botão 🔔/🔕.
-  - Agentes Sonnet:
-    - A: `src/data/metodos.ts`, `src/lib/notasMetodo.ts`, `features/metodos/*`, rota `#/metodos`, links;
-    - C: `src/lib/descanso.ts`;
-    - B (depois de A e C): `Treino.tsx` (selos, nota, bordas, `useDescanso` novo), `metodoSeries.ts`, `AvisoNotificacoes.tsx` e e2e.
-- **Entrega 3b** (depois): push pela Cloudflare (Worker + alarme de Durable Object, grátis).
-  - O Victor está criando os secrets `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` no GitHub.
-  - Plano técnico:
-    - chaves VAPID geradas e guardadas no próprio Durable Object;
-    - o Worker confere o ID token do Firebase;
-    - adicionar o domínio do Worker no `connect-src` da CSP.
+- **Entrega 3 (3a + 3b)**: PR #23. CI verde, revisada sem bloqueantes, Worker publicado.
+  - Worker: `https://vfit-descanso.vfitcoach-site.workers.dev`.
+  - Esperando o "pode juntar". Depois, o Victor testa a notificação num iPhone real.
+  - Pendências menores da revisão (ficam para a Entrega 4):
+    - o Worker não limita frequência nem confere `pagoAte`;
+    - o estado salvo do cronômetro não guarda o uid;
+    - origens localhost liberadas no CORS em produção;
+    - com o app aberto no fim do descanso, chegam o bipe e a notificação (confirmar no iPhone se incomoda).
+- **Entrega 4** (a planejar): registro de erros (coleção `logs` + tela "Erros do app" + vigia de carregamento) e segurança:
+  - MFA TOTP via Identity Platform (grátis no Spark);
+  - limite de tentativas + App Check;
+  - logout por inatividade sem perder cargas;
+  - varredura XSS.
+  - Esperando o Victor responder: MFA só para o coach? Inatividade de 30 min para o coach e 7 dias para o aluno?
 - **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
 
 ## Ideias e pendências futuras (não fazer sem pedido)

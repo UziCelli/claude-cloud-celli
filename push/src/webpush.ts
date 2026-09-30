@@ -76,6 +76,8 @@ export async function enviarPush(
       Urgency: 'high',
     },
     body: corpo,
+    redirect: 'manual',
+    signal: AbortSignal.timeout(10_000),
   })
   return r.status
 }
