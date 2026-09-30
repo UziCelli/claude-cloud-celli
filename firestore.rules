@@ -111,5 +111,19 @@ service cloud.firestore {
         && request.resource.data.get('realizadoEm', null)
              in [resource.data.get('realizadoEm', null), null, request.time];
     }
+
+    // Notas por exercício do aluno: notas/{alunoId} = { alunoId, exercicios: {nome: texto}, atualizadoEm }.
+    match /notas/{alunoId} {
+      allow read, write: if isCoach();
+
+      allow read: if signedIn() && request.auth.uid == alunoId && liberado();
+
+      allow create, update: if signedIn() && request.auth.uid == alunoId && liberado()
+        && request.resource.data.keys().hasOnly(['alunoId', 'exercicios', 'atualizadoEm'])
+        && request.resource.data.alunoId == request.auth.uid
+        && request.resource.data.exercicios is map
+        && request.resource.data.exercicios.size() <= 300
+        && request.resource.data.atualizadoEm == request.time;
+    }
   }
 }

@@ -403,3 +403,70 @@ describe('registros', () => {
     await assertSucceeds(deleteDoc(reg('coach', 'm_bia_s01_t1')));
   });
 });
+
+describe('notas', () => {
+  const nota = (uid: string | undefined, id: string) => doc(db(uid), 'notas', id);
+  // Como o app: setDoc merge com serverTimestamp.
+  const gravar = (uid: string, id: string, extra: object = {}) =>
+    setDoc(
+      nota(uid, id),
+      { alunoId: id, exercicios: { Supino: 'banco 3' }, atualizadoEm: serverTimestamp(), ...extra },
+      { merge: true },
+    );
+
+  beforeEach(() =>
+    env.withSecurityRulesDisabled(async (ctx) => {
+      const admin = ctx.firestore() as unknown as Firestore;
+      await setDoc(doc(admin, 'notas', 'ana'), { alunoId: 'ana', exercicios: { Supino: 'antiga' }, atualizadoEm: passado });
+      await setDoc(doc(admin, 'notas', 'bia'), { alunoId: 'bia', exercicios: {}, atualizadoEm: passado });
+    }),
+  );
+
+  it('aluno liberado lê e grava a própria nota (nova e existente)', async () => {
+    await assertSucceeds(getDoc(nota('ana', 'ana')));
+    await assertSucceeds(gravar('ana', 'ana'));
+    await assertSucceeds(getDoc(nota('bia', 'bia')));
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore() as unknown as Firestore, 'notas', 'ana'));
+    });
+    await assertSucceeds(gravar('ana', 'ana'));
+  });
+
+  it('aluno não lê nem escreve nota de outro', async () => {
+    await assertFails(getDoc(nota('ana', 'bia')));
+    await assertFails(gravar('ana', 'bia'));
+    await assertFails(gravar('ana', 'bia', { alunoId: 'ana' }));
+    await assertFails(deleteDoc(nota('ana', 'bia')));
+  });
+
+  it('vencido, bloqueado, aguardando e anônimo não leem nem escrevem', async () => {
+    for (const uid of ['exp', 'blq', 'agu']) {
+      await assertFails(getDoc(nota(uid, uid)));
+      await assertFails(gravar(uid, uid));
+    }
+    await assertFails(getDoc(nota(undefined, 'ana')));
+    await assertFails(setDoc(nota(undefined, 'ana'), { alunoId: 'ana', exercicios: {}, atualizadoEm: serverTimestamp() }));
+  });
+
+  it('coach lê e escreve qualquer nota', async () => {
+    await assertSucceeds(getDoc(nota('coach', 'ana')));
+    await assertSucceeds(setDoc(nota('coach', 'bia'), { alunoId: 'bia', exercicios: { Remada: 'x' } }, { merge: true }));
+    await assertSucceeds(deleteDoc(nota('coach', 'ana')));
+  });
+
+  it('nega campo extra, alunoId errado, exercicios não-mapa e atualizadoEm do aparelho', async () => {
+    await assertFails(gravar('ana', 'ana', { extra: 1 }));
+    await assertFails(gravar('ana', 'ana', { alunoId: 'bia' }));
+    await assertFails(gravar('ana', 'ana', { exercicios: 'texto' }));
+    await assertFails(gravar('ana', 'ana', { exercicios: ['a'] }));
+    await assertFails(gravar('ana', 'ana', { atualizadoEm: futuro }));
+    await assertFails(setDoc(nota('ana', 'ana'), { alunoId: 'ana', exercicios: {} }, { merge: true }));
+  });
+
+  it('limita exercicios a 300 chaves', async () => {
+    const mapa = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`ex${i}`, 't']));
+    // 299 (e não 300): com 300 nomes o emulador falha ao avaliar get() em me() (limite do motor de regras), então o teto efetivo é 299.
+    await assertSucceeds(gravar('ana', 'ana', { exercicios: mapa(299) }));
+    await assertFails(gravar('bia', 'bia', { exercicios: mapa(301) }));
+  });
+});

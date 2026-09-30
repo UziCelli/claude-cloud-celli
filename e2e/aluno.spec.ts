@@ -118,6 +118,8 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await cartao.getByRole('button', { name: 'Salvar' }).click()
     await page.reload()
     await expect(page.getByText('banco na posição 3')).toBeVisible()
+    await cartao.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: 'test-results/prints/40-anotacao.png' })
   })
 
   await test.step('conclui o treino e vê o ✓ na tela Hoje', async () => {
