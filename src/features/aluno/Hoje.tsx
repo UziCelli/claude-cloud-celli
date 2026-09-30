@@ -11,6 +11,7 @@ import { fmtData } from '../coach/semana/format'
 import { semanaParaAbrir } from '../../lib/semana'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { mesoAtual } from './mesoAtual'
+import AvisoNotificacoes from './AvisoNotificacoes'
 import type { MesoSalvo } from '../../lib/conversores'
 
 const Msg = ({ children }: { children: ReactNode }) => <p className="mt-10 text-center text-slate-400">{children}</p>
@@ -25,6 +26,7 @@ export default function Hoje({ uid }: { uid: string }) {
 
   return (
     <main className="mx-auto max-w-md px-4 py-4">
+      <AvisoNotificacoes />
       <h1 className="mb-1 text-lg font-bold">{doc.nome}</h1>
       {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
@@ -124,6 +126,9 @@ function SemanaCarregada({ meso, mesoId, registros, semanaInicial }: { uid: stri
         })}
       </m.div>
       </Deslizar>
+      <a href="#/metodos" className="mt-5 block text-center text-sm text-slate-400 underline">
+        Guia de métodos
+      </a>
     </>
   )
 }

@@ -45,9 +45,16 @@ Comece por aqui para achar onde mexer.
 ### `src/features/aluno/` — App do aluno
 - `AlunoApp.tsx` — roteador do aluno
 - `Hoje.tsx` — treino de hoje
-- `Treino.tsx` — detalhe do treino (cargas, reps)
+- `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro)
+- `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
+- `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — gráficos: reps, força, volume
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor
+
+### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
+- `IconeMetodo.tsx` — ícone SVG animado por método
+- `GuiaMetodos.tsx` — página "Guia de métodos" + botão "Mostrar as notas de novo"
+- Textos: `src/data/metodos.ts` (`METODOS`, `ORDEM`, `metodoDoRotulo`); notas dispensadas: `src/lib/notasMetodo.ts`
 
 ### `src/features/coach/` — App do coach
 - `inicio/Inicio.tsx` — dashboard do coach
