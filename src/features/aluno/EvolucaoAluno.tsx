@@ -7,6 +7,7 @@ import { useLista } from '../../lib/hooks'
 import { campoBase, Centro } from '../../ui'
 import { fmt } from '../coach/semana/format'
 import { mesoAtual } from './mesoAtual'
+import { ir } from '../../rota'
 
 export default function EvolucaoAluno({ uid }: { uid: string }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
@@ -35,6 +36,9 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
 
   return (
     <main className="mx-auto max-w-md px-4 py-4">
+      <button onClick={() => ir('/')} className="mb-2 text-sm text-slate-400">
+        ← Hoje
+      </button>
       <h1 className="mb-3 text-lg font-bold">Evolução</h1>
       <select
         value={nome}
