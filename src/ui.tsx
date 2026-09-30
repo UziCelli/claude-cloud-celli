@@ -1,3 +1,4 @@
+import { AnimatePresence, m } from 'motion/react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
 
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
@@ -33,8 +34,12 @@ export const Botao = ({
   tipo = 'secundario',
   className = '',
   ...p
-}: ButtonHTMLAttributes<HTMLButtonElement> & { tipo?: keyof typeof estilos }) => (
-  <button
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'> & {
+  tipo?: keyof typeof estilos
+}) => (
+  <m.button
+    whileTap={{ scale: 0.97 }}
+    transition={{ duration: 0.12 }}
     {...p}
     className={`rounded-lg px-3 py-2 text-sm font-semibold transition disabled:opacity-50 ${estilos[tipo]} ${className}`}
   />
@@ -58,4 +63,50 @@ export const Centro = ({ children }: { children: ReactNode }) => (
   <div className="flex min-h-dvh items-center justify-center px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] text-center">
     <div className="w-full max-w-sm min-w-0 space-y-4">{children}</div>
   </div>
+)
+
+// Troca de tela: fade + leve deslocamento; `chave` = rota.
+export const Tela = ({ chave, children }: { chave: string; children: ReactNode }) => (
+  <AnimatePresence mode="wait" initial={false}>
+    <m.div
+      key={chave}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } }}
+      exit={{ opacity: 0, transition: { duration: 0.08 } }}
+    >
+      {children}
+    </m.div>
+  </AnimatePresence>
+)
+
+// Painel que abre/fecha com altura + opacidade (use no lugar de `{aberto && <X/>}`).
+export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => (
+  <AnimatePresence initial={false}>
+    {aberto && (
+      <m.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className={`overflow-hidden ${className ?? ''}`}
+      >
+        {children}
+      </m.div>
+    )}
+  </AnimatePresence>
+)
+
+// Cascata: <Cascata> (container) + <Item> (filhos diretos). Sem delay em campos de digitação.
+export const cascata = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } }
+export const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2 } } }
+
+// Barra que cresce da esquerda até `frac` (0–1) ao aparecer.
+export const Barra = ({ frac }: { frac: number }) => (
+  <m.div
+    className="mt-1 h-1 origin-left rounded bg-marca-500"
+    style={{ width: `${Math.max(2, Math.round(frac * 100))}%` }}
+    initial={{ scaleX: 0 }}
+    animate={{ scaleX: 1 }}
+    transition={{ duration: 0.3, ease: 'easeOut' }}
+  />
 )

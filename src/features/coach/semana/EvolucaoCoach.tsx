@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { evolucaoExercicio, type Meso, type Registros } from '../../../engine'
-import { campoBase, Cartao } from '../../../ui'
+import { Barra, campoBase, Cartao } from '../../../ui'
 import { fmt } from './format'
 
 export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Meso; registros: Registros; reps?: Registros }) {
@@ -11,6 +11,7 @@ export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Me
   const [nome, setNome] = useState(lista[0] ?? '')
 
   const pontos = nome ? evolucaoExercicio(meso, registros, nome, reps) : []
+  const maxCarga = Math.max(1, ...pontos.map((p) => p.cargaMax ?? 0))
 
   return (
     <Cartao>
@@ -49,7 +50,10 @@ export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Me
                 <td className="p-2">{p.ocorrencia}</td>
                 <td className="p-2">{p.semana}</td>
                 <td className="p-2">{p.treino}</td>
-                <td className="p-2 text-right">{fmt(p.cargaMax)}</td>
+                <td className="p-2 text-right">
+                  {fmt(p.cargaMax)}
+                  <Barra key={nome} frac={(p.cargaMax ?? 0) / maxCarga} />
+                </td>
                 <td className="p-2 text-right">{fmt(p.cargaMedia)}</td>
                 <td className="p-2 text-right">{fmt(p.volume)}</td>
               </tr>

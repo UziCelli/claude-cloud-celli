@@ -4,7 +4,7 @@ import { evolucaoExercicio, type Meso } from '../../engine'
 import { docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
-import { campoBase, Centro } from '../../ui'
+import { Barra, campoBase, Centro } from '../../ui'
 import { fmt } from '../coach/semana/format'
 import { mesoAtual } from './mesoAtual'
 import { ir } from '../../rota'
@@ -33,6 +33,7 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
   const [nome, setNome] = useState(lista[0] ?? '')
 
   const pontos = nome ? evolucaoExercicio(meso, cargas, nome, reps) : []
+  const maxCarga = Math.max(1, ...pontos.map((p) => p.cargaMax ?? 0))
 
   return (
     <main className="mx-auto max-w-md px-4 py-4">
@@ -68,7 +69,10 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
             {pontos.map((p) => (
               <tr key={p.ocorrencia} className="border-b border-slate-800 last:border-0">
                 <td className="p-2">{p.semana}</td>
-                <td className="p-2 text-right">{fmt(p.cargaMax)}</td>
+                <td className="p-2 text-right">
+                  {fmt(p.cargaMax)}
+                  <Barra key={nome} frac={(p.cargaMax ?? 0) / maxCarga} />
+                </td>
                 <td className="p-2 text-right">{fmt(p.cargaMedia)}</td>
                 <td className="p-2 text-right">{fmt(p.volume)}</td>
               </tr>

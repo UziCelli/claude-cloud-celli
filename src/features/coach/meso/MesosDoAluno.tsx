@@ -6,7 +6,7 @@ import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, campoBase, Cartao, flash, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao, flash, Pagina, Painel } from '../../../ui'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { mesoPadrao } from './mesoPadrao'
 
@@ -67,8 +67,12 @@ function CartaoMeso({ meso }: { meso: MesoSalvo & { id: string } }) {
         <Botao onClick={() => alternar('duplicar')}>Duplicar</Botao>
         <Botao tipo="perigo" onClick={() => alternar('excluir')}>Excluir</Botao>
       </div>
-      {aberto === 'duplicar' && <FormDuplicar mesoId={meso.id} onFechar={() => setAberto(null)} />}
-      {aberto === 'excluir' && <ConfirmarExclusao meso={meso} onFechar={() => setAberto(null)} />}
+      <Painel aberto={aberto === 'duplicar'}>
+        <FormDuplicar mesoId={meso.id} onFechar={() => setAberto(null)} />
+      </Painel>
+      <Painel aberto={aberto === 'excluir'}>
+        <ConfirmarExclusao meso={meso} onFechar={() => setAberto(null)} />
+      </Painel>
     </Cartao>
   )
 }
