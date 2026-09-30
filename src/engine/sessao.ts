@@ -34,6 +34,15 @@ function extraTempo(m: AplicacaoMetodo): number {
   return ad + p * (b > 1 ? b - 1 : 0)
 }
 
+// Linha de reps de um exercício na semana: o override dele, senão a do grupo (principais pos 1–2, auxiliares).
+export function linhaPrescrita(meso: Meso, semana: number, treino: number, pos: number): (number | null)[] {
+  return (
+    meso.progressaoExercicio?.[`${treino}-${pos}`]?.[semana - 1] ??
+    (pos <= 2 ? meso.progressao.principais : meso.progressao.auxiliares)[semana - 1] ??
+    []
+  )
+}
+
 export function prescreverSessao(meso: Meso, semana: number, treino: number): Sessao | null {
   if (semana < 1 || semana > meso.semanas || treino < 1 || treino > meso.frequencia) return null
 
@@ -44,7 +53,7 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
   const exercicios = (meso.divisao[treino - 1] ?? []).map((original, i): ExercicioPrescrito => {
     const pos = i + 1
     const slot = meso.trocas?.[`${semana}-${treino}-${pos}`] ?? original
-    const linha = (pos <= 2 ? meso.progressao.principais : meso.progressao.auxiliares)[semana - 1] ?? []
+    const linha = linhaPrescrita(meso, semana, treino, pos)
     const base = (k: number) => linha[k - 1] ?? 0
     const n = linha.filter((r) => typeof r === 'number').length
     const linhas = doTreino.filter((m) => m.exercicio === pos)
