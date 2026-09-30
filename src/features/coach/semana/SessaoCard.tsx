@@ -3,6 +3,7 @@ import { registrarCarga } from '../../../lib/acoes'
 import { doc } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
 import { useDoc } from '../../../lib/hooks'
+import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { Cartao } from '../../../ui'
 import type { NotasDoc } from '../../../lib/conversores'
 import { fmt } from './format'
@@ -52,6 +53,9 @@ export default function SessaoCard({
   reps = {},
   realizado,
   onRealizado,
+  inicioEm,
+  realizadoEm,
+  limite,
 }: {
   mesoId: string
   alunoId: string
@@ -60,6 +64,9 @@ export default function SessaoCard({
   reps?: Cargas
   realizado: boolean
   onRealizado: (v: boolean) => void
+  inicioEm?: { toMillis(): number } | null
+  realizadoEm?: { toMillis(): number } | null
+  limite?: number
 }) {
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', alunoId))
   const m = metricasSessao(sessao, cargas, reps)
@@ -71,7 +78,12 @@ export default function SessaoCard({
         <div>
           <h3 className="font-semibold">Treino {sessao.treino}</h3>
           <p className="text-xs text-slate-400">
-            ~{fmt(sessao.tempoMin)} min · pausa {sessao.pausaS}s
+            <b className={`text-sm ${acimaDoLimite(sessao.tempoMin, limite) ? 'text-red-400' : 'text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</b> · pausa {sessao.pausaS}s
+            {inicioEm && realizadoEm && (
+              <>
+                {' '}· real {Math.ceil((realizadoEm.toMillis() - inicioEm.toMillis()) / 60000)} min · previsto {fmtMin(sessao.tempoMin)}
+              </>
+            )}
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm text-slate-300">

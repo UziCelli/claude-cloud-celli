@@ -369,6 +369,34 @@ describe('registros', () => {
     });
   });
 
+  describe('inicioEm (tempo real do treino)', () => {
+    const id = { alunoId: 'ana', mesoId: 'm_ana', semana: 1, treino: 1 }
+    const agora = () => ({ atualizadoEm: serverTimestamp() })
+
+    it('criação aceita inicioEm = hora do servidor; nega hora escolhida pelo aparelho', async () => {
+      const criar = (dados: object, i: string) => setDoc(reg('ana', i), { ...registro('ana', 3, 1), ...agora(), ...dados }, { merge: true })
+      await assertSucceeds(criar({ inicioEm: serverTimestamp() }, 'm_ana_s03_t1'));
+      await assertFails(criar({ inicioEm: passado }, 'm_ana_s03_t1'));
+    });
+    it('atualização grava inicioEm = hora do servidor (updateDoc e setDoc merge)', async () => {
+      await assertSucceeds(updateDoc(reg('ana', 'm_ana_s01_t1'), { inicioEm: serverTimestamp(), ...agora() }));
+      await assertSucceeds(setDoc(reg('ana', 'm_ana_s01_t2'), { ...id, treino: 2, inicioEm: serverTimestamp(), ...agora() }, { merge: true }));
+    });
+    it('nega inicioEm inventado na atualização', async () => {
+      await assertFails(updateDoc(reg('ana', 'm_ana_s01_t1'), { inicioEm: passado, ...agora() }));
+      await assertFails(updateDoc(reg('ana', 'm_ana_s01_t1'), { inicioEm: futuro, ...agora() }));
+    });
+    it('depois de gravado, reenviar o mesmo valor não muda; editar carga não mexe nele', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      await assertSucceeds(updateDoc(r, { inicioEm: serverTimestamp(), ...agora() }));
+      await assertSucceeds(updateDoc(r, { 'cargas.sup.s2': 50, ...agora() }));
+      await assertFails(updateDoc(r, { inicioEm: passado, ...agora() }));
+      await assertFails(updateDoc(r, { inicioEm: null, ...agora() }));
+    });
+    it('outro aluno não grava inicioEm no registro alheio', () =>
+      assertFails(updateDoc(reg('bia', 'm_ana_s01_t1'), { inicioEm: serverTimestamp(), ...agora() })));
+  });
+
   describe('atualização', () => {
     it('permite cargas por campo (updateDoc com caminho pontilhado)', () =>
       assertSucceeds(updateDoc(reg('ana', 'm_ana_s01_t1'), { 'cargas.sup.s2': 42.5, atualizadoEm: serverTimestamp() })));

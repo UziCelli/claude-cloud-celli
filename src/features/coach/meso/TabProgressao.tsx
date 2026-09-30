@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { linhaPrescrita, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
 import { Botao, campoBase, Cartao, Painel } from '../../../ui'
@@ -75,7 +76,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
     if (!previa) return
     const limite = meso.tempoLimiteMin
     const pior = Math.max(...previa.depois.map((x) => x.tempo))
-    if (limite && pior > limite && !confirm(`Vai passar do tempo limite: treino previsto ~${Math.round(pior)} min (limite ${limite}). Aplicar mesmo assim?`)) return
+    if (limite && pior > limite && !confirm(`Vai passar do tempo limite: treino previsto ${fmtMin(pior)} (limite ${limite}). Aplicar mesmo assim?`)) return
     onAtualizar(previa.novo)
     setPrevia(null)
   }
@@ -157,7 +158,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
             <tr className="text-left text-slate-400">
               <th className="font-normal">Sem</th>
               <th className="font-normal">Movimentos</th>
-              <th className="font-normal">Tempo (min)</th>
+              <th className="font-normal">Tempo</th>
             </tr>
           </thead>
           <tbody>
@@ -165,7 +166,10 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
               <tr key={i}>
                 <td className="text-slate-400">S{i + 1}</td>
                 <td>{a.mov} → {previa.depois[i].mov}</td>
-                <td>{fmt(a.tempo)} → {fmt(previa.depois[i].tempo)}</td>
+                <td className="font-bold">
+                  {fmtMin(a.tempo)} →{' '}
+                  <span className={acimaDoLimite(previa.depois[i].tempo, meso.tempoLimiteMin) ? 'text-red-400' : ''}>{fmtMin(previa.depois[i].tempo)}</span>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -33,6 +33,7 @@ export interface AplicacaoMetodo {
 export interface Slot {
   slotId: string
   nome: string
+  pausaS?: number // pausa deste exercício; sem valor = pausa do meso
 }
 
 export interface Meso {

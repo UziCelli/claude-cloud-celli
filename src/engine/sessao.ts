@@ -102,7 +102,9 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
   }
   const somaReps = exercicios.reduce((s, e) => s + e.reps.reduce((a, r) => a + r, 0), 0)
   const extras = doTreino.reduce((s, m) => s + extraTempo(m), 0)
-  const pausas = series * meso.pausaS * Math.max(0, exercicios.length - economizados)
+  // A pausa de cada exercício é a do slot (se houver) ou a do meso; a economia usa a pausa média.
+  const somaPausas = exercicios.reduce((s, e) => s + (e.slot.pausaS ?? meso.pausaS), 0)
+  const pausas = exercicios.length ? series * (somaPausas / exercicios.length) * Math.max(0, exercicios.length - economizados) : 0
   const tempoMin = 10 + (somaReps + pausas + extras) / 60
 
   return { semana, treino, inicioSemana, pausaS: meso.pausaS, series, exercicios, tempoMin }

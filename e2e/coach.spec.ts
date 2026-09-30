@@ -57,15 +57,24 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.waitForURL(/#\/meso\//)
 
     await page.getByRole('button', { name: 'Divisão', exact: true }).click()
-    const tabela = page.locator('table').filter({ hasText: 'Posição' })
     for (let t = 1; t <= 3; t++) {
       for (let p = 1; p <= 3; p++) {
-        const linha = tabela.locator('tbody tr').nth(p - 1)
-        const input = linha.locator('input[list="catalogo"]').nth(t - 1)
+        const input = page.getByTestId(`treino-${t}`).getByRole('combobox').nth(p - 1)
         await input.fill(NOMES[p - 1])
         await input.press('Tab')
       }
     }
+
+    const busca = page.getByTestId('treino-1').getByRole('combobox').nth(3)
+    await busca.fill('halt bulg')
+    await page.getByRole('option', { name: /Búlgaro com Halter/ }).click()
+    await expect(busca).toHaveValue(/Búlgaro com Halter/)
+    await page.getByTestId('treino-1').getByLabel('Pausa em segundos, posição 1').fill('75')
+    await page.getByTestId('treino-1').getByLabel('Pausa em segundos, posição 1').press('Tab')
+    await page.screenshot({ path: 'test-results/prints/71-divisao-pc.png' })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: 'test-results/prints/72-divisao-celular.png' })
+    await page.setViewportSize({ width: 1280, height: 800 })
 
     await page.screenshot({ path: 'test-results/prints/02-editor-divisao.png' })
 
@@ -94,7 +103,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByRole('button', { name: 'Ver semanas' }).click()
     await page.waitForURL(/#\/meso\/.+\/semana\/1/)
 
-    await expect(page.getByText(/~29,2 min/).first()).toBeVisible()
+    await expect(page.getByText(/^30 min$/).first()).toBeVisible()
 
     await page.screenshot({ path: 'test-results/prints/03-semana.png' })
   })
@@ -156,9 +165,8 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
   await page.waitForURL(/#\/meso\//)
   const mesoId = page.url().split('#/meso/')[1]
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
-  const tabela = page.locator('table').filter({ hasText: 'Posição' })
   for (let t = 1; t <= 3; t++) {
-    const input = tabela.locator('tbody tr').first().locator('input[list="catalogo"]').nth(t - 1)
+    const input = page.getByTestId(`treino-${t}`).getByRole('combobox').first()
     await input.fill(NOMES[0])
     await input.press('Tab')
   }

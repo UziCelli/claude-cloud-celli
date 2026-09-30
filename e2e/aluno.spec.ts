@@ -69,10 +69,23 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await kgInputs.nth(0).fill('40')
     await kgInputs.nth(0).blur()
 
+    // Gravar carga não liga o cronômetro sozinho.
+    await expect(page.getByText('Pular')).toBeHidden()
+    await expect(cartaoExercicio1.getByRole('button', { name: /▶ 60 s/ })).toBeVisible()
+
+    // ▶ liga o descanso; pausa e reinicia.
+    await cartaoExercicio1.getByRole('button', { name: /▶ 60 s/ }).click()
     await expect(page.getByText('Pular')).toBeVisible({ timeout: 5000 })
     await expect(page.getByText(/^\d:\d\d$/)).toBeVisible()
+    await expect(cartaoExercicio1.getByRole('button', { name: /⏸/ })).toBeVisible()
     await page.screenshot({ path: 'test-results/prints/11-aluno-treino.png' })
     await page.screenshot({ path: 'test-results/prints/50-treino-animado.png' })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: 'test-results/prints/70-treino.png' })
+    await cartaoExercicio1.getByRole('button', { name: /⏸/ }).click()
+    await expect(cartaoExercicio1.getByRole('button', { name: /▶ \d:\d\d/ })).toBeVisible()
+    await cartaoExercicio1.getByRole('button', { name: 'Reiniciar' }).click()
+    await expect(cartaoExercicio1.getByRole('button', { name: /⏸/ })).toBeVisible()
     await page.getByRole('button', { name: 'Pular' }).click()
 
     // Reps feitas da série 1 (segundo input do par).
@@ -113,6 +126,10 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
         { timeout: 15_000 },
       )
       .toEqual({ s1: 40, s2: 42, reps1: 6 })
+
+    // 1ª ação do treino gravou inicioEm (e só uma vez: o valor não some nas gravações seguintes).
+    const reg = ((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>
+    expect(reg.inicioEm?.timestampValue).toBeTruthy()
   })
 
   await test.step('anotação do exercício sobrevive ao recarregar', async () => {

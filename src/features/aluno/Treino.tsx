@@ -2,7 +2,7 @@ import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { prescreverSessao } from '../../engine'
-import { marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
+import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
 import { fracaoPC } from '../../lib/pesoCorporal'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
@@ -11,10 +11,11 @@ import { useDoc, useLista } from '../../lib/hooks'
 import { cargaAnterior } from '../../lib/treino'
 import { ir } from '../../rota'
 import { Botao, cascata, Centro, item, Painel } from '../../ui'
+import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
 
-type RegistroFlag = RegistroDoc & { realizado?: boolean; pc?: Record<string, number> }
+type RegistroFlag = RegistroDoc & { realizado?: boolean; inicioEm?: unknown; pc?: Record<string, number> }
 
 // Cartão "Novidades": só nas 2 primeiras aberturas (contador no localStorage; sem ele, aparece sempre).
 const CHAVE_NOVIDADES = 'forca-novidades-pc'
@@ -55,9 +56,11 @@ function Novidades() {
 
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-// Contagem de descanso: Date.now() a cada tick, então funciona mesmo se o setInterval atrasar.
+// Cronômetro manual por exercício: Date.now() a cada tick, então funciona mesmo se o setInterval atrasar.
 function useDescanso() {
+  const [slot, setSlot] = useState<string | null>(null)
   const [fimEm, setFimEm] = useState<number | null>(null)
+  const [pausado, setPausado] = useState<number | null>(null) // segundos que faltavam ao pausar
   const [restante, setRestante] = useState(0)
   const [total, setTotal] = useState(1)
   const [ciclo, setCiclo] = useState(0)
@@ -69,20 +72,99 @@ function useDescanso() {
       if (r === 0) {
         navigator.vibrate?.([300, 150, 300])
         setFimEm(null)
+        setSlot(null)
       }
     }
     tick()
     const id = setInterval(tick, 250)
     return () => clearInterval(id)
   }, [fimEm])
-  return { ativo: fimEm != null, restante, total, ciclo, iniciar: (segundos: number) => {
-      setTotal(Math.max(1, segundos))
-      setCiclo((c) => c + 1)
-      setRestante(segundos)
-      setFimEm(Date.now() + segundos * 1000)
-    }, parar: () => setFimEm(null) }
+  const iniciar = (segundos: number, s: string) => {
+    setSlot(s)
+    setPausado(null)
+    setTotal(Math.max(1, segundos))
+    setCiclo((c) => c + 1)
+    setRestante(segundos)
+    setFimEm(Date.now() + segundos * 1000)
+  }
+  const parar = () => {
+    setFimEm(null)
+    setPausado(null)
+    setSlot(null)
+  }
+  // Um toque: inicia; rodando pausa; pausado continua.
+  const alternar = (segundos: number, s: string) => {
+    if (slot !== s) return iniciar(segundos, s)
+    if (fimEm != null) {
+      setPausado(restante)
+      setFimEm(null)
+    } else if (pausado != null) {
+      setFimEm(Date.now() + pausado * 1000)
+      setPausado(null)
+    } else iniciar(segundos, s)
+  }
+  return { slot, rodando: fimEm != null, pausado: pausado != null, visivel: slot != null, restante: pausado ?? restante, total, ciclo, iniciar, alternar, parar }
 }
 
+const METODOS_SEQUENCIA = /Biset|Triset|Superset|Circuito/
+const CHAVE_AVISO = 'forca-aviso-biset'
+const lerAviso = () => {
+  try {
+    return localStorage.getItem(CHAVE_AVISO) !== '1'
+  } catch {
+    return true
+  }
+}
+
+function AvisoSequencia() {
+  const [ver, setVer] = useState(lerAviso)
+  const fechar = (paraSempre: boolean) => {
+    if (paraSempre)
+      try {
+        localStorage.setItem(CHAVE_AVISO, '1')
+      } catch {
+        /* ignora */
+      }
+    setVer(false)
+  }
+  return (
+    <AnimatePresence>
+      {ver && (
+        <m.div
+          role="dialog"
+          aria-label="Como fazer biset, triset, superset e circuito"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+        >
+          <m.div
+            initial={{ y: 16, scale: 0.96, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 16, scale: 0.96, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5"
+          >
+            <h2 className="mb-2 text-lg font-bold">Treino com exercícios em sequência</h2>
+            <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-300">
+              <li>Faça os exercícios do grupo um depois do outro.</li>
+              <li>Descanse só depois do último.</li>
+            </ul>
+            <div className="flex flex-col gap-2">
+              <Botao tipo="primario" className="w-full" onClick={() => fechar(false)}>
+                Entendi
+              </Botao>
+              <Botao className="w-full" onClick={() => fechar(true)}>
+                Não mostrar de novo
+              </Botao>
+            </div>
+          </m.div>
+        </m.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
   const [editando, setEditando] = useState(false)
@@ -162,12 +244,16 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   const sessao = prescreverSessao(meso, semana, treino)
   if (!sessao) return <Centro>Treino não encontrado.</Centro>
 
+  const pausaEx = (p?: number) => p ?? meso.pausaS
   const cargas = docsParaRegistros(docsRegistros)
   const repsFeitas = docsParaRegistrosReps(docsRegistros)
   const chave = `${semana}-${treino}`
   const cs = cargas[chave] ?? {}
   const rs = repsFeitas[chave] ?? {}
   const pcs = docsRegistros.find((r) => r.semana === semana && r.treino === treino)?.pc ?? {}
+  const iniciado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.inicioEm)
+  const iniciou = () => { if (!iniciado) marcarInicio(mesoId, uid, semana, treino) }
+  const vermelho = acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin)
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
 
   return (
@@ -179,12 +265,14 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
         <div className="min-w-0">
           <h1 className="text-lg font-bold">Treino {treino}</h1>
           <p className="text-xs text-slate-400">
-            Semana {semana} · <b className="font-display text-slate-200">~{fmt(sessao.tempoMin)} min</b> · pausa {sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
+            Semana {semana} · pausa {sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
           </p>
         </div>
+        <span className={`shrink-0 rounded-full px-3 py-1 font-display text-lg font-bold ${vermelho ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</span>
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
+      {sessao.exercicios.some((e) => METODOS_SEQUENCIA.test(e.rotulo)) && <AvisoSequencia />}
       <Novidades />
       <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
         {sessao.exercicios.map((e) => {
@@ -211,9 +299,27 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           }
           return (
             <m.div key={e.slot.slotId} variants={item} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-              <div className="mb-2">
-                <div className="font-semibold">{e.slot.nome}</div>
-                {e.rotulo && <div className="mt-1 text-[11px] text-slate-400">{e.rotulo}</div>}
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-semibold">{e.slot.nome}</div>
+                  {e.rotulo && <div className="mt-1 text-[11px] text-slate-400">{e.rotulo}</div>}
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Botao
+                    tipo={descanso.slot === slot ? 'primario' : undefined}
+                    onClick={() => {
+                      iniciou()
+                      descanso.alternar(pausaEx(e.slot.pausaS), slot)
+                    }}
+                  >
+                    {descanso.slot === slot ? `${descanso.rodando ? '⏸' : '▶'} ${mmss(descanso.restante)}` : `▶ ${pausaEx(e.slot.pausaS)} s`}
+                  </Botao>
+                  {descanso.slot === slot && (
+                    <Botao aria-label="Reiniciar" onClick={() => descanso.iniciar(pausaEx(e.slot.pausaS), slot)}>
+                      ↻
+                    </Botao>
+                  )}
+                </div>
               </div>
               <label className="mb-2 flex items-center gap-2 text-xs text-slate-300">
                 <input type="checkbox" checked={!!corpo} onChange={alternarPc} className="h-5 w-5" />
@@ -243,8 +349,8 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                         valor={colunasCargas[k] != null ? Math.max(0, Math.round((colunasCargas[k]! - corpo) * 100) / 100) : null}
                         placeholder={placeholderKg}
                         onSalvar={(v) => {
+                          iniciou()
                           registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, v == null ? null : Math.round((v + corpo) * 100) / 100)
-                          if (v != null && !dropStage) descanso.iniciar(meso.pausaS)
                         }}
                       />
                       <span className="text-xs text-slate-600">kg</span>
@@ -252,7 +358,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                         className="w-full min-w-0"
                         valor={colunasReps[k] ?? null}
                         placeholder={repAlvo}
-                        onSalvar={(v) => registrarReps(mesoId, uid, semana, treino, e.slot.slotId, k, v)}
+                        onSalvar={(v) => { iniciou(); registrarReps(mesoId, uid, semana, treino, e.slot.slotId, k, v) }}
                       />
                       <span className="text-xs text-slate-600">feitas</span>
                     </div>
@@ -295,7 +401,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       </div>
 
       <AnimatePresence>
-      {descanso.ativo && (
+      {descanso.visivel && (
         <m.div
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -308,8 +414,8 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
               key={descanso.ciclo}
               className="h-full rounded bg-marca-500"
               initial={{ width: '100%' }}
-              animate={{ width: '0%' }}
-              transition={{ duration: descanso.total, ease: 'linear' }}
+              animate={{ width: descanso.pausado ? `${(descanso.restante / descanso.total) * 100}%` : '0%' }}
+              transition={{ duration: descanso.pausado ? 0 : descanso.restante, ease: 'linear' }}
             />
           </div>
           <div className="mx-auto flex max-w-md items-center justify-between">

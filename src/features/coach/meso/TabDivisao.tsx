@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
-import { nomesCatalogo, semanasComHistorico } from './util'
+import CampoExercicio from './CampoExercicio'
+import { semanasComHistorico } from './util'
 
-const rotuloPos = (p: number) => (p <= 2 ? 'Principal' : 'Auxiliar')
 
 export default function TabDivisao({
   meso,
@@ -69,29 +69,63 @@ export default function TabDivisao({
     }
   }
 
+  function mudarPausa(t: number, p: number, v: string) {
+    const slot = meso.divisao[t - 1]?.[p - 1]
+    const n = v.trim() === '' ? undefined : Math.max(0, Math.round(Number(v)))
+    if (!slot || n === slot.pausaS || (n !== undefined && Number.isNaN(n))) return
+    const { pausaS: _, ...resto } = slot
+    const divisao = [...meso.divisao]
+    divisao[t - 1] = meso.divisao[t - 1].map((x, i) => (i === p - 1 ? (n === undefined ? resto : { ...resto, pausaS: n }) : x))
+    onAtualizar({ divisao })
+  }
+
   const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1)
   const posicoes = Array.from({ length: 10 }, (_, i) => i + 1)
 
-  // Campo + "×" de uma posição; usado pela grade (md+) e pela lista (celular).
-  function celula(t: number, p: number) {
+  const sel = Math.min(treinoSel, meso.frequencia)
+
+  // Cartão de um treino: usado em grade (md+) e sozinho (celular).
+  function cartaoTreino(t: number) {
     const arr = meso.divisao[t - 1] ?? []
-    if (p > arr.length + 1) return null
-    const slot = arr[p - 1]
     return (
-      <div className="flex items-center gap-1">
-        <input
-          list="catalogo"
-          defaultValue={slot?.nome ?? ''}
-          key={slot?.slotId ?? `novo-${t}-${p}`}
-          placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
-          onBlur={(e) => commit(t, p, e.target.value)}
-          className={`${campoBase} min-w-0 flex-1 px-2 py-2 outline-none focus:border-marca-500 md:py-1`}
-        />
-        {slot && p === arr.length && (
-          <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="px-2 py-1 text-lg text-slate-500 hover:text-red-400">
-            ×
-          </button>
-        )}
+      <div key={t} data-testid={`treino-${t}`} className={`rounded-lg border border-slate-800 bg-slate-950 text-sm ${t === sel ? '' : 'hidden md:block'}`}>
+        <p className="border-b border-slate-800 px-3 py-2 font-semibold">Treino {t}</p>
+        <ul className="divide-y divide-slate-800">
+          {posicoes.map((p) => {
+            if (p > arr.length + 1) return null
+            const slot = arr[p - 1]
+            return (
+              <li key={p} className="flex items-center gap-2 px-3 py-2">
+                <span className="w-4 shrink-0 text-slate-500">{p}</span>
+                <CampoExercicio
+                  key={slot?.slotId ?? `novo-${t}-${p}`}
+                  inicial={slot?.nome ?? ''}
+                  placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
+                  onConfirmar={(nome) => commit(t, p, nome)}
+                  className="flex-1"
+                />
+                {slot && (
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    aria-label={`Pausa em segundos, posição ${p}`}
+                    placeholder="pausa (s)"
+                    defaultValue={slot.pausaS ?? ''}
+                    key={`${slot.slotId}-${slot.pausaS ?? ''}`}
+                    onBlur={(e) => mudarPausa(t, p, e.target.value)}
+                    className={`${campoBase} w-20 shrink-0 px-2 py-2 text-center outline-none focus:border-marca-500`}
+                  />
+                )}
+                {slot && p === arr.length && (
+                  <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="shrink-0 px-1 text-lg text-slate-500 hover:text-red-400">
+                    ×
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
       </div>
     )
   }
@@ -100,66 +134,20 @@ export default function TabDivisao({
     <div className="space-y-4">
       <Msg>{aviso && <Aviso>{aviso}</Aviso>}</Msg>
       <Cartao>
-        <div className="md:hidden">
-          <div className="mb-3 flex gap-2 overflow-x-auto">
-            {treinos.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTreinoSel(Math.min(t, meso.frequencia))}
-                className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${Math.min(treinoSel, meso.frequencia) === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
-              >
-                Treino {t}
-              </button>
-            ))}
-          </div>
-          <ul className="space-y-3">
-            {posicoes.map((p) => {
-              const c = celula(Math.min(treinoSel, meso.frequencia), p)
-              return (
-                c && (
-                  <li key={p}>
-                    <p className="mb-1 text-xs text-slate-400">
-                      {p} · {rotuloPos(p)}
-                    </p>
-                    {c}
-                  </li>
-                )
-              )
-            })}
-          </ul>
-        </div>
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full min-w-[500px] border-separate border-spacing-2 text-sm">
-            <thead>
-              <tr>
-                <th className="text-left text-slate-400">Posição</th>
-                {treinos.map((t) => (
-                  <th key={t} className="text-left text-slate-400">
-                    Treino {t}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {posicoes.map((p) => (
-                <tr key={p}>
-                  <td className="whitespace-nowrap text-slate-400">
-                    {p} · {rotuloPos(p)}
-                  </td>
-                  {treinos.map((t) => (
-                    <td key={t}>{celula(t, p)}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <datalist id="catalogo">
-          {nomesCatalogo.map((n) => (
-            <option key={n} value={n} />
+        <div className="mb-3 flex gap-2 overflow-x-auto md:hidden">
+          {treinos.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTreinoSel(t)}
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${sel === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              Treino {t}
+            </button>
           ))}
-        </datalist>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{treinos.map(cartaoTreino)}</div>
+        <p className="mt-3 text-xs text-slate-400">Pausa em branco = pausa do mesociclo.</p>
       </Cartao>
       <Msg>{hint && <Aviso>{hint}</Aviso>}</Msg>
       <TrocasPontuais meso={meso} onAtualizar={onAtualizar} />
@@ -172,6 +160,7 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
   const [treino, setTreino] = useState(1)
   const [pos, setPos] = useState(1)
   const [nome, setNome] = useState('')
+  const [chaveCampo, setChaveCampo] = useState(0)
   const trocas = meso.trocas ?? {}
 
   function adicionar() {
@@ -179,6 +168,7 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
     const chave = `${semana}-${treino}-${pos}`
     onAtualizar({ trocas: { ...trocas, [chave]: { slotId: crypto.randomUUID(), nome: nome.trim() } } })
     setNome('')
+    setChaveCampo((k) => k + 1)
   }
 
   function remover(chave: string) {
@@ -216,12 +206,7 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
         <Seletor rotulo="Posição" valor={pos} max={Math.max(1, tamanhoTreino)} onChange={setPos} />
         <label className="flex w-full flex-col gap-1 text-sm md:w-auto">
           <span className="text-slate-400">Exercício</span>
-          <input
-            list="catalogo"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className={`${campoBase} w-full px-3 py-2`}
-          />
+          <CampoExercicio key={chaveCampo} onTexto={setNome} className="w-full md:w-72" />
         </label>
         <Botao tipo="primario" onClick={adicionar}>
           Adicionar

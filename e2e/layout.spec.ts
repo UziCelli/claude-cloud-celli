@@ -94,6 +94,7 @@ for (const vp of [
     const kg = page.locator('input[type="number"]').first()
     await kg.fill('100.5')
     await kg.blur()
+    await page.getByRole('button', { name: /^▶ \d+ s$/ }).first().click()
     await expect(page.getByText('Pular')).toBeVisible()
     await confere(page)
     if (prints) await page.screenshot({ path: 'test-results/prints/20-iphone14-treino.png' })

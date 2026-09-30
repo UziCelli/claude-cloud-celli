@@ -54,6 +54,7 @@ Comece por aqui para achar onde mexer.
 - `alunos/Alunos.tsx`, `NovoAluno.tsx` — lista, cadastro
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão
 - `meso/MesosDoAluno.tsx` — lista de mesos de um aluno
+- `meso/CampoExercicio.tsx` — combobox de exercício (sugestões de `src/lib/busca.ts`, texto livre)
 - `meso/TabDivisao.tsx`, `TabMetodos.tsx`, `TabProgressao.tsx` — abas do editor
 - `semana/VisaoSemana.tsx` — monitoramento: séries/reps realizadas vs. prescrição
 - `semana/Monitoramento.tsx`, `LoadInput.tsx`, `SessaoCard.tsx` — cards de treino
