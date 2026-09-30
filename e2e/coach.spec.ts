@@ -103,7 +103,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByRole('button', { name: 'Ver semanas' }).click()
     await page.waitForURL(/#\/meso\/.+\/semana\/1/)
 
-    await expect(page.getByText(/~29,2 min/).first()).toBeVisible()
+    await expect(page.getByText(/^30 min$/).first()).toBeVisible()
 
     await page.screenshot({ path: 'test-results/prints/03-semana.png' })
   })

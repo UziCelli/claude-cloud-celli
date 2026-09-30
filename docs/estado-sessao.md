@@ -11,7 +11,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 
 ## Em andamento: Entrega 1 (`docs/plano-entrega1.md`, aprovada)
 - **Parte A (lógica):** feita e commitada (67ce2ba): `src/lib/{semana,tempo,busca}.ts`, `Slot.pausaS` no motor, regra `inicioEm`.
-- **Parte B (telas do aluno) e C (telas do coach):** agentes rodando no momento deste registro.
+- **Partes B (aluno) e C (coach):** feitas e commitadas; typecheck/test/build/e2e passaram. Próximo: PR da Entrega 1 (via auxiliar) e esperar o "pode juntar" do Victor.
 - **Ao retomar:**
   1. `git status` e `git log`.
   2. Se B ou C não estiverem commitados (o container pode ter sido reiniciado e perdido o que não foi salvo), refazer pelo plano.
