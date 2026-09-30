@@ -1,21 +1,33 @@
 import { useMemo } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
-import { consultaRegistrosRecentes } from '../../../lib/acoes'
+import { consultaRegistrosRecentes, marcarAdaptado, salvarMeso } from '../../../lib/acoes'
+import { docParaMeso, type MesoSalvo } from '../../../lib/conversores'
+import { semanaAtual } from '../../../lib/treino'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { inicioJanela, resumoCoach, type AlunoComId, type RegistroResumo } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
+import { LinhaAcima, treinosAcima } from '../meso/SugestaoTempo'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 
 export default function Inicio() {
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
+  const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
   const agora = new Date()
   const chave = inicioJanela(agora, 14)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<RegistroResumo>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora)
+  // Só mesos em andamento com tempo limite.
+  const acima = mesos.dados
+    .filter((d) => d.tempoLimiteMin)
+    .flatMap((d) => {
+      const meso = docParaMeso(d)
+      if (semanaAtual(meso, agora).estado !== 'durante') return []
+      return treinosAcima(meso).map((a) => ({ d, meso, a, aluno: (alunos.dados as AlunoComId[]).find((x) => x.id === d.alunoId)?.nome ?? 'Aluno' }))
+    })
   const novo = (
     <Botao tipo="primario" onClick={() => ir('/alunos/novo')}>
       Novo aluno
@@ -43,6 +55,24 @@ export default function Inicio() {
   ]
   return (
     <Pagina titulo="Início" acoes={novo}>
+      {acima.length > 0 && (
+        <Cartao className="mb-3 space-y-3">
+          <h2 className="font-semibold">
+            Treinos acima do tempo <span className="font-display text-lg font-bold text-amber-300">{acima.length}</span>
+          </h2>
+          {acima.map(({ d, meso, a, aluno }) => (
+            <LinhaAcima
+              key={`${d.id}-${a.treino}`}
+              meso={meso}
+              acima={a}
+              prefixo={aluno}
+              onAplicar={(novo) => {
+                salvarMeso(d.id, d.alunoId, d.nome, novo).gravado.then(() => marcarAdaptado(d.id)).catch(() => {})
+              }}
+            />
+          ))}
+        </Cartao>
+      )}
       <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
         {blocos.map(([titulo, lista, vazio]) => (
           <m.div key={titulo} variants={item}>

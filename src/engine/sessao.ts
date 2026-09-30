@@ -34,10 +34,14 @@ function extraTempo(m: AplicacaoMetodo): number {
   return ad + p * (b > 1 ? b - 1 : 0)
 }
 
-// Linha de reps de um exercício na semana: o override dele, senão a do grupo (principais pos 1–2, auxiliares).
+// Linha de reps de um exercício na semana: a própria (por slotId do slot da divisão, também numa troca),
+// senão a padrão, senão o legado (principais pos 1–2, auxiliares 3–10).
 export function linhaPrescrita(meso: Meso, semana: number, treino: number, pos: number): (number | null)[] {
+  const slotId = meso.divisao[treino - 1]?.[pos - 1]?.slotId
+  const proprias = meso.progressaoExercicio?.[slotId ?? ''] ?? meso.progressaoExercicio?.[`${treino}-${pos}`]
   return (
-    meso.progressaoExercicio?.[`${treino}-${pos}`]?.[semana - 1] ??
+    proprias?.[semana - 1] ??
+    meso.progressao.padrao?.[semana - 1] ??
     (pos <= 2 ? meso.progressao.principais : meso.progressao.auxiliares)[semana - 1] ??
     []
   )

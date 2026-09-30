@@ -128,6 +128,9 @@ export function salvarMeso(mesoId: string | null, alunoId: string, nome: string,
   return { id: ref.id, gravado: setDoc(ref, { ...dados, alunoId, criadoEm: serverTimestamp() }) }
 }
 
+// Marca que o coach adaptou o treino (o aluno vê o aviso uma vez).
+export const marcarAdaptado = (mesoId: string) => updateDoc(doc(db, 'mesos', mesoId), { adaptadoEm: serverTimestamp() })
+
 // Apaga o meso e os registros (cargas) dele. Registros primeiro: se cair no meio, o meso continua
 // na lista e é só excluir de novo. Lê do servidor (nunca do cache): offline dá erro sem apagar nada.
 export async function excluirMeso(mesoId: string) {

@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
-import { linhaPrescrita, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
+import { prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
 import { Botao, campoBase, Cartao, Painel } from '../../../ui'
 
-type Tabela = 'principais' | 'auxiliares'
 type Previa = { mov: number; tempo: number }[]
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',')
@@ -22,32 +21,54 @@ function resumo(meso: Meso): Previa {
 }
 
 export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
-  const setTabela = (tabela: Tabela, tab: (number | null)[][]) => onAtualizar({ progressao: { ...meso.progressao, [tabela]: tab } })
-  const aplicarSemana1 = (tabela: Tabela) => setTabela(tabela, meso.progressao[tabela].map(() => [...(meso.progressao[tabela][0] ?? [])]))
-  const overrides = Object.entries(meso.progressaoExercicio ?? {})
-
-  function voltarPadrao(chave: string) {
-    const { [chave]: _, ...resto } = meso.progressaoExercicio ?? {}
+  const padrao = meso.progressao.padrao ?? meso.progressao.auxiliares
+  const proprias = meso.progressaoExercicio ?? {}
+  const setPadrao = (l: (number | null)[][]) => onAtualizar({ progressao: { ...meso.progressao, padrao: l } })
+  const setProprio = (slotId: string, l: (number | null)[][]) => onAtualizar({ progressaoExercicio: { ...proprias, [slotId]: l } })
+  const voltarPadrao = (slotId: string) => {
+    const { [slotId]: _, ...resto } = proprias
     onAtualizar({ progressaoExercicio: resto })
   }
+  const vazia = () => Array.from({ length: 6 }, () => null)
+  const deSemana = (l: (number | null)[][], w: number) => l[w] ?? padrao[w] ?? vazia()
 
   return (
     <div className="space-y-4">
       <AjustarVolume meso={meso} onAtualizar={onAtualizar} />
-      <TabelaProgressao titulo="Principais (posições 1–2)" linhas={meso.progressao.principais} onLinhas={(l) => setTabela('principais', l)} acao={{ rotulo: 'Aplicar semana 1 em todas', fazer: () => aplicarSemana1('principais') }} />
-      <TabelaProgressao titulo="Auxiliares (posições 3–10)" linhas={meso.progressao.auxiliares} onLinhas={(l) => setTabela('auxiliares', l)} acao={{ rotulo: 'Aplicar semana 1 em todas', fazer: () => aplicarSemana1('auxiliares') }} />
-      {overrides.map(([chave, linhas]) => {
-        const [t, p] = chave.split('-').map(Number)
-        return (
-          <TabelaProgressao
-            key={chave}
-            titulo={`T${t} · ${meso.divisao[t - 1]?.[p - 1]?.nome ?? `Posição ${p}`}`}
-            linhas={linhas.map((_, w) => [...linhaPrescrita(meso, w + 1, t, p)])}
-            onLinhas={(l) => onAtualizar({ progressaoExercicio: { ...meso.progressaoExercicio, [chave]: l } })}
-            acao={{ rotulo: 'Voltar ao padrão', fazer: () => voltarPadrao(chave) }}
-          />
-        )
-      })}
+      <TabelaProgressao
+        titulo="Progressão padrão"
+        linhas={padrao}
+        onLinhas={setPadrao}
+        acao={{ rotulo: 'Aplicar semana 1 em todas', fazer: () => setPadrao(padrao.map(() => [...(padrao[0] ?? vazia())])) }}
+      />
+      <p className="text-sm text-slate-400">Todo exercício segue a padrão, a menos que você personalize.</p>
+      {meso.divisao.map((slots, t) => (
+        <Cartao key={t} className="space-y-2">
+          <h3 className="font-semibold">Treino {t + 1}</h3>
+          {slots.length === 0 && <p className="text-sm text-slate-500">Sem exercícios.</p>}
+          {slots.map((slot) => {
+            const propria = proprias[slot.slotId]
+            if (!propria)
+              return (
+                <div key={slot.slotId} className="flex items-center justify-between gap-2 border-t border-slate-800 pt-2 first:border-0 first:pt-0">
+                  <span className="min-w-0 break-words text-sm">{slot.nome}</span>
+                  <Botao className="shrink-0" onClick={() => setProprio(slot.slotId, padrao.map((l) => [...l]))}>
+                    Personalizar
+                  </Botao>
+                </div>
+              )
+            return (
+              <TabelaProgressao
+                key={slot.slotId}
+                titulo={slot.nome}
+                linhas={padrao.map((_, w) => deSemana(propria, w))}
+                onLinhas={(l) => setProprio(slot.slotId, l)}
+                acao={{ rotulo: 'Voltar ao padrão', fazer: () => voltarPadrao(slot.slotId) }}
+              />
+            )
+          })}
+        </Cartao>
+      ))}
     </div>
   )
 }
@@ -60,11 +81,11 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
   const [retorno, setRetorno] = useState('2')
   const [onde, setOnde] = useState<'todos' | 'treino' | 'exercicio'>('todos')
   const [treino, setTreino] = useState('1')
-  const [pos, setPos] = useState('1')
+  const [slotSel, setSlotSel] = useState('')
   const [previa, setPrevia] = useState<{ antes: Previa; depois: Previa; novo: Meso } | null>(null)
 
   const alvo = (): AlvoVolume =>
-    onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', treino: +treino, pos: +pos }
+    onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
 
   function calcular() {
     const args = { pct: Number(pct) || 0, de: +de, ate: +ate, alvo: alvo() }
@@ -87,7 +108,8 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
     f(v)
     setPrevia(null)
   }
-  const posicoes = meso.divisao[+treino - 1]?.length || 1
+  const slots = meso.divisao[+treino - 1] ?? []
+  const slotId = slots.some((x) => x.slotId === slotSel) ? slotSel : (slots[0]?.slotId ?? '')
 
   return (
     <Cartao>
@@ -139,9 +161,9 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
         {onde === 'exercicio' && (
           <label className={rot}>
             Exercício
-            <select value={pos} onChange={(e) => mudou(setPos)(e.target.value)} className={sel}>
-              {Array.from({ length: posicoes }, (_, i) => (
-                <option key={i} value={i + 1}>{i + 1}. {meso.divisao[+treino - 1]?.[i]?.nome ?? `Posição ${i + 1}`}</option>
+            <select value={slotId} onChange={(e) => mudou(setSlotSel)(e.target.value)} className={sel}>
+              {slots.map((x, i) => (
+                <option key={x.slotId} value={x.slotId}>{i + 1}. {x.nome}</option>
               ))}
             </select>
           </label>

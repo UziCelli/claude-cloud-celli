@@ -166,6 +166,52 @@ function AvisoSequencia() {
   )
 }
 
+function AvisoAdaptado({ chave }: { chave: string }) {
+  const [ver, setVer] = useState(() => {
+    try {
+      return localStorage.getItem(chave) !== '1'
+    } catch {
+      return true
+    }
+  })
+  const fechar = () => {
+    try {
+      localStorage.setItem(chave, '1')
+    } catch {
+      /* ignora */
+    }
+    setVer(false)
+  }
+  return (
+    <AnimatePresence>
+      {ver && (
+        <m.div
+          role="dialog"
+          aria-label="Treino adaptado"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+        >
+          <m.div
+            initial={{ y: 16, scale: 0.96, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 16, scale: 0.96, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5"
+          >
+            <p className="mb-4 text-sm text-slate-300">Seu coach adaptou seu treino para você progredir dentro do seu tempo.</p>
+            <Botao tipo="primario" className="w-full" onClick={fechar}>
+              Entendi
+            </Botao>
+          </m.div>
+        </m.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
@@ -256,6 +302,22 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   const vermelho = acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin)
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
 
+  // Exercícios do mesmo grupo de método ficam juntos (só a ordem de exibição muda).
+  const grupoDe = (pos: number) => {
+    const l = meso.metodos.find((x) => x.ativo && x.semana === semana && x.treino === treino && x.exercicio === pos && x.grupo != null && METODOS_SEQUENCIA.test(x.metodo))
+    return l ? `${l.metodo}|${l.grupo}` : null
+  }
+  const chaves = sessao.exercicios.map((e) => grupoDe(e.pos))
+  const ordemGrupos = [...new Set(chaves.filter(Boolean))]
+  const visitado = new Set<number>()
+  const exibicao = sessao.exercicios.flatMap((e, i) => {
+    if (visitado.has(i)) return []
+    const membros = chaves[i] ? sessao.exercicios.filter((_, j) => chaves[j] === chaves[i]) : [e]
+    membros.forEach((x) => visitado.add(sessao.exercicios.indexOf(x)))
+    return membros
+  })
+  const adaptadoEm = (meso as { adaptadoEm?: { toMillis(): number } }).adaptadoEm?.toMillis()
+
   return (
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
       <button onClick={() => ir('/')} className="mb-2 text-sm text-slate-400">
@@ -273,9 +335,15 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       </div>
 
       {sessao.exercicios.some((e) => METODOS_SEQUENCIA.test(e.rotulo)) && <AvisoSequencia />}
+      {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
       <Novidades />
       <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
-        {sessao.exercicios.map((e) => {
+        {exibicao.map((e, idx) => {
+          const gk = grupoDe(e.pos)
+          const membros = gk ? exibicao.filter((x) => grupoDe(x.pos) === gk) : []
+          const ordem = membros.indexOf(e)
+          const letra = String.fromCharCode(65 + ordemGrupos.indexOf(gk))
+          void idx
           const colunasCargas = cs[e.slot.slotId] ?? []
           const colunasReps = rs[e.slot.slotId] ?? []
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos)
@@ -298,7 +366,13 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
             grava(Math.round(peso * frac * 10) / 10)
           }
           return (
-            <m.div key={e.slot.slotId} variants={item} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <m.div key={e.slot.slotId} variants={item} className={`relative rounded-xl border bg-slate-900 p-4 ${gk ? 'border-marca-500/60' : 'border-slate-800'}`}>
+              {gk && ordem > 0 && <span aria-hidden className="absolute -top-4 left-6 h-4 w-0.5 bg-marca-500" />}
+              {gk && (
+                <div className="mb-2 text-xs font-semibold text-marca-500">
+                  {gk.split('|')[0]} {membros.map((_, k) => <span key={k}>{k > 0 && ' / '}<span className={k === ordem ? 'text-slate-100' : ''}>{letra}{k + 1}</span></span>)}
+                </div>
+              )}
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-semibold">{e.slot.nome}</div>

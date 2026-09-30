@@ -209,3 +209,33 @@ test('/instalar mostra o passo certo por sistema', async ({ browser }) => {
     await context.close()
   })
 })
+
+test('biset entre posições não vizinhas aparece junto', async ({ page }) => {
+  const prog = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null], w3: [8, 8, 8, null, null, null], w4: [8, 8, 8, null, null, null] }
+  const linha = (exercicio: number) => ({ ativo: true, semana: 1, treino: 1, exercicio, metodo: 'Biset', escopo: 'Todas as séries', grupo: 1 })
+  const b = { email: 'bia.biset-e2e@teste.com', senha: 'senha123' }
+  const biaId = await criarAluno('Bia Biset', b.email, b.senha)
+  await criarMeso({
+    alunoId: biaId,
+    nome: 'Meso Biset',
+    frequencia: 1,
+    semanas: 4,
+    inicio: hojeSaoPaulo(),
+    pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }, { slotId: 'b', nome: 'Supino Reto Barra' }, { slotId: 'c', nome: 'Remada Curvada Barra' }] },
+    progressao: { principais: prog, auxiliares: prog },
+    metodos: [linha(1), linha(3)],
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(b.email)
+  await page.getByLabel('Senha').fill(b.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('button', { name: /Treino 1/ }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Entendi', exact: true }).click()
+  await expect(page.getByText('A1', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('A2', { exact: true }).first()).toBeVisible()
+  const nomes = await page.locator('.rounded-xl.border .min-w-0 > .font-semibold').allTextContents()
+  expect(nomes.slice(0, 3)).toEqual(['Agachamento Livre Halter', 'Remada Curvada Barra', 'Supino Reto Barra'])
+  await page.screenshot({ path: 'test-results/prints/81-biset-aluno.png' })
+})
