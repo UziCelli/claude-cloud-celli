@@ -18,6 +18,7 @@ Comece por aqui para achar onde mexer.
 | Importar mesociclo de planilha | `tools/planilha_para_meso.py` + `tools/importar-meso.mjs` + workflow `.github/workflows/importar-meso.yml` |
 | Offline/sync Firebase | `src/lib/firebase.ts` + `firestore.rules` |
 | Roteamento (hash, /aluno/123, etc.) | `src/rota.ts` + `src/App.tsx` |
+| Notificação "Descanso acabou" (push, app fechado) | `src/lib/push.ts` + `public/sw-push.js` + `push/` (Worker Cloudflare) — veja `docs/push.md` |
 
 ## Árvore por pasta
 
@@ -35,9 +36,17 @@ Comece por aqui para achar onde mexer.
 - `acoes.ts` — `salvarRegistro()`, `atualizarRegistro()`: grava no Firestore campo a campo
 - `conversores.ts` — `mesoParaDoc()`, `docParaMeso()`, `registroId()`: serialização
 - `hooks.ts` — `useUsuarioAtual()`, `useMeso()`, etc.: React hooks
+- `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada)
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
 - `*.test.ts` — testes
+
+### `push/` — Worker Cloudflare (notificação do descanso)
+- `wrangler.toml` — Worker `vfit-descanso`, Durable Object `Descanso` (SQLite)
+- `src/index.ts` — rotas `/vapid`, `/agendar`, `/cancelar`, CORS e a classe `Descanso` (alarme)
+- `src/jwt.ts` — confere o ID token do Firebase; `src/validar.ts` — inscrição e `fimEm`
+- `src/webpush.ts` — chaves VAPID, criptografia aes128gcm e envio; `src/b64.ts` — base64url
+- `src/*.test.ts` — testes (rodam com o `npm test` da raiz); tsconfig próprio (`npm run typecheck` confere)
 
 ### `src/features/auth/` — Autenticação
 - `Entrar.tsx` — login Google/e-mail, cadastro
@@ -45,9 +54,16 @@ Comece por aqui para achar onde mexer.
 ### `src/features/aluno/` — App do aluno
 - `AlunoApp.tsx` — roteador do aluno
 - `Hoje.tsx` — treino de hoje
-- `Treino.tsx` — detalhe do treino (cargas, reps)
+- `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro)
+- `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
+- `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — gráficos: reps, força, volume
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor
+
+### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
+- `IconeMetodo.tsx` — ícone SVG animado por método
+- `GuiaMetodos.tsx` — página "Guia de métodos" + botão "Mostrar as notas de novo"
+- Textos: `src/data/metodos.ts` (`METODOS`, `ORDEM`, `metodoDoRotulo`); notas dispensadas: `src/lib/notasMetodo.ts`
 
 ### `src/features/coach/` — App do coach
 - `inicio/Inicio.tsx` — dashboard do coach
@@ -66,6 +82,9 @@ Comece por aqui para achar onde mexer.
 ### `src/features/instalar/` — PWA/Android
 - `Instalar.tsx` — página de instalação
 - `AvisoIOS.tsx` — instrução iOS
+
+### `public/`
+- `sw-push.js` — trata o push e o clique na notificação (importado pelo service worker via `workbox.importScripts`)
 
 ### `src/` — Raiz
 - `App.tsx` — roteador principal: rotas, verificação de permissão
@@ -93,6 +112,7 @@ Comece por aqui para achar onde mexer.
 
 ### `.github/workflows/` — CI/CD
 - `ci.yml` — typecheck, lint, testes
+- `push.yml` — publica o Worker `push/` na Cloudflare (push em `push/**` ou manual) e mostra a URL
 - `deploy.yml` — build e deploy Firebase Hosting
 - `android.yml`, `apk.yml` — gera APK (TWA)
 - `importar-meso.yml` — workflow: `/importar` trigger (auth: token)
@@ -171,3 +191,16 @@ Comece por aqui para achar onde mexer.
 | `importar-meso.yml` | `/importar` comment | sobe meso + cargas (token) |
 | `alterar-email.yml` | dispatch manual | altera e-mail de aluno (admin) |
 | `backup.yml` | schedule (diário) | backup Firestore → Cloud Storage |
+
+## Pontos sensíveis (leia antes de auditar ou mexer)
+Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e como é testado. Quem corrigir um bug novo acrescenta uma linha aqui.
+
+| Área | Arquivo | Cuidado | Teste que protege |
+|---|---|---|---|
+| Abertura do app | `src/main.tsx` | Renderizar só **depois** de carregar `motionFeatures`. Com o `LazyMotion` assíncrono, o `AnimatePresence mode="wait"` perdia a saída da tela de abertura e o login nunca aparecia (~5% das aberturas; corrigido na Entrega 3). | e2e: 1º `goto('/')` de todo spec |
+| Cargas nunca se perdem | `src/lib/acoes.ts` | Gravar sempre campo a campo (`cargas.<slot>.sN`, `setDoc merge`); nunca sobrescrever o registro inteiro. | `tests/rules.test.ts`, e2e aluno offline |
+| Permissões | `firestore.rules` | Aluno só lê o próprio treino e escreve o próprio registro, com `status=='ativo'` e `pagoAte` futuro; `hasOnly` nos campos. | `tests/rules.test.ts` (emulador) |
+| Salvar meso | `src/lib/conversores.ts` | Firestore não aceita array dentro de array → `paraMapa`; campos opcionais nunca `undefined`. | `conversores.test.ts`, e2e coach |
+| Motor | `src/engine/` | Fonte da verdade: `docs/logica-planilha.md`; TDD obrigatório. | `src/engine/*.test.ts` |
+| Push do descanso | `push/src/` | Token do Firebase verificado (aud/iss/exp/assinatura); só endpoints de push conhecidos (`HOSTS`); chaves VAPID nunca regeneradas. | `push/src/*.test.ts`, conferência no `push.yml` |
+| CSP | `firebase.json` | `connect-src` só com os domínios usados (Google APIs e o Worker); o e2e usa a mesma CSP. | e2e completo |

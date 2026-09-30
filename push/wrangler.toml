@@ -1,0 +1,12 @@
+name = "vfit-descanso"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[[durable_objects.bindings]]
+name = "DESCANSO"
+class_name = "Descanso"
+
+# Plano grátis só aceita Durable Objects com SQLite.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Descanso"]

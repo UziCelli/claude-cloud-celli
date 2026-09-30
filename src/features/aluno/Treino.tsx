@@ -1,7 +1,13 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m } from 'motion/react'
-import { useEffect, useState } from 'react'
-import { prescreverSessao } from '../../engine'
+import { useState, type ReactNode } from 'react'
+import { prescreverSessao, type Metodo } from '../../engine'
+import { METODOS, metodoDoRotulo } from '../../data/metodos'
+import { mmss, useDescanso } from '../../lib/descanso'
+import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
+import { seriesDestacadas } from '../../lib/metodoSeries'
+import IconeMetodo from '../metodos/IconeMetodo'
+import AvisoNotificacoes from './AvisoNotificacoes'
 import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
 import { fracaoPC } from '../../lib/pesoCorporal'
@@ -54,113 +60,90 @@ function Novidades() {
   )
 }
 
-const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-
-// Cronômetro manual por exercício: Date.now() a cada tick, então funciona mesmo se o setInterval atrasar.
-function useDescanso() {
-  const [slot, setSlot] = useState<string | null>(null)
-  const [fimEm, setFimEm] = useState<number | null>(null)
-  const [pausado, setPausado] = useState<number | null>(null) // segundos que faltavam ao pausar
-  const [restante, setRestante] = useState(0)
-  const [total, setTotal] = useState(1)
-  const [ciclo, setCiclo] = useState(0)
-  useEffect(() => {
-    if (fimEm == null) return
-    const tick = () => {
-      const r = Math.max(0, Math.round((fimEm - Date.now()) / 1000))
-      setRestante(r)
-      if (r === 0) {
-        navigator.vibrate?.([300, 150, 300])
-        setFimEm(null)
-        setSlot(null)
-      }
-    }
-    tick()
-    const id = setInterval(tick, 250)
-    return () => clearInterval(id)
-  }, [fimEm])
-  const iniciar = (segundos: number, s: string) => {
-    setSlot(s)
-    setPausado(null)
-    setTotal(Math.max(1, segundos))
-    setCiclo((c) => c + 1)
-    setRestante(segundos)
-    setFimEm(Date.now() + segundos * 1000)
-  }
-  const parar = () => {
-    setFimEm(null)
-    setPausado(null)
-    setSlot(null)
-  }
-  // Um toque: inicia; rodando pausa; pausado continua.
-  const alternar = (segundos: number, s: string) => {
-    if (slot !== s) return iniciar(segundos, s)
-    if (fimEm != null) {
-      setPausado(restante)
-      setFimEm(null)
-    } else if (pausado != null) {
-      setFimEm(Date.now() + pausado * 1000)
-      setPausado(null)
-    } else iniciar(segundos, s)
-  }
-  return { slot, rodando: fimEm != null, pausado: pausado != null, visivel: slot != null, restante: pausado ?? restante, total, ciclo, iniciar, alternar, parar }
-}
-
 const METODOS_SEQUENCIA = /Biset|Triset|Superset|Circuito/
-const CHAVE_AVISO = 'forca-aviso-biset'
-const lerAviso = () => {
-  try {
-    return localStorage.getItem(CHAVE_AVISO) !== '1'
-  } catch {
-    return true
-  }
+const Modal = ({ rotulo, children }: { rotulo: string; children: ReactNode }) => (
+  <m.div
+    role="dialog"
+    aria-label={rotulo}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.2 }}
+    className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+  >
+    <m.div
+      initial={{ y: 16, scale: 0.96, opacity: 0 }}
+      animate={{ y: 0, scale: 1, opacity: 1 }}
+      exit={{ y: 16, scale: 0.96, opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
+    >
+      {children}
+    </m.div>
+  </m.div>
+)
+
+// Explicação de um método (toque no selo): sempre abre.
+function ExplicacaoMetodo({ metodo, fechar }: { metodo: Metodo; fechar: () => void }) {
+  const t = METODOS[metodo]
+  return (
+    <Modal rotulo={`Como fazer ${metodo}`}>
+      <div className="mb-3 flex items-center gap-3 text-fuchsia-200">
+        <IconeMetodo metodo={metodo} tamanho={48} />
+        <h2 className="text-lg font-bold text-slate-100">{metodo}</h2>
+      </div>
+      <h3 className="mb-1 text-sm font-semibold">Como fazer</h3>
+      <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-slate-300">
+        {t.comoFazer.map((c) => (
+          <li key={c}>{c}</li>
+        ))}
+      </ol>
+      {t.dica && <p className="mb-3 text-sm text-slate-400">Dica: {t.dica}</p>}
+      <a href="#/metodos" className="mb-4 block text-sm text-marca-500 underline">
+        Ver todos os métodos
+      </a>
+      <Botao tipo="primario" className="w-full" onClick={fechar}>
+        Fechar
+      </Botao>
+    </Modal>
+  )
 }
 
-function AvisoSequencia() {
-  const [ver, setVer] = useState(lerAviso)
-  const fechar = (paraSempre: boolean) => {
-    if (paraSempre)
-      try {
-        localStorage.setItem(CHAVE_AVISO, '1')
-      } catch {
-        /* ignora */
-      }
-    setVer(false)
-  }
+// Nota ao abrir o treino: uma só, com os métodos ainda não dispensados.
+function NotaMetodos({ metodos }: { metodos: Metodo[] }) {
+  const [ver, setVer] = useState(() => metodos.length > 0)
   return (
     <AnimatePresence>
       {ver && (
-        <m.div
-          role="dialog"
-          aria-label="Como fazer biset, triset, superset e circuito"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
-        >
-          <m.div
-            initial={{ y: 16, scale: 0.96, opacity: 0 }}
-            animate={{ y: 0, scale: 1, opacity: 1 }}
-            exit={{ y: 16, scale: 0.96, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5"
-          >
-            <h2 className="mb-2 text-lg font-bold">Treino com exercícios em sequência</h2>
-            <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-300">
-              <li>Faça os exercícios do grupo um depois do outro.</li>
-              <li>Descanse só depois do último.</li>
-            </ul>
-            <div className="flex flex-col gap-2">
-              <Botao tipo="primario" className="w-full" onClick={() => fechar(false)}>
-                Entendi
-              </Botao>
-              <Botao className="w-full" onClick={() => fechar(true)}>
-                Não mostrar de novo
-              </Botao>
-            </div>
-          </m.div>
-        </m.div>
+        <Modal rotulo="Métodos deste treino">
+          <h2 className="mb-3 text-lg font-bold">Métodos deste treino</h2>
+          <div className="mb-3 space-y-3">
+            {metodos.map((x) => (
+              <div key={x} className="flex gap-3 text-fuchsia-200">
+                <IconeMetodo metodo={x} tamanho={40} />
+                <div className="min-w-0 text-sm text-slate-300">
+                  <div className="font-bold text-slate-100">{x}</div>
+                  {METODOS[x].comoFazer.join(' ')}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mb-4 text-xs text-slate-400">Toque no selo rosa do exercício para ver esta explicação de novo.</p>
+          <div className="flex flex-col gap-2">
+            <Botao tipo="primario" className="w-full" onClick={() => setVer(false)}>
+              Entendi
+            </Botao>
+            <Botao
+              className="w-full"
+              onClick={() => {
+                metodos.forEach(dispensarNota)
+                setVer(false)
+              }}
+            >
+              Não mostrar de novo
+            </Botao>
+          </div>
+        </Modal>
       )}
     </AnimatePresence>
   )
@@ -282,6 +265,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const descanso = useDescanso()
+  const [explicar, setExplicar] = useState<Metodo | null>(null)
 
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Treino não encontrado.</Centro>
@@ -316,10 +300,12 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
     membros.forEach((x) => visitado.add(sessao.exercicios.indexOf(x)))
     return membros
   })
+  const notaInicial = [...new Set(sessao.exercicios.flatMap((e) => (e.rotulo ? e.rotulo.split('; ') : []).map(metodoDoRotulo)))].filter((x): x is Metodo => x != null && !notaDispensada(x))
   const adaptadoEm = (meso as { adaptadoEm?: { toMillis(): number } }).adaptadoEm?.toMillis()
 
   return (
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
+      <AvisoNotificacoes />
       <button onClick={() => ir('/')} className="mb-2 text-sm text-slate-400">
         ← Hoje
       </button>
@@ -334,7 +320,8 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
-      {sessao.exercicios.some((e) => METODOS_SEQUENCIA.test(e.rotulo)) && <AvisoSequencia />}
+      <NotaMetodos metodos={notaInicial} />
+      <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
       {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
       <Novidades />
       <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
@@ -349,6 +336,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos)
           const slot = e.slot.slotId
           const corpo = pcLocal[slot] ?? (pcs[slot] || 0)
+          const destaque = seriesDestacadas(e.rotulo, e.n)
           const frac = fracaoPC(e.slot.nome)
           const alternarPc = () => {
             const grava = (kg: number) => {
@@ -376,9 +364,29 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-semibold">{e.slot.nome}</div>
-                  {e.rotulo && <div className="mt-1 text-[11px] text-slate-400">{e.rotulo}</div>}
+                  {e.rotulo && (
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {e.rotulo.split('; ').map((parte) => {
+                        const mt = metodoDoRotulo(parte)
+                        return (
+                          <button
+                            key={parte}
+                            disabled={!mt}
+                            onClick={() => mt && setExplicar(mt)}
+                            className="flex items-center gap-1.5 rounded-full bg-fuchsia-500/20 px-2.5 py-1 text-sm font-bold text-fuchsia-100 ring-1 ring-fuchsia-400/60"
+                          >
+                            {mt && <IconeMetodo metodo={mt} tamanho={20} />}
+                            {parte} <span aria-hidden>ⓘ</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div className="flex shrink-0 gap-1">
+                  <Botao aria-label="Som do cronômetro" onClick={descanso.alternarSom}>
+                    {descanso.som ? '🔔' : '🔕'}
+                  </Botao>
                   <Botao
                     tipo={descanso.slot === slot ? 'primario' : undefined}
                     onClick={() => {
@@ -415,7 +423,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                       ? fmt(Math.max(0, anterior[k]! - corpo))
                       : null
                   return (
-                    <div key={k} className="grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5">
+                    <div key={k} className={`grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5 ${dropStage || destaque.has(k + 1) ? 'rounded-lg border border-fuchsia-400 px-1 py-1 ring-1 ring-fuchsia-400/30' : ''}`}>
                       <span className="text-xs text-slate-400">{rotuloCol}</span>
                       <span className="truncate text-xs text-slate-400">{repAlvo} reps</span>
                       <LoadInput

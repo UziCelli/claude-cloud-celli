@@ -14,6 +14,7 @@ import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
 import AlunoApp from './features/aluno/AlunoApp'
 import Instalar from './features/instalar/Instalar'
+import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
 
 // /instalar é pública (link enviado pelo WhatsApp): não depende de login.
@@ -43,6 +44,7 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
+  else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
   return (
     <>
@@ -54,6 +56,7 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
           <nav className="flex shrink-0 gap-3 text-sm text-slate-300">
             <a href="#/" className="hover:text-marca-400">Início</a>
             <a href="#/alunos" className="hover:text-marca-400">Alunos</a>
+            <a href="#/metodos" className="hover:text-marca-400">Métodos</a>
           </nav>
           <div className="flex min-w-0 items-center gap-3 text-sm text-slate-400">
             <a href="#/conta" className="min-w-0 truncate hover:text-marca-400">

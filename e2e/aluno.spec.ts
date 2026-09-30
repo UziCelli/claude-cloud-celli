@@ -232,10 +232,64 @@ test('biset entre posições não vizinhas aparece junto', async ({ page }) => {
   await page.getByLabel('Senha').fill(b.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Métodos deste treino' })).toBeVisible()
   await page.getByRole('dialog').getByRole('button', { name: 'Entendi', exact: true }).click()
   await expect(page.getByText('A1', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('A2', { exact: true }).first()).toBeVisible()
   const nomes = await page.locator('.rounded-xl.border .min-w-0 > .font-semibold').allTextContents()
   expect(nomes.slice(0, 3)).toEqual(['Agachamento Livre Halter', 'Remada Curvada Barra', 'Supino Reto Barra'])
   await page.screenshot({ path: 'test-results/prints/81-biset-aluno.png' })
+})
+
+test('selos de método, nota, guia e cronômetro que sobrevive ao reload', async ({ page }) => {
+  const prog = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null], w3: [8, 8, 8, null, null, null], w4: [8, 8, 8, null, null, null] }
+  const u = { email: 'caio.selo-e2e@teste.com', senha: 'senha123' }
+  const id = await criarAluno('Caio Selo', u.email, u.senha)
+  await criarMeso({
+    alunoId: id,
+    nome: 'Meso Selo',
+    frequencia: 1,
+    semanas: 4,
+    inicio: hojeSaoPaulo(),
+    pausaS: 90,
+    divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }, { slotId: 'b', nome: 'Supino Reto Barra' }] },
+    progressao: { principais: prog, auxiliares: prog },
+    metodos: [{ ativo: true, semana: 1, treino: 1, exercicio: 1, metodo: 'Dropset', escopo: 'Últimas 2 séries', etapas: 1 }],
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(u.email)
+  await page.getByLabel('Senha').fill(u.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('button', { name: /Treino 1/ }).click()
+
+  const nota = page.getByRole('dialog', { name: 'Métodos deste treino' })
+  await expect(nota).toBeVisible()
+  await expect(nota.getByText('Toque no selo rosa do exercício para ver esta explicação de novo.')).toBeVisible()
+  await page.screenshot({ path: 'test-results/prints/91-nota.png' })
+  await nota.getByRole('button', { name: 'Não mostrar de novo' }).click()
+  await expect(nota).toBeHidden()
+
+  const selo = page.getByRole('button', { name: /Dropset \[últimas 2\]/ })
+  await expect(selo).toBeVisible()
+  await page.screenshot({ path: 'test-results/prints/90-selos.png' })
+  await selo.click()
+  await expect(page.getByRole('dialog', { name: 'Como fazer Dropset' })).toBeVisible()
+  await page.getByRole('button', { name: 'Fechar' }).click()
+
+  await page.reload()
+  await expect(selo).toBeVisible()
+  await expect(nota).toBeHidden()
+
+  await page.getByRole('button', { name: /▶ 90 s/ }).first().click()
+  await page.reload()
+  const tempo = page.locator('.font-display.tabular-nums')
+  await expect(tempo).toBeVisible()
+  const [mm, ss] = (await tempo.innerText()).split(':').map(Number)
+  expect(mm * 60 + ss).toBeLessThanOrEqual(90)
+
+  await page.goto('/#/metodos')
+  for (const nome of ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset'])
+    await expect(page.getByText(nome, { exact: true }).first()).toBeVisible()
+  await page.screenshot({ path: 'test-results/prints/92-guia.png' })
 })

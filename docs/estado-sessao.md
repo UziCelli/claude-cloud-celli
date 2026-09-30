@@ -11,10 +11,23 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 
 ## Entregas
 - **Entrega 1** (`docs/plano-entrega1.md`): PR #20, juntado pelo Victor.
-- **Entrega 2** (`docs/plano-entrega2.md`): feita (motor, coach e aluno); typecheck, 247 testes, build e e2e passaram.
-  - Está no PR próprio. Esperar o "pode juntar" do Victor.
+- **Entrega 2** (`docs/plano-entrega2.md`): PR #21, juntado e publicado.
   - Padrão adotado: os 2 primeiros exercícios de cada treino ficam fora do biset automático (`incluirPrincipais=false`).
   - O motor ainda lê as chaves antigas `'t-p'` de `progressaoExercicio` como reserva para mesos não migrados.
+- **Entrega 3 (3a + 3b)**: PR #23. CI verde, revisada sem bloqueantes, Worker publicado.
+  - Worker: `https://vfit-descanso.vfitcoach-site.workers.dev`.
+  - Esperando o "pode juntar". Depois, o Victor testa a notificação num iPhone real.
+  - Pendências menores da revisão (ficam para a Entrega 4):
+    - o Worker não limita frequência nem confere `pagoAte`;
+    - o estado salvo do cronômetro não guarda o uid;
+    - origens localhost liberadas no CORS em produção;
+    - com o app aberto no fim do descanso, chegam o bipe e a notificação (confirmar no iPhone se incomoda).
+- **Entrega 4** (a planejar): registro de erros (coleção `logs` + tela "Erros do app" + vigia de carregamento) e segurança:
+  - MFA TOTP via Identity Platform (grátis no Spark);
+  - limite de tentativas + App Check;
+  - logout por inatividade sem perder cargas;
+  - varredura XSS.
+  - Esperando o Victor responder: MFA só para o coach? Inatividade de 30 min para o coach e 7 dias para o aluno?
 - **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
 
 ## Ideias e pendências futuras (não fazer sem pedido)

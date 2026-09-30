@@ -12,3 +12,5 @@ coverage
 *.jks
 test-results
 playwright-report
+.wrangler
+.claude/worktrees/

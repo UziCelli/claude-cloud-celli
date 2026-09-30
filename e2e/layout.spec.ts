@@ -90,7 +90,8 @@ for (const vp of [
 
     await page.getByRole('button', { name: /Treino 1/ }).click()
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
-    expect(await confere(page)).toBeGreaterThan(0)
+    expect(await confere(page)).toBeGreaterThan(0) // com a nota de métodos aberta
+    await page.getByRole('dialog', { name: 'Métodos deste treino' }).getByRole('button', { name: 'Entendi', exact: true }).click()
     const kg = page.locator('input[type="number"]').first()
     await kg.fill('100.5')
     await kg.blur()
