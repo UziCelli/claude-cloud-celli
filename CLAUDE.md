@@ -32,6 +32,7 @@ A sessão principal (Opus) **orquestra**: planeja, decide e delega. Delegue semp
 
 - Prompts de delegação curtos e completos (arquivos, critério de pronto, limite de palavras na resposta).
 - Tarefas independentes em paralelo; nunca dois agentes no mesmo arquivo ao mesmo tempo.
+- Pedido do Victor: tarefas executivas (merge de PR, disparar workflow, acompanhar CI/deploy, commit/push de rotina, conferir status) vão para o `auxiliar` (Haiku). Só faça direto quando for uma única chamada (delegar custaria mais do que fazer).
 
 ## Plugins (ativados em `.claude/settings.json`)
 - **Superpowers**: fluxo brainstorming → writing-plans → subagent-driven-development; TDD; systematic-debugging.
