@@ -6,7 +6,7 @@ import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Botao, Centro, Pagina } from '../../../ui'
-import Evolucao from './Evolucao'
+import EvolucaoCoach from './EvolucaoCoach'
 import { fmtData } from './format'
 import Monitoramento from './Monitoramento'
 import SessaoCard from './SessaoCard'
@@ -80,7 +80,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
 
       <div className="mt-6 space-y-4">
         <Monitoramento meso={meso} registros={registros} reps={reps} />
-        <Evolucao meso={meso} registros={registros} reps={reps} />
+        <EvolucaoCoach meso={meso} registros={registros} reps={reps} />
       </div>
     </Pagina>
   )

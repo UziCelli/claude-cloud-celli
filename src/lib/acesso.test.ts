@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
-import { diasParaVencer, fimDoDiaSaoPaulo, liberado, type Usuario } from './acesso'
+import { diasParaVencer, fimDoDiaSaoPaulo, hojeMaisDias, liberado, type Usuario } from './acesso'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const ts = (d: Date) => Timestamp.fromDate(d)
@@ -41,5 +41,15 @@ describe('diasParaVencer (dias de calendário em São Paulo)', () => {
   it('positivo antes, negativo depois', () => {
     expect(diasParaVencer(pagoAte, sp('2026-09-28T10:00'))).toBe(12)
     expect(diasParaVencer(pagoAte, sp('2026-10-11T00:10'))).toBe(-1)
+  })
+})
+
+describe('hojeMaisDias', () => {
+  afterEach(() => vi.useRealTimers())
+  it('23h em São Paulo ainda é o mesmo dia (UTC já é o dia seguinte)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(sp('2026-10-10T23:00'))
+    expect(hojeMaisDias(0)).toBe('2026-10-10')
+    expect(hojeMaisDias(30)).toBe('2026-11-09')
   })
 })

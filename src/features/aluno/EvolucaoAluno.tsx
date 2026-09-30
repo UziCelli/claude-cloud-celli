@@ -4,11 +4,11 @@ import { evolucaoExercicio, type Meso } from '../../engine'
 import { docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
-import { Centro } from '../../ui'
+import { campoBase, Centro } from '../../ui'
 import { fmt } from '../coach/semana/format'
 import { mesoAtual } from './mesoAtual'
 
-export default function Evolucao({ uid }: { uid: string }) {
+export default function EvolucaoAluno({ uid }: { uid: string }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
   if (carregando) return <Centro>Carregando…</Centro>
 
@@ -39,7 +39,7 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
       <select
         value={nome}
         onChange={(e) => setNome(e.target.value)}
-        className="mb-4 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-marca-500"
+        className={`${campoBase} mb-4 w-full px-3 py-2 outline-none focus:border-marca-500`}
       >
         {lista.map((n) => (
           <option key={n} value={n}>

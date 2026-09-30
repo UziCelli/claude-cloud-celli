@@ -3,6 +3,12 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
 
 // Sempre abaixo do cabeçalho do coach, que já tem a margem de segurança do topo (notch).
+// Mensagem mostrada uma vez na página do aluno depois de criar.
+export const flash = { texto: '' }
+
+// Parte comum dos campos de formulário; cada campo soma padding/largura/foco.
+export const campoBase = 'rounded-lg border border-slate-700 bg-slate-950 text-base text-slate-100'
+
 export const Pagina = ({ titulo, acoes, children }: { titulo: ReactNode; acoes?: ReactNode; children: ReactNode }) => (
   <main className="mx-auto max-w-6xl px-4 py-6">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -39,7 +45,7 @@ export const Campo = ({ rotulo, className = '', ...p }: InputHTMLAttributes<HTML
     <span className="text-slate-400">{rotulo}</span>
     <input
       {...p}
-      className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100 outline-none focus:border-marca-500"
+      className={`${campoBase} px-3 py-2 outline-none focus:border-marca-500`}
     />
   </label>
 )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
-import { Aviso, Botao, Cartao } from '../../../ui'
+import { Aviso, Botao, campoBase, Cartao } from '../../../ui'
 import { nomesCatalogo, semanasComHistorico } from './util'
 
 const rotuloPos = (p: number) => (p <= 2 ? 'Principal' : 'Auxiliar')
@@ -85,7 +85,7 @@ export default function TabDivisao({
           key={slot?.slotId ?? `novo-${t}-${p}`}
           placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
           onBlur={(e) => commit(t, p, e.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100 outline-none focus:border-marca-500 md:py-1"
+          className={`${campoBase} min-w-0 flex-1 px-2 py-2 outline-none focus:border-marca-500 md:py-1`}
         />
         {slot && p === arr.length && (
           <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="px-2 py-1 text-lg text-slate-500 hover:text-red-400">
@@ -220,7 +220,7 @@ function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch
             list="catalogo"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base text-slate-100"
+            className={`${campoBase} w-full px-3 py-2`}
           />
         </label>
         <Botao tipo="primario" onClick={adicionar}>
@@ -238,7 +238,7 @@ function Seletor({ rotulo, valor, max, onChange }: { rotulo: string; valor: numb
       <select
         value={valor}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-base text-slate-100"
+        className={`${campoBase} px-2 py-2`}
       >
         {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
           <option key={n} value={n}>

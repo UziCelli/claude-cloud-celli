@@ -1,14 +1,8 @@
 import { useState } from 'react'
 import { criarAlunoComApp, criarAlunoPresencial } from '../../../lib/acoes'
+import { hojeMaisDias } from '../../../lib/acesso'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, Cartao, Pagina } from '../../../ui'
-
-// YYYY-MM-DD no calendário de São Paulo (toISOString seria UTC: +1 dia depois das 21h).
-export const hojeMaisDias = (dias: number) =>
-  new Date(Date.now() + dias * 864e5).toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' })
-
-// Mensagem mostrada uma vez na página do aluno depois de criar.
-export const flash = { texto: '' }
+import { Aviso, Botao, Campo, Cartao, flash, Pagina } from '../../../ui'
 
 export default function NovoAluno() {
   const [app, setApp] = useState(true)
