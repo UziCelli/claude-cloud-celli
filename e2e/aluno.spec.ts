@@ -127,6 +127,31 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()
     await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
   })
+
+  await test.step('destaca o próximo treino da semana', async () => {
+    await expect(page.getByText('▶ Faça hoje: Treino 2')).toBeVisible()
+  })
+
+  await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
+    await page.getByRole('button', { name: /Treino 2/ }).click()
+    const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
+    page.once('dialog', (d) => d.accept('80'))
+    await cartao.getByRole('checkbox').check()
+    await expect(cartao.getByText('PC: 80 kg (100% de 80 kg)')).toBeVisible()
+
+    const kg = cartao.locator('input[type="number"]').first()
+    await kg.fill('10')
+    await kg.blur()
+
+    const regId = `${mesoId}_s01_t2`
+    await expect
+      .poll(async () => {
+        const f = ((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>
+        const v = f.cargas?.mapValue?.fields?.b?.mapValue?.fields?.s1
+        return v ? Number(v.integerValue ?? v.doubleValue) : null
+      }, { timeout: 15_000 })
+      .toBe(90)
+  })
 })
 
 test('/instalar mostra o passo certo por sistema', async ({ browser }) => {

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { alterarEmail, recuperarSenha, sincronizarEmail } from '../../lib/acoes'
+import { doc } from 'firebase/firestore'
+import { alterarEmail, recuperarSenha, salvarPeso, sincronizarEmail } from '../../lib/acoes'
+import type { Usuario } from '../../lib/acesso'
+import { db } from '../../lib/firebase'
+import { useDoc } from '../../lib/hooks'
 import { Aviso, Botao, Campo, Cartao, Pagina } from '../../ui'
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
@@ -15,6 +19,29 @@ const erros: Record<string, string> = {
 const mensagemErro = (e: unknown) =>
   (e instanceof FirebaseError && erros[e.code]) || 'Não deu para trocar o e-mail. Tente de novo.'
 
+function Peso({ uid, atual }: { uid: string; atual?: number }) {
+  const [kg, setKg] = useState(atual != null ? String(atual) : '')
+  const n = Number(kg.replace(',', '.'))
+  const valido = n >= 20 && n <= 300
+  return (
+    <Cartao>
+      <form
+        className="space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (valido) salvarPeso(uid, n)
+        }}
+      >
+        <h2 className="font-semibold">Peso (kg)</h2>
+        <Campo rotulo="Usado nos exercícios com peso do corpo" type="number" inputMode="decimal" step={0.5} min={20} max={300} value={kg} onChange={(e) => setKg(e.target.value)} />
+        <Botao tipo="primario" className="w-full" disabled={!valido}>
+          Salvar peso
+        </Botao>
+      </form>
+    </Cartao>
+  )
+}
+
 // email = e-mail do perfil (usuarios/{uid}.email).
 export default function MinhaConta({ uid, email }: { uid: string; email: string }) {
   const [novo, setNovo] = useState('')
@@ -22,6 +49,7 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [ok, setOk] = useState('')
+  const { dados: perfil, carregando } = useDoc<Usuario>(doc(db, 'usuarios', uid))
 
   // Depois de confirmar o link e entrar de novo, o perfil alcança o e-mail do login.
   useEffect(() => sincronizarEmail(uid, email), [uid, email])
@@ -63,6 +91,7 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
           <p className="text-sm text-slate-400">E-mail atual</p>
           <p className="break-all font-semibold">{email}</p>
         </Cartao>
+        {perfil?.papel === 'aluno' && !carregando && <Peso uid={uid} atual={perfil.pesoKg} />}
         <Cartao>
           <form
             className="space-y-3"

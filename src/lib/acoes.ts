@@ -185,6 +185,12 @@ export const registrarReps = (
   n: number | null,
 ) => registro(mesoId, alunoId, semana, treino, { reps: { [slotId]: { [`s${coluna + 1}`]: n } } })
 
+// Peso do corpo usado no exercício com PC (0 = desligado): pc.<slotId>.
+export const registrarPc = (mesoId: string, alunoId: string, semana: number, treino: number, slotId: string, kg: number) =>
+  registro(mesoId, alunoId, semana, treino, { pc: { [slotId]: kg } })
+
+export const salvarPeso = (uid: string, kg: number) => updateDoc(doc(db, 'usuarios', uid), { pesoKg: kg })
+
 export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean) =>
   registro(mesoId, alunoId, semana, treino, { realizado, realizadoEm: realizado ? serverTimestamp() : null })
 
