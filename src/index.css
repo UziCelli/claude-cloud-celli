@@ -58,3 +58,16 @@ body {
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Feedback de toque e de mouse em tudo que é clicável (botões, links, selects, abas, checkboxes). */
+@media (prefers-reduced-motion: no-preference) {
+  button, a, select, summary, input[type='checkbox'] {
+    transition: scale 0.12s ease-out, opacity 0.12s ease-out, background-color 0.15s, color 0.15s, filter 0.15s;
+  }
+  button:not(:disabled):not([data-m]):active, select:active, summary:active, input[type='checkbox']:active { scale: 0.95; }
+  a:active { opacity: 0.6; }
+  @media (hover: hover) {
+    button:not(:disabled):hover, select:hover, input[type='checkbox']:hover { filter: brightness(1.12); }
+  }
+}
+button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer; }

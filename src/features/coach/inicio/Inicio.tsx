@@ -6,7 +6,8 @@ import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { inicioJanela, resumoCoach, type AlunoComId, type RegistroResumo } from '../../../lib/resumo'
 import { ir } from '../../../rota'
-import { Botao, Cartao, Pagina } from '../../../ui'
+import { m } from 'motion/react'
+import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 
 export default function Inicio() {
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
@@ -42,11 +43,12 @@ export default function Inicio() {
   ]
   return (
     <Pagina titulo="Início" acoes={novo}>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
         {blocos.map(([titulo, lista, vazio]) => (
-          <Cartao key={titulo} className="space-y-2">
+          <m.div key={titulo} variants={item}>
+          <Cartao className="h-full space-y-2">
             <h2 className="font-semibold">
-              {titulo} <span className="font-display text-lg font-bold text-marca-300">{lista.length}</span>
+              {titulo} <span className="font-display text-lg font-bold text-marca-300"><Contar n={lista.length} /></span>
             </h2>
             {lista.length === 0 ? (
               <p className="text-sm text-slate-500">{vazio}</p>
@@ -65,8 +67,9 @@ export default function Inicio() {
               </ul>
             )}
           </Cartao>
+          </m.div>
         ))}
-      </div>
+      </m.div>
     </Pagina>
   )
 }

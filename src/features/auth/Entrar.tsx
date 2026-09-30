@@ -1,7 +1,8 @@
+import { AnimatePresence, m } from 'motion/react'
 import { useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { cadastrar, entrar, recuperarSenha } from '../../lib/acoes'
-import { Aviso, Botao, Campo, Cartao, Centro } from '../../ui'
+import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from '../../ui'
 import Logo from '../../Logo'
 
 const erros: Record<string, string> = {
@@ -33,6 +34,11 @@ export default function Entrar() {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [msgRecuperar, setMsgRecuperar] = useState('')
+  const [tremor, setTremor] = useState(0)
+  const falhou = (msg: string) => {
+    setErro(msg)
+    setTremor((n) => n + 1)
+  }
 
   async function enviar() {
     setErro('')
@@ -41,7 +47,7 @@ export default function Entrar() {
       if (cadastro) await cadastrar(nome, email, senha)
       else await entrar(email, senha)
     } catch (e) {
-      setErro(mensagemErro(e))
+      falhou(mensagemErro(e))
     } finally {
       setEnviando(false)
     }
@@ -50,24 +56,39 @@ export default function Entrar() {
   async function esqueciSenha() {
     setErro('')
     setMsgRecuperar('')
-    if (!email) return setErro('Digite seu e-mail para recuperar a senha')
+    if (!email) return falhou('Digite seu e-mail para recuperar a senha')
     try {
       await recuperarSenha(email)
       setMsgRecuperar('Enviamos um link para seu e-mail (confira o spam)')
     } catch (e) {
       const erroEspecifico = mensagemRecuperar(e)
       setMsgRecuperar(erroEspecifico ? '' : 'Enviamos um link para seu e-mail (confira o spam)')
-      if (erroEspecifico) setErro(erroEspecifico)
+      if (erroEspecifico) falhou(erroEspecifico)
     }
   }
 
   return (
     <Centro>
+      <m.div
+        variants={{ a: { x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } }, b: { x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } }, quieto: { x: 0 } }}
+        animate={tremor ? (tremor % 2 ? 'a' : 'b') : 'quieto'}
+      >
+      <m.div variants={cascata} initial="hidden" animate="show">
       <Cartao className="text-left">
-        <h1 className="mb-4 flex flex-col items-center gap-3 text-center">
+        <m.h1 variants={item} className="mb-4 flex flex-col items-center gap-3 text-center">
           <Logo className="h-10 text-white" faixa="#3F72A6" />
-          <span className="text-sm font-semibold text-slate-400">{cadastro ? 'Criar conta' : 'Área do aluno e do coach'}</span>
-        </h1>
+          <AnimatePresence mode="wait" initial={false}>
+            <m.span
+              key={cadastro ? 'c' : 'l'}
+              className="text-sm font-semibold text-slate-400"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.15 } }}
+              exit={{ opacity: 0, y: -4, transition: { duration: 0.1 } }}
+            >
+              {cadastro ? 'Criar conta' : 'Área do aluno e do coach'}
+            </m.span>
+          </AnimatePresence>
+        </m.h1>
         <form
           className="space-y-3"
           onSubmit={(e) => {
@@ -75,16 +96,24 @@ export default function Entrar() {
             enviar()
           }}
         >
-          {cadastro && <Campo rotulo="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />}
-          <Campo rotulo="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Campo rotulo="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-          {erro && <Aviso>{erro}</Aviso>}
-          {msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}
-          <Botao tipo="primario" className="w-full" disabled={enviando}>
-            {enviando ? 'Enviando…' : cadastro ? 'Criar conta' : 'Entrar'}
-          </Botao>
+          <Painel aberto={cadastro} className="-mx-1 px-1">
+            <Campo rotulo="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required={cadastro} />
+          </Painel>
+          <m.div variants={item}>
+            <Campo rotulo="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </m.div>
+          <m.div variants={item}>
+            <Campo rotulo="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          </m.div>
+          <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
+          <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
+          <m.div variants={item}>
+            <Botao tipo="primario" className="w-full" disabled={enviando} carregando={enviando}>
+              {enviando ? 'Enviando…' : cadastro ? 'Criar conta' : 'Entrar'}
+            </Botao>
+          </m.div>
         </form>
-        {!cadastro && (
+        <Painel aberto={!cadastro}>
           <button
             type="button"
             className="mt-3 w-full text-center text-sm text-slate-400 hover:text-slate-200"
@@ -92,8 +121,9 @@ export default function Entrar() {
           >
             Esqueci minha senha
           </button>
-        )}
-        <button
+        </Painel>
+        <m.button
+          variants={item}
           type="button"
           className="mt-2 w-full text-center text-sm text-slate-400 hover:text-slate-200"
           onClick={() => {
@@ -103,11 +133,13 @@ export default function Entrar() {
           }}
         >
           {cadastro ? 'Já tenho conta — Entrar' : 'Não tenho conta — Criar conta'}
-        </button>
+        </m.button>
         <a href="/instalar" className="mt-4 block text-center text-xs text-slate-500 hover:text-slate-300">
           Como instalar o app
         </a>
       </Cartao>
+      </m.div>
+      </m.div>
     </Centro>
   )
 }

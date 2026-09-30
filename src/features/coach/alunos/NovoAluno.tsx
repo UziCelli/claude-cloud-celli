@@ -1,8 +1,9 @@
+import { m } from 'motion/react'
 import { useState } from 'react'
 import { criarAlunoComApp, criarAlunoPresencial } from '../../../lib/acoes'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, Cartao, flash, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, Cartao, flash, Msg, Pagina, Painel } from '../../../ui'
 
 export default function NovoAluno() {
   const [app, setApp] = useState(true)
@@ -32,28 +33,31 @@ export default function NovoAluno() {
     }
   }
 
-  const aba = (ativo: boolean) => `flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${ativo ? 'bg-marca-500 text-white' : 'bg-slate-800'}`
+  const aba = (ativo: boolean) => `relative flex-1 rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold ${ativo ? 'text-white' : ''}`
+  const pilula = <m.span layoutId="novo-aba" className="absolute inset-0 rounded-lg bg-marca-500" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />
   return (
     <Pagina titulo="Novo aluno">
       <Cartao className="max-w-md">
         <form onSubmit={enviar} className="space-y-3">
           <div className="flex gap-2">
             <button type="button" className={aba(app)} onClick={() => setApp(true)}>
-              Usa o app
+              {app && pilula}
+              <span className="relative">Usa o app</span>
             </button>
             <button type="button" className={aba(!app)} onClick={() => setApp(false)}>
-              Presencial (sem app)
+              {!app && pilula}
+              <span className="relative">Presencial (sem app)</span>
             </button>
           </div>
           <Campo rotulo="Nome" required value={nome} onChange={(e) => setNome(e.target.value)} />
-          {app && (
-            <>
-              <Campo rotulo="E-mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-              <Campo rotulo="Pago até" type="date" required value={pagoAte} onChange={(e) => setPagoAte(e.target.value)} />
-            </>
-          )}
-          {erro && <Aviso>{erro}</Aviso>}
-          <Botao tipo="primario" type="submit" className="w-full" disabled={enviando}>
+          <Painel aberto={app} className="-mx-1 px-1">
+            <div className="space-y-3">
+              <Campo rotulo="E-mail" type="email" required={app} value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Campo rotulo="Pago até" type="date" required={app} value={pagoAte} onChange={(e) => setPagoAte(e.target.value)} />
+            </div>
+          </Painel>
+          <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
+          <Botao tipo="primario" type="submit" className="w-full" disabled={enviando} carregando={enviando}>
             {enviando ? 'Criando…' : 'Cadastrar'}
           </Botao>
         </form>

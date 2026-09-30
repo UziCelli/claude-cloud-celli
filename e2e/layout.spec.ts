@@ -169,3 +169,11 @@ for (const vp of [
     await ctx.close()
   })
 }
+
+test('print da tela de login (390px)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+  await page.waitForTimeout(900)
+  await page.screenshot({ path: 'test-results/prints/60-login.png' })
+})

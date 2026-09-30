@@ -5,7 +5,7 @@ import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, 
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Botao, Centro, Pagina } from '../../../ui'
+import { Botao, Centro, Deslizar, Msg, Pagina } from '../../../ui'
 import EvolucaoCoach from './EvolucaoCoach'
 import { fmtData } from './format'
 import Monitoramento from './Monitoramento'
@@ -55,9 +55,10 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
         <Botao disabled={semanaAtual >= meso.semanas} onClick={() => ir(`/meso/${id}/semana/${semanaAtual + 1}`)}>
           Semana →
         </Botao>
-        {pendente && <span className="ml-2 text-xs text-amber-400">sincronizando…</span>}
+        <Msg className="ml-2">{pendente && <span className="text-xs text-amber-400">sincronizando…</span>}</Msg>
       </div>
 
+      <Deslizar chave={semanaAtual}>
       <div className="space-y-4">
         {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((treino) => {
           const sessao = prescreverSessao(meso, semanaAtual, treino)
@@ -77,6 +78,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
           )
         })}
       </div>
+      </Deslizar>
 
       <div className="mt-6 space-y-4">
         <Monitoramento meso={meso} registros={registros} reps={reps} />

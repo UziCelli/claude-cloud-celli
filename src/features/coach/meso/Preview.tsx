@@ -1,6 +1,6 @@
 import type { Meso } from '../../../engine'
 import { prescreverSessao } from '../../../engine'
-import { campoBase, Cartao } from '../../../ui'
+import { campoBase, Cartao, Deslizar } from '../../../ui'
 
 // Painel de pré-visualização: mostra o que o aluno vai ver numa semana, em todos os treinos.
 export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana: number; onSemana: (w: number) => void }) {
@@ -20,6 +20,7 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
           ))}
         </select>
       </div>
+      <Deslizar chave={semana}>
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((t) => {
           const sessao = prescreverSessao(meso, semana, t)
@@ -50,6 +51,7 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
           )
         })}
       </div>
+      </Deslizar>
     </Cartao>
   )
 }

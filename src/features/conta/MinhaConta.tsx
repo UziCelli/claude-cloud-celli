@@ -5,7 +5,7 @@ import { alterarEmail, recuperarSenha, salvarPeso, sincronizarEmail } from '../.
 import type { Usuario } from '../../lib/acesso'
 import { db } from '../../lib/firebase'
 import { useDoc } from '../../lib/hooks'
-import { Aviso, Botao, Campo, Cartao, Pagina } from '../../ui'
+import { Aviso, Botao, Campo, Cartao, Msg, Pagina } from '../../ui'
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
 const erros: Record<string, string> = {
@@ -115,8 +115,8 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
             </Botao>
           </form>
         </Cartao>
-        {erro && <Aviso>{erro}</Aviso>}
-        {ok && <Aviso>{ok}</Aviso>}
+        <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
+        <Msg>{ok && <Aviso>{ok}</Aviso>}</Msg>
         <Botao type="button" className="w-full" onClick={trocarSenha}>
           Trocar senha
         </Botao>

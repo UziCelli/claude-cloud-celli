@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react'
 import { liberado, type Usuario } from './lib/acesso'
 import { sair } from './lib/acoes'
 import { useUsuarioAtual } from './lib/hooks'
 import { casar, useRota } from './rota'
-import { Botao, Centro, Tela } from './ui'
+import { Abertura, Botao, Centro, Tela } from './ui'
 import Logo from './Logo'
 import Entrar from './features/auth/Entrar'
 import Inicio from './features/coach/inicio/Inicio'
@@ -17,17 +18,20 @@ import MinhaConta from './features/conta/MinhaConta'
 
 // /instalar é pública (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
-  return location.pathname === '/instalar' ? <Instalar /> : <Principal />
+  return location.pathname === '/instalar' ? <Tela chave="instalar"><Instalar /></Tela> : <Principal />
 }
 
 function Principal() {
   const { user, perfil, carregando } = useUsuarioAtual()
-  if (carregando) return <Centro>Carregando…</Centro>
-  if (!user) return <Entrar />
-  if (!perfil) return <Centro>Preparando sua conta…</Centro>
-  if (perfil.papel === 'coach') return <Coach uid={user.uid} nome={perfil.nome} email={perfil.email} />
-  if (!liberado(perfil, new Date())) return <SemAcesso perfil={perfil} />
-  return <AlunoApp uid={user.uid} nome={perfil.nome} />
+  let estagio = 'app'
+  let tela: ReactNode
+  if (carregando) [estagio, tela] = ['abertura', <Abertura />]
+  else if (!user) [estagio, tela] = ['entrar', <Entrar />]
+  else if (!perfil) [estagio, tela] = ['abertura', <Abertura texto="Preparando sua conta…" />]
+  else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} nome={perfil.nome} email={perfil.email} />
+  else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
+  else tela = <AlunoApp uid={user.uid} nome={perfil.nome} />
+  return <Tela chave={estagio}>{tela}</Tela>
 }
 
 function Coach({ uid, nome, email }: { uid: string; nome: string; email: string }) {

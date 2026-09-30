@@ -6,7 +6,7 @@ import { apagarAluno, definirAcesso } from '../../../lib/acoes'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
-import { Aviso, Botao, Campo, campoBase, Cartao, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
 
@@ -127,11 +127,13 @@ export default function Alunos() {
         </div>
       )}
       {arquivados && <p className="mb-4 text-sm text-slate-400">Apagar de vez não remove o login (e-mail) no Firebase Auth.</p>}
-      {erro && (
-        <div className="mb-4">
-          <Aviso>{erro}</Aviso>
-        </div>
-      )}
+      <Msg>
+        {erro && (
+          <div className="mb-4">
+            <Aviso>{erro}</Aviso>
+          </div>
+        )}
+      </Msg>
       {alunos.length === 0 ? (
         <Cartao className="text-slate-400">
           Nenhum aluno ainda. Use Novo aluno, ou peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
@@ -230,9 +232,9 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
           ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas e anotações. Não dá para desfazer.`
           : `Arquivar “${nome}”? Perde o acesso e some da lista. Dá para reativar depois.`}
       </p>
-      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <Msg>{erro && <p className="text-sm text-red-400">{erro}</p>}</Msg>
       <div className="flex flex-wrap gap-2">
-        <Botao tipo="perigo" disabled={enviando} onClick={confirmar}>
+        <Botao tipo="perigo" disabled={enviando} carregando={enviando} onClick={confirmar}>
           {enviando ? 'Aguarde…' : apagar ? 'Sim, apagar de vez' : 'Sim, arquivar'}
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>

@@ -28,7 +28,7 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
         </div>
       </header>
       <AvisoIOS />
-      <Tela chave={rota}>{tela}</Tela>
+      <Tela chave={rota} abrir={rota.startsWith('/treino')}>{tela}</Tela>
     </>
   )
 }

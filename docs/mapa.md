@@ -71,6 +71,7 @@ Comece por aqui para achar onde mexer.
 - `main.tsx` — entry point React
 - `ui.tsx` — componentes comuns: `Botao`, `Centro`, `Tab`, etc.
 - `motionFeatures.ts` — recursos da biblioteca Motion carregados sob demanda; animações e componentes `Tela`, `Painel`, `Barra`, `cascata`/`item` ficam em `src/ui.tsx`
+- `ui.tsx` também tem `Abertura` (carregando), `Msg` (mensagem que aparece/some), `Deslizar` (troca de semana), `Contar`; toque/hover de botões, links, selects e checkboxes vêm do `index.css`
 - `index.css` — Tailwind, cores marca, fontes
 - `Logo.tsx` — marca VFITCOACH
 
