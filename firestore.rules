@@ -35,51 +35,81 @@ service cloud.firestore {
       return signedIn() && data.alunoId == request.auth.uid;
     }
 
-    // Coach: acesso total.
-    match /{document=**} {
-      allow read, write: if isCoach();
+    function nomeValido(nome) {
+      return nome is string && nome.size() >= 1 && nome.size() <= 80;
+    }
+
+    // Tipos dos campos que o aluno grava no registro (valem para o resultado final do merge).
+    function registroValido(d) {
+      return d.atualizadoEm == request.time
+        && d.get('realizado', false) is bool
+        && d.get('cargas', {}) is map
+        && d.get('reps', {}) is map;
     }
 
     match /usuarios/{uid} {
       // Lê o próprio mesmo bloqueado (o app mostra a tela "bloqueado").
-      allow read: if signedIn() && request.auth.uid == uid;
+      allow read: if isCoach() || (signedIn() && request.auth.uid == uid);
 
-      // Cadastro próprio: sempre aluno aguardando, sem pagoAte.
+      // Coach: no próprio perfil faz tudo; nos das outras pessoas, o resultado é sempre 'aluno'
+      // (ninguém vira coach pelo app). Apagar: só o coach.
+      allow create, update: if isCoach()
+        && (request.auth.uid == uid || request.resource.data.papel == 'aluno');
+      allow delete: if isCoach();
+
+      // Cadastro próprio: sempre aluno aguardando, sem pagoAte, com o e-mail do login.
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['papel', 'status', 'nome', 'email', 'criadoEm'])
+        && request.resource.data.keys().hasAll(['papel', 'status', 'nome', 'email'])
         && request.resource.data.papel == 'aluno'
-        && request.resource.data.status == 'aguardando';
+        && request.resource.data.status == 'aguardando'
+        && nomeValido(request.resource.data.nome)
+        && request.resource.data.email == request.auth.token.email;
 
       // Só o nome. E-mail, papel, status e pagoAte: só o coach (o coach troca o próprio
       // e-mail em Minha conta; aluno troca por manutenção — workflow "Alterar e-mail de aluno").
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome'])
+        && nomeValido(request.resource.data.nome);
     }
 
     match /mesos/{mesoId} {
-      allow read: if own(resource.data) && liberado();
+      allow read: if isCoach() || (own(resource.data) && liberado());
+      allow write: if isCoach();
     }
 
     // Id: {mesoId}_s{WW}_t{T}, ex.: abc_s01_t1.
     match /registros/{regId} {
-      allow read: if own(resource.data) && liberado();
+      allow read: if isCoach() || (own(resource.data) && liberado());
+      allow write: if isCoach();
 
       allow create: if own(request.resource.data) && liberado()
         && request.resource.data.keys().hasOnly(
              ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm'])
         && request.resource.data.semana is int
         && request.resource.data.treino is int
+        && registroValido(request.resource.data)
+        && request.resource.data.get('realizadoEm', null) in [null, request.time]
         && regId == request.resource.data.mesoId
              + '_s' + (request.resource.data.semana < 10 ? '0' : '') + string(request.resource.data.semana)
              + '_t' + string(request.resource.data.treino)
         && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId
-             == request.auth.uid;
+             == request.auth.uid
+        && request.resource.data.semana >= 1
+        && request.resource.data.semana
+             <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.semanas
+        && request.resource.data.treino >= 1
+        && request.resource.data.treino
+             <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.frequencia;
 
       // Gravação campo a campo (merge): identidade do registro não muda.
       // reps = reps feitas (opcional), mesmo formato das cargas.
       allow update: if own(resource.data) && liberado()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm']);
+             .hasOnly(['realizado', 'realizadoEm', 'cargas', 'reps', 'atualizadoEm'])
+        && registroValido(request.resource.data)
+        && request.resource.data.get('realizadoEm', null)
+             in [resource.data.get('realizadoEm', null), null, request.time];
     }
   }
 }

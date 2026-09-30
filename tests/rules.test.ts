@@ -55,6 +55,10 @@ const db = (uid?: string) =>
 
 const reg = (uid: string | undefined, id: string) => doc(db(uid), 'registros', id);
 
+// Login com e-mail no token (como no app: o Auth guarda o e-mail em minúsculas).
+const dbEmail = (uid: string, email: string) =>
+  env.authenticatedContext(uid, { email }).firestore() as unknown as Firestore;
+
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: 'demo-forca',
@@ -70,7 +74,7 @@ beforeEach(async () => {
     const admin = ctx.firestore() as unknown as Firestore;
     await Promise.all([
       ...Object.entries(usuarios).map(([uid, u]) => setDoc(doc(admin, 'usuarios', uid), u)),
-      ...ALUNOS.map((a) => setDoc(doc(admin, 'mesos', `m_${a}`), { alunoId: a, nome: 'Meso 1', semanas: 8 })),
+      ...ALUNOS.map((a) => setDoc(doc(admin, 'mesos', `m_${a}`), { alunoId: a, nome: 'Meso 1', semanas: 8, frequencia: 3 })),
       ...ALUNOS.map((a) => setDoc(doc(admin, 'registros', `m_${a}_s01_t1`), registro(a))),
     ]);
   });
@@ -108,7 +112,7 @@ describe('usuarios', () => {
 
   describe('cadastro próprio', () => {
     const novo = { papel: 'aluno', status: 'aguardando', nome: 'Novo', email: 'n@x.com', criadoEm: serverTimestamp() };
-    const criar = (dados: object, id = 'novo') => setDoc(doc(db('novo'), 'usuarios', id), dados);
+    const criar = (dados: object, id = 'novo') => setDoc(doc(dbEmail('novo', 'n@x.com'), 'usuarios', id), dados);
 
     it('permite aluno aguardando', () => assertSucceeds(criar(novo)));
     it('nega papel coach', () => assertFails(criar({ ...novo, papel: 'coach' })));
@@ -116,6 +120,48 @@ describe('usuarios', () => {
     it('nega pagoAte', () => assertFails(criar({ ...novo, pagoAte: futuro })));
     it('nega campo extra', () => assertFails(criar({ ...novo, admin: true })));
     it('nega id diferente do uid', () => assertFails(criar(novo, 'outro')));
+    it('nega sem nome ou sem e-mail', async () => {
+      const { nome: _n, ...semNome } = novo;
+      const { email: _e, ...semEmail } = novo;
+      await assertFails(criar(semNome));
+      await assertFails(criar(semEmail));
+    });
+    it('nega nome vazio, longo demais ou não texto', async () => {
+      await assertFails(criar({ ...novo, nome: '' }));
+      await assertFails(criar({ ...novo, nome: 'x'.repeat(81) }));
+      await assertFails(criar({ ...novo, nome: 123 }));
+      await assertSucceeds(criar({ ...novo, nome: 'x'.repeat(80) }));
+    });
+    it('nega e-mail diferente do login', async () => {
+      await assertFails(criar({ ...novo, email: 'outro@x.com' }));
+      await assertFails(setDoc(doc(db('novo'), 'usuarios', 'novo'), novo)); // login sem e-mail
+    });
+  });
+
+  it('nome próprio continua texto de 1 a 80 caracteres', async () => {
+    const ana = doc(db('ana'), 'usuarios', 'ana');
+    await assertFails(updateDoc(ana, { nome: '' }));
+    await assertFails(updateDoc(ana, { nome: 'x'.repeat(81) }));
+    await assertFails(updateDoc(ana, { nome: 42 }));
+  });
+
+  describe('coach e outros usuários', () => {
+    it('não promove ninguém a coach', async () => {
+      const c = db('coach');
+      await assertFails(updateDoc(doc(c, 'usuarios', 'ana'), { papel: 'coach' }));
+      await assertFails(setDoc(doc(c, 'usuarios', 'x'), { papel: 'coach', status: 'ativo', nome: 'X', email: 'x@x.com' }));
+      await assertFails(setDoc(doc(c, 'usuarios', 'y'), { status: 'ativo', nome: 'Y', email: '' }));
+    });
+    it('continua editando aluno e o próprio perfil', async () => {
+      await assertSucceeds(updateDoc(doc(db('coach'), 'usuarios', 'ana'), { status: 'bloqueado', nome: 'Ana B' }));
+      await assertSucceeds(updateDoc(doc(db('coach'), 'usuarios', 'coach'), { nome: 'Victor Celli' }));
+    });
+    it('fora de usuarios, mesos e registros, nem o coach lê ou escreve', async () => {
+      const c = db('coach');
+      await assertFails(setDoc(doc(c, 'config', 'x'), { a: 1 }));
+      await assertFails(getDoc(doc(c, 'config', 'x')));
+      await assertFails(setDoc(doc(c, 'usuarios', 'ana', 'notas', 'n1'), { a: 1 }));
+    });
   });
 
   it('usuário altera só o próprio nome', async () => {
@@ -159,7 +205,7 @@ describe('aluno presencial', () => {
   beforeEach(async () => {
     const c = db('coach');
     await setDoc(doc(c, 'usuarios', 'pres'), pres);
-    await setDoc(doc(c, 'mesos', 'm_pres'), { alunoId: 'pres', nome: 'Meso 1', semanas: 8 });
+    await setDoc(doc(c, 'mesos', 'm_pres'), { alunoId: 'pres', nome: 'Meso 1', semanas: 8, frequencia: 3 });
     await setDoc(doc(c, 'registros', 'm_pres_s01_t1'), registro('pres'));
   });
 
@@ -189,7 +235,7 @@ describe('aluno presencial', () => {
     await assertSucceeds(deleteDoc(doc(c, 'usuarios', 'pres')));
     // A aluna nova vê o histórico e continua anotando no mesmo registro.
     await assertSucceeds(getDoc(doc(db('nova'), 'mesos', 'm_pres')));
-    await assertSucceeds(updateDoc(reg('nova', 'm_pres_s01_t1'), { 'cargas.sup.s3': 55 }));
+    await assertSucceeds(updateDoc(reg('nova', 'm_pres_s01_t1'), { 'cargas.sup.s3': 55, atualizadoEm: serverTimestamp() }));
     await assertFails(getDoc(doc(db('ana'), 'mesos', 'm_pres')));
   });
 });
@@ -234,13 +280,15 @@ describe('registros', () => {
   it('vencido, bloqueado ou aguardando não lê nem escreve', async () => {
     for (const uid of ['exp', 'blq', 'agu']) {
       await assertFails(getDoc(reg(uid, `m_${uid}_s01_t1`)));
-      await assertFails(setDoc(reg(uid, `m_${uid}_s01_t2`), registro(uid, 1, 2)));
-      await assertFails(updateDoc(reg(uid, `m_${uid}_s01_t1`), { 'cargas.sup.s2': 50 }));
+      await assertFails(setDoc(reg(uid, `m_${uid}_s01_t2`), { ...registro(uid, 1, 2), atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(reg(uid, `m_${uid}_s01_t1`), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
     }
   });
 
   describe('criação', () => {
-    const criar = (dados: object, id = 'm_ana_s02_t1') => setDoc(reg('ana', id), dados, { merge: true });
+    // Como o app (registro em src/lib/acoes.ts): sempre com atualizadoEm = serverTimestamp().
+    const criar = (dados: object, id = 'm_ana_s02_t1') =>
+      setDoc(reg('ana', id), { atualizadoEm: serverTimestamp(), ...dados }, { merge: true });
 
     it('permite registro próprio com merge', () =>
       assertSucceeds(criar({ ...registro('ana', 2, 1), realizadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })));
@@ -262,6 +310,26 @@ describe('registros', () => {
       await assertFails(criar(registro('ana', 3, 1), 'm_ana_s02_t1'));
       await assertFails(criar(registro('ana', 2, 2), 'm_ana_s02_t1'));
     });
+    it('nega semana ou treino fora do meso (8 semanas, 3 treinos)', async () => {
+      await assertFails(criar(registro('ana', 0, 1), 'm_ana_s00_t1'));
+      await assertFails(criar(registro('ana', 9, 1), 'm_ana_s09_t1'));
+      await assertFails(criar(registro('ana', 2, 0), 'm_ana_s02_t0'));
+      await assertFails(criar(registro('ana', 2, 4), 'm_ana_s02_t4'));
+      await assertSucceeds(criar(registro('ana', 8, 3), 'm_ana_s08_t3'));
+    });
+    it('nega tipos errados em realizado, cargas e reps', async () => {
+      await assertFails(criar({ ...registro('ana', 2, 1), realizado: 'sim' }));
+      await assertFails(criar({ ...registro('ana', 2, 1), cargas: 40 }));
+      await assertFails(criar({ ...registro('ana', 2, 1), reps: 'doze' }));
+    });
+    it('nega atualizadoEm ausente ou escolhido pelo aparelho', async () => {
+      await assertFails(setDoc(reg('ana', 'm_ana_s02_t1'), registro('ana', 2, 1), { merge: true }));
+      await assertFails(criar({ ...registro('ana', 2, 1), atualizadoEm: futuro }));
+    });
+    it('realizadoEm só pode ser a hora do servidor ou null', async () => {
+      await assertFails(criar({ ...registro('ana', 2, 1), realizadoEm: passado }));
+      await assertSucceeds(criar({ ...registro('ana', 2, 2), realizadoEm: null }, 'm_ana_s02_t2'));
+    });
   });
 
   describe('atualização', () => {
@@ -270,14 +338,18 @@ describe('registros', () => {
 
     it('permite setDoc merge com cargas aninhadas e identidade repetida (offline)', () =>
       assertSucceeds(
-        setDoc(reg('ana', 'm_ana_s01_t1'), { ...registro('ana'), cargas: { agach: { s1: 80 } } }, { merge: true }),
+        setDoc(
+          reg('ana', 'm_ana_s01_t1'),
+          { ...registro('ana'), cargas: { agach: { s1: 80 } }, atualizadoEm: serverTimestamp() },
+          { merge: true },
+        ),
       ));
 
     it('permite reps feitas por setDoc merge (como registrarReps)', async () => {
       const r = reg('ana', 'm_ana_s01_t1');
       const id = { alunoId: 'ana', mesoId: 'm_ana', semana: 1, treino: 1 };
       await assertSucceeds(setDoc(r, { ...id, reps: { sup: { s1: 12 } }, atualizadoEm: serverTimestamp() }, { merge: true }));
-      await assertSucceeds(setDoc(r, { ...id, reps: { sup: { s2: null } } }, { merge: true }));
+      await assertSucceeds(setDoc(r, { ...id, reps: { sup: { s2: null } }, atualizadoEm: serverTimestamp() }, { merge: true }));
     });
 
     it('reps não liberam mudar alunoId ou semana', async () => {
@@ -287,7 +359,28 @@ describe('registros', () => {
     });
 
     it('permite marcar realizado', () =>
-      assertSucceeds(updateDoc(reg('ana', 'm_ana_s01_t1'), { realizado: true, realizadoEm: serverTimestamp() })));
+      assertSucceeds(
+        updateDoc(reg('ana', 'm_ana_s01_t1'), { realizado: true, realizadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() }),
+      ));
+
+    it('como marcarRealizado e registrarCarga: desmarca com null e edita carga sem reenviar realizadoEm', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      const id = { alunoId: 'ana', mesoId: 'm_ana', semana: 1, treino: 1 };
+      const agora = () => ({ atualizadoEm: serverTimestamp() });
+      await assertSucceeds(setDoc(r, { ...id, realizado: true, realizadoEm: serverTimestamp(), ...agora() }, { merge: true }));
+      await assertSucceeds(setDoc(r, { ...id, cargas: { sup: { s2: 45 } }, ...agora() }, { merge: true }));
+      await assertSucceeds(setDoc(r, { ...id, realizado: false, realizadoEm: null, ...agora() }, { merge: true }));
+    });
+
+    it('nega sem atualizadoEm, realizadoEm inventado ou tipos errados', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      await assertFails(updateDoc(r, { 'cargas.sup.s2': 50 }));
+      await assertFails(updateDoc(r, { 'cargas.sup.s2': 50, atualizadoEm: futuro }));
+      await assertFails(updateDoc(r, { realizado: true, realizadoEm: passado, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(r, { realizado: 1, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(r, { cargas: 'x', atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(r, { reps: 3, atualizadoEm: serverTimestamp() }));
+    });
 
     it('nega mudar alunoId, mesoId, semana, treino ou campo extra', async () => {
       const r = reg('ana', 'm_ana_s01_t1');
@@ -300,7 +393,7 @@ describe('registros', () => {
     });
 
     it('nega alterar registro de outro aluno', () =>
-      assertFails(updateDoc(reg('ana', 'm_bia_s01_t1'), { 'cargas.sup.s2': 1 })));
+      assertFails(updateDoc(reg('ana', 'm_bia_s01_t1'), { 'cargas.sup.s2': 1, atualizadoEm: serverTimestamp() })));
   });
 
   it('só o coach apaga; coach lê e escreve qualquer um', async () => {
