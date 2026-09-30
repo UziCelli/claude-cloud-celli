@@ -129,6 +129,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', uid))
+  const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const descanso = useDescanso()
 
@@ -169,10 +170,14 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           const colunasReps = rs[e.slot.slotId] ?? []
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos)
           const slot = e.slot.slotId
-          const corpo = pcs[slot] || 0
+          const corpo = pcLocal[slot] ?? (pcs[slot] || 0)
           const frac = fracaoPC(e.slot.nome)
           const alternarPc = () => {
-            if (corpo) return registrarPc(mesoId, uid, semana, treino, slot, 0)
+            const grava = (kg: number) => {
+              setPcLocal((p) => ({ ...p, [slot]: kg }))
+              registrarPc(mesoId, uid, semana, treino, slot, kg)
+            }
+            if (corpo) return grava(0)
             let peso = perfil?.pesoKg
             if (!peso) {
               const n = Number((window.prompt('Qual é o seu peso (kg)?') ?? '').replace(',', '.'))
@@ -180,7 +185,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
               salvarPeso(uid, n)
               peso = n
             }
-            registrarPc(mesoId, uid, semana, treino, slot, Math.round(peso * frac * 10) / 10)
+            grava(Math.round(peso * frac * 10) / 10)
           }
           return (
             <div key={e.slot.slotId} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
