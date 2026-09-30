@@ -55,7 +55,8 @@ Comece por aqui para achar onde mexer.
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão
 - `meso/MesosDoAluno.tsx` — lista de mesos de um aluno
 - `meso/CampoExercicio.tsx` — combobox de exercício (sugestões de `src/lib/busca.ts`, texto livre)
-- `meso/TabDivisao.tsx`, `TabMetodos.tsx`, `TabProgressao.tsx` — abas do editor
+- `meso/TabDivisao.tsx`, `TabMetodos.tsx`, `TabProgressao.tsx` — abas do editor (progressão: padrão + por exercício via slotId)
+- `meso/SugestaoTempo.tsx` — aviso "Treinos acima do tempo" + painel de sugestão de biset/triset (usado no editor e no Início)
 - `semana/VisaoSemana.tsx` — monitoramento: séries/reps realizadas vs. prescrição
 - `semana/Monitoramento.tsx`, `LoadInput.tsx`, `SessaoCard.tsx` — cards de treino
 
@@ -131,7 +132,7 @@ Comece por aqui para achar onde mexer.
 ### `mesos/{mesoId}`
 - `alunoId`, `nome`, `frequencia`, `semanas`
 - `divisao`: `{ s1: [slots], s2: … }` (slotId → exercício, método, série/rep)
-- `progressao`: `{ principais: { s1: [reps meta], … }, auxiliares: … }`
+- `progressao`: `{ principais, auxiliares, padrao? }` (linhas por semana); `progressaoExercicio`: `{ [slotId]: linhas }`; `adaptadoEm` (marcarAdaptado)
 - `criadoEm`, `atualizadoEm`
 
 ### `registros/{regId}`

@@ -6,15 +6,16 @@ import type { Cargas, Meso, Registros, Slot } from '../engine'
 //   progressao: (number|null)[][]   -> { principais: { w1: […], w2: […] }, auxiliares: { w1: … } } (w = semana)
 // Array dentro de mapa dentro de array (metodos[].cargaEtapa) é permitido e fica como está.
 type Linhas<T> = Record<string, T[]>
-//   progressaoExercicio: Record<'t-p', (number|null)[][]> -> { 't1-3': { w1: […], w2: … } }
+//   progressao.padrao (opcional): igual a principais/auxiliares -> { w1: […], w2: … }
+//   progressaoExercicio: Record<slotId, (number|null)[][]> -> { [slotId]: { w1: […], w2: … } }
 export type MesoDoc = Omit<Meso, 'divisao' | 'progressao' | 'progressaoExercicio'> & {
   divisao: Linhas<Slot>
   progressaoExercicio?: Record<string, Linhas<number | null>>
-  progressao: { principais: Linhas<number | null>; auxiliares: Linhas<number | null> }
+  progressao: { principais: Linhas<number | null>; auxiliares: Linhas<number | null>; padrao?: Linhas<number | null> }
 }
 
 // Documento completo em mesos/{id}, como gravado por salvarMeso.
-export type MesoSalvo = MesoDoc & { alunoId: string; nome: string }
+export type MesoSalvo = MesoDoc & { alunoId: string; nome: string; adaptadoEm?: unknown }
 
 const paraMapa =<T>(linhas: T[][], p: string): Linhas<T> =>
   Object.fromEntries(linhas.map((l, i) => [`${p}${i + 1}`, l]))
@@ -34,6 +35,8 @@ export function mesoParaDoc(meso: Meso): MesoDoc {
     progressao: {
       principais: paraMapa(meso.progressao.principais, 'w'),
       auxiliares: paraMapa(meso.progressao.auxiliares, 'w'),
+      // Sem `padrao` o campo não existe (o Firestore recusa undefined).
+      ...(meso.progressao.padrao && { padrao: paraMapa(meso.progressao.padrao, 'w') }),
     },
   }
 }
@@ -49,6 +52,7 @@ export function docParaMeso(d: MesoDoc): Meso {
     progressao: {
       principais: deMapa(d.progressao.principais, 'w'),
       auxiliares: deMapa(d.progressao.auxiliares, 'w'),
+      ...(d.progressao.padrao && { padrao: deMapa(d.progressao.padrao, 'w') }),
     },
     metodos: d.metodos,
     ...(d.progressaoPct != null && { progressaoPct: d.progressaoPct }),

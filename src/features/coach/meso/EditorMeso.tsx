@@ -1,14 +1,16 @@
 import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
+import { migrarProgressao } from '../../../engine'
 import type { Meso } from '../../../engine'
-import { salvarMeso } from '../../../lib/acoes'
+import { marcarAdaptado, salvarMeso } from '../../../lib/acoes'
 import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Aviso, Botao, Campo, Msg, Pagina } from '../../../ui'
 import Preview from './Preview'
+import { LinhaAcima, treinosAcima } from './SugestaoTempo'
 import TabDivisao from './TabDivisao'
 import TabMetodos from './TabMetodos'
 import TabProgressao from './TabProgressao'
@@ -46,12 +48,12 @@ export default function EditorMeso({ id }: { id: string }) {
   useEffect(() => {
     const d = mesoDoc.dados
     if (!d) return
-    const { atualizadoEm: _a, criadoEm: _c, ...resto } = d as MesoSalvo & { atualizadoEm?: unknown; criadoEm?: unknown }
+    const { atualizadoEm: _a, criadoEm: _c, adaptadoEm: _d, ...resto } = d as MesoSalvo & { atualizadoEm?: unknown; criadoEm?: unknown }
     const json = estavel(resto)
     if (json === base.current) return
     if (dirty) return setConflito(true)
     base.current = json
-    setMeso(docParaMeso(d))
+    setMeso(migrarProgressao(docParaMeso(d)))
     setNome(d.nome)
     setAlunoId(d.alunoId)
     setConflito(false)
@@ -64,11 +66,14 @@ export default function EditorMeso({ id }: { id: string }) {
     setDirty(true)
   }
 
-  function salvar() {
-    if (!meso) return
+  function salvar(novo = meso, adaptou = false) {
+    if (!novo) return
+    if (novo !== meso) setMeso(novo)
     setDirty(false)
     setErro(null)
-    salvarMeso(id, alunoId, nome, meso).gravado.catch(() => setErro('Não foi possível salvar. Tentando de novo quando houver internet.'))
+    const g = salvarMeso(id, alunoId, nome, novo).gravado
+    if (adaptou) g.then(() => marcarAdaptado(id)).catch(() => {})
+    g.catch(() => setErro('Não foi possível salvar. Tentando de novo quando houver internet.'))
   }
 
   // Há carga registrada em algum treino/semana que satisfaz o filtro?
@@ -84,18 +89,25 @@ export default function EditorMeso({ id }: { id: string }) {
     atualizar({ frequencia: n, divisao: redimensionar(meso!.divisao, n, () => []) })
   }
 
+  const linhas = (l: (number | null)[][], n: number) => redimensionar(l, n, () => Array(6).fill(null))
+
   function setSemanas(n: number) {
     if (n < meso!.semanas && temCargas((w) => w > n) && !confirm(`As semanas removidas ${AVISO_CORTE}`)) return
     atualizar({
       semanas: n,
       progressao: {
-        principais: redimensionar(meso!.progressao.principais, n, () => Array(6).fill(null)),
-        auxiliares: redimensionar(meso!.progressao.auxiliares, n, () => Array(6).fill(null)),
+        principais: linhas(meso!.progressao.principais, n),
+        auxiliares: linhas(meso!.progressao.auxiliares, n),
+        ...(meso!.progressao.padrao && { padrao: linhas(meso!.progressao.padrao, n) }),
       },
+      ...(meso!.progressaoExercicio && {
+        progressaoExercicio: Object.fromEntries(Object.entries(meso!.progressaoExercicio).map(([k, v]) => [k, linhas(v, n)])),
+      }),
     })
     if (semana > n) setSemana(n)
   }
 
+  const acima = treinosAcima(meso)
   const status = dirty ? 'Alterações não salvas' : mesoDoc.pendente ? 'Salvando… será enviado quando houver internet' : 'Salvo'
 
   return (
@@ -113,7 +125,7 @@ export default function EditorMeso({ id }: { id: string }) {
       acoes={
         <>
           <span className="self-center text-sm text-slate-400">{status}</span>
-          <Botao tipo="primario" disabled={!dirty} onClick={salvar}>
+          <Botao tipo="primario" disabled={!dirty} onClick={() => salvar()}>
             Salvar
           </Botao>
           <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
@@ -132,6 +144,20 @@ export default function EditorMeso({ id }: { id: string }) {
           </Aviso>
         </div>
       )}
+      </Msg>
+      <Msg>
+        {acima.length > 0 && (
+          <div className="mb-3">
+            <Aviso>
+              <p className="mb-2 font-semibold">Treinos acima do tempo</p>
+              <div className="space-y-3">
+                {acima.map((a) => (
+                  <LinhaAcima key={a.treino} meso={meso} acima={a} onAplicar={(novo) => salvar(novo, true)} />
+                ))}
+              </div>
+            </Aviso>
+          </div>
+        )}
       </Msg>
       <div className="mb-4 flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
         {ABAS.map((a) => (

@@ -94,8 +94,8 @@ describe('progressaoAutomatica', () => {
 
   it('alvo treino: cria override só das posições daquele treino', () => {
     const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 2, alvo: { tipo: 'treino', treino: 2 } })
-    expect(Object.keys(m.progressaoExercicio!).sort()).toEqual(['2-1', '2-2', '2-3'])
-    expect(m.progressaoExercicio!['2-1'][1]).toEqual([9, 9, 8, null, null, null])
+    expect(Object.keys(m.progressaoExercicio!).sort()).toEqual(['D', 'E', 'F'])
+    expect(m.progressaoExercicio!.D[1]).toEqual([9, 9, 8, null, null, null])
     // linhas do grupo intactas
     expect(m.progressao).toEqual(mesoBase().progressao)
     // o treino 1 segue igual
@@ -105,25 +105,70 @@ describe('progressaoAutomatica', () => {
 
   it('alvo exercício: cria override só dele, sem mexer nos outros', () => {
     const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 3, alvo: { tipo: 'exercicio', treino: 1, pos: 3 } })
-    expect(Object.keys(m.progressaoExercicio!)).toEqual(['1-3'])
-    expect(m.progressaoExercicio!['1-3']).toHaveLength(8) // nasce como cópia das 8 semanas
-    expect(m.progressaoExercicio!['1-3'][0]).toEqual(linha8())
-    expect(m.progressaoExercicio!['1-3'][2]).toEqual([10, 9, 9, null, null, null])
+    expect(Object.keys(m.progressaoExercicio!)).toEqual(['C'])
+    expect(m.progressaoExercicio!.C).toHaveLength(8) // nasce como cópia das 8 semanas
+    expect(m.progressaoExercicio!.C[0]).toEqual(linha8())
+    expect(m.progressaoExercicio!.C[2]).toEqual([10, 9, 9, null, null, null])
     expect(m.progressao).toEqual(mesoBase().progressao)
     expect(prescreverSessao(m, 3, 1)!.exercicios.map((e) => e.reps.reduce((a, b) => a + b, 0))).toEqual([24, 24, 28])
   })
 
   it('alvo exercício parte do override já existente', () => {
-    const base = mesoBase({ progressaoExercicio: { '1-1': Array.from({ length: 8 }, () => [10, 10, 10, null, null, null]) } })
+    const base = mesoBase({ progressaoExercicio: { A: Array.from({ length: 8 }, () => [10, 10, 10, null, null, null]) } })
     const m = progressaoAutomatica(base, { pct: 10, de: 2, ate: 2, alvo: { tipo: 'exercicio', treino: 1, pos: 1 } })
-    expect(m.progressaoExercicio!['1-1'][1]).toEqual([11, 11, 11, null, null, null]) // 30 -> 33
+    expect(m.progressaoExercicio!.A[1]).toEqual([11, 11, 11, null, null, null]) // 30 -> 33
   })
 
   it('alvo todos também ajusta os overrides existentes', () => {
-    const base = mesoBase({ progressaoExercicio: { '1-1': Array.from({ length: 8 }, () => [10, 10, 10, null, null, null]) } })
+    const base = mesoBase({ progressaoExercicio: { A: Array.from({ length: 8 }, () => [10, 10, 10, null, null, null]) } })
     const m = progressaoAutomatica(base, { pct: 10, de: 2, ate: 2, alvo: { tipo: 'todos' } })
-    expect(m.progressaoExercicio!['1-1'][1]).toEqual([11, 11, 11, null, null, null])
+    expect(m.progressaoExercicio!.A[1]).toEqual([11, 11, 11, null, null, null])
     expect(m.progressao.principais[1]).toEqual([9, 9, 9, null, null, null]) // 24 -> 26,4 -> 27
+  })
+})
+
+describe('progressaoAutomatica — modelo por slotId', () => {
+  const padrao = () => Array.from({ length: 8 }, () => [10, 10, 10, null, null, null])
+
+  it('alvo exercício por slotId (sem treino/pos)', () => {
+    const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 2, alvo: { tipo: 'exercicio', slotId: 'E' } })
+    expect(Object.keys(m.progressaoExercicio!)).toEqual(['E'])
+    expect(m.progressaoExercicio!.E[1]).toEqual([9, 9, 8, null, null, null])
+  })
+
+  it('alvo exercício com slotId inexistente não muda nada', () => {
+    const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 2, alvo: { tipo: 'exercicio', slotId: 'ZZ' } })
+    expect(m).toEqual(mesoBase())
+  })
+
+  it('alvo exercício parte do padrão quando ele existe', () => {
+    const base = mesoBase({ progressao: { principais: padrao(), auxiliares: padrao(), padrao: padrao() } })
+    const m = progressaoAutomatica(base, { pct: 10, de: 2, ate: 2, alvo: { tipo: 'exercicio', treino: 1, pos: 3 } })
+    expect(m.progressaoExercicio!.C[1]).toEqual([11, 11, 11, null, null, null])
+    expect(m.progressao.padrao).toEqual(padrao()) // padrão intacto
+  })
+
+  it('alvo todos ajusta o padrão e os overrides por slotId (e só eles)', () => {
+    const base = mesoBase({
+      progressao: { principais: padrao(), auxiliares: padrao(), padrao: padrao() },
+      progressaoExercicio: { B: padrao() },
+    })
+    const m = progressaoAutomatica(base, { pct: 10, de: 2, ate: 2, alvo: { tipo: 'todos' } })
+    expect(m.progressao.padrao![1]).toEqual([11, 11, 11, null, null, null])
+    expect(m.progressaoExercicio!.B[1]).toEqual([11, 11, 11, null, null, null])
+    expect(Object.keys(m.progressaoExercicio!)).toEqual(['B'])
+  })
+
+  it('alvo todos: override de slot fora da divisão também é ajustado', () => {
+    const base = mesoBase({ progressaoExercicio: { orfao: padrao() } })
+    const m = progressaoAutomatica(base, { pct: 10, de: 2, ate: 2, alvo: { tipo: 'todos' } })
+    expect(m.progressaoExercicio!.orfao[1]).toEqual([11, 11, 11, null, null, null])
+  })
+
+  it('o motor enxerga o resultado (sessão usa o override do slot)', () => {
+    const m = progressaoAutomatica(mesoBase(), { pct: 50, de: 2, ate: 2, alvo: { tipo: 'exercicio', slotId: 'B' } })
+    const reps = prescreverSessao(m, 2, 1)!.exercicios.map((e) => e.reps.reduce((a, b) => a + b, 0))
+    expect(reps).toEqual([24, 36, 24])
   })
 })
 
@@ -171,9 +216,9 @@ describe('reduzirVolume', () => {
 
   it('alvo exercício: só ele muda', () => {
     const m = reduzirVolume(mesoBase(), { pct: 20, de: 2, ate: 2, retorno: 1, alvo: { tipo: 'exercicio', treino: 2, pos: 1 } })
-    expect(Object.keys(m.progressaoExercicio!)).toEqual(['2-1'])
+    expect(Object.keys(m.progressaoExercicio!)).toEqual(['D'])
     expect(m.progressao).toEqual(mesoBase().progressao)
-    expect(movs(m.progressaoExercicio!['2-1'][1])).toBe(19)
+    expect(movs(m.progressaoExercicio!.D[1])).toBe(19)
   })
 })
 

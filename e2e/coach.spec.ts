@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { criarCoach, lerDoc, limparEmuladores } from './seed'
+import { criarAluno, criarCoach, criarMeso, hojeSaoPaulo, lerDoc, limparEmuladores } from './seed'
 
 const COACH = { nome: 'Victor', email: 'victor.e2e@teste.com', senha: 'senha123' }
 const ALUNO = { nome: 'Aluno Teste', email: 'aluno.e2e@teste.com', senha: 'senha123' }
@@ -93,7 +93,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByRole('button', { name: 'Aplicar', exact: true }).click()
     // 8 reps +10% = 8,8 -> arredonda para 9 em alguma série da semana 2 (prévia some após aplicar)
     await expect(page.getByText('Movimentos')).toHaveCount(0)
-    await expect(page.getByRole('heading', { name: /Principais/ })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Progressão padrão' })).toBeVisible()
     expect(await page.locator('input[type="number"][value]').count()).toBeGreaterThan(0)
     await page.getByRole('button', { name: 'Salvar' }).click()
     await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
@@ -212,4 +212,47 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
   const r = await fetch('http://127.0.0.1:9099/emulator/v1/projects/demo-forca/oobCodes')
   const codes = (await r.json()).oobCodes as { email: string; requestType: string }[]
   expect(codes.some((c) => c.email === 'app.e2e@teste.com' && c.requestType === 'PASSWORD_RESET')).toBe(true)
+})
+
+test('treino acima do tempo: aviso, sugestão de biset e progressão por exercício', async ({ page }) => {
+  const alunoId = await criarAluno('Bia Tempo', 'bia.e2e@teste.com', 'senha123')
+  const linha = { w1: [10, 10, 10, null, null, null], w2: [10, 10, 10, null, null, null] }
+  const treino = ['Supino Reto Barra', 'Remada Curvada com Barra', 'Rosca Direta Halter', 'Tríceps Pulley Corda', 'Cadeira Extensora Tradicional']
+  const slots = (t: string, n = 5) => treino.slice(0, n).map((nome, i) => ({ slotId: `${t}${i}`, nome }))
+  const id = await criarMeso({
+    alunoId, nome: 'Meso Tempo', frequencia: 2, semanas: 2, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: slots('a'), t2: slots('b', 2) }, progressao: { principais: linha, auxiliares: linha },
+  })
+
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await expect(page.getByText('Treinos acima do tempo')).toHaveCount(0)
+
+  await page.goto(`/#/meso/${id}`)
+  await page.getByLabel(/Tempo limite do aluno/).fill('25')
+  await expect(page.getByText('Treinos acima do tempo')).toBeVisible()
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
+
+  await page.getByRole('button', { name: 'Progressão', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Progressão padrão' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Principais|Auxiliares/ })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Personalizar' }).first().click()
+  await expect(page.getByRole('button', { name: 'Voltar ao padrão' })).toHaveCount(1)
+  await page.getByRole('button', { name: 'Voltar ao padrão' }).click()
+  await expect(page.getByRole('button', { name: 'Voltar ao padrão' })).toHaveCount(0)
+
+  // Início: cartão com aluno, semana, treino e tempo
+  await page.getByRole('link', { name: 'Início' }).click()
+  const cartao = page.locator('div').filter({ has: page.getByRole('heading', { name: /Treinos acima do tempo/ }) }).last()
+  await expect(cartao.getByText(/Bia Tempo/).first()).toBeVisible({ timeout: 10_000 })
+  await cartao.getByRole('button', { name: 'Ver sugestão' }).first().click()
+  await expect(cartao.getByText(/(Biset|Triset) · \d+ min → \d+ min/).first()).toBeVisible()
+  await page.screenshot({ path: 'test-results/prints/80-sugestao.png' })
+  await cartao.getByRole('button', { name: 'Aplicar', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: /Treinos acima do tempo/ })).toHaveCount(0, { timeout: 10_000 })
+  await expect.poll(async () => Boolean(((await lerDoc(`mesos/${id}`))?.fields as Record<string, unknown> | undefined)?.adaptadoEm), { timeout: 10_000 }).toBe(true)
 })

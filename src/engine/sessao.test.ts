@@ -312,8 +312,8 @@ describe('prescreverSessao — tempo da sessão', () => {
     it('métodos de outro tipo não economizam', () => expect(econ(...em('Dropset', [1, 2]))).toBeCloseTo(0, 6))
   })
 
-  describe('override por exercício (progressaoExercicio)', () => {
-    const over = { '1-2': [[5, 5, null, null, null, null], [6, 6, 6, 6, null, null]] }
+  describe('progressão por exercício (progressaoExercicio por slotId, progressao.padrao)', () => {
+    const over = { B: [[5, 5, null, null, null, null], [6, 6, 6, 6, null, null]] }
 
     it('substitui a linha do grupo só daquele exercício', () => {
       const s = prescreverSessao({ ...base, progressaoExercicio: over }, 1, 1)!
@@ -323,23 +323,68 @@ describe('prescreverSessao — tempo da sessão', () => {
       expect(s.exercicios[2].reps).toEqual([15, 14, 13, 12]) // auxiliar sem override
     })
 
-    it('vale por semana e por treino; semana sem linha cai no grupo', () => {
+    it('vale por semana e pelo slotId; semana sem linha cai no grupo', () => {
       const m = { ...base, progressaoExercicio: over }
       expect(prescreverSessao(m, 2, 1)!.exercicios[1].reps).toEqual([6, 6, 6, 6])
-      expect(prescreverSessao(m, 1, 2)!.exercicios[0].reps).toEqual([10, 9, 8, 7]) // t2, não t1
-      const curto = { ...base, progressaoExercicio: { '1-2': [[5, 5, null, null, null, null]] } }
+      expect(prescreverSessao(m, 1, 2)!.exercicios[0].reps).toEqual([10, 9, 8, 7]) // D (outro slot): sem override, grupo
+      const curto = { ...base, progressaoExercicio: { B: [[5, 5, null, null, null, null]] } }
       expect(prescreverSessao(curto, 2, 1)!.exercicios[1].reps).toEqual([12, 10, 8]) // grupo
+    })
+
+    it('a progressão acompanha o exercício, não a posição (divisão reordenada)', () => {
+      const m = { ...base, divisao: [[slot('B'), slot('A'), slot('C')], base.divisao[1]], progressaoExercicio: over }
+      expect(prescreverSessao(m, 1, 1)!.exercicios.map((e) => e.reps.length)).toEqual([2, 4, 4])
     })
 
     it('vale também para auxiliar e se combina com método', () => {
       const m = com([met({ exercicio: 3, metodo: 'Dropset', etapas: 1, repsPadrao: 0 })], {
-        progressaoExercicio: { '1-3': [[20, 20, null, null, null, null]] },
+        progressaoExercicio: { C: [[20, 20, null, null, null, null]] },
       })
       expect(prescreverSessao(m, 1, 1)!.exercicios[2].reps).toEqual([20, 20, 20]) // etapa usa a última série
     })
 
     it('sem override = comportamento idêntico', () => {
       expect(prescreverSessao({ ...base, progressaoExercicio: {} }, 1, 1)).toEqual(prescreverSessao(base, 1, 1))
+    })
+
+    it('legado: chave antiga `treino-pos` ainda é lida (meso não migrado)', () => {
+      const m = { ...base, progressaoExercicio: { '1-2': over.B } }
+      expect(prescreverSessao(m, 1, 1)!.exercicios[1].reps).toEqual([5, 5])
+    })
+
+    describe('progressao.padrao', () => {
+      const padrao = [[8, 8, 8, null, null, null], [9, 9, null, null, null, null]]
+      const comPadrao = { ...base, progressao: { ...base.progressao, padrao } }
+
+      it('vale para todas as posições, inclusive 1–2 (sem principais/auxiliares)', () => {
+        const s = prescreverSessao(comPadrao, 1, 1)!
+        expect(s.exercicios.map((e) => e.reps)).toEqual([[8, 8, 8], [8, 8, 8], [8, 8, 8]])
+        expect(prescreverSessao(comPadrao, 2, 2)!.exercicios[0].reps).toEqual([9, 9])
+      })
+
+      it('override do slot vence o padrão; padrão vence o legado', () => {
+        const m = { ...comPadrao, progressaoExercicio: { A: [[12, 12, null, null, null, null]] } }
+        const s = prescreverSessao(m, 1, 1)!
+        expect(s.exercicios.map((e) => e.reps)).toEqual([[12, 12], [8, 8, 8], [8, 8, 8]])
+      })
+
+      it('semana que o padrão não cobre cai no legado', () => {
+        const m = { ...base, progressao: { ...base.progressao, padrao: [padrao[0]] } }
+        expect(prescreverSessao(m, 2, 1)!.exercicios[0].reps).toEqual([12, 10, 8]) // principais s2
+      })
+    })
+
+    describe('troca', () => {
+      it('usa a progressão do slot da divisão naquela posição (não a do exercício trocado)', () => {
+        const m = {
+          ...base,
+          trocas: { '1-1-2': slot('X') },
+          progressaoExercicio: { B: [[5, 5, null, null, null, null]], X: [[3, 3, 3, 3, 3, null]] },
+        }
+        const e = prescreverSessao(m, 1, 1)!.exercicios[1]
+        expect(e.slot.slotId).toBe('X')
+        expect(e.reps).toEqual([5, 5]) // progressão de B, o slot da divisão
+      })
     })
   })
 })

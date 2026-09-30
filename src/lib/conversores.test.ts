@@ -59,6 +59,26 @@ describe('meso <-> documento', () => {
     expect(docParaMeso(doc)).toEqual(m)
   })
 
+  it('formato novo: padrao e progressaoExercicio por slotId, ida e volta, sem array dentro de array', () => {
+    const l = (...r: number[]) => [...r, ...Array(6 - r.length).fill(null)]
+    const m: Meso = {
+      ...meso,
+      progressao: { ...meso.progressao, padrao: [l(8, 8, 8), l(9, 9, 8)] },
+      progressaoExercicio: { 'slot-abc': [l(5, 5), l(6, 6, 6)] },
+    }
+    const doc = mesoParaDoc(m)
+    expect(doc.progressao.padrao).toEqual({ w1: l(8, 8, 8), w2: l(9, 9, 8) })
+    expect(doc.progressaoExercicio).toEqual({ 'slot-abc': { w1: l(5, 5), w2: l(6, 6, 6) } })
+    expect(temArrayDeArray(doc)).toBe(false)
+    expect(docParaMeso(doc)).toEqual(m)
+  })
+
+  it('sem padrao: o documento não leva o campo (Firestore recusa undefined) e o meso volta sem ele', () => {
+    const doc = mesoParaDoc(meso)
+    expect('padrao' in doc.progressao).toBe(false)
+    expect(docParaMeso(doc).progressao).not.toHaveProperty('padrao')
+  })
+
   it('sem overrides: o documento leva {} (para limpar no updateDoc) e o meso volta sem o campo', () => {
     expect(mesoParaDoc(meso).progressaoExercicio).toEqual({})
     expect(docParaMeso(mesoParaDoc(meso)).progressaoExercicio).toBeUndefined()

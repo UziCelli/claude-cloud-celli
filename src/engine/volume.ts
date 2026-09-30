@@ -26,29 +26,45 @@ export function ajustarSeries(reps: Linha, pct: number, limite: number): Linha {
 const limiteDe = (m: Meso) => m.limiteReps ?? LIMITE_PADRAO
 
 // Aplica `f` (recebe as linhas semana a semana, devolve as novas) aos exercícios do alvo. Devolve um meso novo.
+// Treino/exercício viram override em progressaoExercicio[slotId] (nasce como cópia da linha que o motor usa hoje).
 function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[]) => Linha[]): Meso {
   const sequencia = (t: number, p: number) =>
     Array.from({ length: meso.semanas }, (_, w) => [...linhaPrescrita(meso, w + 1, t, p)])
+  const posicaoDe = (slotId: string): [number, number] | undefined => {
+    for (const [i, slots] of meso.divisao.entries()) {
+      const j = slots.findIndex((s) => s.slotId === slotId)
+      if (j >= 0) return [i + 1, j + 1]
+    }
+  }
   const overrides = { ...meso.progressaoExercicio }
 
   if (alvo.tipo === 'todos') {
-    for (const chave of Object.keys(overrides)) {
-      const [t, p] = chave.split('-').map(Number)
-      overrides[chave] = f(sequencia(t, p))
+    for (const [slotId, linhas] of Object.entries(overrides)) {
+      const pos = posicaoDe(slotId)
+      overrides[slotId] = f(pos ? sequencia(...pos) : Array.from({ length: meso.semanas }, (_, w) => [...(linhas[w] ?? [])]))
     }
+    const { principais, auxiliares, padrao } = meso.progressao
     return {
       ...meso,
-      progressao: { principais: f(meso.progressao.principais), auxiliares: f(meso.progressao.auxiliares) },
+      progressao: { principais: f(principais), auxiliares: f(auxiliares), ...(padrao && { padrao: f(padrao) }) },
       ...(meso.progressaoExercicio && { progressaoExercicio: overrides }),
     }
   }
 
-  const posicoes =
-    alvo.tipo === 'exercicio'
-      ? [alvo.pos]
-      : Array.from({ length: meso.divisao[alvo.treino - 1]?.length ?? 0 }, (_, i) => i + 1)
-  for (const p of posicoes) overrides[`${alvo.treino}-${p}`] = f(sequencia(alvo.treino, p))
-  return { ...meso, progressaoExercicio: overrides }
+  const alvos: ([number, number] | undefined)[] =
+    alvo.tipo === 'treino'
+      ? (meso.divisao[alvo.treino - 1] ?? []).map((_, i) => [alvo.treino, i + 1])
+      : [
+          'slotId' in alvo ? posicaoDe(alvo.slotId) : [alvo.treino, alvo.pos],
+        ]
+  let mudou = false
+  for (const pos of alvos) {
+    const slotId = pos && meso.divisao[pos[0] - 1]?.[pos[1] - 1]?.slotId
+    if (!pos || !slotId) continue
+    overrides[slotId] = f(sequencia(...pos))
+    mudou = true
+  }
+  return mudou ? { ...meso, progressaoExercicio: overrides } : meso
 }
 
 // Semanas de..ate (1-based) cada uma a partir da anterior: linha(w) = ajustarSeries(linha(w-1)).

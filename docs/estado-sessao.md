@@ -9,20 +9,13 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Tarefas executivas (commit, push, PR, merge, acompanhar CI e deploy) vão para o **auxiliar (Haiku)**.
 - **Merge:** nunca juntar PR sem o Victor dizer "pode juntar". Depois de juntar, conferir o workflow "Publicar".
 
-## Em andamento: Entrega 1 (`docs/plano-entrega1.md`, aprovada)
-- **Parte A (lógica):** feita e commitada (67ce2ba): `src/lib/{semana,tempo,busca}.ts`, `Slot.pausaS` no motor, regra `inicioEm`.
-- **Partes B (aluno) e C (coach):** feitas e commitadas; typecheck/test/build/e2e passaram. Próximo: PR da Entrega 1 (via auxiliar) e esperar o "pode juntar" do Victor.
-- **Ao retomar:**
-  1. `git status` e `git log`.
-  2. Se B ou C não estiverem commitados (o container pode ter sido reiniciado e perdido o que não foi salvo), refazer pelo plano.
-  3. Rodar typecheck, test, test:rules, build e e2e:
-     `export PW_CHROMIUM=/opt/pw-browsers/chromium && npx firebase emulators:exec --only auth,firestore --project demo-forca 'npx playwright test --reporter=line'`
-  4. Pelo auxiliar: commit, push, PR rascunho "Entrega 1: …", acompanhar o CI.
-  5. Mandar os prints ao Victor (`test-results/prints/70-*`, `71-*`, `72-*`) e esperar o "pode juntar".
-
-## Próxima: Entrega 2 (`docs/plano-entrega2.md`)
-- Começar depois do PR da Entrega 1, **num PR separado**.
-- Pendente de confirmação: os 2 primeiros exercícios de cada treino ficam fora do biset automático. Seguir com esse padrão e avisar o Victor.
+## Entregas
+- **Entrega 1** (`docs/plano-entrega1.md`): PR #20, juntado pelo Victor.
+- **Entrega 2** (`docs/plano-entrega2.md`): feita (motor, coach e aluno); typecheck, 247 testes, build e e2e passaram.
+  - Está no PR próprio. Esperar o "pode juntar" do Victor.
+  - Padrão adotado: os 2 primeiros exercícios de cada treino ficam fora do biset automático (`incluirPrincipais=false`).
+  - O motor ainda lê as chaves antigas `'t-p'` de `progressaoExercicio` como reserva para mesos não migrados.
+- **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - Senha provisória pelo WhatsApp em vez do e-mail do Firebase (o nome "forca--app" aparece nos e-mails).

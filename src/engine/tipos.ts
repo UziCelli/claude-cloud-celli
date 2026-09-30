@@ -43,12 +43,15 @@ export interface Meso {
   pausaS: number
   divisao: Slot[][] // [treino-1][pos-1]
   trocas?: Record<string, Slot> // chave `${semana}-${treino}-${pos}`
-  progressao: { principais: (number | null)[][]; auxiliares: (number | null)[][] } // [semana-1][serie-1]
+  // [semana-1][serie-1]. `padrao` é a progressão do exercício sem linha própria; sem ele vale o legado
+  // (posições 1–2 = principais, 3–10 = auxiliares).
+  progressao: { principais: (number | null)[][]; auxiliares: (number | null)[][]; padrao?: (number | null)[][] }
   metodos: AplicacaoMetodo[]
   progressaoPct?: number // % de volume por semana (padrão 5)
   limiteReps?: number // máximo de reps por série (padrão 15)
   tempoLimiteMin?: number // sem valor = sem aviso de tempo
-  // Substitui a linha do grupo de um exercício: chave `${treino}-${pos}`, valor [semana-1][serie-1]
+  // Progressão própria de cada exercício: chave = slotId do slot da divisão, valor [semana-1][serie-1].
+  // (Legado: chave `${treino}-${pos}`, ainda lida pelo motor até migrarProgressao.)
   progressaoExercicio?: Record<string, (number | null)[][]>
 }
 
@@ -57,6 +60,7 @@ export type AlvoVolume =
   | { tipo: 'todos' }
   | { tipo: 'treino'; treino: number }
   | { tipo: 'exercicio'; treino: number; pos: number }
+  | { tipo: 'exercicio'; slotId: string }
 
 export type Cargas = Record<string /* slotId */, (number | null)[]> // índice = coluna: séries e depois etapas do dropset
 export type Registros = Record<string /* `${semana}-${treino}` */, Cargas>
