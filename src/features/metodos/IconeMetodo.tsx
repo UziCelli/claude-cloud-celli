@@ -33,11 +33,12 @@ const desenhos: Record<Metodo, ReactNode> = {
       ))}
     </>
   ),
-  // setas opostas alternando
+  // quatro pontos em quadrado acendendo em sequência
   Superset: (
     <>
-      <m.path d="M4 8h14m-4-4 4 4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" animate={{ opacity: [1, 0.25, 1] }} transition={loop(1.6)} />
-      <m.path d="M20 16H6m4-4-4 4 4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" animate={{ opacity: [0.25, 1, 0.25] }} transition={loop(1.6)} />
+      {[[6, 6], [18, 6], [18, 18], [6, 18]].map(([cx, cy], i) => (
+        <m.circle key={i} cx={cx} cy={cy} r="3" fill="currentColor" animate={{ opacity: [0.25, 1, 0.25] }} transition={loop(2.8, { delay: i * 0.7 })} />
+      ))}
     </>
   ),
   // seta circular girando

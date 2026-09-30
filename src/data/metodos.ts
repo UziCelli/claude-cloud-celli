@@ -17,8 +17,9 @@ export const METODOS: Record<Metodo, { oQueE: string; comoFazer: string[]; dica?
     comoFazer: ['A1 → A2 → A3.', 'Descanse só depois do último.'],
   },
   Superset: {
-    oQueE: '2 exercícios seguidos, normalmente de músculos opostos (ex.: bíceps e tríceps), com pausa bem curta entre eles.',
-    comoFazer: ['Faça o 1º, descanse no máximo uns 15 s e faça o 2º.', 'O descanso normal vem depois dos dois.'],
+    oQueE: '4 ou mais exercícios seguidos, sem descanso entre eles.',
+    comoFazer: ['Faça A1 → A2 → A3 → A4… em sequência.', 'Descanse só depois do último.', 'Repita a volta.'],
+    dica: 'Deixe todos os aparelhos prontos antes.',
   },
   Circuito: {
     oQueE: 'Todos os exercícios do grupo em sequência, como uma volta.',

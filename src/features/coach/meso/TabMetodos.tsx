@@ -14,7 +14,7 @@ const ESCOPOS: Escopo[] = [
   'Primeiras 4 séries',
   'Últimas 4 séries',
 ]
-const TAMANHO_GRUPO: Partial<Record<Metodo, number>> = { Biset: 2, Superset: 2, Triset: 3 }
+const TAMANHO_GRUPO: Partial<Record<Metodo, number>> = { Biset: 2, Triset: 3, Superset: 4 }
 
 function padrao(metodo: Metodo, meso: Meso, semana: number, treino: number, exercicio: number): AplicacaoMetodo {
   const n = seriesDaPosicao(meso, semana, exercicio) || 1
@@ -68,8 +68,9 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
     for (const [chave, pos] of grupos) {
       const [semana, treino, metodo] = chave.split('-')
       const esperado = TAMANHO_GRUPO[metodo as Metodo]!
-      if (pos.size !== esperado) {
-        lista.push(`${metodo} da semana ${semana}, treino ${treino}: tem ${pos.size} exercício(s), o esperado é ${esperado}.`)
+      const minimo = metodo === 'Superset'
+      if (minimo ? pos.size < esperado : pos.size !== esperado) {
+        lista.push(`${metodo} da semana ${semana}, treino ${treino}: tem ${pos.size} exercício(s), ${minimo ? 'o mínimo' : 'o esperado'} é ${esperado}.`)
       }
     }
     return lista
