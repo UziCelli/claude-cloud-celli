@@ -7,7 +7,9 @@ import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
 import { ir } from '../../rota'
 import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
-import { fmt, fmtData } from '../coach/semana/format'
+import { fmtData } from '../coach/semana/format'
+import { semanaParaAbrir } from '../../lib/semana'
+import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { mesoAtual } from './mesoAtual'
 import type { MesoSalvo } from '../../lib/conversores'
 
@@ -26,18 +28,23 @@ export default function Hoje({ uid }: { uid: string }) {
       <h1 className="mb-1 text-lg font-bold">{doc.nome}</h1>
       {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
-      {estado.estado === 'durante' && <Semana uid={uid} mesoId={doc.id} meso={meso} semanaInicial={estado.semana} />}
+      {estado.estado === 'durante' && <Semana uid={uid} mesoId={doc.id} meso={meso} hoje={new Date()} />}
     </main>
   )
 }
 
 type RegistroFlag = RegistroDoc & { realizado?: boolean }
 
-function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: string; meso: Meso; semanaInicial: number }) {
-  const [semana, setSemana] = useState(semanaInicial)
-  const { dados: registros } = useLista<RegistroFlag>(
+function Semana({ uid, mesoId, meso, hoje }: { uid: string; mesoId: string; meso: Meso; hoje: Date }) {
+  const { dados: registros, carregando } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
+  if (carregando) return <Centro>Carregando…</Centro>
+  return <SemanaCarregada uid={uid} mesoId={mesoId} meso={meso} registros={registros} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
+}
+
+function SemanaCarregada({ meso, mesoId, registros, semanaInicial }: { uid: string; mesoId: string; meso: Meso; registros: RegistroFlag[]; semanaInicial: number }) {
+  const [semana, setSemana] = useState(semanaInicial)
   const feitos = new Set(registros.filter((r) => r.realizado).map((r) => `${r.semana}-${r.treino}`))
   const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1).filter((t) => prescreverSessao(meso, semana, t))
   const proximo = treinos.find((t) => !feitos.has(`${semana}-${t}`))
@@ -108,10 +115,9 @@ function Semana({ uid, mesoId, meso, semanaInicial }: { uid: string; mesoId: str
                     </m.span>
                   )}
                 </div>
-                <div className="text-xs text-slate-400">
-                  {sessao.exercicios.length} exercícios · ~{fmt(sessao.tempoMin)} min
-                </div>
+                <div className="text-xs text-slate-400">{sessao.exercicios.length} exercícios</div>
               </div>
+              <span className={`mr-2 ml-auto shrink-0 rounded-full px-3 py-1 font-display text-lg font-bold ${acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin) ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</span>
               <span className="text-slate-600">›</span>
             </m.button>
           )

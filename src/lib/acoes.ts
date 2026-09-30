@@ -210,6 +210,10 @@ export const salvarPeso = (uid: string, kg: number) => updateDoc(doc(db, 'usuari
 export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean) =>
   registro(mesoId, alunoId, semana, treino, { realizado, realizadoEm: realizado ? serverTimestamp() : null })
 
+// Primeira ação do aluno no treino: o chamador só chama se o registro ainda não tem inicioEm.
+export const marcarInicio = (mesoId: string, alunoId: string, semana: number, treino: number) =>
+  registro(mesoId, alunoId, semana, treino, { inicioEm: serverTimestamp() })
+
 // Anotação do aluno por exercício (vale em todas as semanas/mesos). '' = sem nota.
 export const salvarNota = (alunoId: string, exercicio: string, texto: string) =>
   setDoc(

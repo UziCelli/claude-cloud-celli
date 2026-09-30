@@ -1,5 +1,6 @@
 import type { Meso } from '../../../engine'
 import { prescreverSessao } from '../../../engine'
+import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { campoBase, Cartao, Deslizar } from '../../../ui'
 
 // Painel de pré-visualização: mostra o que o aluno vai ver numa semana, em todos os treinos.
@@ -28,8 +29,8 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
             <div key={t} className="rounded-lg border border-slate-800 bg-slate-950 text-sm">
               <div className="flex items-center justify-between gap-2 border-b border-slate-800 px-3 py-2">
                 <p className="font-semibold">Treino {t}</p>
-                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
-                  {(sessao?.tempoMin ?? 0).toFixed(1).replace('.', ',')} min
+                <span className={`rounded-full px-3 py-1 text-sm font-bold ${acimaDoLimite(sessao?.tempoMin ?? 0, meso.tempoLimiteMin) ? 'bg-red-900/50 text-red-300' : 'bg-slate-800 text-slate-100'}`}>
+                  {fmtMin(sessao?.tempoMin ?? 0)}
                 </span>
               </div>
               <ul className="divide-y divide-slate-800">

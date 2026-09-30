@@ -1,4 +1,4 @@
-import { collection, doc, query, where } from 'firebase/firestore'
+import { collection, doc, query, where, type Timestamp } from 'firebase/firestore'
 import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
@@ -11,7 +11,7 @@ import { fmtData } from './format'
 import Monitoramento from './Monitoramento'
 import SessaoCard from './SessaoCard'
 
-type RegistroDocCompleto = RegistroDoc & { realizado?: boolean }
+type RegistroDocCompleto = RegistroDoc & { realizado?: boolean; inicioEm?: Timestamp | null; realizadoEm?: Timestamp | null }
 
 export default function VisaoSemana({ id, semana }: { id: string; semana: number }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', id))
@@ -27,6 +27,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   const reps = docsParaRegistrosReps(docsRegistros)
   const realizados = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, !!d.realizado]))
 
+  const tempos = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, d]))
   const semanaAtual = Math.min(Math.max(1, semana), meso.semanas)
   const primeiraSessao = prescreverSessao(meso, semanaAtual, 1)
 
@@ -73,6 +74,9 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               cargas={registros[chave] ?? {}}
               reps={reps[chave] ?? {}}
               realizado={!!realizados[chave]}
+              inicioEm={tempos[chave]?.inicioEm}
+              realizadoEm={tempos[chave]?.realizadoEm}
+              limite={meso.tempoLimiteMin}
               onRealizado={(v) => marcarRealizado(id, dados.alunoId, semanaAtual, treino, v)}
             />
           )
