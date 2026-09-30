@@ -140,6 +140,22 @@ export async function excluirMeso(mesoId: string) {
   await deleteDoc(doc(db, 'mesos', mesoId))
 }
 
+// Apaga o aluno de vez: registros, mesos, notas e, por último, o perfil (se cair no meio, o
+// perfil arquivado continua na lista e é só apagar de novo). Do servidor: offline dá erro sem apagar.
+// O login (e-mail) no Firebase Auth continua existindo.
+export async function apagarAluno(uid: string) {
+  for (const col of ['registros', 'mesos']) {
+    const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
+    for (let i = 0; i < docs.length; i += 400) {
+      const b = writeBatch(db)
+      for (const d of docs.slice(i, i + 400)) b.delete(d.ref)
+      await b.commit()
+    }
+  }
+  await deleteDoc(doc(db, 'notas', uid))
+  await deleteDoc(doc(db, 'usuarios', uid))
+}
+
 // Copia só a prescrição; registros (cargas) nunca são copiados.
 export async function duplicarMeso(mesoId: string, novoAlunoId: string, novoNome: string) {
   const s = await getDoc(doc(db, 'mesos', mesoId))

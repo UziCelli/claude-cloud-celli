@@ -37,8 +37,9 @@ const usuarios: Record<string, object> = {
   exp: { papel: 'aluno', nome: 'Exp', email: 'e@x.com', status: 'ativo', pagoAte: passado },
   blq: { papel: 'aluno', nome: 'Blq', email: 'l@x.com', status: 'bloqueado', pagoAte: futuro },
   agu: { papel: 'aluno', nome: 'Agu', email: 'g@x.com', status: 'aguardando' },
+  arq: { papel: 'aluno', nome: 'Arq', email: 'q@x.com', status: 'arquivado', pagoAte: futuro },
 };
-const ALUNOS = ['ana', 'bia', 'exp', 'blq', 'agu'];
+const ALUNOS = ['ana', 'bia', 'exp', 'blq', 'agu', 'arq'];
 
 const registro = (aluno: string, semana = 1, treino = 1) => ({
   alunoId: aluno,
@@ -212,6 +213,14 @@ describe('usuarios', () => {
     await assertFails(updateDoc(doc(db('agu'), 'usuarios', 'agu'), { status: 'ativo' }));
   });
 
+  it('coach arquiva, reativa e apaga aluno arquivado', async () => {
+    const c = db('coach');
+    await assertSucceeds(updateDoc(doc(c, 'usuarios', 'ana'), { status: 'arquivado' }));
+    await assertSucceeds(updateDoc(doc(c, 'usuarios', 'ana'), { status: 'ativo' }));
+    await assertSucceeds(deleteDoc(doc(c, 'usuarios', 'arq')));
+    await assertSucceeds(deleteDoc(doc(c, 'notas', 'arq')));
+  });
+
   it('coach libera aluno e só ele apaga', async () => {
     await assertSucceeds(updateDoc(doc(db('coach'), 'usuarios', 'agu'), { status: 'ativo', pagoAte: futuro }));
     await assertFails(deleteDoc(doc(db('ana'), 'usuarios', 'ana')));
@@ -275,6 +284,8 @@ describe('mesos', () => {
     for (const uid of ['exp', 'blq', 'agu']) await assertFails(getDoc(doc(db(uid), 'mesos', `m_${uid}`)));
     await assertFails(getDocs(query(collection(db('novo'), 'mesos'), where('alunoId', '==', 'novo'))));
   });
+
+  it('arquivado não lê o próprio meso', () => assertFails(getDoc(doc(db('arq'), 'mesos', 'm_arq'))));
 
   it('só o coach escreve', async () => {
     await assertFails(updateDoc(doc(db('ana'), 'mesos', 'm_ana'), { semanas: 12 }));

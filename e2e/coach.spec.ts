@@ -119,6 +119,24 @@ test('fluxo completo do painel do coach', async ({ page }) => {
   })
 })
 
+test('coach arquiva, vê em Arquivados e reativa', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('link', { name: 'Alunos', exact: true }).click()
+  const linha = page.locator('tbody tr').filter({ hasText: ALUNO.nome })
+  await linha.getByRole('button', { name: 'Arquivar' }).click()
+  await linha.getByRole('button', { name: 'Sim, arquivar' }).click()
+  await expect(linha).toHaveCount(0)
+  await page.getByRole('button', { name: 'Arquivados (1)' }).click()
+  await expect(linha.getByText('Arquivado')).toBeVisible()
+  await linha.getByRole('button', { name: 'Reativar' }).click()
+  await expect(linha).toHaveCount(0)
+  await page.getByRole('button', { name: 'Voltar aos alunos' }).click()
+  await expect(linha.getByText('Ativo')).toBeVisible()
+})
+
 test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com app', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('E-mail').fill(COACH.email)

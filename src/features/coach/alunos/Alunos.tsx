@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
-import { definirAcesso } from '../../../lib/acoes'
+import { apagarAluno, definirAcesso } from '../../../lib/acoes'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
@@ -22,6 +22,7 @@ const formatarData = (v: string) => {
 
 function statusAluno(a: Aluno): { texto: string; cor: string } {
   if (a.status === 'aguardando') return { texto: 'Aguardando', cor: 'bg-amber-900/50 text-amber-300' }
+  if (a.status === 'arquivado') return { texto: 'Arquivado', cor: 'bg-slate-700 text-slate-300' }
   if (a.status === 'bloqueado') return { texto: 'Bloqueado', cor: 'bg-slate-700 text-slate-300' }
   const dias = a.pagoAte ? diasParaVencer(a.pagoAte, new Date()) : -1
   if (dias < 0) return { texto: 'Vencido', cor: 'bg-red-900/50 text-red-300' }
@@ -37,7 +38,7 @@ function textoVencimento(a: Aluno) {
   return `${data} · vencido há ${-dias} dia${-dias === 1 ? '' : 's'}`
 }
 
-const ordem = { aguardando: 0, ativo: 1, bloqueado: 2 }
+const ordem = { aguardando: 0, ativo: 1, bloqueado: 2, arquivado: 3 }
 
 function comparar(a: Aluno, b: Aluno) {
   if (ordem[a.status] !== ordem[b.status]) return ordem[a.status] - ordem[b.status]
@@ -51,8 +52,12 @@ export default function Alunos() {
   const [busca, setBusca] = useState('')
   const [editando, setEditando] = useState<string | null>(null)
   const [erro, setErro] = useState('')
+  const [arquivados, setArquivados] = useState(false)
+  const [confirmando, setConfirmando] = useState<{ id: string; tipo: 'arquivar' | 'apagar' } | null>(null)
+  const nArquivados = alunos.filter((a) => a.status === 'arquivado').length
 
   const filtrados = alunos
+    .filter((a) => (a.status === 'arquivado') === arquivados)
     .filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase()) || a.email.toLowerCase().includes(busca.toLowerCase()))
     .sort(comparar)
 
@@ -68,8 +73,22 @@ export default function Alunos() {
     definirAcesso(uid, { status: 'bloqueado' }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
   }
 
+  function reativar(uid: string) {
+    setErro('')
+    definirAcesso(uid, { status: 'ativo' }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
+  }
+
   const acoes = (a: Aluno) =>
-    a.presencial ? null : editando === a.id ? (
+    confirmando?.id === a.id ? (
+      <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => setConfirmando(null)} />
+    ) : a.status === 'arquivado' ? (
+      <div className="flex flex-wrap gap-2">
+        <Botao tipo="primario" onClick={() => reativar(a.id)}>Reativar</Botao>
+        <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'apagar' })}>Apagar de vez</Botao>
+      </div>
+    ) : a.presencial ? (
+      <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'arquivar' })}>Arquivar</Botao>
+    ) : editando === a.id ? (
       <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
     ) : (
       <div className="flex flex-wrap gap-2">
@@ -84,6 +103,7 @@ export default function Alunos() {
             Bloquear
           </Botao>
         )}
+        <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'arquivar' })}>Arquivar</Botao>
       </div>
     )
 
@@ -92,6 +112,12 @@ export default function Alunos() {
       <div className="mb-4">
         <Campo rotulo="Buscar" placeholder="Nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} />
       </div>
+      {(nArquivados > 0 || arquivados) && (
+        <div className="mb-4">
+          <Botao onClick={() => setArquivados((v) => !v)}>{arquivados ? 'Voltar aos alunos' : `Arquivados (${nArquivados})`}</Botao>
+        </div>
+      )}
+      {arquivados && <p className="mb-4 text-sm text-slate-400">Apagar de vez não remove o login (e-mail) no Firebase Auth.</p>}
       {erro && (
         <div className="mb-4">
           <Aviso>{erro}</Aviso>
@@ -158,6 +184,40 @@ export default function Alunos() {
         </>
       )}
     </Pagina>
+  )
+}
+
+function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string; tipo: 'arquivar' | 'apagar'; onFechar: () => void }) {
+  const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const apagar = tipo === 'apagar'
+
+  function confirmar() {
+    setEnviando(true)
+    setErro('')
+    // Sucesso: o aluno some da lista sozinho.
+    const p = apagar ? apagarAluno(id) : definirAcesso(id, { status: 'arquivado' })
+    p.then(onFechar).catch(() => {
+      setErro(apagar ? 'Não foi possível apagar. Confira a internet e tente de novo.' : 'Não deu para gravar. Tente de novo.')
+      setEnviando(false)
+    })
+  }
+
+  return (
+    <div className="w-full space-y-2">
+      <p className="text-sm">
+        {apagar
+          ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas e anotações. Não dá para desfazer.`
+          : `Arquivar “${nome}”? Perde o acesso e some da lista. Dá para reativar depois.`}
+      </p>
+      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Botao tipo="perigo" disabled={enviando} onClick={confirmar}>
+          {enviando ? 'Aguarde…' : apagar ? 'Sim, apagar de vez' : 'Sim, arquivar'}
+        </Botao>
+        <Botao onClick={onFechar}>Cancelar</Botao>
+      </div>
+    </div>
   )
 }
 
