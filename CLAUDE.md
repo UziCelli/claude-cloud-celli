@@ -8,6 +8,7 @@ React + Vite + TypeScript + Tailwind (PWA) · Firebase (Auth, Firestore offline,
 Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exercicios.json`.
 
 ## Onde está cada coisa
+- `docs/estado-sessao.md` — **retomada**: o que está em andamento e os próximos passos (leia primeiro ao voltar).
 - `docs/mapa.md` — mapa do código: comece por aqui para achar onde mexer (atualize ao criar/mover arquivos).
 - `docs/logica-planilha.md` — especificação das fórmulas (fonte da verdade do motor).
 - `src/engine/` — motor de cálculo puro (sem React/Firebase). TDD obrigatório.
