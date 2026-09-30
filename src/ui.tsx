@@ -188,9 +188,9 @@ export const Barra = ({ frac }: { frac: number }) => (
 
 // Troca com deslize na direção da seta: `chave` numérica (ex.: semana). Maior = desliza para a esquerda.
 const desliza = {
-  entra: (d: number) => ({ opacity: 0, x: d * 32 }),
+  entra: (d: number) => ({ opacity: 0, x: d * 20 }),
   fica: { opacity: 1, x: 0, transition: { duration: 0.2, ease: 'easeOut' as const } },
-  sai: (d: number) => ({ opacity: 0, x: -d * 32, transition: { duration: 0.1 } }),
+  sai: (d: number) => ({ opacity: 0, x: -d * 20, transition: { duration: 0.12 } }),
 }
 export const Deslizar = ({ chave, children }: { chave: number; children: ReactNode }) => {
   const ant = useRef(chave)
@@ -199,11 +199,13 @@ export const Deslizar = ({ chave, children }: { chave: number; children: ReactNo
     ant.current = chave
   })
   return (
-    <AnimatePresence mode="wait" initial={false} custom={dir}>
-      <m.div key={chave} custom={dir} variants={desliza} initial="entra" animate="fica" exit="sai">
-        {children}
-      </m.div>
-    </AnimatePresence>
+    <div className="relative overflow-hidden">
+      <AnimatePresence mode="popLayout" initial={false} custom={dir}>
+        <m.div key={chave} custom={dir} variants={desliza} initial="entra" animate="fica" exit="sai">
+          {children}
+        </m.div>
+      </AnimatePresence>
+    </div>
   )
 }
 
