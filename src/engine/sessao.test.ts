@@ -295,7 +295,10 @@ describe('prescreverSessao — tempo da sessão', () => {
 
     it('sem métodos não economiza', () => expect(econ()).toBeCloseTo(0, 6))
     it('Triset de 3 → 2', () => expect(econ(...em('Triset', [1, 2, 3]))).toBeCloseTo(2, 6))
-    it('Superset de 2 → 1', () => expect(econ(...em('Superset', [1, 2]))).toBeCloseTo(1, 6))
+    it('Superset de 4 sem grupo → 3', () => expect(econ(...em('Superset', [1, 2, 3, 4]))).toBeCloseTo(3, 6))
+    it('Superset de 3 sem grupo → 2 (todas as posições)', () => expect(econ(...em('Superset', [1, 2, 3]))).toBeCloseTo(2, 6))
+    it('Superset com grupo → posições − 1 por grupo', () =>
+      expect(econ(...em('Superset', [1, 2], { grupo: 1 }), ...em('Superset', [3, 4], { grupo: 2 }))).toBeCloseTo(2, 6))
     it('Circuito de 4 → 3', () => expect(econ(...em('Circuito', [1, 2, 3, 4]))).toBeCloseTo(3, 6))
     it('dois Bisets por grupo (1 e 2) → 2', () =>
       expect(econ(...em('Biset', [1, 2], { grupo: 1 }), ...em('Biset', [3, 4], { grupo: 2 }))).toBeCloseTo(2, 6))

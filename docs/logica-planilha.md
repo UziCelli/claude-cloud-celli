@@ -40,7 +40,7 @@ Padrões sugeridos ao criar um método (aba "Avaliador e Referências"):
 | Dropset | 1 | 20% | 10 s | 1 | Última série |
 | Biset | 2 | — | 15 s | 1 | Todas |
 | Triset | 3 | — | 15 s | 1 | Todas |
-| Superset | 2 | — | 15 s | 1 | Todas |
+| Superset | 4 (mínimo) **[DECIDIDO pelo Victor]** | — | 15 s | 1 | Todas |
 | Circuito | 4 | — | 20 s | 3 | Todas |
 | Rest-pause | 1 | — | 20 s | 2 | Última série |
 | Clusterset | 1 | — | 30 s | 3 | Todas |
@@ -79,7 +79,7 @@ tempo = 10 + ( Σ reps de todas as colunas da sessão
 - `economizados` **[DECIDIDO pelo Victor]** — exercícios do mesmo grupo dividem uma pausa só (Biset, Superset, Triset e Circuito):
   - Considera só linhas ativas da semana+treino com método ∈ {Biset, Superset, Triset, Circuito}, contando **posições distintas** (a mesma posição listada duas vezes conta uma).
   - Linhas com `grupo`: agrupa por (método, grupo); cada grupo economiza `posições − 1`.
-  - Linhas sem `grupo`: agrupa por método; `tamanho` = 2 (Biset/Superset), 3 (Triset), todas as posições (Circuito); economiza `INT(posições / tamanho) · (tamanho − 1)` (Circuito: `posições − 1`).
+  - Linhas sem `grupo`: agrupa por método; `tamanho` = 2 (Biset), 3 (Triset); economiza `INT(posições / tamanho) · (tamanho − 1)`. **[DECIDIDO pelo Victor]** Superset (4 ou mais exercícios seguidos) e Circuito: `tamanho` = todas as posições, economiza `posições − 1`.
   - `economizados` = soma dos grupos. Mantém o comportamento da planilha para Biset (2 linhas → 1).
 
 ## 9. Registro do aluno

@@ -42,7 +42,7 @@ Status: **rascunho, aguardando o Victor**. Todos os textos da interface em pt-BR
 | Dropset | barra com anilhas; uma anilha sai e a barra continua subindo |
 | Biset | dois halteres; um destaque passa do 1º para o 2º |
 | Triset | três pontos em triângulo, acendendo em sequência |
-| Superset | duas setas opostas (empurra/puxa) que se alternam |
+| Superset | quatro pontos em quadrado, acendendo em sequência |
 | Circuito | seta circular girando, com pontos no caminho |
 | Rest-pause | barra que enche, pausa (relógio) e enche mais um pouco |
 | Clusterset | blocos pequenos aparecendo com espaços entre eles |
@@ -66,8 +66,9 @@ Status: **rascunho, aguardando o Victor**. Todos os textos da interface em pt-BR
     - O que é: 3 exercícios seguidos, sem descanso entre eles.
     - Como fazer: A1 → A2 → A3; descanse só depois do último.
   - **Superset**
-    - O que é: 2 exercícios seguidos, normalmente de músculos opostos (ex.: bíceps e tríceps), com pausa bem curta entre eles.
-    - Como fazer: faça o 1º, descanse no máximo uns 15 s e faça o 2º; o descanso normal vem depois dos dois.
+    - O que é: 4 ou mais exercícios seguidos, sem descanso entre eles.
+    - Como fazer: A1 → A2 → A3 → A4… em sequência; descanse só depois do último; repita a volta.
+    - Dica: deixe todos os aparelhos prontos antes.
   - **Circuito**
     - O que é: todos os exercícios do grupo em sequência, como uma volta.
     - Como fazer: uma série de cada exercício, com pausa curta entre eles; o descanso normal vem no fim da volta.
