@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc",
+    "typecheck": "tsc && tsc -p push",
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --only firestore --project demo-forca 'vitest run --config vitest.rules.config.ts'",
     "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-forca 'playwright test'",
@@ -21,6 +21,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260930.2",
     "@firebase/rules-unit-testing": "^5.0.2",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
