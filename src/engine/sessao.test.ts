@@ -343,3 +343,42 @@ describe('prescreverSessao — tempo da sessão', () => {
     })
   })
 })
+
+describe('prescreverSessao — pausa por exercício (Slot.pausaS)', () => {
+  // 2 exercícios de 3×10, pausa do meso 60: 10 + (60 + 3·60·2)/60 = 17
+  const dois: Meso = {
+    ...base,
+    frequencia: 1,
+    divisao: [[slot('A'), slot('B')]],
+    progressao: { principais: [[10, 10, 10]], auxiliares: [[10, 10, 10]] },
+  }
+  const tempo = (m: Meso) => prescreverSessao(m, 1, 1)!.tempoMin
+
+  it('sem pausaS nos slots: igual ao de hoje', () => expect(tempo(dois)).toBeCloseTo(17, 6))
+  it('pausaS do slot substitui a do meso naquele exercício', () => {
+    const m = { ...dois, divisao: [[{ ...slot('A'), pausaS: 120 }, slot('B')]] }
+    // 10 + (60 + 3·(120 + 60))/60 = 10 + 600/60 = 20
+    expect(tempo(m)).toBeCloseTo(20, 6)
+  })
+  it('pausaS 0 no slot vale (sem descanso), não cai na do meso', () => {
+    const m = { ...dois, divisao: [[{ ...slot('A'), pausaS: 0 }, slot('B')]] }
+    // 10 + (60 + 3·(0 + 60))/60 = 14
+    expect(tempo(m)).toBeCloseTo(14, 6)
+  })
+  it('troca da semana leva a própria pausaS', () => {
+    const m = { ...dois, trocas: { '1-1-2': { ...slot('B2'), pausaS: 30 } } }
+    // 10 + (60 + 3·(60 + 30))/60 = 15.5
+    expect(tempo(m)).toBeCloseTo(15.5, 6)
+  })
+  it('com biset, a economia de pausa segue valendo (pela pausa média)', () => {
+    const m = {
+      ...dois,
+      divisao: [[{ ...slot('A'), pausaS: 120 }, slot('B')]],
+      metodos: [met({ metodo: 'Biset', grupo: 1 }), met({ metodo: 'Biset', exercicio: 2, grupo: 1 })],
+    }
+    // pausas = 3 · (120 + 60)/2 · (2 − 1) = 270 → 10 + (60 + 270 + extras)/60
+    const sem = tempo({ ...m, metodos: [] })
+    expect(sem).toBeCloseTo(20, 6)
+    expect(tempo(m)).toBeLessThan(sem)
+  })
+})
