@@ -94,7 +94,7 @@ export default function Entrar() {
       }
       if (resolver) {
         const code = e instanceof FirebaseError ? e.code : undefined
-        if (code === SESSAO_MFA_VENCIDA) return voltar('A sessão expirou. Entre de novo com e-mail e senha.')
+        if (code === SESSAO_MFA_VENCIDA || code === 'auth/quota-exceeded') return voltar(mensagemMfa(code))
         if (code !== 'auth/network-request-failed') {
           registrarFalha()
           setEspera(restanteSeg())

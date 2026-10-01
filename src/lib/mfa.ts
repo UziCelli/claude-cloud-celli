@@ -18,6 +18,9 @@ const msgs: Record<string, string> = {
   'auth/operation-not-allowed':
     "A verificação em 2 etapas ainda não foi ligada no Firebase. Peça para rodar o workflow '2 etapas do coach' (ativar-totp).",
   'auth/invalid-multi-factor-session': 'A sessão expirou. Entre de novo com e-mail e senha.',
+  // O Firebase limita as tentativas de código por login (devolve quota-exceeded).
+  'auth/quota-exceeded':
+    'Muitos códigos errados. Entre de novo com e-mail e senha e use o VFITCOACH mais recente do Google Authenticator.',
   'auth/wrong-password': 'Senha incorreta',
   'auth/invalid-credential': 'Senha incorreta',
   'auth/unverified-email':
