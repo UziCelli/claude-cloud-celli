@@ -11,17 +11,17 @@ Tudo grátis (plano Spark). Faça na ordem. Peça ao Claude para guiar qualquer 
 ## 2. Proteção contra enumeração de e-mail (feito)
 - Authentication → Configurações → **Proteção contra enumeração de e-mail** → ligar.
 
-## 3. App Check (reCAPTCHA v3 invisível)
-1. ✅ (feito em 01/10/2026) Em https://www.google.com/recaptcha/admin crie uma chave **reCAPTCHA v3** com os domínios `app.vfitcoachapp.com` e `forca--app.web.app`.
-2. ✅ (feito em 01/10/2026) Console do Firebase → **App Check** → app web → **reCAPTCHA** → cole a **chave secreta**. Ative o token com validade padrão.
+## 3. App Check (reCAPTCHA Enterprise, invisível)
+1. ⏳ Pendente: em https://console.cloud.google.com/security/recaptcha?project=forca--app crie uma chave tipo **Site**, com os domínios `app.vfitcoachapp.com` e `forca--app.web.app`, **sem** o desafio de caixa de seleção.
+2. ⏳ Pendente: Console do Firebase → **App Check** → app web → **reCAPTCHA Enterprise** → cole a **mesma chave do site** (não existe chave secreta). Validade do token: **1 dia** (gasta menos avaliações).
 3. Em **APIs**, deixe **Firestore** e **Authentication** em **Monitorar** (não bloqueia ninguém).
-4. ✅ (feito em 01/10/2026) Coloque a **chave do site** (a pública) em `.env.production`: `VITE_RECAPTCHA_KEY=...` e publique o app. Sem essa linha o App Check fica desligado.
-5. ✅ (feito em 01/10/2026) Libere os domínios na CSP (`firebase.json`, o Claude altera na hora de ligar):
+4. ⏳ Pendente: coloque a **chave do site** em `.env.production`: `VITE_RECAPTCHA_KEY=...` e publique o app. Sem essa linha o App Check fica desligado.
+5. ✅ (feito em 01/10/2026) CSP liberada (`firebase.json`; `https://www.google.com/recaptcha/` já cobre o `enterprise.js`):
    - `script-src`: `https://www.google.com/recaptcha/` e `https://www.gstatic.com/recaptcha/`
    - `frame-src`: `https://www.google.com/recaptcha/` e `https://recaptcha.google.com/recaptcha/`
    - `connect-src`: `https://www.google.com/recaptcha/` (os `*.googleapis.com` já estão)
-6. ⏳ Pendente: depois de alguns dias sem erros no painel do App Check, mude Firestore e Authentication para **Aplicar**.
-- Importante: a CSP nova precisa estar no ar **antes** de publicar com a chave, senão o app não carrega o reCAPTCHA.
+6. ⏳ Pendente: grátis até 10.000 avaliações por mês. Confira o uso no painel e, depois de alguns dias sem erros, mude Firestore e Authentication para **Aplicar**.
+- Importante: a CSP precisa estar no ar **antes** de publicar com a chave.
 
 ## 4. Restringir a chave da API
 - Google Cloud → **APIs e serviços** → **Credenciais** → chave de navegador do Firebase → **Restrições de aplicativo: sites** → adicione `app.vfitcoachapp.com/*`, `forca--app.web.app/*` e `forca--app.firebaseapp.com/*`. (feito)

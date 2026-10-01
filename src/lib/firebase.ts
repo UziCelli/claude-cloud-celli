@@ -1,5 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 import { connectAuthEmulator, getAuth, inMemoryPersistence, initializeAuth, type Auth } from 'firebase/auth'
 import {
   connectFirestoreEmulator,
@@ -27,7 +27,7 @@ const app = initializeApp(config)
 // App Check (reCAPTCHA v3): só liga com a chave em .env.production e fora do emulador (docs/seguranca.md).
 const protegerApp = (a: FirebaseApp) => {
   if (!emulador && env.VITE_RECAPTCHA_KEY)
-    initializeAppCheck(a, { provider: new ReCaptchaV3Provider(env.VITE_RECAPTCHA_KEY), isTokenAutoRefreshEnabled: true })
+    initializeAppCheck(a, { provider: new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_KEY), isTokenAutoRefreshEnabled: true })
 }
 protegerApp(app)
 

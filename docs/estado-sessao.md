@@ -22,7 +22,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - MFA TOTP só para o coach: ativo.
   - Sem tela de erros no painel: os erros ficam no workflow "Ver erros do app".
   - PR #27 (2 etapas obrigatórias + App Check) aguarda o "pode juntar" do Victor.
-  - App Check está em **Monitorar**; mudar para **Aplicar** depois de alguns dias sem erros (`docs/seguranca.md`, passo 3.6).
+  - App Check: provedor **reCAPTCHA Enterprise**, aguardando a chave do Victor (`docs/seguranca.md`, passo 3). Depois, modo Monitorar e, após alguns dias sem erros, **Aplicar**.
 - **Entrega 5** (a planejar), pagamento:
   - Pix estático no app (QR + copia e cola, sem taxa), com "Valor mensal" por aluno e configuração de pagamento no painel;
   - "Já paguei" → "Pagamentos a confirmar" no Início → "Confirmar" (+1 mês);
