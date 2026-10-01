@@ -5,5 +5,6 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    fileParallelism: false, // todos os arquivos usam o mesmo emulador
   },
 });
