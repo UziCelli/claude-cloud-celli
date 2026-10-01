@@ -17,6 +17,8 @@ describe('2 etapas: partes puras', () => {
     expect(mensagemMfa('auth/network-request-failed')).toMatch(/internet/i)
     expect(mensagemMfa('outro')).toMatch(/tente de novo/i)
     expect(mensagemMfa(undefined)).toMatch(/tente de novo/i)
+    expect(mensagemMfa('outro')).toContain('(outro)')
+    expect(mensagemMfa('auth/unverified-email')).toMatch(/confirme seu e-mail/i)
   })
   it('qrDataUrl gera um SVG em data URL', () => {
     const url = qrDataUrl('otpauth://totp/VFITCOACH:a@b.com?secret=ABC&issuer=VFITCOACH')
