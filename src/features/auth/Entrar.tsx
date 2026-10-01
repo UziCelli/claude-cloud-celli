@@ -8,6 +8,7 @@ import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from 
 import Logo from '../../Logo'
 import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
 import { AVISO_SAIU } from '../../lib/inatividade'
+import { registrarErro } from '../../lib/log'
 
 const erros: Record<string, string> = {
   'auth/wrong-password': 'E-mail ou senha incorretos.',
@@ -20,8 +21,13 @@ const erros: Record<string, string> = {
   'auth/network-request-failed': 'Sem internet. Verifique sua conexão e tente de novo.',
 }
 
-const mensagemErro = (e: unknown) =>
-  (e instanceof FirebaseError && erros[e.code]) || 'Não deu para entrar. Tente de novo.'
+// Erro desconhecido: mostra o código e guarda no registro de erros, para dar para investigar.
+const mensagemErro = (e: unknown) => {
+  if (e instanceof FirebaseError && erros[e.code]) return erros[e.code]
+  const code = e instanceof FirebaseError ? e.code : String(e).slice(0, 80)
+  registrarErro('erro', `login: ${code}`)
+  return `Não deu para entrar (${code}). Tente de novo.`
+}
 
 // Código do autenticador errado: mensagem do 2º fator (e a tela volta ao e-mail/senha se a sessão venceu).
 const SESSAO_MFA_VENCIDA = 'auth/invalid-multi-factor-session'
