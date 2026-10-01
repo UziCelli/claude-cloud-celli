@@ -56,6 +56,7 @@ Comece por aqui para achar onde mexer.
 - `Hoje.tsx` — treino de hoje
 - `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro)
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
+- `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — gráficos: reps, força, volume
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor
@@ -215,4 +216,5 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | 2º fator exigido nas regras | `firestore.rules` (`segundoFator`, `isCoach`), `src/lib/acesso.ts` (`faltaSegundoFator`), `App.tsx`, `e2e/seed.ts` | Todo poder de coach exige `sign_in_second_factor` no token; sem ele o coach só lê o próprio `usuarios/{uid}` e o painel mostra um aviso. A exceção `mfaDispensado` (custom claim) existe só no seed do emulador: nenhum código do app nem workflow de produção a define. Emergência: workflow `mfa.yml` ação `desativar-coach`; depois de rodar, é preciso reativar o 2º fator em Minha conta e entrar de novo. | `tests/rules.test.ts` (2º fator do coach), `acesso.test.ts`, e2e |
 | App Check | `src/lib/firebase.ts` | Provedor reCAPTCHA Enterprise, em modo Monitorar (só liga com `VITE_RECAPTCHA_KEY` e fora do emulador). A CSP precisa manter os domínios do reCAPTCHA (`script-src`, `frame-src`, `connect-src`). Selo escondido por CSS (`.grecaptcha-badge`) com o aviso legal na tela de login (`Entrar.tsx`). | build |
 | Anotações do aluno | `firestore.rules` (`notas`), `acoes.ts` | Até 300 exercícios por documento; a interface corta cada texto em 300 caracteres. As regras do Firestore não conseguem limitar o tamanho dos **valores** de um mapa: um aluno logado pode gravar até 1 MiB só no próprio documento. Risco aceito (afeta só o documento dele). | `tests/rules.test.ts` (notas) |
+| Peso do corpo automático | `src/lib/pesoCorporal.ts` (`corpoEhCarga`), `Treino.tsx` | Barra fixa, flexão de braços, abdominal no solo sem carga e agachamento com peso do corpo já vêm com "Somar meu peso corporal" marcado. Só vale para slot **sem carga** e **sem `pc.<slot>` explícito**; ao gravar a 1ª carga, o `pc` é gravado junto, então histórico e métricas antigas não mudam. Sem `pesoKg` no perfil não há automático (fica a opção manual com aviso). | `pesoCorporal.test.ts` (`corpoEhCarga`), e2e aluno |
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |

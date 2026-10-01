@@ -10,7 +10,7 @@ import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
-import { fracaoPC } from '../../lib/pesoCorporal'
+import { corpoEhCarga, fracaoPC } from '../../lib/pesoCorporal'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
@@ -50,7 +50,7 @@ function Novidades() {
       <div className="mb-1 font-semibold">Novidades</div>
       <ul className="mb-3 space-y-1 text-slate-300">
         <li>📝 Anotação em cada exercício</li>
-        <li>Fiz com o peso do corpo: opcional, marque só se o corpo foi a carga</li>
+        <li>Somar meu peso corporal: já vem marcado na barra fixa e na flexão; nos campos, anote só o peso extra</li>
         <li>Número cinza = carga da semana passada</li>
         <li>▶ Treino do dia em destaque na tela Hoje</li>
       </ul>
@@ -208,7 +208,7 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
           onChange={(ev) => setRascunho(ev.target.value)}
           placeholder="Ex.: banco na posição 3, aparelho Life"
           aria-label={`Anotação de ${nome}`}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-sm"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none focus:border-marca-500"
         />
         <div className="mt-1 flex gap-2">
           <Botao
@@ -335,15 +335,18 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           const colunasReps = rs[e.slot.slotId] ?? []
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos)
           const slot = e.slot.slotId
-          const corpo = pcLocal[slot] ?? (pcs[slot] || 0)
           const destaque = seriesDestacadas(e.rotulo, e.n)
           const frac = fracaoPC(e.slot.nome)
+          // Automático só em slot sem carga e sem escolha explícita: o histórico nunca muda.
+          const explicito = slot in pcLocal || slot in pcs
+          const auto = !explicito && !colunasCargas.some((c) => c != null) && corpoEhCarga(e.slot.nome) && !!perfil?.pesoKg
+          const corpo = explicito ? (pcLocal[slot] ?? (pcs[slot] || 0)) : auto ? Math.round(perfil!.pesoKg! * frac * 10) / 10 : 0
+          const gravaPc = (kg: number) => {
+            setPcLocal((p) => ({ ...p, [slot]: kg }))
+            registrarPc(mesoId, uid, semana, treino, slot, kg)
+          }
           const alternarPc = () => {
-            const grava = (kg: number) => {
-              setPcLocal((p) => ({ ...p, [slot]: kg }))
-              registrarPc(mesoId, uid, semana, treino, slot, kg)
-            }
-            if (corpo) return grava(0)
+            if (corpo) return gravaPc(0)
             let peso = perfil?.pesoKg
             if (!peso) {
               const n = Number((window.prompt('Qual é o seu peso (kg)?') ?? '').replace(',', '.'))
@@ -351,7 +354,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
               salvarPeso(uid, n)
               peso = n
             }
-            grava(Math.round(peso * frac * 10) / 10)
+            gravaPc(Math.round(peso * frac * 10) / 10)
           }
           return (
             <m.div key={e.slot.slotId} variants={item} className={`relative rounded-xl border bg-slate-900 p-4 ${gk ? 'border-marca-500/60' : 'border-slate-800'}`}>
@@ -403,21 +406,6 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                   )}
                 </div>
               </div>
-              {/* Opcional: só marca quem usou o próprio corpo como carga; o app soma o peso do corpo ao extra digitado. */}
-              <label className="mb-2 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
-                <input type="checkbox" checked={!!corpo} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
-                <span>
-                  <b>Fiz com o peso do corpo</b> <span className="text-slate-400">(opcional)</span>
-                  <span className="block text-xs text-slate-400">
-                    Marque só se o seu corpo foi a carga (ex.: barra fixa, flexão). O app soma o seu peso; nos campos, anote só o peso extra.
-                  </span>
-                </span>
-              </label>
-              {corpo > 0 && perfil?.pesoKg && (
-                <p className="mb-2 text-xs text-slate-400">
-                  Peso do corpo contado: {fmt(corpo)} kg ({Math.round(frac * 100)}% de {fmt(perfil.pesoKg)} kg)
-                </p>
-              )}
               <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} />
               <div className="space-y-2">
                 {e.reps.map((repAlvo, k) => {
@@ -438,6 +426,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                         placeholder={placeholderKg}
                         onSalvar={(v) => {
                           iniciou()
+                          if (auto && v != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
                           registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, v == null ? null : Math.round((v + corpo) * 100) / 100)
                         }}
                       />
@@ -453,6 +442,23 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                   )
                 })}
               </div>
+              {/* Logo abaixo das séries: o app soma o peso do corpo ao extra digitado. */}
+              <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
+                <input type="checkbox" checked={!!corpo} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
+                <span>
+                  <b>Somar meu peso corporal</b>
+                  <span className="block text-xs text-slate-400">
+                    {auto || (corpo > 0 && corpoEhCarga(e.slot.nome))
+                      ? 'Já vem marcado porque neste exercício o corpo é a carga. Nos campos, anote só o peso extra (anilha, colete, cinto).'
+                      : 'Nos campos, anote só o peso extra (anilha, colete, cinto).'}
+                  </span>
+                </span>
+              </label>
+              {corpo > 0 && perfil?.pesoKg && (
+                <p className="mt-2 text-xs text-slate-400">
+                  Peso do corpo contado: {fmt(corpo)} kg ({Math.round(frac * 100)}% de {fmt(perfil.pesoKg)} kg)
+                </p>
+              )}
             </m.div>
           )
         })}
