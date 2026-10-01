@@ -56,9 +56,21 @@ export async function lerDoc(caminho: string): Promise<Record<string, unknown> |
   return r.json()
 }
 
-// Cria a conta do coach (Auth + Firestore), pronta e ativa.
+// Custom claim mfaDispensado: as regras aceitam no lugar do 2º fator. Só existe aqui, no emulador
+// (em produção só a Admin SDK poderia defini-lo, e nenhum código nosso o faz).
+async function dispensarMfa(uid: string) {
+  const r = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/projects/${PROJETO}/accounts:update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ localId: uid, customAttributes: JSON.stringify({ mfaDispensado: true }) }),
+  })
+  if (!r.ok) throw new Error(`claim mfaDispensado falhou: ${r.status} ${await r.text()}`)
+}
+
+// Cria a conta do coach (Auth + Firestore), pronta e ativa, com o 2º fator dispensado (só emulador).
 export async function criarCoach(nome: string, email: string, senha: string): Promise<string> {
   const uid = await criarConta(email, senha)
+  await dispensarMfa(uid)
   await gravarDoc(`usuarios/${uid}`, { papel: 'coach', status: 'ativo', nome, email })
   return uid
 }

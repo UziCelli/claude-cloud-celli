@@ -50,15 +50,23 @@ const registro = (aluno: string, semana = 1, treino = 1) => ({
   cargas: { sup: { s1: 40 } },
 });
 
+// Token de quem entrou com o 2º fator (TOTP). O coach só tem poder de coach assim.
+// O tipo do pacote não conhece sign_in_second_factor, por isso o cast.
+const COM_FATOR = { firebase: { sign_in_provider: 'password', sign_in_second_factor: 'totp' } };
+const SEM_FATOR = { firebase: { sign_in_provider: 'password' } };
+const fator = (uid: string) => (uid === 'coach' ? COM_FATOR : {});
+const contexto = (uid: string, token: object = {}) => env.authenticatedContext(uid, token as never);
+
 // O contexto devolve o tipo "compat"; as funções modulares aceitam em tempo de execução.
+// O uid 'coach' já entra com o 2º fator.
 const db = (uid?: string) =>
-  (uid ? env.authenticatedContext(uid) : env.unauthenticatedContext()).firestore() as unknown as Firestore;
+  (uid ? contexto(uid, fator(uid)) : env.unauthenticatedContext()).firestore() as unknown as Firestore;
 
 const reg = (uid: string | undefined, id: string) => doc(db(uid), 'registros', id);
 
 // Login com e-mail no token (como no app: o Auth guarda o e-mail em minúsculas).
 const dbEmail = (uid: string, email: string) =>
-  env.authenticatedContext(uid, { email }).firestore() as unknown as Firestore;
+  contexto(uid, { email, ...fator(uid) }).firestore() as unknown as Firestore;
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
@@ -88,6 +96,50 @@ describe('sem login', () => {
     await assertFails(getDoc(reg(undefined, 'm_ana_s01_t1')));
     await assertFails(setDoc(doc(db(), 'usuarios', 'x'), { papel: 'aluno', status: 'aguardando' }));
     await assertFails(setDoc(reg(undefined, 'm_ana_s01_t2'), registro('ana', 1, 2)));
+  });
+});
+
+// 2º fator do coach: poder de coach só com login que passou pelo TOTP (ou o claim de teste
+// mfaDispensado, que só a Admin SDK define e só o seed do emulador usa).
+describe('2º fator do coach', () => {
+  const como = (token: object) =>
+    contexto('coach', token).firestore() as unknown as Firestore;
+  const coachSem = () => como(SEM_FATOR);
+
+  it('com TOTP: tudo continua permitido', async () => {
+    const c = como(COM_FATOR);
+    await assertSucceeds(getDoc(doc(c, 'usuarios', 'ana')));
+    await assertSucceeds(setDoc(doc(c, 'mesos', 'm_novo'), { alunoId: 'ana', nome: 'M' }));
+    await assertSucceeds(getDocs(collection(c, 'logs')));
+  });
+
+  it('sem 2º fator: nega ler aluno, escrever meso e ler logs', async () => {
+    const c = coachSem();
+    await assertFails(getDoc(doc(c, 'usuarios', 'ana')));
+    await assertFails(getDocs(collection(c, 'usuarios')));
+    await assertFails(setDoc(doc(c, 'mesos', 'm_novo'), { alunoId: 'ana', nome: 'M' }));
+    await assertFails(getDoc(doc(c, 'mesos', 'm_ana')));
+    await assertFails(getDocs(collection(c, 'logs')));
+    await assertFails(getDoc(doc(c, 'registros', 'm_ana_s01_t1')));
+  });
+
+  it('sem 2º fator: ainda lê o próprio perfil (o app precisa saber o papel)', () =>
+    assertSucceeds(getDoc(doc(coachSem(), 'usuarios', 'coach'))));
+
+  it('só com mfaDispensado: permitido', async () => {
+    const c = como({ ...SEM_FATOR, mfaDispensado: true });
+    await assertSucceeds(getDoc(doc(c, 'usuarios', 'ana')));
+    await assertSucceeds(setDoc(doc(c, 'mesos', 'm_novo'), { alunoId: 'ana', nome: 'M' }));
+  });
+
+  it('mfaDispensado diferente de true não vale', async () => {
+    await assertFails(getDoc(doc(como({ ...SEM_FATOR, mfaDispensado: 'true' }), 'usuarios', 'ana')));
+    await assertFails(getDoc(doc(como({ ...SEM_FATOR, mfaDispensado: false }), 'usuarios', 'ana')));
+  });
+
+  it('aluno não muda: lê o próprio treino, não lê outro aluno', async () => {
+    await assertSucceeds(getDoc(doc(db('ana'), 'mesos', 'm_ana')));
+    await assertFails(getDoc(doc(db('ana'), 'usuarios', 'bia')));
   });
 });
 
@@ -193,7 +245,7 @@ describe('usuarios', () => {
   // Troca de e-mail: só coaches (tela Minha conta). Aluno troca por manutenção (Admin SDK).
   describe('e-mail', () => {
     const comToken = (uid: string, email: string) =>
-      doc(env.authenticatedContext(uid, { email }).firestore() as unknown as Firestore, 'usuarios', uid);
+      doc(contexto(uid, { email, ...fator(uid) }).firestore() as unknown as Firestore, 'usuarios', uid);
 
     it('aluno não altera o próprio e-mail, nem igual ao do login', async () => {
       await assertFails(updateDoc(comToken('ana', 'nova@x.com'), { email: 'nova@x.com' }));

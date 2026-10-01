@@ -1,11 +1,12 @@
-import { useEffect, type ReactNode } from 'react'
-import { liberado, type Usuario } from './lib/acesso'
+import { useEffect, useState, type ReactNode } from 'react'
+import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
+import { auth } from './lib/firebase'
 import { sair } from './lib/acoes'
 import { useUsuarioAtual } from './lib/hooks'
 import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
-import { Abertura, Botao, Centro, Tela } from './ui'
+import { Abertura, Aviso, Botao, Centro, Tela } from './ui'
 import Logo from './Logo'
 import Entrar from './features/auth/Entrar'
 import Inicio from './features/coach/inicio/Inicio'
@@ -58,6 +59,11 @@ function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
 
 function Coach({ uid, nome, email }: { uid: string; nome: string; email: string }) {
   const rota = useRota()
+  const [semFator, setSemFator] = useState(false)
+  useEffect(() => {
+    // O token vale até o próximo login: quem acabou de ativar o 2º fator precisa sair e entrar de novo.
+    auth.currentUser?.getIdTokenResult().then((t) => setSemFator(faltaSegundoFator(t.claims))).catch(() => {})
+  }, [uid])
   let p: Record<string, string> | null
   let tela = <Inicio />
   if (rota === '/alunos') tela = <Alunos />
@@ -87,6 +93,14 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
           </div>
         </div>
       </header>
+      {semFator && (
+        <div className="mx-auto max-w-6xl px-4 pt-3">
+          <Aviso>
+            Por segurança, o painel exige a verificação em 2 etapas. Ative em Minha conta (se ainda não ativou) e depois
+            saia e entre de novo com o código.
+          </Aviso>
+        </div>
+      )}
       <Tela chave={rota}>{tela}</Tela>
     </>
   )

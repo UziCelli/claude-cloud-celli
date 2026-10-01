@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
-import { diasParaVencer, fimDoDiaSaoPaulo, hojeMaisDias, liberado, type Usuario } from './acesso'
+import { diasParaVencer, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, type Usuario } from './acesso'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const ts = (d: Date) => Timestamp.fromDate(d)
@@ -52,4 +52,12 @@ describe('hojeMaisDias', () => {
     expect(hojeMaisDias(0)).toBe('2026-10-10')
     expect(hojeMaisDias(30)).toBe('2026-11-09')
   })
+})
+
+describe('faltaSegundoFator (espelha segundoFator() de firestore.rules)', () => {
+  it('login com TOTP: não falta', () => expect(faltaSegundoFator({ firebase: { sign_in_second_factor: 'totp' } })).toBe(false))
+  it('só e-mail e senha: falta', () => expect(faltaSegundoFator({ firebase: { sign_in_provider: 'password' } })).toBe(true))
+  it('sem claims: falta', () => expect(faltaSegundoFator({})).toBe(true))
+  it('mfaDispensado true (só emulador): não falta', () => expect(faltaSegundoFator({ mfaDispensado: true })).toBe(false))
+  it('mfaDispensado que não é true: falta', () => expect(faltaSegundoFator({ mfaDispensado: 'true' })).toBe(true))
 })

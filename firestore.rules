@@ -20,8 +20,17 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
 
+    // Login que passou pelo 2º fator (TOTP). O claim mfaDispensado existe só para testes:
+    // só a Admin SDK o define, e apenas o seed do emulador (e2e/seed.ts) o usa.
+    function segundoFator() {
+      return request.auth.token.firebase.get('sign_in_second_factor', null) != null
+        || request.auth.token.get('mfaDispensado', false) == true;
+    }
+
+    // Todo poder de coach exige o 2º fator. O coach sem ele ainda lê o próprio usuarios/{uid}
+    // (regra de leitura própria) para o app saber o papel e avisar.
     function isCoach() {
-      return signedIn() && me().papel == 'coach';
+      return signedIn() && segundoFator() && me().papel == 'coach';
     }
 
     function liberado() {
