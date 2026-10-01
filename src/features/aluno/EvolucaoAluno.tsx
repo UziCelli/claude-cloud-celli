@@ -23,7 +23,7 @@ function Lista({ uid, mesoId, meso }: { uid: string; mesoId: string; meso: Meso 
   const { dados: docsRegistros } = useLista<RegistroDoc>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
-  const cargas = docsParaRegistros(docsRegistros)
+  const cargas = docsParaRegistros(docsRegistros, meso)
   const reps = docsParaRegistrosReps(docsRegistros)
 
   const nomes = new Set<string>()

@@ -121,3 +121,10 @@ export async function criarMeso(m: MesoSeed): Promise<string> {
   })
   return id
 }
+
+// Cria registros/{id} direto, com os campos que o teste quiser (ex.: formato antigo, sem rebasear/preencherCorpo).
+export async function criarRegistro(mesoId: string, alunoId: string, semana: number, treino: number, campos: Record<string, unknown>) {
+  const id = `${mesoId}_s${String(semana).padStart(2, '0')}_t${treino}`
+  await gravarDoc(`registros/${id}`, { alunoId, mesoId, semana, treino, ...campos, atualizadoEm: new Date() })
+  return id
+}

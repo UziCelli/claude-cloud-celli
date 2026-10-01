@@ -1,5 +1,5 @@
 // Conversão entre os tipos do motor (src/engine) e os documentos do Firestore. Funções puras.
-import type { Cargas, Meso, Registros, Slot } from '../engine'
+import { prescreverSessao, type Cargas, type Meso, type Registros, type Slot } from '../engine'
 
 // O Firestore proíbe array dentro de array. Por isso, no documento:
 //   divisao:    Slot[][]            -> { t1: Slot[], t2: Slot[], … }       (t = treino, 1-based)
@@ -79,6 +79,8 @@ export interface RegistroDoc {
   treino: number
   cargas?: CargasDoc
   reps?: CargasDoc // reps feitas (opcional), mesmo formato das cargas
+  pc?: Record<string, number> // peso do corpo somado por exercício (slotId -> kg; 0 = desligado)
+  realizado?: boolean
 }
 
 export function docParaCargas(cargas: CargasDoc | undefined): Cargas {
@@ -96,8 +98,48 @@ export function docParaCargas(cargas: CargasDoc | undefined): Cargas {
 
 export const docParaReps = docParaCargas
 
-export const docsParaRegistros = (docs: RegistroDoc[]): Registros =>
-  Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaCargas(d.cargas)]))
+const arred = (x: number) => Math.round(x * 100) / 100
+
+// ÚNICA leitura de cargas de um registro (use sempre esta; nunca docParaCargas direto em tela ou cálculo).
+// Convenção atual: a célula guarda o TOTAL (extra digitado + pc.<slot>). Versões antigas do app ainda
+// rodam em abas e celulares abertos e gravaram de outro jeito; os dados não são reescritos, só lidos assim.
+// Com pc[slot] > 0:
+//  (i)   célula com c < pc: formato antigo (só o extra, pc marcado depois de digitar) -> conta c + pc.
+//        No formato novo c >= pc sempre. Vale para todas as colunas, inclusive drop.
+//  (ii)  célula vazia de série prescrita (coluna < n): conta pc se o registro foi concluído OU se há reps
+//        feitas naquela série (versão sem `preencherCorpo`). Colunas de drop (>= n) nunca são preenchidas.
+//  (iii) célula com c >= pc: fica como está.
+// Sem pc (ou pc = 0) nada muda. `n` = séries prescritas por slotId; sem ele, n = maior índice com dado
+// em cargas ou reps do slot (série vazia depois da última com dado não é conhecida, e uma coluna de
+// drop com dado passaria por série). Por isso as telas passam o meso (ver docsParaRegistros).
+export function normalizarCargas(
+  doc: Pick<RegistroDoc, 'cargas' | 'reps' | 'pc' | 'realizado'>,
+  n: Record<string, number> = {},
+): Cargas {
+  const r = docParaCargas(doc.cargas)
+  const reps = docParaReps(doc.reps)
+  for (const [slot, pc] of Object.entries(doc.pc ?? {})) {
+    if (!(pc > 0)) continue
+    const cs = r[slot] ?? []
+    const rs = reps[slot] ?? []
+    const prescritas = n[slot] ?? Math.max(cs.length, rs.length)
+    r[slot] = Array.from({ length: Math.max(cs.length, rs.length, prescritas) }, (_, k) => {
+      const c = cs[k] ?? null
+      if (c != null) return c < pc ? arred(c + pc) : c
+      return k < prescritas && (doc.realizado || (rs[k] ?? 0) > 0) ? pc : null
+    })
+  }
+  return r
+}
+
+// Séries prescritas (sem drop) de cada exercício do treino; só calculado quando o registro tem pc.
+const seriesDe = (meso: Meso | undefined, d: RegistroDoc): Record<string, number> =>
+  meso && Object.values(d.pc ?? {}).some((p) => p > 0)
+    ? Object.fromEntries((prescreverSessao(meso, d.semana, d.treino)?.exercicios ?? []).map((e) => [e.slot.slotId, e.n]))
+    : {}
+
+export const docsParaRegistros = (docs: RegistroDoc[], meso?: Meso): Registros =>
+  Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, normalizarCargas(d, seriesDe(meso, d))]))
 
 export const docsParaRegistrosReps = (docs: RegistroDoc[]): Registros =>
   Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaReps(d.reps)]))

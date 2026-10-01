@@ -8,6 +8,7 @@ import {
   docsParaRegistros,
   docsParaRegistrosReps,
   mesoParaDoc,
+  normalizarCargas,
   registroId,
 } from './conversores'
 
@@ -129,5 +130,61 @@ describe('reps feitas', () => {
         { semana: 3, treino: 1 },
       ]),
     ).toEqual({ '1-2': { a: [null, 9] }, '3-1': {} })
+  })
+})
+
+// Peso do corpo: a célula guarda o TOTAL (extra + pc). Dados de versões antigas são lidos de forma robusta.
+describe('normalizarCargas (peso do corpo)', () => {
+  const pc = { a: 80 }
+
+  it('(i) célula só com o extra (c < pc) conta c + pc; (iii) c >= pc fica como está', () => {
+    expect(normalizarCargas({ cargas: { a: { s1: 2, s2: 82, s3: 80 } }, pc })).toEqual({ a: [82, 82, 80] })
+    expect(normalizarCargas({ cargas: { a: { s1: 0 } }, pc })).toEqual({ a: [80] }) // extra 0 = só o corpo
+    expect(normalizarCargas({ cargas: { a: { s1: 2.5 } }, pc: { a: 76.4 } })).toEqual({ a: [78.9] })
+  })
+
+  it('(ii) célula vazia conta o corpo se o treino foi concluído (só as séries prescritas)', () => {
+    expect(normalizarCargas({ cargas: { a: { s1: 2 } }, pc, realizado: true }, { a: 3 })).toEqual({ a: [82, 80, 80] })
+    expect(normalizarCargas({ cargas: { a: { s1: null } }, pc, realizado: true }, { a: 2 })).toEqual({ a: [80, 80] })
+  })
+
+  it('(ii) célula vazia conta o corpo se a série tem reps feitas, mesmo sem concluir', () => {
+    expect(normalizarCargas({ cargas: { a: { s1: 90 } }, reps: { a: { s2: 8 } }, pc }, { a: 3 })).toEqual({ a: [90, 80, null] })
+    expect(normalizarCargas({ reps: { a: { s1: 0 } }, pc }, { a: 2 })).toEqual({ a: [null, null] }) // 0 reps não é série feita
+  })
+
+  it('não concluído e sem reps: célula vazia continua vazia', () => {
+    expect(normalizarCargas({ cargas: { a: { s1: 2 } }, pc }, { a: 3 })).toEqual({ a: [82, null, null] })
+    expect(normalizarCargas({ pc }, { a: 3 })).toEqual({ a: [null, null, null] })
+  })
+
+  it('drop (coluna >= n): vazia não é preenchida; com extra antigo ganha o corpo', () => {
+    expect(normalizarCargas({ cargas: { a: { s4: 10 } }, pc, realizado: true }, { a: 3 })).toEqual({ a: [80, 80, 80, 90] })
+    expect(normalizarCargas({ cargas: { a: { s1: 5 } }, reps: { a: { s5: 6 } }, pc, realizado: true }, { a: 3 })).toEqual({ a: [85, 80, 80, null, null] })
+  })
+
+  it('sem n: usa o maior índice entre cargas e reps do slot (séries sem nenhum dado não são conhecidas)', () => {
+    expect(normalizarCargas({ cargas: { a: { s1: 2 } }, reps: { a: { s3: 8 } }, pc, realizado: true })).toEqual({ a: [82, 80, 80] })
+    expect(normalizarCargas({ cargas: { a: { s1: 2 } }, pc, realizado: true })).toEqual({ a: [82] })
+  })
+
+  it('slot sem pc (ou pc = 0): nada muda', () => {
+    const cargas = { a: { s1: 2, s3: 40 }, b: { s1: 5 } }
+    expect(normalizarCargas({ cargas, realizado: true }, { a: 3 })).toEqual(docParaCargas(cargas))
+    expect(normalizarCargas({ cargas, pc: { a: 0 }, realizado: true }, { a: 3 })).toEqual(docParaCargas(cargas))
+    expect(normalizarCargas({ cargas, pc: { c: 80 } })).toEqual({ ...docParaCargas(cargas), c: [] }) // pc de outro slot não afeta a e b
+  })
+
+  it('só os slots com pc mudam', () => {
+    expect(normalizarCargas({ cargas: { a: { s1: 2 }, b: { s1: 2 } }, pc: { a: 80 }, realizado: true }, { a: 2, b: 2 })).toEqual({ a: [82, 80], b: [2] })
+  })
+
+  it('docsParaRegistros normaliza com o meso (séries prescritas) e com o pc/realizado do documento', () => {
+    const w = { principais: [[8, 8, 8, null, null, null]], auxiliares: [[8, 8, 8, null, null, null]] }
+    const m: Meso = { ...meso, frequencia: 1, semanas: 1, divisao: [[slot('a')]], progressao: w, metodos: [], trocas: {} }
+    const docs = [{ semana: 1, treino: 1, cargas: { a: { s1: 2 } }, pc: { a: 80 }, realizado: true }]
+    expect(docsParaRegistros(docs, m)).toEqual({ '1-1': { a: [82, 80, 80] } })
+    expect(docsParaRegistros(docs)).toEqual({ '1-1': { a: [82] } }) // sem meso: maior índice
+    expect(docsParaRegistrosReps(docs)).toEqual({ '1-1': {} }) // reps nunca mudam
   })
 })

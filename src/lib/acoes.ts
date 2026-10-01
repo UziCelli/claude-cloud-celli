@@ -215,8 +215,20 @@ export const registrarReps = (
 ) => registro(mesoId, alunoId, semana, treino, { reps: { [slotId]: { [`s${coluna + 1}`]: n } } })
 
 // Peso do corpo usado no exercício com PC (0 = desligado): pc.<slotId>.
-export const registrarPc = (mesoId: string, alunoId: string, semana: number, treino: number, slotId: string, kg: number) =>
-  registro(mesoId, alunoId, semana, treino, { pc: { [slotId]: kg } })
+// `cargas` (de `rebasear`) vai na MESMA gravação: pc e cargas nunca ficam meio trocados, nem num snapshot no meio.
+export const registrarPc = (
+  mesoId: string,
+  alunoId: string,
+  semana: number,
+  treino: number,
+  slotId: string,
+  kg: number,
+  cargas: { coluna: number; kg: number }[] = [],
+) =>
+  registro(mesoId, alunoId, semana, treino, {
+    pc: { [slotId]: kg },
+    ...(cargas.length > 0 && { cargas: { [slotId]: Object.fromEntries(cargas.map((c) => [`s${c.coluna + 1}`, c.kg])) } }),
+  })
 
 export const salvarPeso = (uid: string, kg: number) => updateDoc(doc(db, 'usuarios', uid), { pesoKg: kg })
 
