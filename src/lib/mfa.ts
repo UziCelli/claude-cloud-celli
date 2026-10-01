@@ -20,5 +20,8 @@ const msgs: Record<string, string> = {
   'auth/invalid-multi-factor-session': 'A sessão expirou. Entre de novo com e-mail e senha.',
   'auth/wrong-password': 'Senha incorreta',
   'auth/invalid-credential': 'Senha incorreta',
+  'auth/unverified-email':
+    'Antes de ativar, confirme seu e-mail: enviamos um link agora. Abra o e-mail, clique no link e toque em Ativar de novo.',
 }
-export const mensagemMfa = (code?: string) => (code && msgs[code]) || 'Não deu certo. Tente de novo.'
+// Código desconhecido aparece na mensagem para dar para diagnosticar (não tem dado pessoal).
+export const mensagemMfa = (code?: string) => (code && msgs[code]) || `Não deu certo (${code ?? 'erro desconhecido'}). Tente de novo.`

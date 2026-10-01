@@ -13,6 +13,7 @@ import {
   type MultiFactorResolver,
   type TotpSecret,
   verifyBeforeUpdateEmail,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { registrarErro } from './log'
@@ -273,6 +274,13 @@ export const temTotp = () =>
 export async function iniciarTotp() {
   const user = auth.currentUser
   if (!user) throw new Error('Sem login')
+  // O Firebase exige e-mail confirmado; recarrega para pegar a confirmação feita pelo link.
+  await user.reload()
+  if (!user.emailVerified) {
+    await sendEmailVerification(user)
+    throw new FirebaseError('auth/unverified-email', 'E-mail não confirmado')
+  }
+  await user.getIdToken(true)
   const secret = await TotpMultiFactorGenerator.generateSecret(await multiFactor(user).getSession())
   return { secret, uri: secret.generateQrCodeUrl(user.email ?? '', 'VFITCOACH') }
 }
