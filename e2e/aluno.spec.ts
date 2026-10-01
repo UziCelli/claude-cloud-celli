@@ -161,7 +161,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await page.getByRole('button', { name: /Treino 2/ }).click()
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
     page.once('dialog', (d) => d.accept('80'))
-    await cartao.getByRole('checkbox').check()
+    await cartao.getByRole('checkbox', { name: /Somar meu peso corporal/ }).check()
     await expect(cartao.getByText('Peso do corpo contado: 80 kg (100% de 80 kg)')).toBeVisible()
 
     const kg = cartao.locator('input[type="number"]').first()

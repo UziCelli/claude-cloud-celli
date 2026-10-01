@@ -13,7 +13,18 @@ const TABELA: [RegExp, number][] = [
   [/abdominal/, 0.3],
 ]
 
+const semAcento = (nome: string) => nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
 export function fracaoPC(nome: string) {
-  const n = nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  const n = semAcento(nome)
   return TABELA.find(([re]) => re.test(n))?.[1] ?? 1
+}
+
+// Exercícios em que o corpo É a carga: já vêm com "somar peso corporal" marcado (se o slot ainda não tem carga).
+// Barra fixa, flexão de braços, abdominal no solo sem carga extra e agachamento sem implemento.
+// Fica de fora: flexão nórdica/de joelhos/palmar, agachamento com barra/halter/Smith/máquina, abdominal de máquina/polia/peso.
+export function corpoEhCarga(nome: string) {
+  const n = semAcento(nome).trim()
+  if (/^barra fixa|^flexao de bracos|^agachamento com peso do corpo$/.test(n)) return true
+  return /^abdominal (infra no solo|tesoura|recolhimento)/.test(n) && !/peso|caneleira|anilha|halter|maquina|polia|cabo/.test(n)
 }
