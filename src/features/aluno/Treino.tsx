@@ -208,7 +208,7 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
           onChange={(ev) => setRascunho(ev.target.value)}
           placeholder="Ex.: banco na posição 3, aparelho Life"
           aria-label={`Anotação de ${nome}`}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none focus:border-marca-500"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none transition-[border-color,box-shadow] duration-150 focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]"
         />
         <div className="mt-1 flex gap-2">
           <Botao

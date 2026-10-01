@@ -75,7 +75,7 @@ function MenuRolavel() {
     <div className="relative min-w-0 flex-1">
       <nav
         ref={ref}
-        className="flex gap-3 overflow-x-auto sm:gap-4 text-sm text-slate-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap [&>a]:py-2"
+        className="-m-1 flex gap-3 overflow-x-auto p-1 sm:gap-4 text-sm text-slate-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap [&>a]:py-2"
       >
         <a href="#/" className="hover:text-marca-400">Início</a>
         <a href="#/alunos" className="hover:text-marca-400">Alunos</a>

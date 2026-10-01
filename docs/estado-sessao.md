@@ -21,8 +21,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Inatividade: aluno 30 min, coach 20 min.
   - MFA TOTP só para o coach: ativo.
   - Sem tela de erros no painel: os erros ficam no workflow "Ver erros do app".
-  - PR #27 (2 etapas obrigatórias + App Check) aguarda o "pode juntar" do Victor.
-  - App Check: provedor **reCAPTCHA Enterprise**, chave no `.env.production` desde 01/10/2026; falta o Victor confirmar a chave salva no App Check do Firebase (`docs/seguranca.md`, passo 3). Depois, modo Monitorar e, após alguns dias sem erros, **Aplicar**.
+  - PR #27 (2 etapas obrigatórias + App Check) juntado e publicado. PR #28 corrigiu o login que caía na hora (marca de inatividade antiga).
+  - App Check: **reCAPTCHA Enterprise** registrado no Firebase em modo Monitorar (01/10/2026). Após alguns dias sem erros, conferir o uso (grátis até 10 mil/mês) e mudar para **Aplicar**.
+- **01/10/2026 (madrugada, autorizado pelo Victor a juntar sozinho):** peso do corpo automático nos exercícios de corpo livre + opção "Somar meu peso corporal" abaixo das séries; campo de anotação limpo; menu do topo sem cortes (ícone de conta no celular). Depois: aluno de exemplo "Victor C.L. Silva" + `docs/apresentacao.md`.
 - **Entrega 5** (a planejar), pagamento:
   - Pix estático no app (QR + copia e cola, sem taxa), com "Valor mensal" por aluno e configuração de pagamento no painel;
   - "Já paguei" → "Pagamentos a confirmar" no Início → "Confirmar" (+1 mês);
