@@ -32,6 +32,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
+- **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
+  - avaliação física (Fase 3): dados de saúde, com acesso só do coach e do próprio aluno, e auditoria das regras;
+  - cartão no app (Apple Pay, Google Pay, Samsung Pay…): o app nunca guarda nem vê dados de cartão, tudo via gateway com tokenização (PCI); precisa de servidor (Worker da Cloudflare, já que o Spark não tem Functions).
 - Senha provisória pelo WhatsApp em vez do e-mail do Firebase (o nome "forca--app" aparece nos e-mails).
 - Botão "ver vídeo" em cada exercício, quando o Victor gravar os vídeos.
 - App da Gislane (`docs/plano-app-gislane.md`):
