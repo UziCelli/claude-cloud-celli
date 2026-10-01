@@ -18,7 +18,8 @@ const lerUltima = () => {
     return 0
   }
 }
-const marcar = (t = Date.now()) => {
+// Também chamado ao enviar o login: sem isso, a marca velha da sessão anterior derrubava o login novo na hora.
+export const marcar = (t = Date.now()) => {
   try {
     localStorage.setItem(ATIVIDADE, String(t))
   } catch {

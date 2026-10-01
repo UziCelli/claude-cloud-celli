@@ -146,6 +146,19 @@ test('coach arquiva, vê em Arquivados e reativa', async ({ page }) => {
   await expect(linha.getByText('Ativo')).toBeVisible()
 })
 
+// Bug de 01/10/2026: a marca de uso da sessão anterior (velha) derrubava o login novo na hora.
+test('login novo não cai por inatividade antiga', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => localStorage.setItem('forca-ultima-atividade', String(Date.now() - 2 * 60 * 60_000)))
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.waitForTimeout(3000)
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await expect(page.getByText('Você saiu por inatividade.')).toHaveCount(0)
+})
+
 test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com app', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('E-mail').fill(COACH.email)

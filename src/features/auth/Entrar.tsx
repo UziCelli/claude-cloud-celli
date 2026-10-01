@@ -7,7 +7,7 @@ import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
 import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from '../../ui'
 import Logo from '../../Logo'
 import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
-import { AVISO_SAIU } from '../../lib/inatividade'
+import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
 
 const erros: Record<string, string> = {
@@ -75,6 +75,7 @@ export default function Entrar() {
     if (!cadastro && restanteSeg() > 0) return setEspera(restanteSeg())
     setErro('')
     setEnviando(true)
+    marcar() // quem está entrando está usando o app
     try {
       if (resolver) {
         await confirmarLoginTotp(resolver, codigo)
