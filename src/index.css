@@ -71,3 +71,6 @@ body {
   }
 }
 button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer; }
+
+/* Selo do reCAPTCHA tapa botões no celular; o aviso legal fica na tela de login. */
+.grecaptcha-badge { visibility: hidden; }
