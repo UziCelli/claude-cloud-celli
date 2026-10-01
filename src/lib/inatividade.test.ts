@@ -16,4 +16,7 @@ describe('inatividade', () => {
     expect(expirou(t0, t0 + 20 * 60_000, 'aluno')).toBe(false)
     expect(expirou(t0, t0 + 30 * 60_000, 'aluno')).toBe(true)
   })
+  it('sem marca (aparelho sem armazenamento) não derruba ninguém', () => {
+    expect(expirou(0, Date.now(), 'coach')).toBe(false)
+  })
 })
