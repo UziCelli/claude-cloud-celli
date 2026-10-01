@@ -1,0 +1,36 @@
+name: Aluno de exemplo
+
+# Manutenção manual: prepara a conta "Victor C.L. Silva" (antes "Victor Aluno") para apresentar o app.
+# Rode com modo "gravar" antes de cada apresentação (as datas ficam atuais). "simular" só mostra o que faria.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: simular (só mostra o que faria) ou gravar (aplica no app)
+        type: choice
+        options:
+          - simular
+          - gravar
+        default: simular
+
+permissions:
+  contents: read
+
+jobs:
+  exemplo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preparar o aluno de exemplo
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          MODO: ${{ inputs.modo }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/aluno-exemplo.mjs "$RUNNER_TEMP/adm/"
+          cd "$RUNNER_TEMP/adm"
+          npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node aluno-exemplo.mjs
