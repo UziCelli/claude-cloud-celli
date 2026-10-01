@@ -14,20 +14,19 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Entrega 2** (`docs/plano-entrega2.md`): PR #21, juntado e publicado.
   - Padrão adotado: os 2 primeiros exercícios de cada treino ficam fora do biset automático (`incluirPrincipais=false`).
   - O motor ainda lê as chaves antigas `'t-p'` de `progressaoExercicio` como reserva para mesos não migrados.
-- **Entrega 3 (3a + 3b)**: PR #23. CI verde, revisada sem bloqueantes, Worker publicado.
+- **Entrega 3**: PRs #23 e #24 (Superset = 4+ exercícios), juntados e publicados.
   - Worker: `https://vfit-descanso.vfitcoach-site.workers.dev`.
-  - Esperando o "pode juntar". Depois, o Victor testa a notificação num iPhone real.
-  - Pendências menores da revisão (ficam para a Entrega 4):
-    - o Worker não limita frequência nem confere `pagoAte`;
-    - o estado salvo do cronômetro não guarda o uid;
-    - origens localhost liberadas no CORS em produção;
-    - com o app aberto no fim do descanso, chegam o bipe e a notificação (confirmar no iPhone se incomoda).
-- **Entrega 4** (a planejar): registro de erros (coleção `logs` + tela "Erros do app" + vigia de carregamento) e segurança:
-  - MFA TOTP via Identity Platform (grátis no Spark);
-  - limite de tentativas + App Check;
-  - logout por inatividade sem perder cargas;
-  - varredura XSS.
-  - Esperando o Victor responder: MFA só para o coach? Inatividade de 30 min para o coach e 7 dias para o aluno?
+  - Falta o Victor testar a notificação num iPhone real.
+- **Entrega 4** (`docs/plano-entrega4.md`): em andamento, aprovada ("pode rodar").
+  - Inatividade: aluno 30 min, coach 20 min.
+  - MFA TOTP só para o coach.
+  - Sem tela de erros no painel: os erros ficam no workflow "Ver erros do app".
+- **Entrega 5** (a planejar), pagamento:
+  - Pix estático no app (QR + copia e cola, sem taxa), com "Valor mensal" por aluno e configuração de pagamento no painel;
+  - "Já paguei" → "Pagamentos a confirmar" no Início → "Confirmar" (+1 mês);
+  - link de cartão opcional (a DOC Pagamentos não tem API);
+  - botão também na tela de bloqueio;
+  - aviso de vencimento por push (3 dias antes e no dia), abrindo a tela do Pix.
 - **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
