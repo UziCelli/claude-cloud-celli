@@ -545,3 +545,78 @@ describe('notas', () => {
     await assertFails(gravar('bia', 'bia', { exercicios: mapa(301) }));
   });
 });
+
+// Registro de erros do app: qualquer usuário logado cria; só o coach lê e apaga; ninguém edita.
+describe('logs', () => {
+  const log = (uid: string | undefined, id = 'l1') => doc(db(uid), 'logs', id);
+  const valido = (uid: string, extra: object = {}) => ({
+    tipo: 'erro',
+    mensagem: 'falhou ao salvar',
+    tela: '/treino',
+    versao: '1.0.0',
+    aparelho: 'Mozilla/5.0',
+    online: true,
+    uid,
+    em: serverTimestamp(),
+    ...extra,
+  });
+  const semudar = () =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'logs', 'l1'), { tipo: 'erro', mensagem: 'x', uid: 'ana' }),
+    );
+
+  it('aluno logado cria registro válido, de qualquer status', async () => {
+    await assertSucceeds(setDoc(log('ana'), valido('ana')));
+    await assertSucceeds(setDoc(log('blq', 'l2'), valido('blq')));
+    await assertSucceeds(setDoc(log('agu', 'l3'), valido('agu')));
+  });
+
+  it('aceita todos os tipos e nega tipo desconhecido', async () => {
+    for (const tipo of ['erro', 'promessa', 'gravacao', 'carregando']) {
+      await assertSucceeds(setDoc(log('ana', tipo), valido('ana', { tipo })));
+    }
+    await assertFails(setDoc(log('ana'), valido('ana', { tipo: 'outro' })));
+  });
+
+  it('nega sem login', () => assertFails(setDoc(log(undefined), valido('ana'))));
+
+  it('nega campo extra e campo faltando', async () => {
+    await assertFails(setDoc(log('ana'), valido('ana', { extra: 1 })));
+    for (const campo of ['tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em']) {
+      const { [campo]: _fora, ...resto } = valido('ana') as Record<string, unknown>;
+      await assertFails(setDoc(log('ana'), resto));
+    }
+  });
+
+  it('limita tamanhos e tipos', async () => {
+    await assertSucceeds(setDoc(log('ana', 'a'), valido('ana', { mensagem: 'x'.repeat(500) })));
+    await assertFails(setDoc(log('ana'), valido('ana', { mensagem: 'x'.repeat(501) })));
+    await assertFails(setDoc(log('ana'), valido('ana', { mensagem: 123 })));
+    await assertFails(setDoc(log('ana'), valido('ana', { tela: 'x'.repeat(101) })));
+    await assertFails(setDoc(log('ana'), valido('ana', { versao: 'x'.repeat(41) })));
+    await assertFails(setDoc(log('ana'), valido('ana', { aparelho: 'x'.repeat(201) })));
+    await assertFails(setDoc(log('ana'), valido('ana', { online: 'sim' })));
+  });
+
+  it('nega uid de outro e hora do aparelho', async () => {
+    await assertFails(setDoc(log('ana'), valido('bia')));
+    await assertFails(setDoc(log('ana'), valido('ana', { em: futuro })));
+  });
+
+  it('aluno não lê, não lista, não apaga e não edita', async () => {
+    await semudar();
+    await assertFails(getDoc(log('ana')));
+    await assertFails(getDocs(collection(db('ana'), 'logs')));
+    await assertFails(deleteDoc(log('ana')));
+    await assertFails(updateDoc(log('ana'), { mensagem: 'y' }));
+  });
+
+  it('coach lê, lista e apaga, mas não edita', async () => {
+    await semudar();
+    await assertSucceeds(getDoc(log('coach')));
+    await assertSucceeds(getDocs(collection(db('coach'), 'logs')));
+    await assertFails(updateDoc(log('coach'), { mensagem: 'y' }));
+    await assertSucceeds(deleteDoc(log('coach')));
+    await assertSucceeds(setDoc(log('coach', 'c1'), valido('coach')));
+  });
+});

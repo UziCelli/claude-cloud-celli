@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
 import { darAcessoAoApp, duplicarMeso, excluirMeso, salvarMeso } from '../../../lib/acoes'
+import { registrarErro } from '../../../lib/log'
 import { type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
@@ -31,7 +32,10 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
     setErro(null)
     const { id, gravado } = salvarMeso(null, uid, `Mesociclo ${mesos.dados.length + 1}`, mesoPadrao())
     ir(`/meso/${id}`)
-    gravado.catch(() => setErro('Não foi possível salvar o novo mesociclo.'))
+    gravado.catch((e) => {
+      registrarErro('gravacao', `novo meso: ${e?.code ?? e}`, e)
+      setErro('Não foi possível salvar o novo mesociclo.')
+    })
   }
 
   return (
@@ -130,7 +134,10 @@ function FormDuplicar({ mesoId, onFechar }: { mesoId: string; onFechar: () => vo
     try {
       const { id, gravado } = await duplicarMeso(mesoId, alunoId, nome.trim())
       ir(`/meso/${id}`)
-      gravado.catch(() => setErro('Não foi possível duplicar o mesociclo.'))
+      gravado.catch((e) => {
+        registrarErro('gravacao', `duplicar meso: ${e?.code ?? e}`, e)
+        setErro('Não foi possível duplicar o mesociclo.')
+      })
     } catch {
       setErro('Não foi possível duplicar o mesociclo.')
       setEnviando(false)

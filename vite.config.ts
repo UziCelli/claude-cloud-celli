@@ -18,6 +18,7 @@ const previewHeaders = Object.fromEntries(
 );
 
 export default defineConfig({
+  define: { __VERSAO__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
   preview: { headers: previewHeaders },
   plugins: [
     react(),

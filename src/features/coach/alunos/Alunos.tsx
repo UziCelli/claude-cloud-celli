@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
 import { apagarAluno, definirAcesso } from '../../../lib/acoes'
+import { registrarErro } from '../../../lib/log'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
@@ -72,19 +73,28 @@ export default function Alunos() {
 
   function liberar(uid: string, pagoAte: string) {
     setErro('')
-    definirAcesso(uid, { status: 'ativo', pagoAte }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
+    definirAcesso(uid, { status: 'ativo', pagoAte }).catch((e) => {
+      registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
+      setErro('Não deu para gravar. Tente de novo.')
+    })
     setEditando(null)
   }
 
   function bloquear(uid: string) {
     if (!confirm('Bloquear o acesso deste aluno?')) return
     setErro('')
-    definirAcesso(uid, { status: 'bloqueado' }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
+    definirAcesso(uid, { status: 'bloqueado' }).catch((e) => {
+      registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
+      setErro('Não deu para gravar. Tente de novo.')
+    })
   }
 
   function reativar(uid: string) {
     setErro('')
-    definirAcesso(uid, { status: 'ativo' }).catch(() => setErro('Não deu para gravar. Tente de novo.'))
+    definirAcesso(uid, { status: 'ativo' }).catch((e) => {
+      registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
+      setErro('Não deu para gravar. Tente de novo.')
+    })
   }
 
   const acoes = (a: Aluno) =>

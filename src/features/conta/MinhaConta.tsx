@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { doc } from 'firebase/firestore'
-import { alterarEmail, recuperarSenha, salvarPeso, sincronizarEmail } from '../../lib/acoes'
+import type { TotpSecret } from 'firebase/auth'
+import { alterarEmail, ativarTotp, iniciarTotp, reautenticar, recuperarSenha, salvarPeso, sincronizarEmail, temTotp } from '../../lib/acoes'
+import { chaveManual, codigoCompleto, limparCodigo, mensagemMfa, qrDataUrl } from '../../lib/mfa'
 import type { Usuario } from '../../lib/acesso'
 import { db } from '../../lib/firebase'
 import { useDoc } from '../../lib/hooks'
@@ -38,6 +40,116 @@ function Peso({ uid, atual }: { uid: string; atual?: number }) {
           Salvar peso
         </Botao>
       </form>
+    </Cartao>
+  )
+}
+
+// Só coach: ativa o 2º fator (Google Authenticator) escaneando um QR code e confirmando com um código.
+function DuasEtapas() {
+  const [ativa, setAtiva] = useState(temTotp)
+  const [chave, setChave] = useState<{ secret: TotpSecret; uri: string } | null>(null)
+  const [codigo, setCodigo] = useState('')
+  const [senha, setSenha] = useState('')
+  const [pedeSenha, setPedeSenha] = useState(false)
+  const [ocupado, setOcupado] = useState(false)
+  const [erro, setErro] = useState('')
+
+  // Tenta a ação; se o Firebase pedir login recente, pede a senha e tenta de novo.
+  async function tentar(acao: () => Promise<void>) {
+    setErro('')
+    setOcupado(true)
+    try {
+      await acao()
+    } catch (e) {
+      const code = e instanceof FirebaseError ? e.code : undefined
+      if (code === 'auth/requires-recent-login') {
+        setPedeSenha(true)
+        setErro('Por segurança, confirme sua senha para continuar.')
+      } else setErro(mensagemMfa(code))
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  const comecar = () => tentar(async () => setChave(await iniciarTotp()))
+  const confirmar = () =>
+    tentar(async () => {
+      if (!chave) return
+      await ativarTotp(chave.secret, codigo)
+      setAtiva(true)
+      setChave(null)
+    })
+  // Depois de reautenticar, a pessoa toca de novo em Ativar/Confirmar.
+  const confirmarSenha = () =>
+    tentar(async () => {
+      await reautenticar(senha)
+      setPedeSenha(false)
+      setSenha('')
+      setErro('Senha confirmada. Toque de novo para continuar.')
+    })
+
+  return (
+    <Cartao className="space-y-3">
+      <h2 className="font-semibold">Verificação em 2 etapas</h2>
+      {ativa ? (
+        <p className="text-sm text-emerald-400">Ativada ✓</p>
+      ) : (
+        <>
+          <p className="text-sm text-slate-400">
+            Além da senha, o login pede um código de 6 dígitos do app Google Authenticator.
+          </p>
+          {chave && !pedeSenha && (
+            <div className="space-y-3">
+              <p className="text-sm">Abra o Google Authenticator, toque em + e escaneie o QR code:</p>
+              <img src={qrDataUrl(chave.uri)} alt="QR code para o Google Authenticator" className="mx-auto h-48 w-48 rounded bg-white p-2" />
+              <p className="text-sm text-slate-400">
+                Ou digite esta chave no app: <span className="break-all font-mono text-slate-200">{chaveManual(chave.secret.secretKey)}</span>
+              </p>
+              <form
+                className="space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (codigoCompleto(codigo)) confirmar()
+                }}
+              >
+                <Campo
+                  rotulo="Código de 6 dígitos do Google Authenticator"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  value={codigo}
+                  onChange={(e) => setCodigo(limparCodigo(e.target.value))}
+                  required
+                />
+                <Botao tipo="primario" className="w-full" disabled={ocupado || !codigoCompleto(codigo)}>
+                  {ocupado ? 'Confirmando…' : 'Confirmar e ativar'}
+                </Botao>
+              </form>
+            </div>
+          )}
+          {pedeSenha && (
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault()
+                confirmarSenha()
+              }}
+            >
+              <Campo rotulo="Senha atual" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+              <Botao tipo="primario" className="w-full" disabled={ocupado}>
+                Confirmar senha
+              </Botao>
+            </form>
+          )}
+          {!chave && !pedeSenha && (
+            <Botao type="button" tipo="primario" className="w-full" disabled={ocupado} onClick={comecar}>
+              {ocupado ? 'Gerando…' : 'Ativar'}
+            </Botao>
+          )}
+        </>
+      )}
+      <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
     </Cartao>
   )
 }
@@ -115,6 +227,7 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
             </Botao>
           </form>
         </Cartao>
+        {perfil?.papel === 'coach' && !carregando && <DuasEtapas />}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
         <Msg>{ok && <Aviso>{ok}</Aviso>}</Msg>
         <Botao type="button" className="w-full" onClick={trocarSenha}>

@@ -138,5 +138,24 @@ service cloud.firestore {
         && request.resource.data.exercicios.size() <= 300
         && request.resource.data.atualizadoEm == request.time;
     }
+
+    // Registro de erros do app (src/lib/log.ts): qualquer usuário logado cria, com campos e
+    // tamanhos fixos (exige login para ninguém de fora esgotar a cota grátis). Só o coach lê e apaga.
+    match /logs/{id} {
+      allow read, delete: if isCoach();
+      allow update: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em'])
+        && request.resource.data.keys().hasAll(['tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em'])
+        && request.resource.data.tipo in ['erro', 'promessa', 'gravacao', 'carregando']
+        && request.resource.data.mensagem is string && request.resource.data.mensagem.size() <= 500
+        && request.resource.data.tela is string && request.resource.data.tela.size() <= 100
+        && request.resource.data.versao is string && request.resource.data.versao.size() <= 40
+        && request.resource.data.aparelho is string && request.resource.data.aparelho.size() <= 200
+        && request.resource.data.online is bool
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.em == request.time;
+    }
   }
 }

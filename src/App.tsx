@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { liberado, type Usuario } from './lib/acesso'
 import { sair } from './lib/acoes'
 import { useUsuarioAtual } from './lib/hooks'
+import { etapaCarregando, telaPronta } from './lib/log'
+import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
 import { Abertura, Botao, Centro, Tela } from './ui'
 import Logo from './Logo'
@@ -32,7 +34,26 @@ function Principal() {
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} nome={perfil.nome} email={perfil.email} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
   else tela = <AlunoApp uid={user.uid} nome={perfil.nome} />
-  return <Tela chave={estagio}>{tela}</Tela>
+  useEffect(() => {
+    if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
+    else telaPronta()
+  }, [estagio, carregando, user])
+  return (
+    <>
+      {user && perfil && <Vigia papel={perfil.papel === 'coach' ? 'coach' : 'aluno'} />}
+      <Tela chave={estagio}>{tela}</Tela>
+    </>
+  )
+}
+
+// Desconecta por inatividade; avisa se há cargas esperando internet.
+function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
+  const aviso = useInatividade(papel)
+  return aviso ? (
+    <div role="alert" className="fixed inset-x-0 top-0 z-50 bg-amber-950 px-4 py-2 text-center text-sm text-amber-200">
+      Conecte-se à internet para salvar suas cargas antes de sair.
+    </div>
+  ) : null
 }
 
 function Coach({ uid, nome, email }: { uid: string; nome: string; email: string }) {

@@ -1,6 +1,7 @@
 import { m } from 'motion/react'
 import { useState } from 'react'
 import { criarAlunoComApp, criarAlunoPresencial } from '../../../lib/acoes'
+import { registrarErro } from '../../../lib/log'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { ir } from '../../../rota'
 import { Aviso, Botao, Campo, Cartao, flash, Msg, Pagina, Painel } from '../../../ui'
@@ -19,7 +20,10 @@ export default function NovoAluno() {
     if (!app) {
       const { id, gravado } = criarAlunoPresencial({ nome: nome.trim() })
       ir('/aluno/' + id)
-      gravado.catch(() => alert('Não foi possível salvar o aluno. Tente de novo.'))
+      gravado.catch((e) => {
+        registrarErro('gravacao', `novo aluno: ${e?.code ?? e}`, e)
+        alert('Não foi possível salvar o aluno. Tente de novo.')
+      })
       return
     }
     setEnviando(true)

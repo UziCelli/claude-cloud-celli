@@ -1,0 +1,41 @@
+name: 2 etapas do coach
+
+# Manutenção manual da verificação em 2 etapas (app autenticador) do coach. Veja tools/mfa.mjs.
+# - ativar-totp: liga o TOTP no projeto (antes: upgrade para o Identity Platform no console do Firebase).
+# - desativar-coach: EMERGÊNCIA, para quando o coach perdeu o celular. Informe o e-mail do coach.
+on:
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: O que fazer
+        type: choice
+        required: true
+        options:
+          - ativar-totp
+          - desativar-coach
+      email:
+        description: E-mail do coach (só para desativar-coach)
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  mfa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Executar
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          ACAO: ${{ inputs.acao }}
+          EMAIL: ${{ inputs.email }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/mfa.mjs "$RUNNER_TEMP/adm/"
+          cd "$RUNNER_TEMP/adm"
+          npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node mfa.mjs

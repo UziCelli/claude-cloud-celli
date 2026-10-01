@@ -4,6 +4,7 @@ import { collection, doc, query, where } from 'firebase/firestore'
 import { migrarProgressao } from '../../../engine'
 import type { Meso } from '../../../engine'
 import { marcarAdaptado, salvarMeso } from '../../../lib/acoes'
+import { registrarErro } from '../../../lib/log'
 import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
@@ -73,7 +74,10 @@ export default function EditorMeso({ id }: { id: string }) {
     setErro(null)
     const g = salvarMeso(id, alunoId, nome, novo).gravado
     if (adaptou) g.then(() => marcarAdaptado(id)).catch(() => {})
-    g.catch(() => setErro('Não foi possível salvar. Tentando de novo quando houver internet.'))
+    g.catch((e) => {
+      registrarErro('gravacao', `salvar meso: ${e?.code ?? e}`, e)
+      setErro('Não foi possível salvar. Tentando de novo quando houver internet.')
+    })
   }
 
   // Há carga registrada em algum treino/semana que satisfaz o filtro?

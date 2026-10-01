@@ -105,6 +105,8 @@ Comece por aqui para achar onde mexer.
 - `e2e/seed.ts` — fixture: usuários, mesos
 
 ### `tools/` — Scripts offline
+- `tools/mfa.mjs` + `.github/workflows/mfa.yml`: ativa o TOTP no projeto e remove o 2º fator do coach em emergência.
+- `tools/erros.mjs` + `.github/workflows/erros.yml` ("Ver erros do app"): lista os 100 logs mais recentes no resumo e apaga os com mais de 30 dias.
 - `extrair_planilha.py` — lê .xlsx original (conversão manual)
 - `planilha_para_meso.py` — transforma matriz em `Meso` JSON
 - `importar-meso.mjs` — sobe um meso + cargas para demo Firebase
@@ -204,3 +206,10 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Motor | `src/engine/` | Fonte da verdade: `docs/logica-planilha.md`; TDD obrigatório. | `src/engine/*.test.ts` |
 | Push do descanso | `push/src/` | Token do Firebase verificado (aud/iss/exp/assinatura); só endpoints de push conhecidos (`HOSTS`); chaves VAPID nunca regeneradas. | `push/src/*.test.ts`, conferência no `push.yml` |
 | CSP | `firebase.json` | `connect-src` só com os domínios usados (Google APIs e o Worker); o e2e usa a mesma CSP. | e2e completo |
+| Registro de erros | `firestore.rules` (`logs`), `src/lib/log.ts` | Criar só logado, com `hasOnly` e tamanhos fixos, `uid == auth.uid` e `em == request.time`; só o coach lê e apaga; ninguém edita. O log nunca registra o próprio erro, e `promessa` ignora o que já foi registrado como `gravacao`. Antes do login fica numa fila local; máx. 20 por aparelho por dia. | `tests/rules.test.ts` (logs), `log.test.ts` |
+| Inatividade | `src/lib/inatividade.ts` | Coach 20 min, aluno 30 min; o cronômetro rodando conta como uso; só sai depois de `waitForPendingWrites` (offline = avisa e espera). | `inatividade.test.ts` |
+| Tentativas de login | `src/lib/tentativas.ts`, `Entrar.tsx` | Depois de 5 falhas, espera crescente (30 s → máx. 15 min) por aparelho; zera no sucesso. | `tentativas.test.ts` |
+| Push: acesso | `push/src/acesso.ts`, `index.ts` | `/agendar` só para coach ou aluno ativo e em dia (perfil lido com o token dele, cache de 10 min); 30 por minuto (429); falha ao ler = 503; CORS sem localhost. O limite e o cache ficam na memória da instância e recomeçam se ela reiniciar. | `push/src/acesso.test.ts`, `cors.test.ts` |
+| Descanso salvo | `src/lib/descanso.ts` | O estado guarda o `uid`; de outra conta (ou sem uid) é ignorado e apagado. | `descanso.test.ts` |
+| 2º fator do coach | `src/lib/mfa.ts`, `Entrar.tsx`, `MinhaConta.tsx` | TOTP (Google Authenticator). Código errado conta como tentativa falha; sessão vencida volta ao e-mail e senha. Emergência: workflow `mfa.yml`, ação `desativar-coach`. | `mfa.test.ts` |
+| App Check | `src/lib/firebase.ts` | Só liga com `VITE_RECAPTCHA_KEY` e fora do emulador. Antes, liberar o reCAPTCHA na CSP (`docs/seguranca.md`). | build |

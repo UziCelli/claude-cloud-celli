@@ -3,13 +3,19 @@
 import {
   createUserWithEmailAndPassword,
   EmailAuthProvider,
+  getMultiFactorResolver,
+  multiFactor,
   reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  TotpMultiFactorGenerator,
+  type MultiFactorResolver,
+  type TotpSecret,
   verifyBeforeUpdateEmail,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
+import { registrarErro } from './log'
 import {
   collection,
   deleteDoc,
@@ -181,7 +187,10 @@ const registro = (mesoId: string, alunoId: string, semana: number, treino: numbe
     doc(db, 'registros', registroId(mesoId, semana, treino)),
     { alunoId, mesoId, semana, treino, ...campos, atualizadoEm: serverTimestamp() },
     { merge: true },
-  )
+  ).catch((e) => {
+    registrarErro('gravacao', `registro: ${e?.code ?? e}`, e)
+    throw e
+  })
 
 export const registrarCarga = (
   mesoId: string,
@@ -234,11 +243,44 @@ export const recuperarSenha = (email: string) => sendPasswordResetEmail(auth, em
 
 // Troca de e-mail: confirma a senha e manda o link para o e-mail NOVO. A troca só acontece
 // quando a pessoa clica no link (até lá o login continua com o e-mail antigo).
-export async function alterarEmail(senhaAtual: string, novoEmail: string) {
+export async function reautenticar(senhaAtual: string) {
   const user = auth.currentUser
   if (!user?.email) throw new Error('Sem login')
   await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, senhaAtual))
+  return user
+}
+
+export async function alterarEmail(senhaAtual: string, novoEmail: string) {
+  const user = await reautenticar(senhaAtual)
   await verifyBeforeUpdateEmail(user, novoEmail)
+}
+
+// ---------- verificação em 2 etapas (TOTP) ----------
+
+// Login: o Firebase lança auth/multi-factor-auth-required; o resolver guarda o fator do coach.
+export const resolverMfa = (e: FirebaseError) => getMultiFactorResolver(auth, e as never)
+
+export function confirmarLoginTotp(resolver: MultiFactorResolver, codigo: string) {
+  const hint = resolver.hints.find((h) => h.factorId === TotpMultiFactorGenerator.FACTOR_ID)
+  if (!hint) throw new Error('Sem fator TOTP')
+  return resolver.resolveSignIn(TotpMultiFactorGenerator.assertionForSignIn(hint.uid, codigo))
+}
+
+export const temTotp = () =>
+  !!auth.currentUser &&
+  multiFactor(auth.currentUser).enrolledFactors.some((f) => f.factorId === TotpMultiFactorGenerator.FACTOR_ID)
+
+export async function iniciarTotp() {
+  const user = auth.currentUser
+  if (!user) throw new Error('Sem login')
+  const secret = await TotpMultiFactorGenerator.generateSecret(await multiFactor(user).getSession())
+  return { secret, uri: secret.generateQrCodeUrl(user.email ?? '', 'VFITCOACH') }
+}
+
+export async function ativarTotp(secret: TotpSecret, codigo: string) {
+  const user = auth.currentUser
+  if (!user) throw new Error('Sem login')
+  await multiFactor(user).enroll(TotpMultiFactorGenerator.assertionForEnrollment(secret, codigo), 'Google Authenticator')
 }
 
 // Depois da confirmação (e de entrar de novo), copia o e-mail do login para o perfil.
