@@ -37,7 +37,7 @@ const quando = (iso, hora) => Timestamp.fromDate(new Date(`${iso}T${hora}-03:00`
 
 // ---------- prescrição ----------
 // Frações do peso do corpo: as mesmas de src/lib/pesoCorporal.ts (o teste confere).
-// carga = kg da semana 1 (peso EXTRA nos exercícios de peso do corpo); feitas = reps feitas.
+// carga = kg da semana 1 (peso EXTRA nos exercícios de peso do corpo; ao gravar soma-se o corpo); feitas = reps feitas.
 // Colunas = séries (3) + etapas do dropset.
 const T = [
   [ // Treino 1: superior
@@ -141,9 +141,11 @@ T.forEach((treino, t) => {
   const realizadoEm = quando(diaTreino, '18:30:00')
   const cargas = {}, reps = {}, pc = {}
   treino.forEach((e, i) => {
-    cargas[slotId(t, i)] = fmtCol(e.carga)
+    const corpo = e.pc ? Math.round(pesoKg * e.pc * 10) / 10 : 0
+    // Convenção do app: a carga gravada é o TOTAL = extra + peso do corpo.
+    cargas[slotId(t, i)] = fmtCol(e.carga.map((x) => Math.round((x + corpo) * 100) / 100))
     reps[slotId(t, i)] = fmtCol(e.feitas)
-    if (e.pc) pc[slotId(t, i)] = Math.round(pesoKg * e.pc * 10) / 10
+    if (e.pc) pc[slotId(t, i)] = corpo
   })
   const id = `${MESO_ID}_s01_t${t + 1}`
   b.set(

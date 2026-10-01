@@ -76,10 +76,10 @@ export async function criarCoach(nome: string, email: string, senha: string): Pr
 }
 
 // Cria a conta do aluno (Auth + Firestore), já ativa e paga por 30 dias.
-export async function criarAluno(nome: string, email: string, senha: string): Promise<string> {
+export async function criarAluno(nome: string, email: string, senha: string, pesoKg?: number): Promise<string> {
   const uid = await criarConta(email, senha)
   const pagoAte = new Date(Date.now() + 30 * 86_400_000)
-  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte })
+  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte, ...(pesoKg ? { pesoKg } : {}) })
   return uid
 }
 

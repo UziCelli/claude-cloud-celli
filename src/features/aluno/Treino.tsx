@@ -10,7 +10,7 @@ import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
-import { corpoEhCarga, fracaoPC } from '../../lib/pesoCorporal'
+import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
@@ -286,6 +286,26 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   const vermelho = acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin)
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
 
+  // Peso do corpo de um exercício (render e "Concluir"). Automático só em slot sem carga e sem escolha explícita: o histórico nunca muda.
+  const estadoCorpo = (e: (typeof sessao.exercicios)[number]) => {
+    const slot = e.slot.slotId
+    const explicito = slot in pcLocal || slot in pcs
+    const auto = !explicito && !(cs[slot] ?? []).some((c) => c != null) && corpoEhCarga(e.slot.nome) && !!perfil?.pesoKg
+    const corpo = explicito ? (pcLocal[slot] ?? (pcs[slot] || 0)) : auto ? Math.round(perfil!.pesoKg! * fracaoPC(e.slot.nome) * 10) / 10 : 0
+    return { auto, corpo }
+  }
+  const concluir = () => {
+    for (const e of sessao.exercicios) {
+      const { corpo } = estadoCorpo(e)
+      if (!(corpo > 0)) continue
+      const slot = e.slot.slotId
+      if (!(slot in pcs)) registrarPc(mesoId, uid, semana, treino, slot, corpo)
+      for (const { coluna, kg } of preencherCorpo(cs[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
+    }
+    marcarRealizado(mesoId, uid, semana, treino, true)
+    ir('/')
+  }
+
   // Exercícios do mesmo grupo de método ficam juntos (só a ordem de exibição muda).
   const grupoDe = (pos: number) => {
     const l = meso.metodos.find((x) => x.ativo && x.semana === semana && x.treino === treino && x.exercicio === pos && x.grupo != null && METODOS_SEQUENCIA.test(x.metodo))
@@ -337,13 +357,12 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           const slot = e.slot.slotId
           const destaque = seriesDestacadas(e.rotulo, e.n)
           const frac = fracaoPC(e.slot.nome)
-          // Automático só em slot sem carga e sem escolha explícita: o histórico nunca muda.
-          const explicito = slot in pcLocal || slot in pcs
-          const auto = !explicito && !colunasCargas.some((c) => c != null) && corpoEhCarga(e.slot.nome) && !!perfil?.pesoKg
-          const corpo = explicito ? (pcLocal[slot] ?? (pcs[slot] || 0)) : auto ? Math.round(perfil!.pesoKg! * frac * 10) / 10 : 0
+          const { auto, corpo } = estadoCorpo(e)
           const gravaPc = (kg: number) => {
             setPcLocal((p) => ({ ...p, [slot]: kg }))
             registrarPc(mesoId, uid, semana, treino, slot, kg)
+            // Cargas já digitadas mantêm o extra: c - corpo antigo + corpo novo.
+            for (const { coluna, kg: c } of rebasear(colunasCargas, corpo, kg)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, c)
           }
           const alternarPc = () => {
             if (corpo) return gravaPc(0)
@@ -452,6 +471,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                       ? 'Já vem marcado porque neste exercício o corpo é a carga. Nos campos, anote só o peso extra (anilha, colete, cinto).'
                       : 'Nos campos, anote só o peso extra (anilha, colete, cinto).'}
                   </span>
+                  {!!corpo && <span className="mt-1 block text-xs text-slate-400">Séries em branco contam só o peso do corpo ao concluir.</span>}
                 </span>
               </label>
               {corpo > 0 && perfil?.pesoKg && (
@@ -484,10 +504,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           <Botao
             tipo="primario"
             className="w-full py-4 text-base"
-            onClick={() => {
-              marcarRealizado(mesoId, uid, semana, treino, true)
-              ir('/')
-            }}
+            onClick={concluir}
           >
             Concluir treino
           </Botao>

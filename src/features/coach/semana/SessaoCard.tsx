@@ -51,6 +51,7 @@ export default function SessaoCard({
   sessao,
   cargas,
   reps = {},
+  pc = {},
   realizado,
   onRealizado,
   inicioEm,
@@ -62,6 +63,7 @@ export default function SessaoCard({
   sessao: Sessao
   cargas: Cargas
   reps?: Cargas
+  pc?: Record<string, number>
   realizado: boolean
   onRealizado: (v: boolean) => void
   inicioEm?: { toMillis(): number } | null
@@ -126,6 +128,7 @@ export default function SessaoCard({
                       {notas.exercicios[e.slot.nome.trim()]}
                     </div>
                   )}
+                  {pc[e.slot.slotId] > 0 && <div className="mt-0.5 text-[11px] text-slate-400">Inclui peso do corpo: {fmt(pc[e.slot.slotId])} kg</div>}
                   <Chips rotulo={e.rotulo} />
                 </td>
                 {Array.from({ length: sessao.series }, (_, k) =>

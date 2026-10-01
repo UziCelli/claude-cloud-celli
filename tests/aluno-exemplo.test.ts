@@ -152,6 +152,8 @@ describe('aluno de exemplo', () => {
       for (const [slot, kg] of Object.entries(reg.pc as Record<string, number>)) {
         const nome = s.exercicios.find((e) => e.slot.slotId === slot)!.slot.nome
         expect(kg).toBeCloseTo(80 * fracaoPC(nome), 1)
+        // Convenção do app: a carga gravada é o TOTAL (extra + peso do corpo); o extra do exemplo é 0.
+        for (const c of Object.values(reg.cargas[slot] as Record<string, number>)) expect(c, nome).toBe(Math.round((0 + kg) * 100) / 100)
       }
     }
     // Os 4 de peso do corpo estão marcados.
