@@ -11,7 +11,7 @@ import { fmtData } from './format'
 import Monitoramento from './Monitoramento'
 import SessaoCard from './SessaoCard'
 
-type RegistroDocCompleto = RegistroDoc & { realizado?: boolean; inicioEm?: Timestamp | null; realizadoEm?: Timestamp | null }
+type RegistroDocCompleto = RegistroDoc & { realizado?: boolean; pc?: Record<string, number>; inicioEm?: Timestamp | null; realizadoEm?: Timestamp | null }
 
 export default function VisaoSemana({ id, semana }: { id: string; semana: number }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', id))
@@ -73,6 +73,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               sessao={sessao}
               cargas={registros[chave] ?? {}}
               reps={reps[chave] ?? {}}
+              pc={tempos[chave]?.pc}
               realizado={!!realizados[chave]}
               inicioEm={tempos[chave]?.inicioEm}
               realizadoEm={tempos[chave]?.realizadoEm}

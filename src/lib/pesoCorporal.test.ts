@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { corpoEhCarga, fracaoPC } from './pesoCorporal'
+import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from './pesoCorporal'
 
 describe('fracaoPC', () => {
   it.each([
@@ -54,5 +54,34 @@ describe('corpoEhCarga', () => {
     const { default: cat } = await import('../data/exercicios.json')
     const ids = cat.flatMap((g) => g.exercicios.map((e) => e.id))
     expect(ids).toContain('agachamento-com-peso-do-corpo')
+  })
+})
+
+describe('rebasear', () => {
+  it('troca o corpo mantendo o extra digitado', () => {
+    expect(rebasear([10, null, 12.5], 0, 80)).toEqual([{ coluna: 0, kg: 90 }, { coluna: 2, kg: 92.5 }])
+    expect(rebasear([90, 92.5], 80, 0)).toEqual([{ coluna: 0, kg: 10 }, { coluna: 1, kg: 12.5 }])
+    expect(rebasear([85], 76, 80.5)).toEqual([{ coluna: 0, kg: 89.5 }])
+  })
+  it('carga gravada sem o corpo antigo (dado antigo) fica como está; não grava quando nada muda', () => {
+    expect(rebasear([5], 80, 0)).toEqual([]) // nenhuma carga se perde
+    expect(rebasear([5, 85], 80, 0)).toEqual([{ coluna: 1, kg: 5 }])
+    expect(rebasear([10, 20], 80, 80)).toEqual([])
+    expect(rebasear([null, null], 0, 80)).toEqual([])
+    expect(rebasear([], 0, 80)).toEqual([])
+  })
+})
+
+describe('preencherCorpo', () => {
+  it('preenche só séries prescritas vazias com o corpo', () => {
+    expect(preencherCorpo([null, 5, undefined as never], 3, 76)).toEqual([{ coluna: 0, kg: 76 }, { coluna: 2, kg: 76 }])
+    expect(preencherCorpo([], 2, 76)).toEqual([{ coluna: 0, kg: 76 }, { coluna: 1, kg: 76 }])
+  })
+  it('ignora colunas de drop e corpo zerado', () => {
+    expect(preencherCorpo([null, null, null, null], 3, 50)).toHaveLength(3)
+    expect(preencherCorpo([null], 1, 0)).toEqual([])
+  })
+  it('nunca sobrescreve carga existente (nem 0)', () => {
+    expect(preencherCorpo([0, 60], 2, 76)).toEqual([])
   })
 })
