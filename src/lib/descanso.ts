@@ -6,7 +6,7 @@ export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padSt
 const CHAVE = 'forca-descanso'
 const CHAVE_SOM = 'forca-descanso-som'
 
-export type EstadoSalvo = { slot: string; fimEm: number | null; total: number; pausadoRestante: number | null }
+export type EstadoSalvo = { slot: string; fimEm: number | null; total: number; pausadoRestante: number | null; uid?: string }
 export type Bipe = { em: number; tons: { freq: number; dur: number; vol: number; atraso: number }[] }
 
 // Bipes que ainda faltam, com o atraso (s) a partir de agora. Marcos: 5,4 médio; 3,2,1 agudo; 0 fim.
@@ -34,10 +34,16 @@ export const vibracaoDoMarco = (m: number): number | number[] | null => (m === 0
 
 type Armazem = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
-export function lerEstado(agora: number, arm?: Armazem): EstadoSalvo | null {
+// Só restaura o estado de quem iniciou (uid): de outra conta (ou sem uid) é ignorado e apagado.
+export function lerEstado(agora: number, uid: string | null, arm?: Armazem): EstadoSalvo | null {
   try {
-    const s = JSON.parse((arm ?? localStorage).getItem(CHAVE) ?? 'null') as EstadoSalvo | null
+    const a = arm ?? localStorage
+    const s = JSON.parse(a.getItem(CHAVE) ?? 'null') as EstadoSalvo | null
     if (!s || typeof s.slot !== 'string' || !(s.total > 0)) return null
+    if (!uid || s.uid !== uid) {
+      a.removeItem(CHAVE)
+      return null
+    }
     if (s.pausadoRestante != null) return s.pausadoRestante > 0 ? s : null
     return s.fimEm != null && s.fimEm > agora ? s : null
   } catch {
@@ -55,6 +61,17 @@ export function gravarEstado(s: EstadoSalvo | null, arm?: Armazem) {
   }
 }
 
+// Uid do usuário logado. O Firebase só carrega quando é preciso (como em push.ts), e sem import circular.
+async function uidLogado(): Promise<string | null> {
+  try {
+    const { auth } = await import('./firebase')
+    await auth.authStateReady()
+    return auth.currentUser?.uid ?? null
+  } catch {
+    return null
+  }
+}
+
 const lerSom = () => {
   try {
     return localStorage.getItem(CHAVE_SOM) !== '0'
@@ -67,14 +84,13 @@ type Oscs = { o: OscillatorNode; g: GainNode }
 
 // Cronômetro de descanso: persistente, com sons (Web Audio), vibração e tela acesa.
 export function useDescanso() {
-  const inicial = useRef<EstadoSalvo | null | undefined>(undefined)
-  if (inicial.current === undefined) inicial.current = lerEstado(Date.now())
-  const ini = inicial.current
-  const [slot, setSlot] = useState<string | null>(ini?.slot ?? null)
-  const [fimEm, setFimEm] = useState<number | null>(ini?.fimEm ?? null)
-  const [pausado, setPausado] = useState<number | null>(ini?.pausadoRestante ?? null)
-  const [restante, setRestante] = useState(ini?.fimEm ? Math.max(0, Math.round((ini.fimEm - Date.now()) / 1000)) : 0)
-  const [total, setTotal] = useState(ini?.total ?? 1)
+  const [uid, setUid] = useState<string | null>(null) // quem está logado; só depois disso o estado é lido/gravado
+  const tocou = useRef(false) // o aluno já iniciou um descanso antes de o uid chegar
+  const [slot, setSlot] = useState<string | null>(null)
+  const [fimEm, setFimEm] = useState<number | null>(null)
+  const [pausado, setPausado] = useState<number | null>(null)
+  const [restante, setRestante] = useState(0)
+  const [total, setTotal] = useState(1)
   const [ciclo, setCiclo] = useState(0)
   const [som, setSom] = useState(lerSom)
   const ctx = useRef<AudioContext | null>(null)
@@ -145,10 +161,31 @@ export function useDescanso() {
     return () => clearInterval(id)
   }, [fimEm])
 
+  // Restaura o descanso salvo (se for deste usuário)
+  useEffect(() => {
+    let vivo = true
+    void uidLogado().then((u) => {
+      if (!vivo) return
+      const ini = u && !tocou.current ? lerEstado(Date.now(), u) : null
+      if (ini) {
+        setSlot(ini.slot)
+        setFimEm(ini.fimEm)
+        setPausado(ini.pausadoRestante)
+        setRestante(ini.fimEm ? Math.max(0, Math.round((ini.fimEm - Date.now()) / 1000)) : 0)
+        setTotal(ini.total)
+      }
+      setUid(u)
+    })
+    return () => {
+      vivo = false
+    }
+  }, [])
+
   // Persistência
   useEffect(() => {
-    gravarEstado(slot ? { slot, fimEm, total, pausadoRestante: pausado } : null)
-  }, [slot, fimEm, total, pausado])
+    if (!uid) return
+    gravarEstado(slot ? { slot, fimEm, total, pausadoRestante: pausado, uid } : null)
+  }, [uid, slot, fimEm, total, pausado])
 
   // Tela acesa enquanto roda
   const rodando = fimEm != null
@@ -174,6 +211,7 @@ export function useDescanso() {
   }, [rodando])
 
   const iniciar = (segundos: number, s: string) => {
+    tocou.current = true
     setSlot(s)
     setPausado(null)
     setTotal(Math.max(1, segundos))

@@ -1,4 +1,5 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, type FirebaseApp } from 'firebase/app'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import { connectAuthEmulator, getAuth, inMemoryPersistence, initializeAuth, type Auth } from 'firebase/auth'
 import {
   connectFirestoreEmulator,
@@ -23,6 +24,13 @@ const config = emulador
     }
 const app = initializeApp(config)
 
+// App Check (reCAPTCHA v3): só liga com a chave em .env.production e fora do emulador (docs/seguranca.md).
+const protegerApp = (a: FirebaseApp) => {
+  if (!emulador && env.VITE_RECAPTCHA_KEY)
+    initializeAppCheck(a, { provider: new ReCaptchaV3Provider(env.VITE_RECAPTCHA_KEY), isTokenAutoRefreshEnabled: true })
+}
+protegerApp(app)
+
 export const auth = getAuth(app)
 auth.languageCode = 'pt-BR' // e-mails do Firebase (ex.: recuperar senha) em português
 // Cache persistente (IndexedDB) = funciona offline, em várias abas.
@@ -42,7 +50,9 @@ if (emulador) {
 let cadastro: Auth | undefined
 export function authCadastro() {
   if (!cadastro) {
-    cadastro = initializeAuth(initializeApp(config, 'cadastro'), { persistence: inMemoryPersistence })
+    const segunda = initializeApp(config, 'cadastro')
+    protegerApp(segunda) // a criação de conta também passa pelo App Check
+    cadastro = initializeAuth(segunda, { persistence: inMemoryPersistence })
     if (emulador) connectAuthEmulator(cadastro, 'http://127.0.0.1:9099', { disableWarnings: true })
   }
   return cadastro

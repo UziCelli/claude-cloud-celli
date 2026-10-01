@@ -1,14 +1,19 @@
 import { AnimatePresence, m } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { cadastrar, entrar, recuperarSenha } from '../../lib/acoes'
+import type { MultiFactorResolver } from 'firebase/auth'
+import { cadastrar, confirmarLoginTotp, entrar, recuperarSenha, resolverMfa } from '../../lib/acoes'
+import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
 import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from '../../ui'
 import Logo from '../../Logo'
+import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
+import { AVISO_SAIU } from '../../lib/inatividade'
 
 const erros: Record<string, string> = {
-  'auth/wrong-password': 'E-mail ou senha incorretos',
-  'auth/user-not-found': 'E-mail ou senha incorretos',
-  'auth/invalid-credential': 'E-mail ou senha incorretos',
+  'auth/wrong-password': 'E-mail ou senha incorretos.',
+  'auth/user-not-found': 'E-mail ou senha incorretos.',
+  'auth/invalid-credential': 'E-mail ou senha incorretos.',
+  'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos ou use Esqueci minha senha.',
   'auth/email-already-in-use': 'Já existe uma conta com esse e-mail',
   'auth/weak-password': 'Senha muito fraca (mínimo 6 caracteres)',
   'auth/invalid-email': 'E-mail inválido',
@@ -17,6 +22,9 @@ const erros: Record<string, string> = {
 
 const mensagemErro = (e: unknown) =>
   (e instanceof FirebaseError && erros[e.code]) || 'Não deu para entrar. Tente de novo.'
+
+// Código do autenticador errado: mensagem do 2º fator (e a tela volta ao e-mail/senha se a sessão venceu).
+const SESSAO_MFA_VENCIDA = 'auth/invalid-multi-factor-session'
 
 const mensagemRecuperar = (e: unknown) => {
   if (e instanceof FirebaseError && e.code === 'auth/invalid-email') return 'E-mail inválido'
@@ -35,22 +43,73 @@ export default function Entrar() {
   const [enviando, setEnviando] = useState(false)
   const [msgRecuperar, setMsgRecuperar] = useState('')
   const [tremor, setTremor] = useState(0)
+  const [resolver, setResolver] = useState<MultiFactorResolver | null>(null)
+  const [codigo, setCodigo] = useState('')
+  const [espera, setEspera] = useState(restanteSeg)
+  const [saiu] = useState(() => {
+    try {
+      const v = localStorage.getItem(AVISO_SAIU)
+      localStorage.removeItem(AVISO_SAIU)
+      return !!v
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    if (espera <= 0) return
+    const t = setTimeout(() => setEspera(restanteSeg()), 1000)
+    return () => clearTimeout(t)
+  }, [espera])
   const falhou = (msg: string) => {
     setErro(msg)
     setTremor((n) => n + 1)
   }
 
   async function enviar() {
+    if (!cadastro && restanteSeg() > 0) return setEspera(restanteSeg())
     setErro('')
     setEnviando(true)
     try {
-      if (cadastro) await cadastrar(nome, email, senha)
-      else await entrar(email, senha)
+      if (resolver) {
+        await confirmarLoginTotp(resolver, codigo)
+        zerarFalhas()
+      } else if (cadastro) await cadastrar(nome, email, senha)
+      else {
+        await entrar(email, senha)
+        zerarFalhas()
+      }
     } catch (e) {
+      if (e instanceof FirebaseError && e.code === 'auth/multi-factor-auth-required') {
+        // Senha certa: falta o código de 6 dígitos do autenticador.
+        zerarFalhas()
+        setResolver(resolverMfa(e))
+        setCodigo('')
+        return
+      }
+      if (resolver) {
+        const code = e instanceof FirebaseError ? e.code : undefined
+        if (code === SESSAO_MFA_VENCIDA) return voltar('A sessão expirou. Entre de novo com e-mail e senha.')
+        if (code !== 'auth/network-request-failed') {
+          registrarFalha()
+          setEspera(restanteSeg())
+        }
+        setCodigo('')
+        return falhou(mensagemMfa(code))
+      }
+      if (!cadastro && !(e instanceof FirebaseError && e.code === 'auth/network-request-failed')) {
+        registrarFalha()
+        setEspera(restanteSeg())
+      }
       falhou(mensagemErro(e))
     } finally {
       setEnviando(false)
     }
+  }
+
+  function voltar(msg = '') {
+    setResolver(null)
+    setCodigo('')
+    setErro(msg)
   }
 
   async function esqueciSenha() {
@@ -96,20 +155,43 @@ export default function Entrar() {
             enviar()
           }}
         >
-          <Painel aberto={cadastro} className="-mx-1 px-1">
-            <Campo rotulo="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required={cadastro} />
-          </Painel>
-          <m.div variants={item}>
-            <Campo rotulo="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </m.div>
-          <m.div variants={item}>
-            <Campo rotulo="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-          </m.div>
+          {resolver ? (
+            <div className="space-y-2">
+              <Campo
+                rotulo="Código de 6 dígitos do Google Authenticator"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                autoFocus
+                value={codigo}
+                onChange={(e) => setCodigo(limparCodigo(e.target.value))}
+                required
+              />
+              <button type="button" className="text-sm text-slate-400 hover:text-slate-200" onClick={() => voltar()}>
+                Voltar
+              </button>
+            </div>
+          ) : (
+            <>
+              <Painel aberto={cadastro} className="-mx-1 px-1">
+                <Campo rotulo="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required={cadastro} />
+              </Painel>
+              <m.div variants={item}>
+                <Campo rotulo="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </m.div>
+              <m.div variants={item}>
+                <Campo rotulo="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+              </m.div>
+            </>
+          )}
+          <Msg>{saiu && <Aviso>Você saiu por inatividade.</Aviso>}</Msg>
           <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
+          <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
           <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
           <m.div variants={item}>
-            <Botao tipo="primario" className="w-full" disabled={enviando} carregando={enviando}>
-              {enviando ? 'Enviando…' : cadastro ? 'Criar conta' : 'Entrar'}
+            <Botao tipo="primario" className="w-full" disabled={enviando || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))} carregando={enviando}>
+              {enviando ? 'Enviando…' : !cadastro && espera > 0 ? `Aguarde ${espera} s` : cadastro ? 'Criar conta' : resolver ? 'Confirmar' : 'Entrar'}
             </Botao>
           </m.div>
         </form>
@@ -129,6 +211,7 @@ export default function Entrar() {
           onClick={() => {
             setErro('')
             setMsgRecuperar('')
+            setResolver(null)
             setCadastro((c) => !c)
           }}
         >

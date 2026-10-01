@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { LazyMotion, MotionConfig } from 'motion/react';
 import App from './App';
 import './index.css';
+import { iniciarLog } from './lib/log';
+
+iniciarLog();
 
 // Só renderiza depois que as animações carregaram: se a 1ª tela montar antes, o AnimatePresence
 // perde a animação de saída e a tela de abertura nunca some (login não aparece).

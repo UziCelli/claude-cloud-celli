@@ -27,12 +27,30 @@ describe('descanso', () => {
   })
   it('estado salvo: restaura, expira e limpa', () => {
     const a = mem()
-    gravarEstado({ slot: 's1', fimEm: 10_000, total: 60, pausadoRestante: null }, a)
-    expect(lerEstado(5_000, a)?.slot).toBe('s1')
-    expect(lerEstado(11_000, a)).toBeNull()
-    gravarEstado({ slot: 's1', fimEm: null, total: 60, pausadoRestante: 20 }, a)
-    expect(lerEstado(99_000, a)?.pausadoRestante).toBe(20)
+    gravarEstado({ slot: 's1', fimEm: 10_000, total: 60, pausadoRestante: null, uid: 'u1' }, a)
+    expect(lerEstado(5_000, 'u1', a)?.slot).toBe('s1')
+    expect(lerEstado(11_000, 'u1', a)).toBeNull()
+    gravarEstado({ slot: 's1', fimEm: null, total: 60, pausadoRestante: 20, uid: 'u1' }, a)
+    expect(lerEstado(99_000, 'u1', a)?.pausadoRestante).toBe(20)
     gravarEstado(null, a)
-    expect(lerEstado(0, a)).toBeNull()
+    expect(lerEstado(0, 'u1', a)).toBeNull()
+  })
+  it('estado de outro uid (ou sem uid, ou sem usuário logado) é ignorado e limpo', () => {
+    for (const [salvo, logado] of [
+      ['u1', 'u2'],
+      [undefined, 'u2'],
+      ['u1', null],
+    ] as const) {
+      const a = mem()
+      gravarEstado({ slot: 's1', fimEm: 10_000, total: 60, pausadoRestante: null, uid: salvo }, a)
+      expect(lerEstado(5_000, logado, a)).toBeNull()
+      expect(a.getItem('forca-descanso')).toBeNull()
+    }
+  })
+  it('estado do mesmo uid fica guardado', () => {
+    const a = mem()
+    gravarEstado({ slot: 's1', fimEm: 10_000, total: 60, pausadoRestante: null, uid: 'u1' }, a)
+    expect(lerEstado(5_000, 'u1', a)?.uid).toBe('u1')
+    expect(a.getItem('forca-descanso')).not.toBeNull()
   })
 })

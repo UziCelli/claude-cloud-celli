@@ -1,17 +1,21 @@
 import { DurableObject } from 'cloudflare:workers'
+import { acessoComCache, lerPermissao, registrarAgendamento, type CacheAcesso } from './acesso'
+import { cors } from './cors'
 import { chaveDoGoogle, verificarIdToken } from './jwt'
 import { validarFimEm, validarInscricao, type Inscricao } from './validar'
 import { enviarPush, gerarParVapid, type ParVapid } from './webpush'
 
 type Env = { DESCANSO: DurableObjectNamespace<Descanso> }
 
-const ORIGENS = ['https://app.vfitcoachapp.com', 'https://forca--app.web.app', 'http://localhost:5173', 'http://localhost:4173']
 const MENSAGEM = { title: 'Descanso acabou', body: 'Volte para o treino 💪' }
 
 // Uma instância por aluno (nome = uid): guarda a inscrição e dispara o alarme.
 // A instância '__vapid' guarda o par de chaves VAPID (gerado na 1ª vez, nunca regenerado).
 export class Descanso extends DurableObject<Env> {
   private par?: Promise<ParVapid>
+  // Só na memória: se a instância reiniciar, o limite e o cache recomeçam (basta para segurar abuso).
+  private marcas: number[] = []
+  private acesso?: CacheAcesso
 
   vapid(): Promise<ParVapid> {
     this.par ??= (async () => {
@@ -27,9 +31,19 @@ export class Descanso extends DurableObject<Env> {
     return this.par
   }
 
-  async agendar(inscricao: Inscricao, fimEm: number) {
+  // Limite de frequência, depois acesso (ativo e em dia), depois agenda.
+  async agendar(uid: string, token: string, inscricao: Inscricao, fimEm: number): Promise<'ok' | 'limite' | 'bloqueado' | 'indisponivel'> {
+    const agora = Date.now()
+    const marcas = registrarAgendamento(this.marcas, agora)
+    if (!marcas) return 'limite'
+    this.marcas = marcas
+    const r = await acessoComCache(this.acesso, agora, () => lerPermissao(uid, token, agora))
+    this.acesso = r.cache
+    if (r.ok === null) return 'indisponivel'
+    if (!r.ok) return 'bloqueado'
     await this.ctx.storage.put('inscricao', inscricao)
     await this.ctx.storage.setAlarm(fimEm)
+    return 'ok'
   }
 
   async cancelar() {
@@ -50,17 +64,6 @@ export class Descanso extends DurableObject<Env> {
     }
   }
 }
-
-const cors = (origem: string | null): Record<string, string> =>
-  origem && ORIGENS.includes(origem)
-    ? {
-        'Access-Control-Allow-Origin': origem,
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Max-Age': '86400',
-        Vary: 'Origin',
-      }
-    : { Vary: 'Origin' }
 
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
@@ -97,7 +100,10 @@ export default {
       const inscricao = validarInscricao(corpo?.subscription)
       if (!inscricao) return json({ erro: 'inscrição inválida' }, 400)
       if (!validarFimEm(corpo.fimEm, Date.now())) return json({ erro: 'fimEm fora da janela (1 s a 15 min)' }, 400)
-      await aluno.agendar(inscricao, corpo.fimEm)
+      const r = await aluno.agendar(uid, token!, inscricao, corpo.fimEm)
+      if (r === 'limite') return json({ erro: 'muitos agendamentos' }, 429, { 'Retry-After': '60' })
+      if (r === 'bloqueado') return json({ erro: 'acesso bloqueado' }, 403)
+      if (r === 'indisponivel') return json({ erro: 'não foi possível verificar o acesso' }, 503)
       return json({ ok: true })
     }
 
