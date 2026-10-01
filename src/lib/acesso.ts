@@ -25,6 +25,13 @@ export function liberado(u: Usuario | null, agora: Date) {
   return u.status === 'ativo' && !!u.pagoAte && agora.getTime() < u.pagoAte.toMillis()
 }
 
+// O coach só tem poder com login que passou pelo 2º fator (ou o claim de teste mfaDispensado,
+// que só existe no seed do emulador). Espelha segundoFator() de firestore.rules.
+export function faltaSegundoFator(claims: Record<string, unknown>) {
+  const fb = claims.firebase as { sign_in_second_factor?: unknown } | undefined
+  return fb?.sign_in_second_factor == null && claims.mfaDispensado !== true
+}
+
 // Nº do dia de calendário em São Paulo (independe do fuso do aparelho).
 export const diaSP = (ms: number) => Math.floor((ms + SP) / DIA)
 

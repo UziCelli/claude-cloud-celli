@@ -220,6 +220,11 @@ export default function Entrar() {
         <a href="/instalar" className="mt-4 block text-center text-xs text-slate-500 hover:text-slate-300">
           Como instalar o app
         </a>
+        <p className="mt-3 text-center text-xs text-slate-500">
+          Protegido pelo reCAPTCHA. Valem a{' '}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline">Política de Privacidade</a> e os{' '}
+          <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline">Termos de Serviço</a> do Google.
+        </p>
       </Cartao>
       </m.div>
       </m.div>

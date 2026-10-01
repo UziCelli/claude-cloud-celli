@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 30/09/2026
+# Estado da sessão (retomada) — atualizado em 01/10/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #19 estão juntados e publicados.
 
@@ -17,10 +17,12 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Entrega 3**: PRs #23 e #24 (Superset = 4+ exercícios), juntados e publicados.
   - Worker: `https://vfit-descanso.vfitcoach-site.workers.dev`.
   - Falta o Victor testar a notificação num iPhone real.
-- **Entrega 4** (`docs/plano-entrega4.md`): em andamento, aprovada ("pode rodar").
+- **Entrega 4** (`docs/plano-entrega4.md`): juntada (PRs #25 e #26) e publicada.
   - Inatividade: aluno 30 min, coach 20 min.
-  - MFA TOTP só para o coach.
+  - MFA TOTP só para o coach: ativo.
   - Sem tela de erros no painel: os erros ficam no workflow "Ver erros do app".
+  - PR #27 (2 etapas obrigatórias + App Check) aguarda o "pode juntar" do Victor.
+  - App Check: provedor **reCAPTCHA Enterprise**, chave no `.env.production` desde 01/10/2026; falta o Victor confirmar a chave salva no App Check do Firebase (`docs/seguranca.md`, passo 3). Depois, modo Monitorar e, após alguns dias sem erros, **Aplicar**.
 - **Entrega 5** (a planejar), pagamento:
   - Pix estático no app (QR + copia e cola, sem taxa), com "Valor mensal" por aluno e configuração de pagamento no painel;
   - "Já paguei" → "Pagamentos a confirmar" no Início → "Confirmar" (+1 mês);
