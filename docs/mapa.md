@@ -111,6 +111,7 @@ Comece por aqui para achar onde mexer.
 - `extrair_planilha.py` — lê .xlsx original (conversão manual)
 - `planilha_para_meso.py` — transforma matriz em `Meso` JSON
 - `importar-meso.mjs` — sobe um meso + cargas para demo Firebase
+- `aluno-exemplo.mjs` + `.github/workflows/aluno-exemplo.yml` ("Aluno de exemplo", modo simular/gravar): prepara a conta "Victor C.L. Silva" para apresentações (meso `exemplo-victor`, semana 1 registrada). Roteiro em `docs/apresentacao.md`; teste em `tests/aluno-exemplo.test.ts`.
 - `alterar-email.mjs`, `backup.mjs` — utilitários admin
 
 ### `.github/workflows/` — CI/CD
@@ -119,6 +120,7 @@ Comece por aqui para achar onde mexer.
 - `deploy.yml` — build e deploy Firebase Hosting
 - `android.yml`, `apk.yml` — gera APK (TWA)
 - `importar-meso.yml` — workflow: `/importar` trigger (auth: token)
+- `aluno-exemplo.yml` — manual: aluno de exemplo (simular/gravar)
 - `alterar-email.yml` — workflow: alterar e-mail de aluno
 - `backup.yml` — backup automático
 
@@ -192,6 +194,7 @@ Comece por aqui para achar onde mexer.
 | `android.yml` | push com tag `android-*` | gera APK (TWA) |
 | `apk.yml` | dispatch manual | idem |
 | `importar-meso.yml` | `/importar` comment | sobe meso + cargas (token) |
+| `aluno-exemplo.yml` | dispatch manual | prepara o aluno de exemplo (modo simular ou gravar) |
 | `alterar-email.yml` | dispatch manual | altera e-mail de aluno (admin) |
 | `backup.yml` | schedule (diário) | backup Firestore → Cloud Storage |
 
@@ -219,3 +222,4 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Anotações do aluno | `firestore.rules` (`notas`), `acoes.ts` | Até 300 exercícios por documento; a interface corta cada texto em 300 caracteres. As regras do Firestore não conseguem limitar o tamanho dos **valores** de um mapa: um aluno logado pode gravar até 1 MiB só no próprio documento. Risco aceito (afeta só o documento dele). | `tests/rules.test.ts` (notas) |
 | Peso do corpo automático | `src/lib/pesoCorporal.ts` (`corpoEhCarga`), `Treino.tsx` | Barra fixa, flexão de braços, abdominal no solo sem carga e agachamento com peso do corpo já vêm com "Somar meu peso corporal" marcado. Só vale para slot **sem carga** e **sem `pc.<slot>` explícito**; ao gravar a 1ª carga, o `pc` é gravado junto, então histórico e métricas antigas não mudam. Sem `pesoKg` no perfil não há automático (fica a opção manual com aviso). | `pesoCorporal.test.ts` (`corpoEhCarga`), e2e aluno |
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |
+| Aluno de exemplo | `tools/aluno-exemplo.mjs`, `aluno-exemplo.yml` | Escreve em **produção**, só no aluno "Victor Aluno"/"Victor C.L. Silva" (falha se não houver exatamente 1). Nunca cria, altera ou apaga registros da **semana 2** (o Victor registra ao vivo); só grava a semana 1, com merge. Em outros mesos da conta só muda `inicio` dos que estiverem em andamento (guarda `inicioOriginal`). | `tests/aluno-exemplo.test.ts` (emulador) |
