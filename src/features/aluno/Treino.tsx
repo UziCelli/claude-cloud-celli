@@ -50,7 +50,7 @@ function Novidades() {
       <div className="mb-1 font-semibold">Novidades</div>
       <ul className="mb-3 space-y-1 text-slate-300">
         <li>📝 Anotação em cada exercício</li>
-        <li>PC: marque nos exercícios com peso do corpo</li>
+        <li>Fiz com o peso do corpo: opcional, marque só se o corpo foi a carga</li>
         <li>Número cinza = carga da semana passada</li>
         <li>▶ Treino do dia em destaque na tela Hoje</li>
       </ul>
@@ -403,13 +403,19 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                   )}
                 </div>
               </div>
-              <label className="mb-2 flex items-center gap-2 text-xs text-slate-300">
-                <input type="checkbox" checked={!!corpo} onChange={alternarPc} className="h-5 w-5" />
-                PC (peso do corpo)
+              {/* Opcional: só marca quem usou o próprio corpo como carga; o app soma o peso do corpo ao extra digitado. */}
+              <label className="mb-2 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
+                <input type="checkbox" checked={!!corpo} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
+                <span>
+                  <b>Fiz com o peso do corpo</b> <span className="text-slate-400">(opcional)</span>
+                  <span className="block text-xs text-slate-400">
+                    Marque só se o seu corpo foi a carga (ex.: barra fixa, flexão). O app soma o seu peso; nos campos, anote só o peso extra.
+                  </span>
+                </span>
               </label>
               {corpo > 0 && perfil?.pesoKg && (
                 <p className="mb-2 text-xs text-slate-400">
-                  PC: {fmt(corpo)} kg ({Math.round(frac * 100)}% de {fmt(perfil.pesoKg)} kg)
+                  Peso do corpo contado: {fmt(corpo)} kg ({Math.round(frac * 100)}% de {fmt(perfil.pesoKg)} kg)
                 </p>
               )}
               <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} />
