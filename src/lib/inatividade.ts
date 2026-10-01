@@ -8,8 +8,9 @@ export const LIMITE_MIN = { coach: 20, aluno: 30 } as const
 const ATIVIDADE = 'forca-ultima-atividade'
 export const AVISO_SAIU = 'forca-saiu-inatividade'
 
+// Sem marca (0: navegador sem armazenamento) não conta como expirado: antes derrubava o login na hora.
 export const expirou = (ultima: number, agora: number, papel: keyof typeof LIMITE_MIN) =>
-  agora - ultima >= LIMITE_MIN[papel] * 60_000
+  ultima > 0 && agora - ultima >= LIMITE_MIN[papel] * 60_000
 
 const lerUltima = () => {
   try {

@@ -17,11 +17,20 @@ const previewHeaders = Object.fromEntries(
   ]),
 );
 
+const versao = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
 export default defineConfig({
-  define: { __VERSAO__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
+  define: { __VERSAO__: JSON.stringify(versao) },
   preview: { headers: previewHeaders },
   plugins: [
     react(),
+    // versao.json: a tela de login compara com __VERSAO__ e recarrega abas antigas (src/lib/atualizar.ts).
+    {
+      name: 'versao',
+      generateBundle() {
+        this.emitFile({ type: 'asset', fileName: 'versao.json', source: JSON.stringify({ versao }) });
+      },
+    },
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',

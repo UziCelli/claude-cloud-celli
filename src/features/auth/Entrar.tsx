@@ -9,6 +9,7 @@ import Logo from '../../Logo'
 import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
 import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
+import { atualizarNaEntrada } from '../../lib/atualizar'
 
 const erros: Record<string, string> = {
   'auth/wrong-password': 'E-mail ou senha incorretos.',
@@ -61,6 +62,8 @@ export default function Entrar() {
       return false
     }
   })
+  // Aba antiga (aberta antes de publicar) se atualiza sozinha aqui, antes de alguém tentar entrar.
+  useEffect(() => atualizarNaEntrada(), [])
   useEffect(() => {
     if (espera <= 0) return
     const t = setTimeout(() => setEspera(restanteSeg()), 1000)
@@ -232,6 +235,7 @@ export default function Entrar() {
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline">Política de Privacidade</a> e os{' '}
           <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline">Termos de Serviço</a> do Google.
         </p>
+        <p className="mt-1 text-center text-xs text-slate-600">Versão {__VERSAO__}</p>
       </Cartao>
       </m.div>
       </m.div>
