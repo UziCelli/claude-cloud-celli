@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
 import { auth } from './lib/firebase'
 import { sair } from './lib/acoes'
@@ -32,7 +32,7 @@ function Principal() {
   if (carregando) [estagio, tela] = ['abertura', <Abertura />]
   else if (!user) [estagio, tela] = ['entrar', <Entrar />]
   else if (!perfil) [estagio, tela] = ['abertura', <Abertura texto="Preparando sua conta…" />]
-  else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} nome={perfil.nome} email={perfil.email} />
+  else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
   else tela = <AlunoApp uid={user.uid} nome={perfil.nome} />
   useEffect(() => {
@@ -57,7 +57,43 @@ function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
   ) : null
 }
 
-function Coach({ uid, nome, email }: { uid: string; nome: string; email: string }) {
+// Links do topo: não cortam; se não couberem, rolam para o lado com degradê na borda direita.
+function MenuRolavel() {
+  const ref = useRef<HTMLElement>(null)
+  const [mais, setMais] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ver = () => setMais(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+    ver()
+    el.addEventListener('scroll', ver, { passive: true })
+    const ro = new ResizeObserver(ver)
+    ro.observe(el)
+    return () => (el.removeEventListener('scroll', ver), ro.disconnect())
+  }, [])
+  return (
+    <div className="relative min-w-0 flex-1">
+      <nav
+        ref={ref}
+        className="-m-1 flex gap-3 overflow-x-auto p-1 sm:gap-4 text-sm text-slate-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap [&>a]:py-2"
+      >
+        <a href="#/" className="hover:text-marca-400">Início</a>
+        <a href="#/alunos" className="hover:text-marca-400">Alunos</a>
+        <a href="#/metodos" className="hover:text-marca-400">Métodos</a>
+        <a href="#/conta" aria-label="Minha conta" title="Minha conta" className="hover:text-marca-400">
+          <svg viewBox="0 0 24 24" className="size-5 sm:hidden" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+          </svg>
+          <span className="hidden sm:inline">Minha conta</span>
+        </a>
+      </nav>
+      {mais && <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-marca-900" />}
+    </div>
+  )
+}
+
+function Coach({ uid, email }: { uid: string; email: string }) {
   const rota = useRota()
   const [semFator, setSemFator] = useState(false)
   useEffect(() => {
@@ -80,17 +116,8 @@ function Coach({ uid, nome, email }: { uid: string; nome: string; email: string 
           <a href="#/" className="shrink-0 text-white" aria-label="VFITCOACH">
             <Logo className="h-5" faixa="#3F72A6" />
           </a>
-          <nav className="flex shrink-0 gap-3 text-sm text-slate-300">
-            <a href="#/" className="hover:text-marca-400">Início</a>
-            <a href="#/alunos" className="hover:text-marca-400">Alunos</a>
-            <a href="#/metodos" className="hover:text-marca-400">Métodos</a>
-          </nav>
-          <div className="flex min-w-0 items-center gap-3 text-sm text-slate-400">
-            <a href="#/conta" className="min-w-0 truncate hover:text-marca-400">
-              {nome}
-            </a>
-            <Botao className="shrink-0" onClick={sair}>Sair</Botao>
-          </div>
+          <MenuRolavel />
+          <Botao className="shrink-0" onClick={sair}>Sair</Botao>
         </div>
       </header>
       {semFator && (
