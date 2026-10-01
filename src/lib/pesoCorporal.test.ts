@@ -72,6 +72,13 @@ describe('rebasear', () => {
   })
 })
 
+describe('rebasear sobre valor normalizado (formato antigo)', () => {
+  it('célula antiga 2 com pc 80 vira 82; ao desmarcar grava 2; trocar o pc mantém o extra', () => {
+    expect(rebasear([82], 80, 0)).toEqual([{ coluna: 0, kg: 2 }])
+    expect(rebasear([82], 80, 76)).toEqual([{ coluna: 0, kg: 78 }])
+  })
+})
+
 describe('preencherCorpo', () => {
   it('preenche só séries prescritas vazias com o corpo', () => {
     expect(preencherCorpo([null, 5, undefined as never], 3, 76)).toEqual([{ coluna: 0, kg: 76 }, { coluna: 2, kg: 76 }])

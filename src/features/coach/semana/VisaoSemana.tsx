@@ -23,7 +23,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   if (!dados) return <Centro>Meso não encontrado.</Centro>
 
   const meso = docParaMeso(dados)
-  const registros = docsParaRegistros(docsRegistros)
+  const registros = docsParaRegistros(docsRegistros, meso)
   const reps = docsParaRegistrosReps(docsRegistros)
   const realizados = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, !!d.realizado]))
 

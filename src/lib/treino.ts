@@ -13,7 +13,16 @@ export function semanaAtual(meso: Meso, hoje: Date) {
 
 // Cargas da semana anterior mais recente em que a mesma posição do treino tinha o mesmo
 // exercício (pelo nome, já com trocas) e alguma carga anotada. Lida pelo slotId daquela semana.
-export function cargaAnterior(meso: Meso, registros: Registros, semana: number, treino: number, pos: number) {
+// Sem `pcs`, devolve o total gravado. Com `pcs` (`${semana}-${treino}` -> { slotId: kg do corpo }),
+// devolve só o extra: total menos o corpo DAQUELE registro (o de hoje pode ser outro), nunca negativo.
+export function cargaAnterior(
+  meso: Meso,
+  registros: Registros,
+  semana: number,
+  treino: number,
+  pos: number,
+  pcs?: Record<string, Record<string, number> | undefined>,
+) {
   const slot = (w: number) => meso.trocas?.[`${w}-${treino}-${pos}`] ?? meso.divisao[treino - 1]?.[pos - 1]
   const alvo = slot(semana)
   if (!alvo) return null
@@ -21,7 +30,9 @@ export function cargaAnterior(meso: Meso, registros: Registros, semana: number, 
     const s = slot(w)
     if (s?.nome !== alvo.nome) continue
     const cargas = registros[`${w}-${treino}`]?.[s.slotId]
-    if (cargas?.some((c) => c != null)) return cargas
+    if (!cargas?.some((c) => c != null)) continue
+    const corpo = pcs?.[`${w}-${treino}`]?.[s.slotId] ?? 0
+    return corpo > 0 ? cargas.map((c) => (c == null ? null : Math.max(0, Math.round((c - corpo) * 100) / 100))) : cargas
   }
   return null
 }

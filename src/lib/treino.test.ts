@@ -64,4 +64,10 @@ describe('cargaAnterior', () => {
     expect(cargaAnterior(meso, {}, 4, 1, 1)).toBeNull()
     expect(cargaAnterior(meso, registros, 4, 1, 9)).toBeNull() // posição inexistente
   })
+  it('com pcs, devolve só o extra: total menos o peso do corpo DAQUELE registro (não o de hoje)', () => {
+    const pcs = { '3-1': { b: 76 }, '1-1': { b: 0 } }
+    expect(cargaAnterior(meso, registros, 4, 1, 2, pcs)).toEqual([14, null]) // 90 - 76
+    expect(cargaAnterior(meso, registros, 3, 1, 2, pcs)).toEqual([80]) // s1 b: pc 0, total = extra
+    expect(cargaAnterior(meso, { '3-1': { b: [70, 90] } }, 4, 1, 2, pcs)).toEqual([0, 14]) // nunca negativo
+  })
 })

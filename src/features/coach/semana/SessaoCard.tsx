@@ -118,6 +118,11 @@ export default function SessaoCard({
           {sessao.exercicios.map((e, i) => {
             const cs = cargas[e.slot.slotId] ?? []
             const rs = reps[e.slot.slotId] ?? []
+            // `cargas` é o total normalizado: o campo mostra o extra (total - corpo) e grava extra + corpo, como a tela do aluno.
+            const corpo = pc[e.slot.slotId] > 0 ? pc[e.slot.slotId] : 0
+            const extra = (c: number | null | undefined) => (c != null ? Math.max(0, Math.round((c - corpo) * 100) / 100) : null)
+            const gravar = (coluna: number) => (v: number | null) =>
+              registrarCarga(mesoId, alunoId, sessao.semana, sessao.treino, e.slot.slotId, coluna, v == null ? null : Math.round((v + corpo) * 100) / 100)
             return (
               <tr key={e.slot.slotId} className="border-b border-slate-800 last:border-0 align-top">
                 <td className="p-2">{e.pos}</td>
@@ -136,8 +141,8 @@ export default function SessaoCard({
                     <td key={k} className="p-2 text-center">
                       <RepsFeitas alvo={e.reps[k]} feita={rs[k]} />
                       <LoadInput
-                        valor={cs[k] ?? null}
-                        onSalvar={(v) => registrarCarga(mesoId, alunoId, sessao.semana, sessao.treino, e.slot.slotId, k, v)}
+                        valor={extra(cs[k])}
+                        onSalvar={gravar(k)}
                       />
                     </td>
                   ) : (
@@ -155,9 +160,9 @@ export default function SessaoCard({
                         <>
                           <RepsFeitas alvo={e.reps[coluna]} feita={rs[coluna]} />
                           <LoadInput
-                            valor={cs[coluna] ?? null}
+                            valor={extra(cs[coluna])}
                             placeholder={e.cargaSugerida[coluna] ?? null}
-                            onSalvar={(v) => registrarCarga(mesoId, alunoId, sessao.semana, sessao.treino, e.slot.slotId, coluna, v)}
+                            onSalvar={gravar(coluna)}
                           />
                         </>
                       ) : (

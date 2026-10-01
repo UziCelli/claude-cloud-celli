@@ -27,6 +27,12 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Peso do corpo automático (barra fixa, flexão de braços, abdominais no solo sem carga, "Agachamento com Peso do Corpo") + opção "Somar meu peso corporal" abaixo das séries; campo de anotação limpo; menu do topo sem cortes (ícone de conta no celular).
   - Aluno de exemplo "Victor C.L. Silva" (antes "Victor Aluno") com o meso `exemplo-victor`; workflow "Aluno de exemplo" (rodar em `gravar` antes de cada apresentação); roteiro em `docs/apresentacao.md`. O meso de teste antigo "Teste 1" dessa conta foi encerrado (só a data; `inicioOriginal` guarda a antiga).
   - Para o Victor decidir: marcar também como peso do corpo Abdominal Paralela (4 variações), Abdominal Declinado, Tríceps Barra Paralela, Flexão Nórdica?
+- **01/10/2026 (dia, Victor autorizou juntar direto):**
+  - PR #31: menu e anotação.
+  - PR #32: aba antiga se atualiza sozinha na tela de login (`versao.json`), com a versão no rodapé.
+  - PR #33: o coach soma o peso do corpo.
+  - PR seguinte: leitura única `normalizarCargas`, que conta certo os registros gravados por versões antigas sem reescrever dados. O campo do coach mostra o extra.
+  - Regras, limites e como verificar: `docs/peso-corporal.md`.
 - **Entrega 5** (a planejar), pagamento:
   - Pix estático no app (QR + copia e cola, sem taxa), com "Valor mensal" por aluno e configuração de pagamento no painel;
   - "Já paguei" → "Pagamentos a confirmar" no Início → "Confirmar" (+1 mês);

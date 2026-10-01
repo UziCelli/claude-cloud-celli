@@ -11,7 +11,7 @@ import AvisoNotificacoes from './AvisoNotificacoes'
 import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
-import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
+import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
 import { cargaAnterior } from '../../lib/treino'
@@ -275,12 +275,15 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   if (!sessao) return <Centro>Treino não encontrado.</Centro>
 
   const pausaEx = (p?: number) => p ?? meso.pausaS
-  const cargas = docsParaRegistros(docsRegistros)
+  const cargas = docsParaRegistros(docsRegistros, meso) // totais normalizados (ver normalizarCargas)
   const repsFeitas = docsParaRegistrosReps(docsRegistros)
   const chave = `${semana}-${treino}`
   const cs = cargas[chave] ?? {}
   const rs = repsFeitas[chave] ?? {}
-  const pcs = docsRegistros.find((r) => r.semana === semana && r.treino === treino)?.pc ?? {}
+  const docAtual = docsRegistros.find((r) => r.semana === semana && r.treino === treino)
+  const pcs = docAtual?.pc ?? {}
+  const cargasCruas = docParaCargas(docAtual?.cargas) // o que está gravado de fato (para decidir o que gravar)
+  const pcsPorRegistro = Object.fromEntries(docsRegistros.map((r) => [`${r.semana}-${r.treino}`, r.pc]))
   const iniciado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.inicioEm)
   const iniciou = () => { if (!iniciado) marcarInicio(mesoId, uid, semana, treino) }
   const vermelho = acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin)
@@ -300,7 +303,8 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       if (!(corpo > 0)) continue
       const slot = e.slot.slotId
       if (!(slot in pcs)) registrarPc(mesoId, uid, semana, treino, slot, corpo)
-      for (const { coluna, kg } of preencherCorpo(cs[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
+      // Crua: série vazia só com reps feitas (que a leitura já conta como corpo) também é gravada.
+      for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     marcarRealizado(mesoId, uid, semana, treino, true)
     ir('/')
@@ -353,18 +357,24 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
           void idx
           const colunasCargas = cs[e.slot.slotId] ?? []
           const colunasReps = rs[e.slot.slotId] ?? []
-          const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos)
+          const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos, pcsPorRegistro) // só o extra, com o corpo do registro de origem
           const slot = e.slot.slotId
           const destaque = seriesDestacadas(e.rotulo, e.n)
           const frac = fracaoPC(e.slot.nome)
           const { auto, corpo } = estadoCorpo(e)
+          // Troca do corpo ainda não confirmada pelo Firestore: um 2º toque rebasearia sobre cargas velhas.
+          const trocandoPc = slot in pcLocal && pcLocal[slot] !== (pcs[slot] ?? 0)
           const gravaPc = (kg: number) => {
             setPcLocal((p) => ({ ...p, [slot]: kg }))
-            registrarPc(mesoId, uid, semana, treino, slot, kg)
-            // Cargas já digitadas mantêm o extra: c - corpo antigo + corpo novo.
-            for (const { coluna, kg: c } of rebasear(colunasCargas, corpo, kg)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, c)
+            // Cargas já digitadas mantêm o extra: c - corpo antigo + corpo novo (valores normalizados), tudo numa gravação.
+            // Desmarcar: série que estava vazia no banco (só a leitura contava o corpo) volta a vazia, não vira 0.
+            const muda = rebasear(colunasCargas, corpo, kg).filter((g) => kg > 0 || cargasCruas[slot]?.[g.coluna] != null)
+            registrarPc(mesoId, uid, semana, treino, slot, kg, muda).catch(() =>
+              setPcLocal(({ [slot]: _, ...resto }) => resto), // recusada: volta ao que está gravado
+            )
           }
           const alternarPc = () => {
+            if (trocandoPc) return
             if (corpo) return gravaPc(0)
             let peso = perfil?.pesoKg
             if (!peso) {
@@ -433,7 +443,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                   const placeholderKg = dropStage
                     ? (e.cargaSugerida[k] ?? null)
                     : anterior?.[k] != null
-                      ? fmt(Math.max(0, anterior[k]! - corpo))
+                      ? fmt(anterior[k]!)
                       : null
                   return (
                     <div key={k} className={`grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5 ${dropStage || destaque.has(k + 1) ? 'rounded-lg border border-fuchsia-400 px-1 py-1 ring-1 ring-fuchsia-400/30' : ''}`}>
@@ -463,7 +473,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
               </div>
               {/* Logo abaixo das séries: o app soma o peso do corpo ao extra digitado. */}
               <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
-                <input type="checkbox" checked={!!corpo} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
+                <input type="checkbox" checked={!!corpo} disabled={trocandoPc} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
                 <span>
                   <b>Somar meu peso corporal</b>
                   <span className="block text-xs text-slate-400">

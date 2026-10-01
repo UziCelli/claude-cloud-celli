@@ -14,6 +14,7 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
   - Todo agente lê essa seção antes de mexer.
   - Quem corrigir um bug acrescenta uma linha nela.
 - `docs/logica-planilha.md` — especificação das fórmulas (fonte da verdade do motor).
+- `docs/peso-corporal.md` — peso do corpo nas cargas: convenção (total), leitura de dados antigos, como verificar.
 - `src/engine/` — motor de cálculo puro (sem React/Firebase). TDD obrigatório.
 - `firestore.rules` — segurança e bloqueio por pagamento. TDD obrigatório (emulador).
 - `tools/extrair_planilha.py` — lê o .xlsx original (só biblioteca padrão). O .xlsx nunca vai para o repositório.
