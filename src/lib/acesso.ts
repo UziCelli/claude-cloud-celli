@@ -10,6 +10,8 @@ export interface Usuario {
   criadoEm?: Timestamp
   pesoKg?: number // peso corporal do aluno (20..300), usado no checkbox PC
   presencial?: boolean // aluno sem app/login (o coach anota as cargas); email '' e sem pagoAte
+  privacidadeEm?: Timestamp // aceite da Política de Privacidade (LGPD)
+  privacidadeVersao?: string // VERSAO_PRIVACIDADE aceita
 }
 
 // São Paulo = UTC−03:00 fixo: o Brasil não tem horário de verão desde 2019.

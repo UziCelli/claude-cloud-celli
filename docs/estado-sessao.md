@@ -33,6 +33,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - PR #33: o coach soma o peso do corpo.
   - PR seguinte: leitura única `normalizarCargas`, que conta certo os registros gravados por versões antigas sem reescrever dados. O campo do coach mostra o extra.
   - Regras, limites e como verificar: `docs/peso-corporal.md`.
+- **02/10/2026:** auditoria de segurança + LGPD (PR a abrir, aguardando "pode juntar" do Victor).
+  - Política de Privacidade (/privacidade), aceite obrigatório no cadastro e tela de aceite para alunos atuais.
+  - Exclusão total: `exclusoes/{uid}` + workflow diário "Limpeza LGPD".
+  - Backups com 30 dias.
+  - Relatório da auditoria e passos do Victor em `docs/seguranca.md` (seção "Auditoria 02/10/2026").
 - **Entrega 5** (a planejar), pagamento:
   - Pix estático no app (QR + copia e cola, sem taxa), com "Valor mensal" por aluno e configuração de pagamento no painel;
   - "Já paguei" → "Pagamentos a confirmar" no Início → "Confirmar" (+1 mês);

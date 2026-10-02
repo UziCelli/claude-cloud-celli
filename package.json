@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc && tsc -p push",
     "test": "vitest run",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-forca 'vitest run --config vitest.rules.config.ts'",
+    "test:rules": "firebase emulators:exec --only auth,firestore --project demo-forca 'vitest run --config vitest.rules.config.ts'",
     "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-forca 'playwright test'",
     "emuladores": "firebase emulators:start --only auth,firestore --project demo-forca",
     "icones": "pwa-assets-generator"

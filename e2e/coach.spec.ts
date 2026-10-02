@@ -20,6 +20,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByLabel('Nome').fill(ALUNO.nome)
     await page.getByLabel('E-mail').fill(ALUNO.email)
     await page.getByLabel('Senha').fill(ALUNO.senha)
+    await page.getByRole('checkbox', { name: /Li e aceito/ }).check()
     await page.getByRole('button', { name: 'Criar conta', exact: true }).click()
 
     await expect(page.getByRole('heading', { name: 'Cadastro recebido!' })).toBeVisible()

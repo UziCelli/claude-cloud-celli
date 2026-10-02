@@ -1,0 +1,63 @@
+name: Limpeza LGPD
+
+# Todo dia: atende os pedidos de "Apagar de vez" (coleção exclusoes) apagando o que o app não alcança
+# (registros, mesos, notas, perfil, logs e o login). Se apagou alguém, faz um backup novo e remove
+# TODOS os backups antigos (eles ainda guardariam os dados da pessoa). O resumo só tem contagens.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: firestore-backup
+
+jobs:
+  limpeza:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apagar pedidos
+        id: limpeza
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/limpeza-lgpd.mjs tools/backup.mjs "$RUNNER_TEMP/adm/"
+          cd "$RUNNER_TEMP/adm"
+          npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node limpeza-lgpd.mjs
+          if [ "$(grep -c '^apagados=0$' "$GITHUB_OUTPUT")" = "0" ]; then
+            GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node backup.mjs "$GITHUB_WORKSPACE/backup.json"
+          fi
+          rm -f "$RUNNER_TEMP/sa.json"
+      - name: Data
+        if: steps.limpeza.outputs.apagados != '0'
+        id: data
+        run: echo "d=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Guardar backup novo
+        if: steps.limpeza.outputs.apagados != '0'
+        id: up
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-firestore-${{ steps.data.outputs.d }}-lgpd
+          path: backup.json
+          retention-days: 30
+      - name: Apagar backups antigos
+        if: steps.limpeza.outputs.apagados != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOVO: ${{ steps.up.outputs.artifact-id }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select((.name | startswith("backup-firestore-")) and (.expired | not)) | .id' |
+          while read -r id; do
+            [ "$id" = "$NOVO" ] && continue
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" > /dev/null
+          done

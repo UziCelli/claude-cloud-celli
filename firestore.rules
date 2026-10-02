@@ -62,6 +62,11 @@ service cloud.firestore {
       return p is number && p >= 20 && p <= 300;
     }
 
+    // Versão da Política de Privacidade aceita: texto de 1 a 20 caracteres.
+    function versaoValida(v) {
+      return v is string && v.size() >= 1 && v.size() <= 20;
+    }
+
     match /usuarios/{uid} {
       // Lê o próprio mesmo bloqueado (o app mostra a tela "bloqueado").
       allow read: if isCoach() || (signedIn() && request.auth.uid == uid);
@@ -74,20 +79,28 @@ service cloud.firestore {
 
       // Cadastro próprio: sempre aluno aguardando, sem pagoAte, com o e-mail do login.
       allow create: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['papel', 'status', 'nome', 'email', 'criadoEm'])
+        && request.resource.data.keys().hasOnly(['papel', 'status', 'nome', 'email', 'criadoEm', 'privacidadeEm', 'privacidadeVersao'])
         && request.resource.data.keys().hasAll(['papel', 'status', 'nome', 'email'])
+        && request.resource.data.get('criadoEm', request.time) == request.time
+        && request.resource.data.get('privacidadeEm', request.time) == request.time
+        && (!('privacidadeVersao' in request.resource.data) || versaoValida(request.resource.data.privacidadeVersao))
         && request.resource.data.papel == 'aluno'
         && request.resource.data.status == 'aguardando'
         && nomeValido(request.resource.data.nome)
         && request.resource.data.email == request.auth.token.email;
 
-      // Só nome e pesoKg. E-mail, papel, status e pagoAte: só o coach (o coach troca o próprio
-      // e-mail em Minha conta; aluno troca por manutenção — workflow "Alterar e-mail de aluno").
+      // Só nome, pesoKg e o aceite da privacidade. E-mail, papel, status e pagoAte: só o coach
+      // (o coach troca o próprio e-mail em Minha conta; aluno troca por manutenção — workflow
+      // "Alterar e-mail de aluno").
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg', 'privacidadeEm', 'privacidadeVersao'])
         && nomeValido(request.resource.data.nome)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['pesoKg'])
-            || pesoValido(request.resource.data.pesoKg));
+            || pesoValido(request.resource.data.pesoKg))
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['privacidadeEm'])
+            || request.resource.data.privacidadeEm == request.time)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['privacidadeVersao'])
+            || versaoValida(request.resource.data.privacidadeVersao));
     }
 
     match /mesos/{mesoId} {
@@ -146,6 +159,17 @@ service cloud.firestore {
         && request.resource.data.exercicios is map
         && request.resource.data.exercicios.size() <= 300
         && request.resource.data.atualizadoEm == request.time;
+    }
+
+    // Pedido de exclusão total (LGPD): exclusoes/{uid} = { em }. O coach cria ao apagar o aluno; o
+    // workflow diário "Limpeza LGPD" (Admin SDK, ignora estas regras) apaga o login e o resto e,
+    // por fim, o pedido. Só o coach lê e apaga; ninguém mais toca.
+    match /exclusoes/{uid} {
+      allow read, delete: if isCoach();
+      allow create, update: if isCoach()
+        && request.resource.data.keys().hasOnly(['em'])
+        && request.resource.data.keys().hasAll(['em'])
+        && request.resource.data.em == request.time;
     }
 
     // Registro de erros do app (src/lib/log.ts): qualquer usuário logado cria, com campos e

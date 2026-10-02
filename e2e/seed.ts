@@ -1,4 +1,5 @@
 // Ajuda de preparação dos emuladores para o teste e2e (fetch puro, sem SDK do Firebase).
+import { VERSAO_PRIVACIDADE } from '../src/lib/privacidade'
 const PROJETO = 'demo-forca'
 const AUTH = 'http://127.0.0.1:9099'
 const FIRESTORE = 'http://127.0.0.1:8080'
@@ -76,10 +77,10 @@ export async function criarCoach(nome: string, email: string, senha: string): Pr
 }
 
 // Cria a conta do aluno (Auth + Firestore), já ativa e paga por 30 dias.
-export async function criarAluno(nome: string, email: string, senha: string, pesoKg?: number): Promise<string> {
+export async function criarAluno(nome: string, email: string, senha: string, pesoKg?: number, aceitou = true): Promise<string> {
   const uid = await criarConta(email, senha)
   const pagoAte = new Date(Date.now() + 30 * 86_400_000)
-  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte, ...(pesoKg ? { pesoKg } : {}) })
+  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte, ...(aceitou ? { privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date() } : {}), ...(pesoKg ? { pesoKg } : {}) })
   return uid
 }
 

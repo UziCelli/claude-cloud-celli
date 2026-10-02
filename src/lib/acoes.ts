@@ -22,6 +22,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocFromServer,
   getDocsFromServer,
   query,
   serverTimestamp,
@@ -37,6 +38,7 @@ import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
 import { auth, authCadastro, db } from './firebase'
 import { inicioJanela } from './resumo'
+import { VERSAO_PRIVACIDADE } from './privacidade'
 
 // ---------- coach ----------
 
@@ -152,8 +154,12 @@ export async function excluirMeso(mesoId: string) {
 
 // Apaga o aluno de vez: registros, mesos, notas e, por último, o perfil (se cair no meio, o
 // perfil arquivado continua na lista e é só apagar de novo). Do servidor: offline dá erro sem apagar.
-// O login (e-mail) no Firebase Auth continua existindo.
+// Antes de tudo grava o pedido exclusoes/{uid}: se cair no meio, o workflow diário "Limpeza LGPD"
+// (tools/limpeza-lgpd.mjs) termina o serviço. É ele que apaga o login (Auth), os erros (logs) e os
+// backups do aluno, e por fim o pedido.
 export async function apagarAluno(uid: string) {
+  await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
+  await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
   for (const col of ['registros', 'mesos']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
@@ -231,6 +237,10 @@ export const registrarPc = (
   })
 
 export const salvarPeso = (uid: string, kg: number) => updateDoc(doc(db, 'usuarios', uid), { pesoKg: kg })
+
+// Aceite da Política de Privacidade (consentimento da LGPD, inclusive para dados de saúde).
+export const aceitarPrivacidade = (uid: string) =>
+  updateDoc(doc(db, 'usuarios', uid), { privacidadeEm: serverTimestamp(), privacidadeVersao: VERSAO_PRIVACIDADE })
 
 export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean) =>
   registro(mesoId, alunoId, semana, treino, { realizado, realizadoEm: realizado ? serverTimestamp() : null })
@@ -319,6 +329,8 @@ export async function cadastrar(nome: string, email: string, senha: string) {
     nome,
     email: (user.email ?? email).toLowerCase(), // o da regra: igual ao do login
     criadoEm: serverTimestamp(),
+    privacidadeEm: serverTimestamp(), // a tela só chama depois do aceite
+    privacidadeVersao: VERSAO_PRIVACIDADE,
   })
   return user
 }

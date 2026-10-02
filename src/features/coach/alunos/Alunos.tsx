@@ -136,7 +136,7 @@ export default function Alunos() {
           <Botao onClick={() => setArquivados((v) => !v)}>{arquivados ? 'Voltar aos alunos' : `Arquivados (${nArquivados})`}</Botao>
         </div>
       )}
-      {arquivados && <p className="mb-4 text-sm text-slate-400">Apagar de vez não remove o login (e-mail) no Firebase Auth.</p>}
+      {arquivados && <p className="mb-4 text-sm text-slate-400">Apagar de vez apaga tudo do aluno, inclusive o login e as cópias de segurança (em até 24 h).</p>}
       <Msg>
         {erro && (
           <div className="mb-4">
@@ -239,7 +239,7 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
     >
       <p className="text-sm">
         {apagar
-          ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas e anotações. Não dá para desfazer.`
+          ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas, anotações e o login. A limpeza automática apaga também os registros de erro e as cópias de segurança em até 24 h. Não dá para desfazer.`
           : `Arquivar “${nome}”? Perde o acesso e some da lista. Dá para reativar depois.`}
       </p>
       <Msg>{erro && <p className="text-sm text-red-400">{erro}</p>}</Msg>

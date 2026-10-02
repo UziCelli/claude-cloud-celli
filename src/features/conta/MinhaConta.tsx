@@ -233,6 +233,7 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
         <Botao type="button" className="w-full" onClick={trocarSenha}>
           Trocar senha
         </Botao>
+        <a href="/privacidade" className="block text-center text-sm text-slate-400 underline hover:text-slate-200">Política de Privacidade</a>
       </div>
     </Pagina>
   )

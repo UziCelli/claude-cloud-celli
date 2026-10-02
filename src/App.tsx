@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { aceitouPrivacidade } from './lib/privacidade'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
 import { auth } from './lib/firebase'
 import { sair } from './lib/acoes'
@@ -19,9 +20,12 @@ import AlunoApp from './features/aluno/AlunoApp'
 import Instalar from './features/instalar/Instalar'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
+import Politica from './features/privacidade/Politica'
+import Aceite from './features/privacidade/Aceite'
 
-// /instalar é pública (link enviado pelo WhatsApp): não depende de login.
+// /instalar e /privacidade são públicas (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
+  if (location.pathname === '/privacidade') return <Tela chave="privacidade"><Politica /></Tela>
   return location.pathname === '/instalar' ? <Tela chave="instalar"><Instalar /></Tela> : <Principal />
 }
 
@@ -34,6 +38,7 @@ function Principal() {
   else if (!perfil) [estagio, tela] = ['abertura', <Abertura texto="Preparando sua conta…" />]
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
+  else if (!aceitouPrivacidade(perfil)) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} />]
   else tela = <AlunoApp uid={user.uid} nome={perfil.nome} />
   useEffect(() => {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
