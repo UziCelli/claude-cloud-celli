@@ -78,7 +78,14 @@ Comece por aqui para achar onde mexer.
 - `semana/Monitoramento.tsx`, `LoadInput.tsx`, `SessaoCard.tsx` — cards de treino
 
 ### `src/features/conta/` — Minha Conta
-- `MinhaConta.tsx` — perfil, logout
+- `MinhaConta.tsx` — perfil, logout, solicitar exclusão
+
+### `src/features/privacidade/` — Política e Aceite
+- `Politica.tsx` — página pública /privacidade + `CaixaAceite` (widget persistente)
+- `Aceite.tsx` — tela de aceite obrigatório (aluno antes de `AlunoApp`, coach antes do `CoachApp`)
+
+### `src/lib/` — Privacidade
+- `privacidade.ts` — `VERSAO_PRIVACIDADE` (troca = novo aceite obrigatório)
 
 ### `src/features/instalar/` — PWA/Android
 - `Instalar.tsx` — página de instalação
@@ -108,6 +115,7 @@ Comece por aqui para achar onde mexer.
 ### `tools/` — Scripts offline
 - `tools/mfa.mjs` + `.github/workflows/mfa.yml`: ativa o TOTP no projeto e remove o 2º fator do coach em emergência.
 - `tools/erros.mjs` + `.github/workflows/erros.yml` ("Ver erros do app"): lista os 100 logs mais recentes no resumo e apaga os com mais de 30 dias.
+- `tools/limpeza-lgpd.mjs` + `.github/workflows/limpeza-lgpd.yml` ("Limpeza LGPD", diário): atende `exclusoes/{uid}`, apaga Auth/logs/dados, faz backup novo e apaga os com 30+ dias. Teste em `tests/limpeza-lgpd.test.ts`.
 - `extrair_planilha.py` — lê .xlsx original (conversão manual)
 - `planilha_para_meso.py` — transforma matriz em `Meso` JSON
 - `importar-meso.mjs` — sobe um meso + cargas para demo Firebase
@@ -172,6 +180,10 @@ Comece por aqui para achar onde mexer.
 - Vale em todas as semanas/mesos (chave = nome). `''` = sem nota.
 - Gravação: `salvarNota()` em `src/lib/acoes.ts`. UI: aluno edita em `Treino.tsx` (`Nota`); coach lê em `semana/SessaoCard.tsx`.
 
+### `exclusoes/{uid}`
+- `uid`, `solicitadoEm`, `status` (pending/processado)
+- Pedido de exclusão total (LGPD). Workflow "Limpeza LGPD" processa uma vez por dia.
+
 ---
 
 ## Comandos e workflows
@@ -224,3 +236,4 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Peso do corpo automático | `src/lib/pesoCorporal.ts` (`corpoEhCarga`, `rebasear`, `preencherCorpo`), `conversores.ts` (`normalizarCargas`), `Treino.tsx`, `SessaoCard.tsx` | **Detalhes, formatos antigos e como verificar: `docs/peso-corporal.md`.** Toda leitura de cargas passa por `docsParaRegistros(docs, meso)` (normaliza dado de versão antiga; nunca use `docParaCargas` cru em tela/cálculo). Barra fixa, flexão de braços, abdominal no solo sem carga e agachamento com peso do corpo já vêm com "Somar meu peso corporal" marcado. Só vale para slot **sem carga** e **sem `pc.<slot>` explícito**; ao gravar a 1ª carga, o `pc` é gravado junto, então histórico e métricas antigas não mudam. Sem `pesoKg` no perfil não há automático (fica a opção manual com aviso). **Convenção: `cargas.<slot>.s<n>` guarda o TOTAL (extra + `pc`)**; a tela mostra `total - corpo`. Ao marcar/desmarcar/trocar o `pc` (A para B), `rebasear` regrava campo a campo cada carga já preenchida como `c - A + B`; carga menor que A (gravada sem o corpo, dado antigo) fica como está, para nenhuma carga se perder. Ao "Concluir treino", `preencherCorpo` grava `pc` (se faltar) e `carga = corpo` nas séries prescritas **vazias** (nunca sobrescreve; drop fica de fora); `estadoCorpo` (Treino.tsx) é a regra única de `corpo`/`auto`. O coach vê "Inclui peso do corpo: X kg" no card. `tools/aluno-exemplo.mjs` também grava extra + pc. | `pesoCorporal.test.ts`, `conversores.test.ts`, `treino.test.ts`, `tests/aluno-exemplo.test.ts`, e2e `peso-corpo.spec.ts` |
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |
 | Aluno de exemplo | `tools/aluno-exemplo.mjs`, `aluno-exemplo.yml` | Escreve em **produção**, só no aluno "Victor Aluno"/"Victor C.L. Silva" (falha se não houver exatamente 1). Nunca cria, altera ou apaga registros da **semana 2** (o Victor registra ao vivo); só grava a semana 1, com merge. Em outros mesos da conta só muda `inicio` dos que estiverem em andamento (guarda `inicioOriginal`). | `tests/aluno-exemplo.test.ts` (emulador) |
+| LGPD / exclusão | `MinhaConta.tsx` (solicitar), `exclusoes/{uid}`, `tools/limpeza-lgpd.mjs` | "Apagar de vez" grava `exclusoes/{uid}` **antes** de apagar; Limpeza LGPD (diária) termina Auth/logs/dados, faz backup novo e apaga os com 30+ dias; resumo do workflow nunca expõe nome/e-mail/uid; nunca apagar pedido de coach; quem mudar política troca `VERSAO_PRIVACIDADE`. | `tests/limpeza-lgpd.test.ts` |
