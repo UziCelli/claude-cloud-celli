@@ -189,6 +189,23 @@ describe('usuarios', () => {
       await assertFails(criar({ ...novo, email: 'outro@x.com' }));
       await assertFails(setDoc(doc(db('novo'), 'usuarios', 'novo'), novo)); // login sem e-mail
     });
+    it('aceita privacidade (hora do servidor e versão)', () =>
+      assertSucceeds(criar({ ...novo, privacidadeEm: serverTimestamp(), privacidadeVersao: '2026-10-02' })));
+    it('aceita versão de privacidade com 20 caracteres', () =>
+      assertSucceeds(criar({ ...novo, privacidadeEm: serverTimestamp(), privacidadeVersao: 'x'.repeat(20) })));
+    it('nega privacidadeEm com data qualquer', async () => {
+      await assertFails(criar({ ...novo, privacidadeEm: futuro, privacidadeVersao: '1' }));
+      await assertFails(criar({ ...novo, privacidadeEm: passado, privacidadeVersao: '1' }));
+    });
+    it('nega versão de privacidade vazia, longa ou não texto', async () => {
+      await assertFails(criar({ ...novo, privacidadeEm: serverTimestamp(), privacidadeVersao: '' }));
+      await assertFails(criar({ ...novo, privacidadeEm: serverTimestamp(), privacidadeVersao: 'x'.repeat(21) }));
+      await assertFails(criar({ ...novo, privacidadeEm: serverTimestamp(), privacidadeVersao: 1 }));
+    });
+    it('nega criadoEm com data qualquer', async () => {
+      await assertFails(criar({ ...novo, criadoEm: passado }));
+      await assertFails(criar({ ...novo, criadoEm: futuro }));
+    });
   });
 
   it('nome próprio continua texto de 1 a 80 caracteres', async () => {
@@ -235,6 +252,27 @@ describe('usuarios', () => {
     await assertFails(updateDoc(ana, { nome: '', pesoKg: 70 }));
     await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { pesoKg: 70 }));
     await assertFails(updateDoc(ana, { pesoKg: 70, status: 'bloqueado', pagoAte: Timestamp.fromMillis(Date.now() + 365 * DIA) }));
+  });
+
+  it('aluno grava o aceite da privacidade (hora do servidor + versão), sozinho ou com o nome', async () => {
+    for (const uid of ['ana', 'agu', 'blq', 'exp']) {
+      await assertSucceeds(updateDoc(doc(db(uid), 'usuarios', uid), { privacidadeEm: serverTimestamp(), privacidadeVersao: '2026-10' }));
+    }
+    await assertSucceeds(
+      updateDoc(doc(db('bia'), 'usuarios', 'bia'), { nome: 'Bia M', privacidadeEm: serverTimestamp(), privacidadeVersao: 'v1' }),
+    );
+  });
+
+  it('privacidade: negada com papel/status, hora forjada, versão inválida ou em outro usuário', async () => {
+    const ana = doc(db('ana'), 'usuarios', 'ana');
+    await assertFails(updateDoc(ana, { privacidadeEm: serverTimestamp(), privacidadeVersao: '1', papel: 'coach' }));
+    await assertFails(updateDoc(ana, { privacidadeEm: serverTimestamp(), privacidadeVersao: '1', status: 'bloqueado' }));
+    await assertFails(updateDoc(ana, { privacidadeEm: passado, privacidadeVersao: '1' }));
+    await assertFails(updateDoc(ana, { privacidadeEm: futuro }));
+    await assertFails(updateDoc(ana, { privacidadeEm: serverTimestamp(), privacidadeVersao: '' }));
+    await assertFails(updateDoc(ana, { privacidadeEm: serverTimestamp(), privacidadeVersao: 'x'.repeat(21) }));
+    await assertFails(updateDoc(ana, { privacidadeVersao: 5 }));
+    await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { privacidadeEm: serverTimestamp(), privacidadeVersao: '1' }));
   });
 
   it('usuário altera só o próprio nome', async () => {
@@ -595,6 +633,45 @@ describe('notas', () => {
     // 299 (e não 300): com 300 nomes o emulador falha ao avaliar get() em me() (limite do motor de regras), então o teto efetivo é 299.
     await assertSucceeds(gravar('ana', 'ana', { exercicios: mapa(299) }));
     await assertFails(gravar('bia', 'bia', { exercicios: mapa(301) }));
+  });
+});
+
+// Pedido de exclusão total (LGPD): só o coach cria/lê/apaga; o workflow diário usa a Admin SDK.
+describe('exclusoes', () => {
+  const ex = (uid: string | undefined, id = 'ana') => doc(db(uid), 'exclusoes', id);
+  const semCoach = (token: object) => doc(contexto('coach', token).firestore() as unknown as Firestore, 'exclusoes', 'ana');
+  const existente = () =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'exclusoes', 'ana'), { em: Timestamp.now() }),
+    );
+
+  it('coach com 2º fator cria, lê, atualiza e apaga', async () => {
+    await assertSucceeds(setDoc(ex('coach'), { em: serverTimestamp() }));
+    await assertSucceeds(getDoc(ex('coach')));
+    await assertSucceeds(getDocs(collection(db('coach'), 'exclusoes')));
+    await assertSucceeds(setDoc(ex('coach'), { em: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(ex('coach')));
+  });
+
+  it('coach sem 2º fator, aluno e anônimo: tudo negado', async () => {
+    await existente();
+    await assertFails(setDoc(semCoach(SEM_FATOR), { em: serverTimestamp() }));
+    await assertFails(getDoc(semCoach(SEM_FATOR)));
+    await assertFails(deleteDoc(semCoach(SEM_FATOR)));
+    for (const uid of ['ana', 'bia', undefined]) {
+      await assertFails(setDoc(ex(uid, 'ana'), { em: serverTimestamp() }));
+      await assertFails(setDoc(ex(uid, 'novo'), { em: serverTimestamp() }));
+      await assertFails(getDoc(ex(uid, 'ana')));
+      await assertFails(deleteDoc(ex(uid, 'ana')));
+    }
+  });
+
+  it('coach: nega chave extra, em diferente de serverTimestamp e sem em', async () => {
+    await assertFails(setDoc(ex('coach'), { em: serverTimestamp(), motivo: 'x' }));
+    await assertFails(setDoc(ex('coach'), { em: passado }));
+    await assertFails(setDoc(ex('coach'), { em: futuro }));
+    await assertFails(setDoc(ex('coach'), { em: 'agora' }));
+    await assertFails(setDoc(ex('coach'), {}));
   });
 });
 

@@ -6,6 +6,7 @@ import { cadastrar, confirmarLoginTotp, entrar, recuperarSenha, resolverMfa } fr
 import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
 import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from '../../ui'
 import Logo from '../../Logo'
+import { CaixaAceite } from '../privacidade/Politica'
 import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
 import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
@@ -46,6 +47,7 @@ export default function Entrar() {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [aceito, setAceito] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [msgRecuperar, setMsgRecuperar] = useState('')
@@ -195,12 +197,15 @@ export default function Entrar() {
               </m.div>
             </>
           )}
+          <Painel aberto={cadastro && !resolver}>
+            <CaixaAceite marcada={aceito} onChange={setAceito} />
+          </Painel>
           <Msg>{saiu && <Aviso>Você saiu por inatividade.</Aviso>}</Msg>
           <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
           <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
           <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
           <m.div variants={item}>
-            <Botao tipo="primario" className="w-full" disabled={enviando || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))} carregando={enviando}>
+            <Botao tipo="primario" className="w-full" disabled={enviando || (cadastro && !aceito) || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))} carregando={enviando}>
               {enviando ? 'Enviando…' : !cadastro && espera > 0 ? `Aguarde ${espera} s` : cadastro ? 'Criar conta' : resolver ? 'Confirmar' : 'Entrar'}
             </Botao>
           </m.div>
@@ -231,7 +236,7 @@ export default function Entrar() {
           Como instalar o app
         </a>
         <p className="mt-3 text-center text-xs text-slate-500">
-          Protegido pelo reCAPTCHA. Valem a{' '}
+          <a href="/privacidade" className="underline">Política de Privacidade</a> do VFITCOACH. Protegido pelo reCAPTCHA. Valem a{' '}
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline">Política de Privacidade</a> e os{' '}
           <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline">Termos de Serviço</a> do Google.
         </p>

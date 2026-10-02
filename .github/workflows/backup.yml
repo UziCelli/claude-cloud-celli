@@ -1,8 +1,9 @@
 name: Backup semanal
 
-# Copia todo o Firestore (usuarios, mesos, registros) para um JSON e guarda como artifact por 90 dias.
+# Copia todo o Firestore (usuarios, mesos, registros) para um JSON e guarda como artifact por 30 dias.
 # Restaurar: baixe o artifact em Actions -> execução -> Artifacts e regrave cada documento com firebase-admin
 # (db.collection(c).doc(id).set(dados)); datas estão em ISO e voltam a Timestamp com Timestamp.fromDate.
+# A limpeza LGPD (limpeza-lgpd.yml) apaga os backups antigos depois de uma exclusão: ambos usam o mesmo grupo de concorrência.
 # ATENÇÃO: o artifact contém dados pessoais dos alunos. Mantenha o repositório privado.
 on:
   schedule:
@@ -11,6 +12,9 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: firestore-backup
 
 jobs:
   backup:
@@ -37,4 +41,4 @@ jobs:
         with:
           name: backup-firestore-${{ steps.data.outputs.d }}
           path: backup.json
-          retention-days: 90
+          retention-days: 30
