@@ -84,16 +84,23 @@ export default function Inicio() {
               <p className="text-sm text-slate-500">{vazio}</p>
             ) : (
               <ul className="flex flex-wrap gap-2">
-                {lista.map((a) => (
-                  <li key={a.id} className="min-w-0">
-                    <a
-                      href={`#/aluno/${a.id}`}
-                      className="block max-w-full truncate rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-                    >
-                      {a.nome}
-                    </a>
-                  </li>
-                ))}
+                {lista.flatMap((a) => {
+                  const hoje = titulo === 'Treinaram hoje' ? r.treinosHoje[a.id] : undefined
+                  const links = hoje?.length
+                    ? hoje.map((t) => ({
+                        k: `${t.mesoId}-${t.semana}-${t.treino}`,
+                        href: `#/meso/${t.mesoId}/semana/${t.semana}`,
+                        texto: `${a.nome} · Treino ${t.treino}${t.feito ? ' ✓' : ' (em andamento)'}`,
+                      }))
+                    : [{ k: a.id, href: `#/aluno/${a.id}`, texto: a.nome }]
+                  return links.map((l) => (
+                    <li key={`${a.id}-${l.k}`} className="min-w-0">
+                      <a href={l.href} className="block max-w-full truncate rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">
+                        {l.texto}
+                      </a>
+                    </li>
+                  ))
+                })}
               </ul>
             )}
           </Cartao>

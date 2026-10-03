@@ -57,6 +57,7 @@ export default function SessaoCard({
   inicioEm,
   realizadoEm,
   limite,
+  hoje,
 }: {
   mesoId: string
   alunoId: string
@@ -69,16 +70,24 @@ export default function SessaoCard({
   inicioEm?: { toMillis(): number } | null
   realizadoEm?: { toMillis(): number } | null
   limite?: number
+  hoje?: 'feito' | 'andamento'
 }) {
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', alunoId))
   const m = metricasSessao(sessao, cargas, reps)
   const nEtapas = Math.max(0, ...sessao.exercicios.map((e) => e.reps.length - e.n))
 
   return (
-    <Cartao>
+    <Cartao className={hoje ? 'ring-2 ring-marca-400' : undefined}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="font-semibold">Treino {sessao.treino}</h3>
+          <h3 className="font-semibold">
+            Treino {sessao.treino}
+            {hoje && (
+              <span className={`ml-2 rounded px-1.5 py-0.5 text-[11px] font-semibold ${hoje === 'feito' ? 'bg-green-900/50 text-green-300' : 'bg-amber-900/50 text-amber-300'}`}>
+                {hoje === 'feito' ? 'Feito hoje ✓' : 'Treinando hoje'}
+              </span>
+            )}
+          </h3>
           <p className="text-xs text-slate-400">
             <b className={`text-sm ${acimaDoLimite(sessao.tempoMin, limite) ? 'text-red-400' : 'text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</b> · pausa {sessao.pausaS}s
             {inicioEm && realizadoEm && (
