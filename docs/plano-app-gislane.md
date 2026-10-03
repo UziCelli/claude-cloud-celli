@@ -40,7 +40,7 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 
 ## Checklist antes de começar (Victor/Gislane)
 - [x] **Nome:** **Gislane** (confirmado pelo Victor; "Gislaine" era erro de transcrição).
-- [ ] **Nome do app** embaixo do ícone (curto, até 12 letras).
+- [x] **Nome do app** embaixo do ícone: **Gislane** (aprovado pelo Victor em 03/10/2026).
 - [x] **Logo:** já vetorizado em `docs/marca/gislane-logo.svg` (vermelho `#E21E27`, feito a partir do PNG oficial em fonte Gatwick).
 - [ ] **Cores e fontes** (paleta da prévia, a confirmar com o Victor: fundo preto quente, botões vermelho `#E21E27`, destaques rosé `#D4A79C`; escalas usadas na prévia: slate 950 `#0e0a09` · 900 `#1a1311` · 800 `#2c211e` · 700 `#3d2e2a` · 600 `#54423c` · 500 `#85706a` · 400 `#b89a92` · 300 `#d4b8b0` · 200 `#e8d7d2` · 100 `#f6eeeb`; marca 300 `#d4a79c` · 400 `#ea4a50` · 500 `#e21e27` · 600 `#b81a22` · 700 `#5a2a24` · 900 `#1a0f0d`): estão no Canva, no kit de marca "Gislane Personal Trainer". O Claude lê pelas miniaturas dos designs ("Cópia de Portfólio Gislane", "Proposta Comercial - Gislane") e pede confirmação.
 - [ ] **Endereço** escolhido (tabela acima). Se for domínio próprio, já comprado.
@@ -53,7 +53,9 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 - [x] **Fase A** (marca configurável): `marcas/<id>/`, alias `@marca`, `--mode`, scripts `dev:gislane`/`build:gislane`/`icones:gislane`, e2e com `MARCA=gislane`. Build vfit igual ao anterior.
 - [x] **Fase B** (identidade): paleta aprovada em `marcas/gislane/tema.css`, logo, ícone (o "G" em fundo #1a0f0d) e PNGs gerados. Fontes: Inter/Montserrat por enquanto.
 - [x] `apk.yml` (VFIT) já grava o `assetlinks.json` em `marcas/vfit/public/.well-known/`. `slate-500` da Gislane clareado para 4,7:1.
-- [ ] Pendências do Victor: nome do app embaixo do ícone (hoje "Gislane"), nome completo e CREF da Gislane, endereço do app (`A CONFIRMAR` em `marcas/gislane/marca.json`); aprovar prints e ícone; decidir a cor do botão "perigo" e dos erros (vermelho parecido com a marca).
+- [x] Ícone (o "G" vermelho) e nome "Gislane" aprovados pelo Victor (03/10/2026).
+- [x] Botão "perigo" em vinho escuro (`red-600`/`red-500` sobrescritos só em `marcas/gislane/tema.css`), aprovado pelo Victor.
+- [ ] Pendências do Victor: nome completo e CREF da Gislane, endereço do app (`A CONFIRMAR` em `marcas/gislane/marca.json`).
 - [ ] Fases C e D: `twa/`, workflows de deploy/APK por marca, `firebase.json`, `.firebaserc`, `push/` (o Worker do descanso só aceita o projeto da VFIT; a Gislane precisa do dela, e sem `VITE_PUSH_URL` o push fica desligado). Antes de publicar, travar o build da Gislane se ainda houver "A CONFIRMAR" ou se faltar a chave do Firebase (sem chave o app cai no emulador).
 
 ## Passos técnicos (para o Claude)
