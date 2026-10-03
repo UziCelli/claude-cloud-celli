@@ -1,6 +1,6 @@
 import { collection, doc, query, where } from 'firebase/firestore'
-import { AnimatePresence, m } from 'motion/react'
-import { useState, type ReactNode } from 'react'
+import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { prescreverSessao, type Metodo } from '../../engine'
 import { METODOS, metodoDoRotulo } from '../../data/metodos'
 import { mmss, useDescanso } from '../../lib/descanso'
@@ -14,6 +14,8 @@ import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/peso
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
+import { historicoExercicios, recordeAnterior, type RegistroEvolucao } from '../../lib/evolucao'
+import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
 import { ir } from '../../rota'
 import { Botao, cascata, Centro, item, Painel } from '../../ui'
@@ -256,6 +258,40 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
   )
 }
 
+const CONFETE = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#facc15', '#a78bfa']
+
+// Aviso de recorde: some sozinho em ~4 s (o pai troca a `key` a cada recorde).
+function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolean | null; fechar: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(fechar, 4000)
+    return () => clearTimeout(t)
+  }, [fechar])
+  return (
+    <m.div
+      role="status"
+      initial={{ opacity: 0, y: quieto ? 0 : -16, scale: quieto ? 1 : 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={quieto ? { duration: 0.15 } : { type: 'spring', stiffness: 400, damping: 18 }}
+      className="pointer-events-none fixed inset-x-4 top-4 z-40 mx-auto max-w-sm rounded-xl border border-amber-400 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-amber-200 shadow-lg"
+    >
+      {!quieto &&
+        CONFETE.map((cor, i) => (
+          <m.span
+            key={i}
+            aria-hidden
+            className="absolute left-1/2 top-1/2 h-2 w-2 rounded-sm"
+            style={{ backgroundColor: cor }}
+            initial={{ x: 0, y: 0, opacity: 1 }}
+            animate={{ x: (i - 2.5) * 44, y: i % 2 ? 56 : -40, rotate: i * 120, opacity: 0 }}
+            transition={{ duration: 1.1, ease: 'easeOut' }}
+          />
+        ))}
+      {texto}
+    </m.div>
+  )
+}
+
 export default function Treino({ uid, mesoId, semana, treino }: { uid: string; mesoId: string; semana: number; treino: number }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', mesoId))
   const { dados: docsRegistros, pendente } = useLista<RegistroFlag>(
@@ -266,6 +302,19 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const descanso = useDescanso()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
+  // Festa no recorde: só leitura do histórico inteiro do aluno.
+  const quieto = useReducedMotion()
+  const qTodos = useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid])
+  const qMesos = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
+  const { dados: todosRegistros } = useLista<RegistroEvolucao>(qTodos)
+  const { dados: todosMesos } = useLista<MesoSalvo>(qMesos)
+  const historico = useMemo(
+    () => historicoExercicios(todosMesos.map((x) => ({ id: x.id, meso: docParaMeso(x), nome: x.nome })), todosRegistros),
+    [todosMesos, todosRegistros],
+  )
+  const festejados = useRef(new Set<string>())
+  const [festa, setFesta] = useState<{ n: number; texto: string } | null>(null)
+  const fecharFesta = useCallback(() => setFesta(null), [])
 
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Treino não encontrado.</Centro>
@@ -344,6 +393,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
+      <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
       {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
@@ -456,7 +506,13 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
                         onSalvar={(v) => {
                           iniciou()
                           if (auto && v != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
-                          registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, v == null ? null : Math.round((v + corpo) * 100) / 100)
+                          const total = v == null ? null : Math.round((v + corpo) * 100) / 100
+                          registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, total)
+                          if (!festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
+                            festejados.current.add(e.slot.nome)
+                            navigator.vibrate?.([80, 40, 120])
+                            setFesta({ n: festejados.current.size, texto: `Novo recorde! 🎉 ${e.slot.nome}: ${fmt(total!)} kg` })
+                          }
                         }}
                       />
                       <span className="text-xs text-slate-600">kg</span>

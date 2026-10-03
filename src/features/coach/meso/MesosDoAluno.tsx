@@ -41,7 +41,12 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
   return (
     <Pagina
       titulo={`Mesociclos de ${aluno.dados?.nome ?? '…'}`}
-      acoes={<Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>}
+      acoes={
+        <>
+          <Botao onClick={() => ir(`/aluno/${uid}/evolucao`)}>Evolução</Botao>
+          <Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>
+        </>
+      }
     >
       <Msg>{aviso && <p className="mb-3 text-sm text-green-400">{aviso}</p>}</Msg>
       {aluno.dados?.presencial && <DarAcesso id={uid} />}

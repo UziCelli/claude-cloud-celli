@@ -16,6 +16,8 @@ import Alunos from './features/coach/alunos/Alunos'
 import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
+import RankingAlunos from './features/coach/RankingAlunos'
+import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
 import Instalar from './features/instalar/Instalar'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
@@ -110,6 +112,8 @@ function Coach({ uid, email }: { uid: string; email: string }) {
   if (rota === '/alunos') tela = <Alunos />
   else if (rota === '/alunos/novo') tela = <NovoAluno />
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />
+  else if (rota === '/ranking') tela = <RankingAlunos />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
   else if (rota === '/metodos') tela = <GuiaMetodos />

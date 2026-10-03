@@ -102,6 +102,8 @@ for (const vp of [
 
     await page.goto('/#/evolucao')
     await expect(page.getByRole('heading', { name: 'Evolução' })).toBeVisible()
+    // O título aparece já no "Carregando…": espera o painel com dados (select "Por exercício").
+    await expect(page.getByRole('combobox')).toBeVisible()
     expect(await confere(page)).toBeGreaterThan(0)
     await ctx.close()
   })

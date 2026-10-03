@@ -102,6 +102,10 @@ for (const largura of [1280, 390]) {
 
     await ir(`/#/aluno/${alunoId}`, 'Meso Varredura')
     await confere('coach-aluno')
+    await ir(`/#/aluno/${alunoId}/evolucao`, 'Evolução')
+    await confere('coach-evolucao')
+    await ir('/#/ranking', 'Ranking de evolução')
+    await confere('coach-ranking')
 
     await page.goto(`/#/meso/${mesoId}`)
     await expect(page.getByRole('button', { name: 'Divisão', exact: true })).toBeVisible()

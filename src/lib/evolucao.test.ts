@@ -211,6 +211,12 @@ describe('painelEvolucao: frequência', () => {
     expect(painel([]).mediaSemanal).toBe(0)
   })
 
+  it('mediaSemanal de quem começou há pouco: só as semanas desde o 1º treino (a atual vazia não conta)', () => {
+    expect(painel([...emSemana(1, 1, [1, 2]), ...emSemana(0, 2, [1, 2])]).mediaSemanal).toBe(2)
+    expect(painel(emSemana(1, 1, [1, 2, 3])).mediaSemanal).toBe(3)
+    expect(painel([...emSemana(2, 1, [1, 2]), ...emSemana(0, 2, [1, 2])]).mediaSemanal).toBe(1.33)
+  })
+
   it('dias: dias distintos com treino nos últimos 84 dias, em ordem', () => {
     const p = painel([
       feito('m1', 1, 1, '2026-07-18T10:00'), // 84 dias atrás: fora

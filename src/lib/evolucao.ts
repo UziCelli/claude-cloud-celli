@@ -29,7 +29,7 @@ export type Painel = {
   totalTreinos: number
   semanasSeguidas: number
   melhorSequencia: number
-  mediaSemanal: number // treinos por semana nas últimas 8 semanas de calendário
+  mediaSemanal: number // treinos por semana nas últimas 8 semanas (desde a do 1º treino; atual vazia fora)
   porSemana: { inicio: number; feitos: number }[] // últimas 12 (inicio = diaSP da segunda), mais antiga primeiro
   meta: number | null // frequência do meso mais recente
   dias: number[] // diaSP com treino nos últimos 84 dias
@@ -124,6 +124,11 @@ function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: nu
     const inicio = atual - 7 * (11 - i)
     return { inicio, feitos: feitos.filter((f) => f.dia != null && segunda(f.dia) === inicio).length }
   })
+  // Média das últimas 8 semanas, mas só desde a semana do 1º treino (quem começou agora não é
+  // dividido por 8); a semana atual ainda vazia não puxa a média para baixo.
+  const primeira = semanas.size ? Math.min(...semanas) : atual
+  let janela = porSemana.slice(-8).filter((s) => s.inicio >= primeira)
+  if (janela.length > 1 && janela.at(-1)!.feitos === 0) janela = janela.slice(0, -1)
 
   const topEvolucao = lista
     .flatMap(([nome, os]) => {
@@ -163,7 +168,7 @@ function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: nu
     totalTreinos: feitos.length,
     semanasSeguidas,
     melhorSequencia,
-    mediaSemanal: arred(soma(porSemana.slice(-8).map((s) => s.feitos)) / 8),
+    mediaSemanal: arred(soma(janela.map((s) => s.feitos)) / Math.max(1, janela.length)),
     porSemana,
     meta: [...mesos].sort(porInicio).at(-1)?.meso.frequencia ?? null,
     dias: [...new Set(feitos.flatMap((f) => (f.dia != null && hoje - f.dia < 84 ? [f.dia] : [])))].sort((a, b) => a - b),

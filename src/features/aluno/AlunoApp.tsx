@@ -14,7 +14,7 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
   if ((p = casar('/treino/:mesoId/:semana/:treino', rota)))
     tela = <Treino uid={uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
-  else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} />
+  else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />
 
   return (
     <>
