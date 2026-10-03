@@ -56,7 +56,14 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Início: seção "Treinaram hoje" mostra "Treino N ✓" com link para a semana.
   - Semana: cartão do treino de hoje com selo "Feito hoje ✓"/"Treinando hoje".
   - Ajustar volume: prévia com reps por exercício (3×10 → 3×11) e botão Cancelar.
-- **Em andamento:** filtro da aba Métodos (semana/treino/exercício), testes de segurança e varredura do front-end.
+- PR #38 (juntado): filtro da aba Métodos (semana/treino/exercício), `e2e/varredura.spec.ts` (todas as telas, sem bugs), `tests/ataques.test.ts` (79 casos, nenhum furo) e link da política no Hoje do aluno.
+- PR #39 (juntado): login anônimo não conta como logado nas regras.
+- **Próximo:** app da Gislane (segunda marca) numa conversa nova. Plano em `docs/plano-app-gislane.md`.
+- **Pendências do Victor:**
+  - App Check → Aplicar;
+  - retenção de logs do GitHub em 30 dias;
+  - 2 etapas no Google e no GitHub;
+  - advogado revisar a política.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
