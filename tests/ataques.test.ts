@@ -547,16 +547,14 @@ describe('anônimo: sem login nada é lido nem escrito, em nenhuma coleção', (
     await negar(getDocs(collection(c, 'mesos', 'm_ana', 'semanas')));
   });
 
-  // ACHADO MENOR: as regras usam só `request.auth != null`. Um login ANÔNIMO do Firebase
-  // (provider 'anonymous') conta como logado. Hoje isso só abre `logs` (qualquer logado cria),
-  // porque todo o resto exige papel/status em usuarios/{uid}, que o anônimo não tem e não
-  // consegue criar (sem e-mail no token). A defesa real é manter "Anônimo" DESLIGADO em
-  // Authentication > Método de login. Se alguém ligar, qualquer pessoa gasta a cota com logs.
+  // Login ANÔNIMO do Firebase (provider 'anonymous'): o app não usa. `signedIn()` nas regras não o
+  // conta como logado (fechado em 03/10/2026), então mesmo com "Anônimo" ligado no console por engano
+  // ele não grava nada, nem `logs`.
   describe('login anônimo do Firebase (provider anonymous)', () => {
     const anon = () => comoFirestore('anon1', { firebase: { sign_in_provider: 'anonymous' } });
 
-    it('ACHADO MENOR (permitido hoje): consegue criar log, porque só se exige estar logado', () =>
-      assertSucceeds(setDoc(doc(anon(), 'logs', 'a1'), {
+    it('não cria log (anônimo não conta como logado)', () =>
+      negar(setDoc(doc(anon(), 'logs', 'a1'), {
         tipo: 'erro', mensagem: 'x', tela: '/', versao: '1', aparelho: 'x', online: true, uid: 'anon1', em: serverTimestamp(),
       })));
 
