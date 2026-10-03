@@ -72,7 +72,8 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - PRs #1–#40 conferidas: 39 juntadas. A #22 foi fechada por engano do Victor e fica descartada.
 - Pendências antigas achadas nas PRs: conferir login, "Esqueci minha senha" e o app no iPhone/Android (#13); rodar "Aluno de exemplo" para acertar a semana 1 (#33).
 - Aprovados pelo Victor: ícone "G", nome "Gislane" embaixo do ícone e botão "perigo" em vinho escuro.
-- **Falta do Victor:** nome completo e CREF da Gislane e o endereço (domínio). Depois: Fase C (projeto Firebase dela + domínio).
+- Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP.
+- **Falta do Victor:** comprar o domínio na Squarespace (por enquanto só local). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:

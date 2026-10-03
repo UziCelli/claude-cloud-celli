@@ -37,7 +37,7 @@ export default function Politica() {
       <p className="text-center text-xs text-slate-500">Versão vigente: 02/10/2026</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
-          {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é o responsável (controlador) pelos dados do app {marca.nome}. Contato:{' '}
+          {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
           {marca.responsavel.contato}.
         </p>
       </Secao>
