@@ -12,8 +12,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Login anônimo do Firebase (o app não usa) não conta como logado: nem se alguém ligar no console.
     function signedIn() {
-      return request.auth != null;
+      return request.auth != null
+        && request.auth.token.firebase.get('sign_in_provider', '') != 'anonymous';
     }
 
     function me() {

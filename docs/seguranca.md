@@ -125,5 +125,5 @@ Plano Spark do Firebase:
 - **Furos reais:** nenhum. `npm audit --omit=dev`: 0 vulnerabilidades.
 - **Achados menores, aceitos e documentados no teste:**
   - os valores dentro de `cargas`, `reps`, `pc` e `notas` não têm o tipo validado; o dano fica só nos dados do próprio aluno, e o motor ignora o que não é número;
-  - o login anônimo, se fosse ligado, poderia gravar `logs`. Ele não é usado: mantenha "Anônimo" **desligado** em Authentication → Método de login.
+  - login anônimo: fechado nas regras em 03/10/2026 (`signedIn()` não conta o provider `anonymous`). Mesmo se alguém ligar "Anônimo" no console, ele não grava nada. Mesmo assim, mantenha desligado.
 - `e2e/varredura.spec.ts` abre todas as telas (coach, aluno e públicas) em 1280 e 390 px e falha em caso de erro, rolagem horizontal ou "undefined"/"NaN".
