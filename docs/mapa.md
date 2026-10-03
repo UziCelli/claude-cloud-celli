@@ -73,7 +73,7 @@ Comece por aqui para achar onde mexer.
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão
 - `meso/MesosDoAluno.tsx` — lista de mesos de um aluno
 - `meso/CampoExercicio.tsx` — combobox de exercício (sugestões de `src/lib/busca.ts`, texto livre)
-- `meso/TabDivisao.tsx` (navegação por teclado: Tab/Enter via `onAvancar` do `CampoExercicio`, foco no `useEffect`; copiar treino via `copiarTreino` de `meso/util.ts`), `TabMetodos.tsx`, `TabProgressao.tsx` — abas do editor (progressão: padrão + por exercício via slotId)
+- `meso/TabDivisao.tsx` (navegação por teclado: Tab/Enter via `onAvancar` do `CampoExercicio`, foco no `useEffect`; copiar treino via `copiarTreino` de `meso/util.ts`), `TabMetodos.tsx` (filtro semana/treino/exercício via `filtrarMetodos`, só visualização), `TabProgressao.tsx` (prévia do Ajustar volume com Cancelar e reps por exercício via `fmtReps` de `src/lib/tempo.ts`) — abas do editor (progressão: padrão + por exercício via slotId)
 - `meso/SugestaoTempo.tsx` — aviso "Treinos acima do tempo" + painel de sugestão de biset/triset (usado no editor e no Início)
 - `semana/VisaoSemana.tsx` — monitoramento: séries/reps realizadas vs. prescrição
 - `semana/Monitoramento.tsx`, `LoadInput.tsx`, `SessaoCard.tsx` — cards de treino (treino de hoje em destaque: prop `hoje`, calculada em `VisaoSemana`; Início usa `resumoCoach().treinosHoje`)
@@ -110,7 +110,8 @@ Comece por aqui para achar onde mexer.
 
 ### `tests/` · `e2e/` — Testes
 - `tests/rules.test.ts` — segurança Firestore (emulador)
-- `e2e/*.spec.ts` — fluxo aluno/coach (Playwright)
+- `tests/ataques.test.ts` — teste de ataques (troca de ID, escalada, anônimo, abuso); todo caso deve ser negado
+- `e2e/*.spec.ts` — fluxo aluno/coach (Playwright); `e2e/varredura.spec.ts` abre todas as telas em 1280/390 px (erro, rolagem horizontal, "undefined"/"NaN")
 - `e2e/seed.ts` — fixture: usuários, mesos
 
 ### `tools/` — Scripts offline
