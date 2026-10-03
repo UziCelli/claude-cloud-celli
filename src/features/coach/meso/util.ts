@@ -51,3 +51,16 @@ export function copiarTreino(meso: Meso, de: number, para: number) {
   ]
   return { divisao, metodos, progressaoExercicio }
 }
+
+export interface FiltroMetodos {
+  semana?: number
+  treino?: number
+  exercicio?: number
+}
+
+// Só para exibir: devolve os métodos que batem com o filtro, com o índice original no array.
+export function filtrarMetodos(metodos: Meso['metodos'], f: FiltroMetodos) {
+  return metodos
+    .map((m, idx) => ({ m, idx }))
+    .filter(({ m }) => (!f.semana || m.semana === f.semana) && (!f.treino || m.treino === f.treino) && (!f.exercicio || m.exercicio === f.exercicio))
+}

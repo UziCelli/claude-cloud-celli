@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Meso } from '../../../engine'
-import { copiarTreino } from './util'
+import { copiarTreino, filtrarMetodos } from './util'
 
 const meso = {
   frequencia: 3,
@@ -36,5 +36,22 @@ describe('copiarTreino', () => {
     expect(r.progressaoExercicio.a1).toEqual([[10, 8]])
     expect(r.progressaoExercicio.b1).toBeUndefined()
     expect(r.progressaoExercicio[ids[1]]).toBeUndefined()
+  })
+})
+
+describe('filtrarMetodos', () => {
+  const lista = [
+    { semana: 1, treino: 1, exercicio: 1 },
+    { semana: 2, treino: 1, exercicio: 3 },
+    { semana: 2, treino: 2, exercicio: 3 },
+  ] as Meso['metodos']
+  it('sem filtro devolve tudo, com os índices originais', () => {
+    expect(filtrarMetodos(lista, {}).map((x) => x.idx)).toEqual([0, 1, 2])
+  })
+  it('filtra por semana, treino e exercício combinados', () => {
+    expect(filtrarMetodos(lista, { semana: 2 }).map((x) => x.idx)).toEqual([1, 2])
+    expect(filtrarMetodos(lista, { semana: 2, treino: 2 }).map((x) => x.idx)).toEqual([2])
+    expect(filtrarMetodos(lista, { exercicio: 3 }).map((x) => x.idx)).toEqual([1, 2])
+    expect(filtrarMetodos(lista, { semana: 1, exercicio: 3 })).toEqual([])
   })
 })
