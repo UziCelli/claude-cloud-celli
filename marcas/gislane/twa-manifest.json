@@ -1,0 +1,27 @@
+{
+  "packageId": "com.gislanepersonaltrainer.app",
+  "host": "app.gislanepersonaltrainer.com",
+  "name": "Gislane",
+  "launcherName": "Gislane",
+  "display": "standalone",
+  "themeColor": "#1A0F0D",
+  "navigationColor": "#1A0F0D",
+  "backgroundColor": "#0E0A09",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://app.gislanepersonaltrainer.com/pwa-512x512.png",
+  "maskableIconUrl": "https://app.gislanepersonaltrainer.com/maskable-icon-512x512.png",
+  "webManifestUrl": "https://app.gislanepersonaltrainer.com/manifest.webmanifest",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./forca.keystore",
+    "alias": "forca"
+  },
+  "appVersionName": "1",
+  "appVersion": "1",
+  "appVersionCode": 1,
+  "fallbackType": "customtabs",
+  "minSdkVersion": 21,
+  "fullScopeUrl": "https://app.gislanepersonaltrainer.com/",
+  "generatorApp": "@bubblewrap/cli"
+}

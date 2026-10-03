@@ -84,7 +84,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Falta do Victor:** acesso da conta de serviço ao projeto dela (mesmo robô ou robô próprio) e dados da landing (foto, WhatsApp, Instagram, agenda, locais, resultado da aluna). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
 
 - **App da Gislane, Fase C no código** (03/10/2026): projeto `gislane-personal-trainer`, `.env.gislane`, aliases no `.firebaserc`, job `gislane` em `deploy.yml` (com trava) e `build:gislane` no CI.
-- O job `gislane` falha até o Victor dar acesso à conta de serviço no projeto dela e o `dominio` do `marca.json` ser preenchido.
+- PR #43 juntada: VFIT publicado; o job `gislane` deu 403 (faltava o papel "Consumidor do Service Usage" para o robô no projeto dela). Depois do papel: re-rodar o job `gislane` do "Publicar".
+- PR seguinte: APK reserva da Gislane + Instalar por marca (Android dela pelo Chrome) e scripts operacionais nos 2 projetos.
+- Landing: `vfitcoach-site` PR #4 (pasta `gislane/`, workflow manual "Publicar site da Gislane" com secrets `CLOUDFLARE_*_GISLANE` da conta Cloudflare dela). Faltam dados pessoais (marcadores [A CONFIRMAR]).
 - Workflows que ainda só rodam na VFIT (backup, LGPD, vigia, mfa, erros): ver `docs/plano-app-gislane.md`, antes de ela ter alunos.
 
 ## Ideias e pendências futuras (não fazer sem pedido)

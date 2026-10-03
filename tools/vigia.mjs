@@ -1,6 +1,6 @@
 // Vigia de segurança: só lê (Firestore + Auth) e grava um JSON com alertas { id, titulo, texto }.
 // Só contagens: nunca nome, e-mail ou uid. Roda no workflow "Vigia de segurança".
-// Uso local: GOOGLE_APPLICATION_CREDENTIALS=sa.json node vigia.mjs alertas.json
+// Uso local: PROJETO=forca--app (ou gislane-personal-trainer) GOOGLE_APPLICATION_CREDENTIALS=sa.json node vigia.mjs alertas.json
 import { appendFileSync, writeFileSync } from 'node:fs'
 import { applicationDefault, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
@@ -13,14 +13,24 @@ const MAX_NEGADOS_24H = 20
 const MAX_LOGS_TOTAL = 5000
 const DIAS_LIMPEZA_ATRASADA = 2
 
+// Projeto SEMPRE explícito (env PROJETO): nunca vem do JSON da credencial nem de padrão. Sem ele, sai.
+const PROJETOS = { 'forca--app': 'vfit', 'gislane-personal-trainer': 'gislane' }
 const emulador = !!process.env.FIRESTORE_EMULATOR_HOST
-initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: process.env.PROJETO ?? 'forca--app' })
+const projeto = process.env.PROJETO?.trim()
+if (!projeto || !(projeto in PROJETOS || (emulador && projeto.startsWith('demo-')))) {
+  console.error(`Informe PROJETO: ${Object.keys(PROJETOS).join(' ou ')} (recebido: ${projeto || 'nada'}).`)
+  process.exit(1)
+}
+const marca = PROJETOS[projeto] ?? projeto
+initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: projeto })
 const db = getFirestore()
 const auth = getAuth()
 const agora = Date.now()
 const h24 = Timestamp.fromMillis(agora - 86400_000)
 const alertas = []
-const alerta = (id, titulo, texto) => alertas.push({ id, titulo, texto: `${texto} Chame o Claude para investigar.` })
+// O título leva a marca: a Issue de um projeto nunca se confunde (nem se repete) com a do outro. A vfit mantém o título de sempre.
+const sufixo = marca === 'vfit' ? '' : ` (${marca})`
+const alerta = (id, titulo, texto) => alertas.push({ id, titulo: titulo + sufixo, texto: `${texto} Chame o Claude para investigar.` })
 
 const coaches = (await db.collection('usuarios').where('papel', '==', 'coach').get()).docs.map((d) => d.id)
 if (coaches.length !== 1)
@@ -73,6 +83,6 @@ if (atrasados)
   alerta('limpeza-atrasada', 'Limpeza LGPD atrasada', `${atrasados} pedido(s) de exclusão esperam há mais de ${DIAS_LIMPEZA_ATRASADA} dias. A Limpeza LGPD pode estar falhando.`)
 
 writeFileSync(process.argv[2], JSON.stringify(alertas))
-const saida = `## Vigia de segurança\n\n- Alertas: ${alertas.length}\n`
+const saida = `## Vigia de segurança (${marca})\n\n- Alertas: ${alertas.length}\n`
 console.log(saida)
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, saida)

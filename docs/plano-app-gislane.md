@@ -57,7 +57,10 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 - [x] Botão "perigo" em vinho escuro (`red-600`/`red-500` sobrescritos só em `marcas/gislane/tema.css`), aprovado pelo Victor.
 - [x] Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP (`responsavel.papel` acerta "a responsável").
 - [x] **Fase C no código** (03/10/2026): projeto Firebase `gislane-personal-trainer`; `.env.gislane` (config pública) versionado; `.firebaserc` com aliases `vfit`/`gislane`; `deploy.yml` com job separado `gislane` (trava: falha se o `dist/` tiver "A CONFIRMAR" ou "forca--app"); `ci.yml` faz `build:gislane`. O dev (`npm run dev*`) usa sempre os emuladores.
-- [ ] **O job `gislane` falha até:** (a) o Victor dar acesso à conta de serviço no projeto dela (passos 6–7 da página de instruções) e (b) o `dominio` de `marcas/gislane/marca.json` ser preenchido (hoje "A CONFIRMAR"). O job da VFIT não é afetado.
+- [x] Domínio preenchido. Falta: no IAM do `gislane-personal-trainer`, dar ao robô do GitHub também o papel **Consumidor do Service Usage** (o deploy deu 403 só com Administrador do Firebase; 03/10/2026).
+- [x] **Fase D (reserva):** `apk.yml` com input `marca`; pacote `com.gislanepersonaltrainer.app`, release `apk-gislane`, mesma chave; `marcas/gislane/twa-manifest.json` e `assetlinks.json`. Decisão do Victor: no Android a Gislane instala pelo Chrome (PWA), a tela Instalar dela não mostra APK.
+- [x] Workflows operacionais (backup, limpeza LGPD, vigia, erros, mfa) atuam nos 2 projetos com `PROJETO` explícito.
+- [ ] (histórico) **O job `gislane` falhava até:** (a) o Victor dar acesso à conta de serviço no projeto dela (passos 6–7 da página de instruções) e (b) o `dominio` de `marcas/gislane/marca.json` ser preenchido (hoje "A CONFIRMAR"). O job da VFIT não é afetado.
 - [x] Domínio comprado na Squarespace: `gislanepersonaltrainer.com` (landing no domínio principal, na Cloudflare como o VFIT; app em `app.gislanepersonaltrainer.com`). Passo a passo atualizado na página de instruções do Victor (Partes 1–3).
 
 ## Fase C — passo a passo do Victor (depois de comprar o domínio na Squarespace)

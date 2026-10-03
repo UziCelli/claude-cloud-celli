@@ -3,6 +3,14 @@ name: Ver erros do app
 # Manutenção manual: lista os 100 erros mais recentes no resumo da execução e apaga os com mais de 30 dias.
 on:
   workflow_dispatch:
+    inputs:
+      marca:
+        description: Marca (projeto Firebase)
+        type: choice
+        default: vfit
+        options:
+          - vfit
+          - gislane
 
 permissions:
   contents: read
@@ -12,12 +20,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Projeto da marca
+        id: proj
+        env:
+          MARCA: ${{ inputs.marca }}
+        run: |
+          case "$MARCA" in
+            vfit) echo "p=forca--app" >> "$GITHUB_OUTPUT" ;;
+            gislane) echo "p=gislane-personal-trainer" >> "$GITHUB_OUTPUT" ;;
+            *) echo "Marca inválida: '$MARCA'"; exit 1 ;;
+          esac
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Ler e limpar os logs
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJETO: ${{ steps.proj.outputs.p }}
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           mkdir -p "$RUNNER_TEMP/adm" && cp tools/erros.mjs "$RUNNER_TEMP/adm/"

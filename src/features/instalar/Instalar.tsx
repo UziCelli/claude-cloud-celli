@@ -76,9 +76,10 @@ function copiarLink(setCopiado: (v: boolean) => void) {
 function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }) {
   return (
     <>
+      {marca.apk && (
       <Cartao>
         <ol className="space-y-3 text-sm">
-          <Passo n={1}>Abra o arquivo <strong>forca.apk</strong> que seu coach enviou no WhatsApp.</Passo>
+          <Passo n={1}>Abra o arquivo <strong>{marca.apk}</strong> que seu coach enviou no WhatsApp.</Passo>
           <Passo n={2}>Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (WhatsApp ou Arquivos).</Passo>
           <Passo n={3}>Toque em <strong>Instalar</strong> e depois abra o <strong>{marca.nome}</strong>.</Passo>
           <Passo n={4}>Entre com seu e-mail e senha.</Passo>
@@ -86,9 +87,10 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
         <p className="mt-3 text-xs text-slate-500">Não recebeu o arquivo? Peça ao seu coach.</p>
         <p className="text-xs text-slate-500">Precisa do Google Chrome instalado (já vem na maioria dos celulares).</p>
       </Cartao>
+      )}
 
       <Cartao>
-        <p className="mb-3 text-sm font-semibold">Ou instale direto pelo Chrome</p>
+        <p className="mb-3 text-sm font-semibold">{marca.apk ? 'Ou instale direto pelo Chrome' : 'Instale pelo Chrome'}</p>
         {promptEvento ? (
           <Botao tipo="secundario" className="w-full" onClick={() => promptEvento.prompt()}>
             Instalar pelo Chrome

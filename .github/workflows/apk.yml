@@ -1,10 +1,18 @@
 name: Gerar APK
 
-# Gera o APK Android (TWA) do site publicado e sobe como release "apk".
-# Rodar manualmente: Actions -> Gerar APK -> Run workflow.
-# Secret usado: APK_SENHA (senha do keystore).
+# Gera o APK Android (TWA) do site publicado e sobe como release.
+# vfit: release "apk", arquivo forca.apk (twa/twa-manifest.json).
+# gislane: release "apk-gislane", arquivo gislane.apk (marcas/gislane/twa-manifest.json).
+# Rodar manualmente: Actions -> Gerar APK -> Run workflow (escolha a marca).
+# Secret usado: APK_SENHA (senha do keystore, a mesma para as duas marcas).
 on:
   workflow_dispatch:
+    inputs:
+      marca:
+        description: Marca do APK
+        type: choice
+        options: [vfit, gislane]
+        default: vfit
 
 permissions:
   contents: write
@@ -21,6 +29,7 @@ jobs:
     env:
       APK_SENHA: ${{ secrets.APK_SENHA }}
       GH_TOKEN: ${{ github.token }}
+      MARCA: ${{ inputs.marca || 'vfit' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -74,22 +83,26 @@ jobs:
             FINGERPRINT=$(keytool -list -v -keystore forca.keystore -alias forca -storepass "$APK_SENHA" \
               | grep 'SHA256:' | sed 's/.*SHA256: //')
 
-            mkdir -p ../marcas/vfit/public/.well-known
-            cat > ../marcas/vfit/public/.well-known/assetlinks.json <<EOF
+            # Mesma chave nas duas marcas: grava o assetlinks de cada uma (pacote diferente, mesmo fingerprint).
+            for par in vfit:br.com.victorcelli.forca gislane:com.gislanepersonaltrainer.app; do
+              MARCA_ID=${par%%:*}; PACOTE=${par#*:}
+              mkdir -p ../marcas/$MARCA_ID/public/.well-known
+              cat > ../marcas/$MARCA_ID/public/.well-known/assetlinks.json <<EOF
           [{
             "relation": ["delegate_permission/common.handle_all_urls"],
             "target": {
               "namespace": "android_app",
-              "package_name": "br.com.victorcelli.forca",
+              "package_name": "$PACOTE",
               "sha256_cert_fingerprints": ["$FINGERPRINT"]
             }
           }]
           EOF
+            done
 
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             # Estamos dentro de twa/: caminhos relativos à raiz via -C ..
-            git -C .. add twa/forca.keystore.enc marcas/vfit/public/.well-known/assetlinks.json
+            git -C .. add twa/forca.keystore.enc marcas/vfit/public/.well-known/assetlinks.json marcas/gislane/public/.well-known/assetlinks.json
             git commit -m "Gerar keystore de assinatura do APK e assetlinks.json"
             git push origin HEAD:main
           fi
@@ -97,6 +110,8 @@ jobs:
       - name: Ajustar versão do app
         working-directory: twa
         run: |
+          # vfit usa twa/twa-manifest.json (como sempre); as outras marcas trazem o seu.
+          [ "$MARCA" = vfit ] || cp "../marcas/$MARCA/twa-manifest.json" ./twa-manifest.json
           node -e "
             const fs = require('fs');
             const p = './twa-manifest.json';
@@ -125,10 +140,11 @@ jobs:
           if [ -z "$APK" ]; then
             APK=$(find . -maxdepth 2 -iname "*.apk" | head -n1)
           fi
-          cp "$APK" forca.apk
+          if [ "$MARCA" = vfit ]; then TAG=apk; ARQ=forca.apk; else TAG="apk-$MARCA"; ARQ="$MARCA.apk"; fi
+          cp "$APK" "$ARQ"
 
-          gh release create apk --title "App Android" --notes "APK do app Força" || true
-          gh release upload apk forca.apk --clobber
+          gh release create "$TAG" --title "App Android ($MARCA)" --notes "APK do app $MARCA" || true
+          gh release upload "$TAG" "$ARQ" --clobber
 
       # O plano gratuito do Firebase (Spark) não hospeda .apk: o APK fica só na Release "apk".
       - name: Republicar o site (leva o assetlinks.json criado no 1º run)

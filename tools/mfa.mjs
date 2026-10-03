@@ -3,12 +3,22 @@
 //   (console do Firebase -> Authentication -> Configurações -> "Fazer upgrade").
 // - desativar-coach: EMERGÊNCIA (o coach perdeu o celular e não consegue o código). Remove os fatores do coach
 //   pelo e-mail; no próximo login ele entra só com a senha e ativa de novo em "Minha conta".
-// Uso local: ACAO=ativar-totp GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
+// Uso local: PROJETO=forca--app (ou gislane-personal-trainer) ACAO=ativar-totp GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
 //            ACAO=desativar-coach EMAIL=coach@x.com GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
 import { appendFileSync } from 'node:fs'
 import { applicationDefault, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
+
+// Projeto SEMPRE explícito (env PROJETO): nunca vem do JSON da credencial nem de padrão. Sem ele, sai.
+const PROJETOS = { 'forca--app': 'vfit', 'gislane-personal-trainer': 'gislane' }
+const emulador = !!process.env.FIRESTORE_EMULATOR_HOST
+const projeto = process.env.PROJETO?.trim()
+if (!projeto || !(projeto in PROJETOS || (emulador && projeto.startsWith('demo-')))) {
+  console.error(`Informe PROJETO: ${Object.keys(PROJETOS).join(' ou ')} (recebido: ${projeto || 'nada'}).`)
+  process.exit(1)
+}
+const marca = PROJETOS[projeto] ?? projeto
 
 const acao = process.env.ACAO?.trim()
 const email = process.env.EMAIL?.trim().toLowerCase()
@@ -21,7 +31,7 @@ const avisar = (texto) => {
 
 if (acao !== 'ativar-totp' && acao !== 'desativar-coach') throw new Error('Informe ACAO: ativar-totp ou desativar-coach')
 
-initializeApp({ credential: applicationDefault(), projectId: 'forca--app' })
+initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: projeto })
 
 if (acao === 'ativar-totp') {
   try {
@@ -31,7 +41,7 @@ if (acao === 'ativar-totp') {
         providerConfigs: [{ state: 'ENABLED', totpProviderConfig: { adjacentIntervals: 5 } }],
       },
     })
-    avisar('Verificação em 2 etapas (app autenticador) ligada no projeto. Agora o coach ativa em "Minha conta".')
+    avisar(`Verificação em 2 etapas (app autenticador) ligada no projeto ${marca}. Agora o coach ativa em "Minha conta".`)
   } catch (e) {
     avisar(
       'Não foi possível ligar as 2 etapas. Provavelmente falta o upgrade para o Identity Platform (é grátis no plano atual).\n' +
@@ -48,5 +58,5 @@ if (acao === 'ativar-totp') {
   if (papel !== 'coach') throw new Error(`${email} não é coach (papel: ${papel ?? 'sem perfil'}). Nada foi alterado.`)
   const antes = user.multiFactor?.enrolledFactors?.length ?? 0
   await getAuth().updateUser(user.uid, { multiFactor: { enrolledFactors: null } })
-  avisar(`2 etapas removidas do coach ${email} (${antes} fator(es)). No próximo login, só a senha; ative de novo em "Minha conta".`)
+  avisar(`2 etapas removidas do coach ${email} (${marca}) (${antes} fator(es)). No próximo login, só a senha; ative de novo em "Minha conta".`)
 }

@@ -1,5 +1,6 @@
 name: Vigia de segurança
 
+# Roda para as duas marcas (cada uma só no PRÓPRIO projeto); Issues da gislane levam "(gislane)" no título.
 # A cada 6 horas: confere sinais de ataque (Firestore/Auth) e vulnerabilidades das dependências.
 # Cada alerta vira uma Issue com @UziCelli (e-mail e push do GitHub), sem repetir se já houver uma aberta.
 # O resumo e as Issues só têm contagens: nunca nome, e-mail ou uid.
@@ -7,29 +8,63 @@ on:
   schedule:
     - cron: '23 */6 * * *'
   workflow_dispatch:
+    inputs:
+      marca:
+        description: Marca (projeto Firebase); o agendado roda as duas
+        type: choice
+        default: vfit
+        options:
+          - vfit
+          - gislane
 
 permissions:
   contents: read
   issues: write
 
 jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    outputs:
+      matriz: ${{ steps.m.outputs.matriz }}
+    steps:
+      # Agendado: as duas marcas. Manual: só a escolhida. Marca desconhecida = erro.
+      - id: m
+        env:
+          EVENTO: ${{ github.event_name }}
+          MARCA: ${{ inputs.marca }}
+        run: |
+          V='{"marca":"vfit","projeto":"forca--app"}'
+          G='{"marca":"gislane","projeto":"gislane-personal-trainer"}'
+          if [ "$EVENTO" != workflow_dispatch ]; then M="$V,$G"
+          elif [ "$MARCA" = vfit ]; then M="$V"
+          elif [ "$MARCA" = gislane ]; then M="$G"
+          else echo "Marca inválida: '$MARCA'"; exit 1; fi
+          echo "matriz={\"include\":[$M]}" >> "$GITHUB_OUTPUT"
+
   vigia:
     runs-on: ubuntu-latest
+    needs: preparar
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preparar.outputs.matriz) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Vigiar
+      - name: Vigiar (${{ matrix.marca }})
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJETO: ${{ matrix.projeto }}
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           mkdir -p "$RUNNER_TEMP/adm" && cp tools/vigia.mjs "$RUNNER_TEMP/adm/"
           (cd "$RUNNER_TEMP/adm" && npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0 &&
             GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node vigia.mjs "$RUNNER_TEMP/alertas.json")
           rm -f "$RUNNER_TEMP/sa.json"
+      # As dependências são do repositório, iguais nas duas marcas: checa só na vfit para não repetir a Issue.
       - name: Dependências
+        if: matrix.marca == 'vfit'
         run: |
           npm audit --package-lock-only --omit=dev --audit-level=high --json > "$RUNNER_TEMP/audit.json" || true
           jq '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "high" or .value.severity == "critical") | "\(.key) (\(.value.severity))"] | join(", ")' -r "$RUNNER_TEMP/audit.json" > "$RUNNER_TEMP/pacotes.txt"
@@ -48,7 +83,7 @@ jobs:
             [ -n "$existe" ] && continue
             gh api "repos/${{ github.repository }}/issues" -f title="$titulo" -f body="$(jq -r .texto <<< "$a")"$'\n\n@UziCelli' > /dev/null
           done
-          echo "## Vigia de segurança: $(jq length "$RUNNER_TEMP/alertas.json") alerta(s)" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Vigia de segurança (${{ matrix.marca }}): $(jq length "$RUNNER_TEMP/alertas.json") alerta(s)" >> "$GITHUB_STEP_SUMMARY"
       # Silêncio não é segurança: se o vigia quebrar (permissão, rede), avisa também.
       - name: Avisar falha do vigia
         if: failure()
@@ -56,6 +91,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           titulo="🚨 Segurança: o vigia não conseguiu rodar"
+          [ "${{ matrix.marca }}" = vfit ] || titulo="$titulo (${{ matrix.marca }})"
           existe=$(gh api --paginate "repos/${{ github.repository }}/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$titulo\") | .number" | head -1)
           [ -n "$existe" ] || gh api "repos/${{ github.repository }}/issues" -f title="$titulo" \
-            -f body="A checagem automática de segurança falhou: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Chame o Claude para ver."$'\n\n@UziCelli' > /dev/null
+            -f body="A checagem automática de segurança (${{ matrix.marca }}) falhou: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Chame o Claude para ver."$'\n\n@UziCelli' > /dev/null

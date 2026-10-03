@@ -134,6 +134,7 @@ Comece por aqui para achar onde mexer.
 - `e2e/seed.ts` — fixture: usuários, mesos
 
 ### `tools/` — Scripts offline
+- **Marca/projeto nos scripts operacionais** (`mfa`, `backup`, `limpeza-lgpd`, `vigia`, `erros`): todos exigem a env `PROJETO` (`forca--app` ou `gislane-personal-trainer`); sem ela saem com erro. Agendados rodam nas 2 marcas (matrix, `fail-fast: false`); manuais têm o input `marca` (padrão vfit). Issues da Gislane levam "(gislane)" no título; backups `backup-gislane-firestore-<data>`. Teste: `tests/projeto-explicito.test.ts`.
 - `tools/mfa.mjs` + `.github/workflows/mfa.yml`: ativa o TOTP no projeto e remove o 2º fator do coach em emergência.
 - `tools/erros.mjs` + `.github/workflows/erros.yml` ("Ver erros do app"): lista os 100 logs mais recentes no resumo e apaga os com mais de 30 dias.
 - `tools/limpeza-lgpd.mjs` + `.github/workflows/limpeza-lgpd.yml` ("Limpeza LGPD", diário): atende `exclusoes/{uid}`, apaga Auth/logs/dados, faz backup novo e apaga os com 30+ dias. Teste em `tests/limpeza-lgpd.test.ts`.
@@ -147,7 +148,7 @@ Comece por aqui para achar onde mexer.
 - `ci.yml` — typecheck, lint, testes
 - `push.yml` — publica o Worker `push/` na Cloudflare (push em `push/**` ou manual) e mostra a URL
 - `deploy.yml` — build e deploy Firebase Hosting; job `deploy` (VFIT) e job `gislane` (separado, com trava no `dist/`, `--project gislane`)
-- `android.yml`, `apk.yml` — gera APK (TWA)
+- `android.yml`, `apk.yml` — gera APK (TWA); `apk.yml` tem input `marca` (Gislane: reserva, release `apk-gislane`; no Android ela instala pelo Chrome, `marca.json` → `apk: ""`)
 - `importar-meso.yml` — workflow: `/importar` trigger (auth: token)
 - `aluno-exemplo.yml` — manual: aluno de exemplo (simular/gravar)
 - `alterar-email.yml` — workflow: alterar e-mail de aluno
@@ -265,4 +266,4 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |
 | Aluno de exemplo | `tools/aluno-exemplo.mjs`, `aluno-exemplo.yml` | Escreve em **produção**, só no aluno "Victor Aluno"/"Victor C.L. Silva" (falha se não houver exatamente 1). Nunca cria, altera ou apaga registros da **semana 2** (o Victor registra ao vivo); só grava a semana 1, com merge. Em outros mesos da conta só muda `inicio` dos que estiverem em andamento (guarda `inicioOriginal`). | `tests/aluno-exemplo.test.ts` (emulador) |
 | Evolução e recorde | `src/lib/evolucao.ts`, `Treino.tsx` (festa no recorde), `RankingAlunos.tsx` | Tudo calculado no aparelho, sem dado novo nem regra nova; cargas sempre via `docsParaRegistros` (peso do corpo); exercícios casam pelo nome entre mesos; a festa no recorde só lê (não mexe na gravação) e compara o TOTAL gravado; o aluno lê todos os próprios registros na Evolução e no Treino (custo ~100–300 docs/ano por aluno); o ranking lê só os mesos atuais; o Início não ganhou consulta (frequenciaCaindo usa os 14 dias já carregados, meso com < 7 dias não conta); cartão do story só com primeiro nome e números (LGPD), CSP `img-src 'self' data:` (nada de blob: em <img>). | `evolucao.test.ts`, `resumo.test.ts`, `recorde.test.ts`, e2e `evolucao`/`recorde`/`ranking`/`layout` |
-| LGPD / exclusão | `Alunos.tsx` ("Apagar de vez") → `apagarAluno` (`acoes.ts`), `exclusoes/{uid}`, `tools/limpeza-lgpd.mjs` | "Apagar de vez" grava `exclusoes/{uid}` **antes** de apagar; Limpeza LGPD (diária) termina Auth/logs/dados, se apagou alguém faz backup novo e apaga os antigos (backups guardados 30 dias); resumo do workflow nunca expõe nome/e-mail/uid; nunca apagar pedido de coach; quem mudar política troca `VERSAO_PRIVACIDADE`. | `tests/limpeza-lgpd.test.ts` |
+| LGPD / exclusão (por projeto: `PROJETO` explícito; nunca lê `exclusoes` de um e apaga no outro) | `Alunos.tsx` ("Apagar de vez") → `apagarAluno` (`acoes.ts`), `exclusoes/{uid}`, `tools/limpeza-lgpd.mjs` | "Apagar de vez" grava `exclusoes/{uid}` **antes** de apagar; Limpeza LGPD (diária) termina Auth/logs/dados, se apagou alguém faz backup novo e apaga os antigos (backups guardados 30 dias); resumo do workflow nunca expõe nome/e-mail/uid; nunca apagar pedido de coach; quem mudar política troca `VERSAO_PRIVACIDADE`. | `tests/limpeza-lgpd.test.ts` |

@@ -1,10 +1,19 @@
 // Backup: lê TODAS as coleções do Firestore (incluindo subcoleções) e grava um JSON.
-// Roda no GitHub Actions (workflow "Backup semanal"). Uso local: GOOGLE_APPLICATION_CREDENTIALS=sa.json node backup.mjs [arquivo.json]
+// Roda no GitHub Actions (workflow "Backup semanal"). Uso local: PROJETO=forca--app (ou gislane-personal-trainer) GOOGLE_APPLICATION_CREDENTIALS=sa.json node backup.mjs [arquivo.json]
 import { writeFileSync } from 'node:fs'
 import { applicationDefault, initializeApp } from 'firebase-admin/app'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 
-initializeApp({ credential: applicationDefault(), projectId: 'forca--app' })
+// Projeto SEMPRE explícito (env PROJETO): nunca vem do JSON da credencial nem de padrão. Sem ele, sai.
+const PROJETOS = { 'forca--app': 'vfit', 'gislane-personal-trainer': 'gislane' }
+const emulador = !!process.env.FIRESTORE_EMULATOR_HOST
+const projeto = process.env.PROJETO?.trim()
+if (!projeto || !(projeto in PROJETOS || (emulador && projeto.startsWith('demo-')))) {
+  console.error(`Informe PROJETO: ${Object.keys(PROJETOS).join(' ou ')} (recebido: ${projeto || 'nada'}).`)
+  process.exit(1)
+}
+const marca = PROJETOS[projeto] ?? projeto
+initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: projeto })
 const db = getFirestore()
 
 const limpa = (v) =>
@@ -27,4 +36,5 @@ for (const col of await db.listCollections()) backup[col.id] = await lerColecao(
 
 const arquivo = process.argv[2] ?? 'backup.json'
 writeFileSync(arquivo, JSON.stringify(backup, null, 2))
+console.log(`Backup ${marca} (${projeto})`)
 console.log(Object.entries(backup).map(([c, d]) => `${c}: ${Object.keys(d).length}`).join(' | '))
