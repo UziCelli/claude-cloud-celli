@@ -118,3 +118,12 @@ Plano Spark do Firebase:
 2. Chamar o Claude: "Recebemos um alerta de `<tipo>`. Olha a Issue e o que fazer?"
 3. Resolver o problema (atualizar pacote, desativar 2º fator, etc.)
 4. Fechar a Issue quando pronto
+
+## 7. Teste de ataques (03/10/2026)
+- `tests/ataques.test.ts` tem 79 casos e cerca de 555 tentativas de ataque. Todas foram negadas, e o teste roda junto com `npm run test:rules`.
+  - Cobertura: troca de ID (get e list), escalada de privilégio, pagamento vencido ou bloqueado, acesso anônimo, abuso de logs, notas e exclusões, e datas forjadas.
+- **Furos reais:** nenhum. `npm audit --omit=dev`: 0 vulnerabilidades.
+- **Achados menores, aceitos e documentados no teste:**
+  - os valores dentro de `cargas`, `reps`, `pc` e `notas` não têm o tipo validado; o dano fica só nos dados do próprio aluno, e o motor ignora o que não é número;
+  - o login anônimo, se fosse ligado, poderia gravar `logs`. Ele não é usado: mantenha "Anônimo" **desligado** em Authentication → Método de login.
+- `e2e/varredura.spec.ts` abre todas as telas (coach, aluno e públicas) em 1280 e 390 px e falha em caso de erro, rolagem horizontal ou "undefined"/"NaN".

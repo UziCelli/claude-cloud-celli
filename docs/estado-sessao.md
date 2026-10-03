@@ -50,6 +50,13 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 
 - **Cadastro próprio:** continua aberto (decisão do Victor, risco controlado com alertas).
 - **Vigia de segurança + Dependabot:** PR a abrir (Victor autorizou juntar direto). Workflow roda a cada 6h e abre Issues com @UziCelli sem repetir. Alertas com contagens apenas, limites em `tools/vigia.mjs`, falha do vigia também alerta. Documentação em `docs/seguranca.md` seção "## 6. Monitoramento".
+- **PR #37 "Coach mais rápido"** (juntado com autorização do Victor):
+  - Prescrição rápida: Tab ou Enter (com texto/sugestão) confirma e vai ao próximo exercício; Enter no campo vazio vai ao próximo treino.
+  - "Copiar de…" em cada treino: repete exercícios, pausas, métodos e progressão. Bloqueado se destino tem cargas.
+  - Início: seção "Treinaram hoje" mostra "Treino N ✓" com link para a semana.
+  - Semana: cartão do treino de hoje com selo "Feito hoje ✓"/"Treinando hoje".
+  - Ajustar volume: prévia com reps por exercício (3×10 → 3×11) e botão Cancelar.
+- **Em andamento:** filtro da aba Métodos (semana/treino/exercício), testes de segurança e varredura do front-end.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:

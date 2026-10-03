@@ -129,3 +129,10 @@ export async function criarRegistro(mesoId: string, alunoId: string, semana: num
   await gravarDoc(`registros/${id}`, { alunoId, mesoId, semana, treino, ...campos, atualizadoEm: new Date() })
   return id
 }
+
+// Cria um aluno arquivado (para a lista "Arquivados").
+export async function criarAlunoArquivado(nome: string, email: string, senha: string): Promise<string> {
+  const uid = await criarConta(email, senha)
+  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'arquivado', nome, email })
+  return uid
+}

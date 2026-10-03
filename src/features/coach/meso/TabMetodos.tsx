@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { AplicacaoMetodo, Escopo, Meso, Metodo } from '../../../engine'
 import { Aviso, Botao, Campo, campoBase, Cartao } from '../../../ui'
-import { seriesDaPosicao } from './util'
+import { filtrarMetodos, seriesDaPosicao, type FiltroMetodos } from './util'
 
 const METODOS: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
 const ESCOPOS: Escopo[] = [
@@ -35,6 +35,10 @@ function padrao(metodo: Metodo, meso: Meso, semana: number, treino: number, exer
 
 export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
   const metodos = meso.metodos
+  const [filtro, setFiltro] = useState<FiltroMetodos>({})
+  const visiveis = filtrarMetodos(metodos, filtro)
+  const filtrando = Boolean(filtro.semana || filtro.treino || filtro.exercicio)
+  const exerciciosFiltro = filtro.treino ? (meso.divisao[filtro.treino - 1] ?? []).map((s, i) => `${i + 1}. ${s.nome}`) : Array.from({ length: 10 }, (_, i) => String(i + 1))
 
   function set(idx: number, patch: Partial<AplicacaoMetodo>) {
     const lista = metodos.map((m, i) => (i === idx ? { ...m, ...patch } : m))
@@ -46,7 +50,7 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
   }
 
   function adicionar() {
-    onAtualizar({ metodos: [...metodos, padrao('Dropset', meso, 1, 1, 1)] })
+    onAtualizar({ metodos: [...metodos, padrao('Dropset', meso, filtro.semana ?? 1, filtro.treino ?? 1, filtro.exercicio ?? 1)] })
   }
 
   function copiarParaTodas(idx: number) {
@@ -84,11 +88,21 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
       <Botao tipo="primario" onClick={adicionar}>
         Adicionar método
       </Botao>
+      <div className="flex flex-wrap items-end gap-2">
+        <FiltroSelect rotulo="Semana" valor={filtro.semana} opcoes={Array.from({ length: meso.semanas }, (_, i) => String(i + 1))} onChange={(v) => setFiltro({ ...filtro, semana: v })} />
+        <FiltroSelect rotulo="Treino" valor={filtro.treino} opcoes={Array.from({ length: meso.frequencia }, (_, i) => String(i + 1))} onChange={(v) => setFiltro({ ...filtro, treino: v, exercicio: undefined })} />
+        <FiltroSelect rotulo="Exercício" valor={filtro.exercicio} opcoes={exerciciosFiltro} onChange={(v) => setFiltro({ ...filtro, exercicio: v })} />
+        {filtrando && <Botao onClick={() => setFiltro({})}>Limpar filtro</Botao>}
+      </div>
+      <p className="text-sm text-slate-400">
+        Mostrando {visiveis.length} de {metodos.length} métodos
+      </p>
       <div className="space-y-3">
-        {metodos.map((m, idx) => (
+        {visiveis.map(({ m, idx }) => (
           <LinhaMetodo key={idx} m={m} meso={meso} onSet={(p) => set(idx, p)} onRemover={() => remover(idx)} onCopiar={() => copiarParaTodas(idx)} />
         ))}
         {metodos.length === 0 && <p className="text-slate-500">Nenhum método avançado.</p>}
+        {metodos.length > 0 && visiveis.length === 0 && <p className="text-slate-500">Nenhum método neste filtro.</p>}
       </div>
     </div>
   )
@@ -234,6 +248,22 @@ function CampoNum({ rotulo, valor, onChange }: { rotulo: string; valor: number |
       onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
       className="w-32"
     />
+  )
+}
+
+function FiltroSelect({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor?: number; opcoes: string[]; onChange: (v?: number) => void }) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-slate-400">{rotulo}</span>
+      <select aria-label={`Filtrar por ${rotulo.toLowerCase()}`} value={valor ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${campoBase} px-2 py-2`}>
+        <option value="">{rotulo === 'Semana' ? 'Todas' : 'Todos'}</option>
+        {opcoes.map((o, i) => (
+          <option key={i} value={i + 1}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
 
