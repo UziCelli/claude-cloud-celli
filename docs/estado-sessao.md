@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 01/10/2026
+# Estado da sessão (retomada) — atualizado em 03/10/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #19 estão juntados e publicados.
 
@@ -45,6 +45,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - botão também na tela de bloqueio;
   - aviso de vencimento por push (3 dias antes e no dia), abrindo a tela do Pix.
 - **Ao retomar:** `git status`/`git log`, conferir PRs abertos e CI, e seguir o que faltar.
+
+## 03/10/2026
+
+- **Cadastro próprio:** continua aberto (decisão do Victor, risco controlado com alertas).
+- **Vigia de segurança + Dependabot:** PR a abrir (Victor autorizou juntar direto). Workflow roda a cada 6h e abre Issues com @UziCelli sem repetir. Alertas com contagens apenas, limites em `tools/vigia.mjs`, falha do vigia também alerta. Documentação em `docs/seguranca.md` seção "## 6. Monitoramento".
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:

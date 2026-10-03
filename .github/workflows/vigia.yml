@@ -1,0 +1,61 @@
+name: Vigia de segurança
+
+# A cada 6 horas: confere sinais de ataque (Firestore/Auth) e vulnerabilidades das dependências.
+# Cada alerta vira uma Issue com @UziCelli (e-mail e push do GitHub), sem repetir se já houver uma aberta.
+# O resumo e as Issues só têm contagens: nunca nome, e-mail ou uid.
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  vigia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Vigiar
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/vigia.mjs "$RUNNER_TEMP/adm/"
+          (cd "$RUNNER_TEMP/adm" && npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0 &&
+            GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node vigia.mjs "$RUNNER_TEMP/alertas.json")
+          rm -f "$RUNNER_TEMP/sa.json"
+      - name: Dependências
+        run: |
+          npm audit --package-lock-only --omit=dev --audit-level=high --json > "$RUNNER_TEMP/audit.json" || true
+          jq '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "high" or .value.severity == "critical") | "\(.key) (\(.value.severity))"] | join(", ")' -r "$RUNNER_TEMP/audit.json" > "$RUNNER_TEMP/pacotes.txt"
+          # jq -r imprime "\n" mesmo sem pacotes: confere o conteúdo, não o tamanho do arquivo.
+          if [ -n "$(tr -d '\n' < "$RUNNER_TEMP/pacotes.txt")" ]; then
+            jq --rawfile p "$RUNNER_TEMP/pacotes.txt" '. + [{id:"dependencias", titulo:"Dependências com vulnerabilidade", texto:("Pacotes com vulnerabilidade grave: " + ($p | rtrimstr("\n")) + ". Chame o Claude para atualizar.")}]' "$RUNNER_TEMP/alertas.json" > "$RUNNER_TEMP/a2.json"
+            mv "$RUNNER_TEMP/a2.json" "$RUNNER_TEMP/alertas.json"
+          fi
+      - name: Abrir Issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          jq -c '.[]' "$RUNNER_TEMP/alertas.json" | while read -r a; do
+            titulo="🚨 Segurança: $(jq -r .titulo <<< "$a")"
+            existe=$(gh api --paginate "repos/${{ github.repository }}/issues?state=open&per_page=100" --jq ".[] | select(.pull_request | not) | select(.title == \"$titulo\") | .number" | head -1)
+            [ -n "$existe" ] && continue
+            gh api "repos/${{ github.repository }}/issues" -f title="$titulo" -f body="$(jq -r .texto <<< "$a")"$'\n\n@UziCelli' > /dev/null
+          done
+          echo "## Vigia de segurança: $(jq length "$RUNNER_TEMP/alertas.json") alerta(s)" >> "$GITHUB_STEP_SUMMARY"
+      # Silêncio não é segurança: se o vigia quebrar (permissão, rede), avisa também.
+      - name: Avisar falha do vigia
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          titulo="🚨 Segurança: o vigia não conseguiu rodar"
+          existe=$(gh api --paginate "repos/${{ github.repository }}/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$titulo\") | .number" | head -1)
+          [ -n "$existe" ] || gh api "repos/${{ github.repository }}/issues" -f title="$titulo" \
+            -f body="A checagem automática de segurança falhou: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Chame o Claude para ver."$'\n\n@UziCelli' > /dev/null
