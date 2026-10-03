@@ -1,0 +1,17 @@
+{
+  "id": "vfit",
+  "nome": "VFITCOACH",
+  "titulo": "VFITCOACH — Treino",
+  "doNome": "do VFITCOACH",
+  "nomeCurto": "VFITCOACH",
+  "themeColor": "#0B1E3D",
+  "backgroundColor": "#0A1424",
+  "iconeFundo": "#0B1E3D",
+  "dominio": "app.vfitcoachapp.com",
+  "responsavel": {
+    "nome": "Victor Celli",
+    "pedirA": "ao Victor",
+    "cref": "177235-G/SP",
+    "contato": "o WhatsApp que você já usa com ele"
+  }
+}

@@ -49,6 +49,13 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
   2. Registrar o app Web e colar aqui o `firebaseConfig`, que é público.
   3. Em IAM → Conceder acesso, dar à conta de serviço do GitHub (a mesma do `FIREBASE_SERVICE_ACCOUNT`) o papel **Administrador do Firebase** no projeto novo. Assim não precisa de secret novo.
 
+## Andamento
+- [x] **Fase A** (marca configurável): `marcas/<id>/`, alias `@marca`, `--mode`, scripts `dev:gislane`/`build:gislane`/`icones:gislane`, e2e com `MARCA=gislane`. Build vfit igual ao anterior.
+- [x] **Fase B** (identidade): paleta aprovada em `marcas/gislane/tema.css`, logo, ícone (o "G" em fundo #1a0f0d) e PNGs gerados. Fontes: Inter/Montserrat por enquanto.
+- [x] `apk.yml` (VFIT) já grava o `assetlinks.json` em `marcas/vfit/public/.well-known/`. `slate-500` da Gislane clareado para 4,7:1.
+- [ ] Pendências do Victor: nome do app embaixo do ícone (hoje "Gislane"), nome completo e CREF da Gislane, endereço do app (`A CONFIRMAR` em `marcas/gislane/marca.json`); aprovar prints e ícone; decidir a cor do botão "perigo" e dos erros (vermelho parecido com a marca).
+- [ ] Fases C e D: `twa/`, workflows de deploy/APK por marca, `firebase.json`, `.firebaserc`, `push/` (o Worker do descanso só aceita o projeto da VFIT; a Gislane precisa do dela, e sem `VITE_PUSH_URL` o push fica desligado). Antes de publicar, travar o build da Gislane se ainda houver "A CONFIRMAR" ou se faltar a chave do Firebase (sem chave o app cai no emulador).
+
 ## Passos técnicos (para o Claude)
 Siga o CLAUDE.md: Superpowers + Ponytail, delegando para o agente mais barato. A VFITCOACH não pode mudar nada, e os prints dela devem ficar iguais antes e depois.
 

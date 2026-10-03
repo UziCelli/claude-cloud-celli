@@ -5,6 +5,8 @@ const COACH = { nome: 'Victor', email: 'victor.e2e@teste.com', senha: 'senha123'
 const ALUNO = { nome: 'Aluno Teste', email: 'aluno.e2e@teste.com', senha: 'senha123' }
 
 const NOMES = ['Agachamento Livre Halter', 'Agachamento Frontal Halter', 'Agachamento Sumô Barra']
+// Só os campos de exercício: o select "Copiar de…" também tem papel combobox e roubava o nth() quando o campo seguinte ainda não existia.
+const CAMPO = 'input[role="combobox"]'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -60,13 +62,13 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByRole('button', { name: 'Divisão', exact: true }).click()
     for (let t = 1; t <= 3; t++) {
       for (let p = 1; p <= 3; p++) {
-        const input = page.getByTestId(`treino-${t}`).getByRole('combobox').nth(p - 1)
+        const input = page.getByTestId(`treino-${t}`).locator(CAMPO).nth(p - 1)
         await input.fill(NOMES[p - 1])
         await input.press('Tab')
       }
     }
 
-    const busca = page.getByTestId('treino-1').getByRole('combobox').nth(3)
+    const busca = page.getByTestId('treino-1').locator(CAMPO).nth(3)
     await busca.fill('halt bulg')
     await page.getByRole('option', { name: /Búlgaro com Halter/ }).click()
     await expect(busca).toHaveValue(/Búlgaro com Halter/)
@@ -180,7 +182,7 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
   const mesoId = page.url().split('#/meso/')[1]
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
   for (let t = 1; t <= 3; t++) {
-    const input = page.getByTestId(`treino-${t}`).getByRole('combobox').first()
+    const input = page.getByTestId(`treino-${t}`).locator(CAMPO).first()
     await input.fill(NOMES[0])
     await input.press('Tab')
   }
@@ -286,7 +288,7 @@ test('divisão: navegação por teclado e copiar treino', async ({ page }) => {
   await page.goto(`/#/meso/${id}`)
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
 
-  const campo = (t: number, p: number) => page.getByTestId(`treino-${t}`).getByRole('combobox').nth(p - 1)
+  const campo = (t: number, p: number) => page.getByTestId(`treino-${t}`).locator(CAMPO).nth(p - 1)
   await campo(1, 1).fill(NOMES[0])
   await campo(1, 1).press('Enter')
   await expect(campo(1, 2)).toBeFocused()

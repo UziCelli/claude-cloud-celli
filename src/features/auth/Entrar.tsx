@@ -5,12 +5,13 @@ import type { MultiFactorResolver } from 'firebase/auth'
 import { cadastrar, confirmarLoginTotp, entrar, recuperarSenha, resolverMfa } from '../../lib/acoes'
 import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
 import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from '../../ui'
-import Logo from '../../Logo'
+import Logo from '@marca/Logo'
 import { CaixaAceite } from '../privacidade/Politica'
 import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
 import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
 import { atualizarNaEntrada } from '../../lib/atualizar'
+import marca from '@marca/marca.json'
 
 const erros: Record<string, string> = {
   'auth/wrong-password': 'E-mail ou senha incorretos.',
@@ -147,7 +148,7 @@ export default function Entrar() {
       <m.div variants={cascata} initial="hidden" animate="show">
       <Cartao className="text-left">
         <m.h1 variants={item} className="mb-4 flex flex-col items-center gap-3 text-center">
-          <Logo className="h-10 text-white" faixa="#3F72A6" />
+          <Logo className="h-10 text-white" />
           <AnimatePresence mode="wait" initial={false}>
             <m.span
               key={cadastro ? 'c' : 'l'}
@@ -236,7 +237,7 @@ export default function Entrar() {
           Como instalar o app
         </a>
         <p className="mt-3 text-center text-xs text-slate-500">
-          <a href="/privacidade" className="underline">Política de Privacidade</a> do VFITCOACH. Protegido pelo reCAPTCHA. Valem a{' '}
+          <a href="/privacidade" className="underline">Política de Privacidade</a> {marca.doNome}. Protegido pelo reCAPTCHA. Valem a{' '}
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline">Política de Privacidade</a> e os{' '}
           <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline">Termos de Serviço</a> do Google.
         </p>

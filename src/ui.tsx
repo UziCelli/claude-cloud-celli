@@ -1,6 +1,6 @@
 import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
-import Logo from './Logo'
+import Logo from '@marca/Logo'
 
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
 
@@ -111,7 +111,7 @@ export const Abertura = ({ texto }: { texto?: string }) => (
         animate={{ opacity: [1, 0.55, 1], scale: [1, 1.04, 1] }}
         transition={{ duration: 1.6, delay: 0.5, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Logo className="h-10 text-white" faixa="#3F72A6" />
+        <Logo className="h-10 text-white" />
       </m.div>
     </m.div>
     <m.div

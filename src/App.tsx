@@ -8,7 +8,7 @@ import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
 import { Abertura, Aviso, Botao, Centro, Tela } from './ui'
-import Logo from './Logo'
+import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
 import Inicio from './features/coach/inicio/Inicio'
 import NovoAluno from './features/coach/alunos/NovoAluno'
@@ -22,6 +22,7 @@ import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
 import Politica from './features/privacidade/Politica'
 import Aceite from './features/privacidade/Aceite'
+import marca from '@marca/marca.json'
 
 // /instalar e /privacidade são públicas (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
@@ -118,8 +119,8 @@ function Coach({ uid, email }: { uid: string; email: string }) {
     <>
       <header className="border-b border-slate-800 bg-marca-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <a href="#/" className="shrink-0 text-white" aria-label="VFITCOACH">
-            <Logo className="h-5" faixa="#3F72A6" />
+          <a href="#/" className="shrink-0 text-white" aria-label={marca.nome}>
+            <Logo className="h-5" />
           </a>
           <MenuRolavel />
           <Botao className="shrink-0" onClick={sair}>Sair</Botao>

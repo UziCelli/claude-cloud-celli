@@ -65,6 +65,14 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - 2 etapas no Google e no GitHub;
   - advogado revisar a política.
 
+## 03/10/2026 (tarde) — App da Gislane
+- Branch `claude/sweet-wozniak-88xkfn`. Coordenação pelo Opus; código e testes com Sonnet/Haiku (pedido do Victor).
+- **Decisão do Victor:** um repositório só. Toda melhoria (segurança, back-end, design) vale para os dois apps; só a marca muda.
+- Fases A e B de `docs/plano-app-gislane.md` feitas (seção "Andamento"). Rodar local: `npm run emuladores` + `npm run dev:gislane`.
+- PRs #1–#40 conferidas: 39 juntadas. A #22 foi fechada por engano do Victor e fica descartada.
+- Pendências antigas achadas nas PRs: conferir login, "Esqueci minha senha" e o app no iPhone/Android (#13); rodar "Aluno de exemplo" para acertar a semana 1 (#33).
+- **Falta do Victor:** nome embaixo do ícone, nome completo e CREF da Gislane, endereço (domínio), aprovar prints/ícone e a cor do botão "perigo". Depois: Fase C (projeto Firebase dela + domínio).
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
   - avaliação física (Fase 3): dados de saúde, com acesso só do coach e do próprio aluno, e auditoria das regras;

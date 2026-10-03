@@ -1,5 +1,6 @@
 // Verificação em 2 etapas (TOTP): partes puras, sem Firebase (as chamadas ficam em acoes.ts).
 import { renderSVG } from 'uqr'
+import marca from '@marca/marca.json'
 
 export const limparCodigo = (s: string) => s.replace(/\D/g, '').slice(0, 6)
 export const codigoCompleto = (s: string) => /^\d{6}$/.test(s)
@@ -20,7 +21,7 @@ const msgs: Record<string, string> = {
   'auth/invalid-multi-factor-session': 'A sessão expirou. Entre de novo com e-mail e senha.',
   // O Firebase limita as tentativas de código por login (devolve quota-exceeded).
   'auth/quota-exceeded':
-    'Muitos códigos errados. Entre de novo com e-mail e senha e use o VFITCOACH mais recente do Google Authenticator.',
+    `Muitos códigos errados. Entre de novo com e-mail e senha e use o ${marca.nome} mais recente do Google Authenticator.`,
   'auth/wrong-password': 'Senha incorreta',
   'auth/invalid-credential': 'Senha incorreta',
   'auth/unverified-email':

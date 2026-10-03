@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Botao } from '../../ui'
+import marca from '@marca/marca.json'
 
 const permissao = (): NotificationPermission | null => {
   try {
@@ -26,7 +27,7 @@ export default function AvisoNotificacoes() {
       <p className="font-semibold">🔔 Permita as notificações para o cronômetro te chamar de volta ao treino.</p>
       {p === 'denied' ? (
         <p className="mt-1 text-slate-300">
-          Para liberar: {ios ? 'Ajustes → Notificações → VFITCOACH.' : 'segure o ícone do app → Informações do app → Notificações.'}
+          Para liberar: {ios ? `Ajustes → Notificações → ${marca.nome}.` : 'segure o ícone do app → Informações do app → Notificações.'}
         </p>
       ) : (
         <Botao tipo="primario" className="mt-2 w-full" onClick={pedir}>

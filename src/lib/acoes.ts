@@ -39,6 +39,7 @@ import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversore
 import { auth, authCadastro, db } from './firebase'
 import { inicioJanela } from './resumo'
 import { VERSAO_PRIVACIDADE } from './privacidade'
+import marca from '@marca/marca.json'
 
 // ---------- coach ----------
 
@@ -304,7 +305,7 @@ export async function iniciarTotp() {
   }
   await user.getIdToken(true)
   const secret = await TotpMultiFactorGenerator.generateSecret(await multiFactor(user).getSession())
-  return { secret, uri: secret.generateQrCodeUrl(user.email ?? '', 'VFITCOACH') }
+  return { secret, uri: secret.generateQrCodeUrl(user.email ?? '', marca.nome) }
 }
 
 export async function ativarTotp(secret: TotpSecret, codigo: string) {
