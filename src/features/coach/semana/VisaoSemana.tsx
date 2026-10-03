@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react'
 import { collection, doc, query, where, type Timestamp } from 'firebase/firestore'
 import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
+import { diaSP } from '../../../lib/acesso'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
@@ -11,13 +13,30 @@ import { fmtData } from './format'
 import Monitoramento from './Monitoramento'
 import SessaoCard from './SessaoCard'
 
-type RegistroDocCompleto = RegistroDoc & { realizado?: boolean; pc?: Record<string, number>; inicioEm?: Timestamp | null; realizadoEm?: Timestamp | null }
+type RegistroDocCompleto = RegistroDoc & { realizado?: boolean; pc?: Record<string, number>; inicioEm?: Timestamp | null; realizadoEm?: Timestamp | null; atualizadoEm?: Timestamp | null }
 
 export default function VisaoSemana({ id, semana }: { id: string; semana: number }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', id))
   const { dados: docsRegistros, pendente } = useLista<RegistroDocCompleto>(
     query(collection(db, 'registros'), where('mesoId', '==', id)),
   )
+
+  // Treinos de hoje (dia de São Paulo) desta semana: feito ou em andamento.
+  const hoje = diaSP(Date.now())
+  const deHoje: Record<number, 'feito' | 'andamento'> = {}
+  for (const d of docsRegistros)
+    if (d.semana === semana && [d.realizadoEm, d.atualizadoEm].some((t) => t && diaSP(t.toMillis()) === hoje))
+      deHoje[d.treino] = d.realizado ? 'feito' : 'andamento'
+  const primeiro = Math.min(...Object.keys(deHoje).map(Number))
+  // Rola uma vez por semana até o primeiro cartão destacado (os registros chegam depois da montagem).
+  const rolou = useRef<number | null>(null)
+  useEffect(() => {
+    if (!Number.isFinite(primeiro) || rolou.current === semana) return
+    const el = document.querySelector(`[data-treino="${primeiro}"]`)
+    if (!el) return
+    rolou.current = semana
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [semana, primeiro, carregando])
 
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Meso não encontrado.</Centro>
@@ -66,8 +85,8 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
           if (!sessao) return null
           const chave = `${semanaAtual}-${treino}`
           return (
+            <div key={treino} data-treino={treino}>
             <SessaoCard
-              key={treino}
               mesoId={id}
               alunoId={dados.alunoId}
               sessao={sessao}
@@ -78,8 +97,10 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               inicioEm={tempos[chave]?.inicioEm}
               realizadoEm={tempos[chave]?.realizadoEm}
               limite={meso.tempoLimiteMin}
+              hoje={deHoje[treino]}
               onRealizado={(v) => marcarRealizado(id, dados.alunoId, semanaAtual, treino, v)}
             />
+            </div>
           )
         })}
       </div>

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import CampoExercicio from './CampoExercicio'
-import { semanasComHistorico } from './util'
+import { copiarTreino, semanasComHistorico } from './util'
 
 
 export default function TabDivisao({
@@ -17,6 +17,25 @@ export default function TabDivisao({
   const [aviso, setAviso] = useState<string | null>(null)
   const [hint, setHint] = useState<string | null>(null)
   const [treinoSel, setTreinoSel] = useState(1)
+  const [foco, setFoco] = useState<{ t: number; p: number; para: 'exercicio' | 'treino' | 'ir' } | null>(null)
+
+  // Foca depois do re-render (com o meso já novo), nunca dentro do handler de tecla.
+  useEffect(() => {
+    if (!foco) return
+    const { t, p, para } = foco
+    if (para !== 'ir') {
+      const tam = meso.divisao[t - 1]?.length ?? 0
+      if (para === 'exercicio' && p + 1 <= 10 && p + 1 <= tam + 1) return setFoco({ t, p: p + 1, para: 'ir' })
+      if (t >= meso.frequencia) return
+      setTreinoSel(t + 1) // mostra o cartão no celular antes de focar
+      return setFoco({ t: t + 1, p: Math.min((meso.divisao[t]?.length ?? 0) + 1, 10), para: 'ir' })
+    }
+    document
+      .querySelectorAll(`[data-testid="treino-${t}"] li`)
+      [p - 1]?.querySelector<HTMLInputElement>('input[role="combobox"]')
+      ?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [foco])
 
   function commit(t: number, p: number, nomeBruto: string) {
     const arr = meso.divisao[t - 1] ?? []
@@ -82,14 +101,25 @@ export default function TabDivisao({
   const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1)
   const posicoes = Array.from({ length: 10 }, (_, i) => i + 1)
 
+  function copiar(de: number, t: number) {
+    const dest = meso.divisao[t - 1] ?? []
+    if (dest.some((_, i) => semanasComHistorico(meso, registros, t, i + 1).length)) {
+      setHint(`O Treino ${t} já tem cargas registradas. Para não perder nada, troque os exercícios um a um.`)
+      return
+    }
+    if (dest.length && !window.confirm(`Trocar os exercícios do Treino ${t} pelos do Treino ${de}? Os métodos do Treino ${t} também serão trocados.`)) return
+    setHint(null)
+    onAtualizar(copiarTreino(meso, de, t))
+  }
+
   const sel = Math.min(treinoSel, meso.frequencia)
 
   // Cartão de um treino: usado em grade (md+) e sozinho (celular).
   function cartaoTreino(t: number) {
     const arr = meso.divisao[t - 1] ?? []
     return (
-      <div key={t} data-testid={`treino-${t}`} className={`rounded-lg border border-slate-800 bg-slate-950 text-sm ${t === sel ? '' : 'hidden md:block'}`}>
-        <p className="border-b border-slate-800 px-3 py-2 font-semibold">Treino {t}</p>
+      <div key={t} data-testid={`treino-${t}`} className={`relative rounded-lg border border-slate-800 bg-slate-950 text-sm ${t === sel ? '' : 'hidden md:block'}`}>
+        <p className="border-b border-slate-800 px-3 py-3 font-semibold">Treino {t}</p>
         <ul className="divide-y divide-slate-800">
           {posicoes.map((p) => {
             if (p > arr.length + 1) return null
@@ -102,6 +132,7 @@ export default function TabDivisao({
                   inicial={slot?.nome ?? ''}
                   placeholder={p === arr.length + 1 ? 'Adicionar…' : ''}
                   onConfirmar={(nome) => commit(t, p, nome)}
+                  onAvancar={(para) => setFoco({ t, p, para })}
                   className="flex-1"
                 />
                 {slot && (
@@ -126,6 +157,23 @@ export default function TabDivisao({
             )
           })}
         </ul>
+        <div className="absolute right-2 top-1.5">
+          {treinos.some((o) => o !== t && meso.divisao[o - 1]?.length) && (
+            <select
+              aria-label={`Copiar outro treino para o Treino ${t}`}
+              value=""
+              onChange={(e) => e.target.value && copiar(Number(e.target.value), t)}
+              className={`${campoBase} px-2 py-0.5`}
+            >
+              <option value="">Copiar de…</option>
+              {treinos.filter((o) => o !== t && meso.divisao[o - 1]?.length).map((o) => (
+                <option key={o} value={o}>
+                  Treino {o}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
     )
   }
@@ -147,7 +195,7 @@ export default function TabDivisao({
           ))}
         </div>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{treinos.map(cartaoTreino)}</div>
-        <p className="mt-3 text-xs text-slate-400">Pausa em branco = pausa do mesociclo.</p>
+        <p className="mt-3 text-xs text-slate-400">Tab: próximo exercício · Enter no campo vazio: próximo treino · Pausa em branco = pausa do mesociclo.</p>
       </Cartao>
       <Msg>{hint && <Aviso>{hint}</Aviso>}</Msg>
       <TrocasPontuais meso={meso} onAtualizar={onAtualizar} />

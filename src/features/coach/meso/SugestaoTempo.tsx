@@ -43,13 +43,13 @@ export function LinhaAcima({ meso, acima, prefixo, onAplicar }: { meso: Meso; ac
         <Botao onClick={() => setAberto((a) => !a)}>{aberto ? 'Fechar' : 'Ver sugestão'}</Botao>
       </div>
       <Painel aberto={aberto}>
-        <PainelSugestao meso={meso} acima={acima} onAplicar={onAplicar} />
+        <PainelSugestao meso={meso} acima={acima} onAplicar={onAplicar} onCancelar={() => setAberto(false)} />
       </Painel>
     </div>
   )
 }
 
-function PainelSugestao({ meso, acima, onAplicar }: { meso: Meso; acima: Acima; onAplicar: (novo: Meso) => void }) {
+function PainelSugestao({ meso, acima, onAplicar, onCancelar }: { meso: Meso; acima: Acima; onAplicar: (novo: Meso) => void; onCancelar: () => void }) {
   const limite = meso.tempoLimiteMin!
   const propostas = useMemo(() => sugerirMetodos(meso, acima.semana, acima.treino, limite), [meso, acima, limite])
   const [fora, setFora] = useState<number[]>([])
@@ -93,9 +93,12 @@ function PainelSugestao({ meso, acima, onAplicar }: { meso: Meso; acima: Acima; 
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className={previsto > limite ? 'text-amber-300' : 'text-slate-300'}>Fica em {fmtMin(previsto)}</span>
-        <Botao tipo="primario" disabled={escolhidas.length === 0 || semanas.length === 0} onClick={() => onAplicar(aplicado(semanas))}>
-          Aplicar
-        </Botao>
+        <span className="flex gap-2">
+          <Botao onClick={onCancelar}>Cancelar</Botao>
+          <Botao tipo="primario" disabled={escolhidas.length === 0 || semanas.length === 0} onClick={() => onAplicar(aplicado(semanas))}>
+            Aplicar
+          </Botao>
+        </span>
       </div>
     </div>
   )

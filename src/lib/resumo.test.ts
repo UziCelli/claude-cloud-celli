@@ -28,9 +28,11 @@ describe('resumoCoach', () => {
 
   it('arquivado fica fora de tudo', () => {
     const a = aluno('a', { status: 'arquivado', pagoAte: paga('2026-10-12') })
-    const reg = [{ alunoId: 'a', atualizadoEm: ts('2026-10-10T07:00') }]
+    const reg = [{ alunoId: 'a', mesoId: 'm', semana: 1, treino: 1, atualizadoEm: ts('2026-10-10T07:00') }]
     const r = resumoCoach([a], reg, agora)
-    expect(Object.values(r).flat()).toEqual([])
+    const { treinosHoje, ...listas } = r
+    expect(Object.values(listas).flat()).toEqual([])
+    expect(treinosHoje).toEqual({})
   })
 
   it('vencendo: ativo, de 0 a 7 dias (dia de São Paulo), sem presencial', () => {
@@ -77,6 +79,27 @@ describe('resumoCoach', () => {
       agora,
     )
     expect(ids(r.treinaramHoje)).toEqual(['a', 'b', 'pres'])
+  })
+
+  it('treinosHoje: por aluno, sem repetir, ordenado, feito x em andamento', () => {
+    const base = { mesoId: 'm1', realizado: false }
+    const r = resumoCoach(
+      [aluno('a'), aluno('b')],
+      [
+        { ...base, alunoId: 'a', semana: 2, treino: 2, atualizadoEm: ts('2026-10-10T07:00') },
+        { ...base, alunoId: 'a', semana: 2, treino: 1, realizado: true, realizadoEm: ts('2026-10-10T01:00') },
+        { ...base, alunoId: 'a', semana: 2, treino: 2, realizado: true, atualizadoEm: ts('2026-10-10T07:30') }, // repetido
+        { ...base, alunoId: 'a', semana: 1, treino: 3, atualizadoEm: ts('2026-10-09T23:59') }, // ontem
+        { ...base, alunoId: 'b', semana: 1, treino: 1 }, // sem datas
+      ],
+      agora,
+    )
+    expect(r.treinosHoje).toEqual({
+      a: [
+        { mesoId: 'm1', semana: 2, treino: 1, feito: true },
+        { mesoId: 'm1', semana: 2, treino: 2, feito: true }, // um dos registros repetidos está feito
+      ],
+    })
   })
 
   it('sumidos: liberado, de app, sem registro atualizado nos últimos 7 dias', () => {

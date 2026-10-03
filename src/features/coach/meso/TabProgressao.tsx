@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
+import { acimaDoLimite, fmtMin, fmtReps } from '../../../lib/tempo'
 import { prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
 import { Botao, campoBase, Cartao, Painel } from '../../../ui'
@@ -83,6 +83,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
   const [treino, setTreino] = useState('1')
   const [slotSel, setSlotSel] = useState('')
   const [previa, setPrevia] = useState<{ antes: Previa; depois: Previa; novo: Meso } | null>(null)
+  const [verSem, setVerSem] = useState<number | null>(null)
 
   const alvo = (): AlvoVolume =>
     onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
@@ -91,6 +92,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
     const args = { pct: Number(pct) || 0, de: +de, ate: +ate, alvo: alvo() }
     const novo = modo === 'prog' ? progressaoAutomatica(meso, args) : reduzirVolume(meso, { ...args, retorno: +retorno })
     setPrevia({ antes: resumo(meso), depois: resumo(novo), novo })
+    setVerSem(null)
   }
 
   function aplicar() {
@@ -108,6 +110,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
     f(v)
     setPrevia(null)
   }
+  const semVer = verSem ?? Math.min(meso.semanas, Math.max(1, +de || 1))
   const slots = meso.divisao[+treino - 1] ?? []
   const slotId = slots.some((x) => x.slotId === slotSel) ? slotSel : (slots[0]?.slotId ?? '')
 
@@ -172,6 +175,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
       <div className="mt-3 flex flex-wrap gap-2">
         <Botao onClick={calcular}>Calcular prévia</Botao>
         {previa && <Botao tipo="primario" onClick={aplicar}>Aplicar</Botao>}
+        {previa && <Botao onClick={() => setPrevia(null)}>Cancelar</Botao>}
       </div>
       <Painel aberto={!!previa}>
       {previa && (
@@ -196,6 +200,37 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
             ))}
           </tbody>
         </table>
+      )}
+      {previa && (
+        <div className="mt-3 space-y-2 text-sm">
+          <label className={rot}>
+            Ver semana
+            <select value={semVer} onChange={(e) => setVerSem(+e.target.value)} className={sel}>
+              {Array.from({ length: meso.semanas }, (_, i) => (
+                <option key={i} value={i + 1}>S{i + 1}</option>
+              ))}
+            </select>
+          </label>
+          {Array.from({ length: meso.frequencia }, (_, t) => {
+            const antes = prescreverSessao(meso, semVer, t + 1)?.exercicios ?? []
+            const depois = prescreverSessao(previa.novo, semVer, t + 1)?.exercicios ?? []
+            return (
+              <div key={t}>
+                <h4 className="font-semibold">Treino {t + 1}</h4>
+                {depois.map((d, i) => {
+                  const a = antes[i] ?? d
+                  const fa = fmtReps(a.reps, a.n)
+                  const fd = fmtReps(d.reps, d.n)
+                  return (
+                    <p key={d.slot.slotId} className={`break-words ${fa === fd ? 'text-slate-500' : 'text-amber-300'}`}>
+                      {d.slot.nome} — {fa === fd ? fa : `${fa} → ${fd}`}
+                    </p>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
       )}
       </Painel>
     </Cartao>
