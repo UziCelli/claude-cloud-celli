@@ -19,6 +19,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --passWithNoTests
       - run: npm run build
+      - run: npm run build:gislane
 
   rules:
     runs-on: ubuntu-latest

@@ -56,7 +56,9 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 - [x] Ícone (o "G" vermelho) e nome "Gislane" aprovados pelo Victor (03/10/2026).
 - [x] Botão "perigo" em vinho escuro (`red-600`/`red-500` sobrescritos só em `marcas/gislane/tema.css`), aprovado pelo Victor.
 - [x] Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP (`responsavel.papel` acerta "a responsável").
-- [ ] Pendência do Victor: domínio (comprar na Squarespace; por enquanto só local). Depois seguir o passo a passo abaixo.
+- [x] **Fase C no código** (03/10/2026): projeto Firebase `gislane-personal-trainer`; `.env.gislane` (config pública) versionado; `.firebaserc` com aliases `vfit`/`gislane`; `deploy.yml` com job separado `gislane` (trava: falha se o `dist/` tiver "A CONFIRMAR" ou "forca--app"); `ci.yml` faz `build:gislane`. O dev (`npm run dev*`) usa sempre os emuladores.
+- [ ] **O job `gislane` falha até:** (a) o Victor dar acesso à conta de serviço no projeto dela (passos 6–7 da página de instruções) e (b) o `dominio` de `marcas/gislane/marca.json` ser preenchido (hoje "A CONFIRMAR"). O job da VFIT não é afetado.
+- [x] Domínio comprado na Squarespace: `gislanepersonaltrainer.com` (landing no domínio principal, na Cloudflare como o VFIT; app em `app.gislanepersonaltrainer.com`). Passo a passo atualizado na página de instruções do Victor (Partes 1–3).
 
 ## Fase C — passo a passo do Victor (depois de comprar o domínio na Squarespace)
 Recomendado: o app em `app.<domínio>` (como `app.vfitcoachapp.com`); o domínio principal fica livre para um site dela.
@@ -130,6 +132,11 @@ Proposta mínima:
 3. Também guiar os e-mails com a marca dela: Authentication → Modelos, igual ao que fizemos para a VFIT.
 
 **Fechamento:** `revisor` (Sonnet), depois commit, PR em rascunho e CI verde. O Victor junta, e então roda o APK da Gislane.
+
+## Workflows que hoje só rodam no projeto da VFIT
+Todos usam a credencial/projeto `forca--app`: backup, limpeza LGPD, vigia, mfa, erros, aluno-exemplo, importar-meso, alterar-email. (Não implementado.)
+- **Precisam rodar também no da Gislane antes de ela ter alunos:** backup, limpeza LGPD (obrigação LGPD), vigia, mfa (2º fator do coach) e erros.
+- Só VFIT (sob demanda): aluno-exemplo; importar-meso e alterar-email só se ela pedir.
 
 ## Cuidados
 - ⚠️ **Nunca** publique o build de uma marca no projeto da outra. Por isso a matrix usa o alias do `.firebaserc`, e nenhum comando de deploy deve ficar sem `--project`.

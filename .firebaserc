@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "forca--app"
+    "default": "forca--app",
+    "vfit": "forca--app",
+    "gislane": "gislane-personal-trainer"
   }
 }
