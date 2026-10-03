@@ -58,7 +58,7 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 - [x] Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP (`responsavel.papel` acerta "a responsável").
 - [x] **Fase C no código** (03/10/2026): projeto Firebase `gislane-personal-trainer`; `.env.gislane` (config pública) versionado; `.firebaserc` com aliases `vfit`/`gislane`; `deploy.yml` com job separado `gislane` (trava: falha se o `dist/` tiver "A CONFIRMAR" ou "forca--app"); `ci.yml` faz `build:gislane`. O dev (`npm run dev*`) usa sempre os emuladores.
 - [ ] **O job `gislane` falha até:** (a) o Victor dar acesso à conta de serviço no projeto dela (passos 6–7 da página de instruções) e (b) o `dominio` de `marcas/gislane/marca.json` ser preenchido (hoje "A CONFIRMAR"). O job da VFIT não é afetado.
-- [ ] Pendência do Victor: domínio (comprar na Squarespace; por enquanto só local). Depois seguir o passo a passo abaixo.
+- [x] Domínio comprado na Squarespace: `gislanepersonaltrainer.com` (landing no domínio principal, na Cloudflare como o VFIT; app em `app.gislanepersonaltrainer.com`). Passo a passo atualizado na página de instruções do Victor (Partes 1–3).
 
 ## Fase C — passo a passo do Victor (depois de comprar o domínio na Squarespace)
 Recomendado: o app em `app.<domínio>` (como `app.vfitcoachapp.com`); o domínio principal fica livre para um site dela.

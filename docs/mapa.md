@@ -108,7 +108,7 @@ Comece por aqui para achar onde mexer.
 - A marca vem do `--mode` do Vite: existe `marcas/<mode>` → essa marca; senão `vfit`. `@marca` aponta para a pasta (no `tsc` sempre `vfit`).
 - `public/` da marca é mesclada com `public/` por um plugin em `vite.config.ts` (dev serve, build emite antes do SW, então entra no precache).
 - Gislane local: `npm run emuladores` + `npm run dev:gislane` (sem `.env.production` cai no emulador). Build: `npm run build:gislane`. Ícones: `npm run icones:gislane`. e2e: `MARCA=gislane npm run test:e2e`.
-- `A CONFIRMAR` em `marcas/gislane/marca.json`: nome completo, CREF, endereço (domínio).
+- `marcas/gislane/marca.json` completo (o deploy trava se aparecer "A CONFIRMAR").
 
 ### `public/` (comum às marcas)
 - `sw-push.js` — trata o push e o clique na notificação (importado pelo service worker via `workbox.importScripts`)

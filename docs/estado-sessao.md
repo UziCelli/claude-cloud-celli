@@ -80,7 +80,8 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Aprovados pelo Victor: ícone "G", nome "Gislane" embaixo do ícone e botão "perigo" em vinho escuro.
 - Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP.
 - PR #42 recebeu a `main` com o Painel de Evolução (#41): o cartão do story agora lê logo (`@marca/logoPaths`), cores (`marca.json` → `cores`, conferidas contra o `tema.css` por teste) e nome da marca. Toda tela ou imagem nova deve ler a marca assim, nunca ter VFIT fixo.
-- **Falta do Victor:** comprar o domínio na Squarespace (por enquanto só local). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
+- Domínio: `gislanepersonaltrainer.com` (landing na Cloudflare, igual ao VFIT; app em `app.`). Landing em `vfitcoach-site/gislane/` (PR #4 daquele repositório).
+- **Falta do Victor:** acesso da conta de serviço ao projeto dela (mesmo robô ou robô próprio) e dados da landing (foto, WhatsApp, Instagram, agenda, locais, resultado da aluna). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
 
 - **App da Gislane, Fase C no código** (03/10/2026): projeto `gislane-personal-trainer`, `.env.gislane`, aliases no `.firebaserc`, job `gislane` em `deploy.yml` (com trava) e `build:gislane` no CI.
 - O job `gislane` falha até o Victor dar acesso à conta de serviço no projeto dela e o `dominio` do `marca.json` ser preenchido.
