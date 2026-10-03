@@ -23,7 +23,7 @@ Avaliação física e relatórios escritos ficam para depois (Fase 3).
 - **Recorde:** ocorrência cuja carga máx é maior que todas as anteriores do mesmo exercício. A 1ª ocorrência não conta. Total e últimos 30 dias.
 - **Mais constante:** exercício com a maior sequência de ocorrências seguidas sem baixar a carga máx (≥ 3).
 - **Volume total (kg):** Σ carga × reps efetivas de todos os treinos feitos.
-- **Toneladas divertidas:** maior objeto da tabela com qtd ≥ 1.
+- **Toneladas divertidas:** maior objeto da tabela com qtd ≥ 5. Se nenhum chegar a 5, o maior com qtd ≥ 1.
   - Tabela: piano 0,4 t; carro popular 1 t; hipopótamo 1,5 t; elefante 6 t; ônibus 12 t; caminhão 20 t; avião 737 41 t; baleia-azul 150 t.
   - Exemplo: "48 t ≈ 8 elefantes".
 - **Semana completa:** semana de um meso com todos os treinos 1..frequência feitos.
