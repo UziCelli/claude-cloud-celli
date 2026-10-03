@@ -34,3 +34,27 @@ jobs:
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx firebase deploy --only hosting,firestore:rules,firestore:indexes --project forca--app --non-interactive
+
+  # Gislane: job separado. Não depende do da VFIT nem o bloqueia. Falha até a conta de serviço ter acesso
+  # ao projeto gislane-personal-trainer e o "dominio" de marcas/gislane/marca.json estar preenchido.
+  gislane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:gislane
+      - name: Trava (nunca publicar build trocado ou incompleto)
+        run: |
+          if grep -rlE "A CONFIRMAR|forca--app" dist; then echo "dist da Gislane com 'A CONFIRMAR' ou 'forca--app'"; exit 1; fi
+          grep -rq "gislane-personal-trainer" dist || { echo "dist sem o projeto da Gislane"; exit 1; }
+      - name: Publicar no Firebase (Gislane)
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase deploy --only hosting,firestore:rules,firestore:indexes --project gislane --non-interactive

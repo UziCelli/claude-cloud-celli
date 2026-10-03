@@ -82,6 +82,10 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - PR #42 recebeu a `main` com o Painel de Evolução (#41): o cartão do story agora lê logo (`@marca/logoPaths`), cores (`marca.json` → `cores`, conferidas contra o `tema.css` por teste) e nome da marca. Toda tela ou imagem nova deve ler a marca assim, nunca ter VFIT fixo.
 - **Falta do Victor:** comprar o domínio na Squarespace (por enquanto só local). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
 
+- **App da Gislane, Fase C no código** (03/10/2026): projeto `gislane-personal-trainer`, `.env.gislane`, aliases no `.firebaserc`, job `gislane` em `deploy.yml` (com trava) e `build:gislane` no CI.
+- O job `gislane` falha até o Victor dar acesso à conta de serviço no projeto dela e o `dominio` do `marca.json` ser preenchido.
+- Workflows que ainda só rodam na VFIT (backup, LGPD, vigia, mfa, erros): ver `docs/plano-app-gislane.md`, antes de ela ter alunos.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
   - avaliação física (Fase 3): dados de saúde, com acesso só do coach e do próprio aluno, e auditoria das regras;
@@ -90,7 +94,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Senha provisória pelo WhatsApp em vez do e-mail do Firebase (o nome "forca--app" aparece nos e-mails).
 - Botão "ver vídeo" em cada exercício, quando o Victor gravar os vídeos.
 - App da Gislane (`docs/plano-app-gislane.md`):
-  - faltam o nome embaixo do ícone (até 12 letras), o domínio próprio e o ID do projeto Firebase;
+  - faltam o nome embaixo do ícone (até 12 letras), o domínio próprio (ID do projeto Firebase já definido);
   - as cores já estão aprovadas.
 - Importar planilhas de outros alunos: `tools/planilha_para_meso.py` + workflow "Importar mesociclo".
 - A migração do projeto Firebase foi descartada pelo Victor.

@@ -43,7 +43,9 @@ const publicDaMarca = (dir: string): Plugin => ({
 });
 
 // Marca = --mode (se existir marcas/<mode>); sem ele, vfit. `npm run build` e `npm run dev` continuam VFITCOACH.
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
+// Dev (serve) usa SEMPRE os emuladores, mesmo com .env.gislane/.env.production presentes. Build não é afetado.
+if (command === 'serve') process.env.VITE_USE_EMULATOR = '1';
 const id = existsSync(`marcas/${mode}`) ? mode : 'vfit';
 const marca = JSON.parse(readFileSync(`marcas/${id}/marca.json`, 'utf8'));
 return {
