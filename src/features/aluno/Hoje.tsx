@@ -129,6 +129,10 @@ function SemanaCarregada({ meso, mesoId, registros, semanaInicial }: { uid: stri
       <a href="#/metodos" className="mt-5 block text-center text-sm text-slate-400 underline">
         Guia de métodos
       </a>
+      {/* O aluno não tem "Minha conta": a política fica acessível daqui (LGPD). */}
+      <a href="/privacidade" className="mt-2 block text-center text-xs text-slate-500 underline">
+        Política de Privacidade
+      </a>
     </>
   )
 }
