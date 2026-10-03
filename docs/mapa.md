@@ -20,6 +20,7 @@ Comece por aqui para achar onde mexer.
 | Offline/sync Firebase | `src/lib/firebase.ts` + `firestore.rules` |
 | Roteamento (hash, /aluno/123, etc.) | `src/rota.ts` + `src/App.tsx` |
 | Notificação "Descanso acabou" (push, app fechado) | `src/lib/push.ts` + `public/sw-push.js` + `push/` (Worker Cloudflare) — veja `docs/push.md` |
+| Painel de evolução, conquistas, ranking | `src/lib/evolucao.ts` + `src/features/evolucao/` + `src/features/coach/RankingAlunos.tsx` |
 
 ## Árvore por pasta
 
@@ -40,6 +41,9 @@ Comece por aqui para achar onde mexer.
 - `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada)
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
+- `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `comparacaoToneladas()`, `recordeAnterior()`, `rankingAlunos()`: cálculos do painel de evolução
+- `recorde.ts` — `ehRecorde()`: verifica se uma carga é recorde
+- `evolucao.test.ts`, `recorde.test.ts` — testes desses cálculos
 - `*.test.ts` — testes
 
 ### `push/` — Worker Cloudflare (notificação do descanso)
@@ -55,12 +59,17 @@ Comece por aqui para achar onde mexer.
 ### `src/features/aluno/` — App do aluno
 - `AlunoApp.tsx` — roteador do aluno
 - `Hoje.tsx` — treino de hoje
-- `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro)
+- `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro, festa no recorde)
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
-- `EvolucaoAluno.tsx` — gráficos: reps, força, volume
+- `EvolucaoAluno.tsx` — reexporta o painel de evolução
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor
+
+### `src/features/evolucao/` — Painel de evolução, conquistas, cartão
+- `PainelEvolucao.tsx` — tela única para aluno (`#/evolucao`) e coach (`#/aluno/:uid/evolucao`): números, calendário, maiores evoluções, recordes, conquistas, tabela por exercício
+- `cartaoStory.ts` — imagem Canvas 1080×1920 com logo, primeiro nome e números para compartilhar no Instagram
+- `BotaoCompartilhar.tsx` — botão "Compartilhar no story" (usa `navigator.share` ou download PNG)
 
 ### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
 - `IconeMetodo.tsx` — ícone SVG animado por método
@@ -112,6 +121,7 @@ Comece por aqui para achar onde mexer.
 - `tests/rules.test.ts` — segurança Firestore (emulador)
 - `tests/ataques.test.ts` — teste de ataques (troca de ID, escalada, anônimo, abuso); todo caso deve ser negado
 - `e2e/*.spec.ts` — fluxo aluno/coach (Playwright); `e2e/varredura.spec.ts` abre todas as telas em 1280/390 px (erro, rolagem horizontal, "undefined"/"NaN")
+- `e2e/evolucao.spec.ts`, `e2e/recorde.spec.ts`, `e2e/ranking.spec.ts` — fluxos do painel de evolução, recorde e ranking
 - `e2e/seed.ts` — fixture: usuários, mesos
 
 ### `tools/` — Scripts offline
@@ -150,9 +160,12 @@ Comece por aqui para achar onde mexer.
 | `/alunos` | Alunos | Coach |
 | `/alunos/novo` | NovoAluno | Coach |
 | `/aluno/:uid` | MesosDoAluno | Coach |
+| `/aluno/:uid/evolucao` | EvolucaoCoach (`PainelEvolucao.tsx`) | Coach |
 | `/meso/:id` | EditorMeso | Coach |
 | `/meso/:id/semana/:n` | VisaoSemana | Coach |
+| `/ranking` | RankingAlunos | Coach |
 | `/conta` | MinhaConta | Ambos |
+| `/evolucao` | EvolucaoAluno (`PainelEvolucao.tsx`) | Aluno |
 | (padrão) | AlunoApp | Aluno |
 
 ---
@@ -239,4 +252,5 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Peso do corpo automático | `src/lib/pesoCorporal.ts` (`corpoEhCarga`, `rebasear`, `preencherCorpo`), `conversores.ts` (`normalizarCargas`), `Treino.tsx`, `SessaoCard.tsx` | **Detalhes, formatos antigos e como verificar: `docs/peso-corporal.md`.** Toda leitura de cargas passa por `docsParaRegistros(docs, meso)` (normaliza dado de versão antiga; nunca use `docParaCargas` cru em tela/cálculo). Barra fixa, flexão de braços, abdominal no solo sem carga e agachamento com peso do corpo já vêm com "Somar meu peso corporal" marcado. Só vale para slot **sem carga** e **sem `pc.<slot>` explícito**; ao gravar a 1ª carga, o `pc` é gravado junto, então histórico e métricas antigas não mudam. Sem `pesoKg` no perfil não há automático (fica a opção manual com aviso). **Convenção: `cargas.<slot>.s<n>` guarda o TOTAL (extra + `pc`)**; a tela mostra `total - corpo`. Ao marcar/desmarcar/trocar o `pc` (A para B), `rebasear` regrava campo a campo cada carga já preenchida como `c - A + B`; carga menor que A (gravada sem o corpo, dado antigo) fica como está, para nenhuma carga se perder. Ao "Concluir treino", `preencherCorpo` grava `pc` (se faltar) e `carga = corpo` nas séries prescritas **vazias** (nunca sobrescreve; drop fica de fora); `estadoCorpo` (Treino.tsx) é a regra única de `corpo`/`auto`. O coach vê "Inclui peso do corpo: X kg" no card. `tools/aluno-exemplo.mjs` também grava extra + pc. | `pesoCorporal.test.ts`, `conversores.test.ts`, `treino.test.ts`, `tests/aluno-exemplo.test.ts`, e2e `peso-corpo.spec.ts` |
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |
 | Aluno de exemplo | `tools/aluno-exemplo.mjs`, `aluno-exemplo.yml` | Escreve em **produção**, só no aluno "Victor Aluno"/"Victor C.L. Silva" (falha se não houver exatamente 1). Nunca cria, altera ou apaga registros da **semana 2** (o Victor registra ao vivo); só grava a semana 1, com merge. Em outros mesos da conta só muda `inicio` dos que estiverem em andamento (guarda `inicioOriginal`). | `tests/aluno-exemplo.test.ts` (emulador) |
+| Evolução e recorde | `src/lib/evolucao.ts`, `Treino.tsx` (festa no recorde), `RankingAlunos.tsx` | Tudo calculado no aparelho, sem dado novo nem regra nova; cargas sempre via `docsParaRegistros` (peso do corpo); exercícios casam pelo nome entre mesos; a festa no recorde só lê (não mexe na gravação) e compara o TOTAL gravado; o aluno lê todos os próprios registros na Evolução e no Treino (custo ~100–300 docs/ano por aluno); o ranking lê só os mesos atuais; o Início não ganhou consulta (frequenciaCaindo usa os 14 dias já carregados, meso com < 7 dias não conta); cartão do story só com primeiro nome e números (LGPD), CSP `img-src 'self' data:` (nada de blob: em <img>). | `evolucao.test.ts`, `resumo.test.ts`, `recorde.test.ts`, e2e `evolucao`/`recorde`/`ranking`/`layout` |
 | LGPD / exclusão | `Alunos.tsx` ("Apagar de vez") → `apagarAluno` (`acoes.ts`), `exclusoes/{uid}`, `tools/limpeza-lgpd.mjs` | "Apagar de vez" grava `exclusoes/{uid}` **antes** de apagar; Limpeza LGPD (diária) termina Auth/logs/dados, se apagou alguém faz backup novo e apaga os antigos (backups guardados 30 dias); resumo do workflow nunca expõe nome/e-mail/uid; nunca apagar pedido de coach; quem mudar política troca `VERSAO_PRIVACIDADE`. | `tests/limpeza-lgpd.test.ts` |

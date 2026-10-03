@@ -26,11 +26,16 @@ Aluno usado: **Victor C.L. Silva** (a conta de teste do Victor).
 7. **Peso do corpo**: marque "Fiz com o peso do corpo" na Barra Fixa ou Flexão; o app soma o peso do aluno sozinho.
 8. **Registrar ao vivo**: digite uma carga e as reps; mostre que salva na hora e funciona **sem internet** (modo avião).
 9. **Treino 2**: Clusterset, Dropset, Triset e Circuito.
-10. **Concluir treino** e abrir **Evolução** (gráficos de reps, força e volume).
+10. **Concluir treino** e abrir **Evolução** (números, calendário, maiores evoluções, recordes, conquistas).
+    - Botão **"Compartilhar no story"**: gera cartão com logo, primeiro nome, treinos, semanas seguidas, toneladas e a maior evolução.
 11. **Guia de métodos** (link na tela Hoje).
 12. **Semana no app**: cartão do treino de hoje tem selo "Feito hoje ✓" (quando concluído).
 13. **Política de Privacidade** (/privacidade): mostrar na tela de aceite do aluno.
-14. **Lado do coach** (outra conta): semana do aluno, séries e reps realizadas vs. prescrição.
+14. **Lado do coach** (outra conta):
+    - Semana do aluno: séries e reps realizadas vs. prescrição.
+    - **Ranking de evolução** (`/ranking`): abas Mais evoluíram, Mais frequentes, Em risco; mostra evolução %, frequência, semanas seguidas.
+    - Bloco **"Frequência caindo"** e link **"Ranking de evolução"** no Início.
+    - Botão **"Evolução"** na página do aluno: o mesmo painel que ele vê.
 
 ## Dicas
 - Se algo estiver estranho, rode o workflow de novo no modo `gravar`: é seguro repetir.
