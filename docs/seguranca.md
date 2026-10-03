@@ -67,3 +67,54 @@ Tudo grátis (plano Spark). Faça na ordem. Peça ao Claude para guiar qualquer 
   - tirar o botão da tela;
   - bloquear nas regras;
   - desligar "Criar conta" no Authentication.
+
+## 6. Monitoramento (alertas)
+
+### Alertas automáticos (Vigia de segurança)
+
+O workflow "Vigia de segurança" roda **a cada 6 horas** e confere sinais de ataque e vulnerabilidades:
+
+| Alerta | Limite | O que é |
+|--------|--------|--------|
+| Muitos cadastros novos | 10 por 24h | Possível ataque de robôs; confira quem se cadastrou |
+| Muitos aguardando aprovação | 20 pessoas | Possível cadastro em massa; fila muito grande |
+| Muitos erros no app | 100 por 24h | Bug novo ou abuso; confira o workflow "Ver erros do app" |
+| Muitos acessos negados | 20 por 24h | Tentativa de acesso indevido ou bug; leia os logs |
+| Coach sem 2º fator | 1 conta | Verificação em 2 etapas desligada; ative em "Minha conta" |
+| Quantidade de coaches incorreta | 1 esperado | Alguém virou coach ou sumiu; confira a lista de usuários |
+| Coleção de logs muito grande | 5.000 logs | Abuso da cota grátis; limpar manualmente ou na Limpeza LGPD |
+| Limpeza LGPD atrasada | 2+ dias | Pedido de exclusão não foi processado; workflow falhou |
+| Pacotes com vulnerabilidade | crítica/grave | npm audit achou vulnerabilidade; atualizar dependência |
+
+**Cada alerta vira uma Issue com @UziCelli** sem repetir se já houver uma aberta. Se o vigia quebra (permissão, rede), abre Issue também.
+
+### Dependabot
+
+**Ligado em 03/10/2026** (alertas + security updates automáticas):
+
+- **Alerts:** confira toda semana no GitHub → Security → Dependabot alerts
+- **Security updates:** PR automáticas na seção "Manutenção"
+- **Ação:** abrir a PR → revisar com o Claude → juntar se tudo OK → conferir CI
+
+### Cloudflare (notificação de descanso)
+
+Worker `vfit-descanso` só hospeda o aviso de descanso:
+
+- **Sem dados guardados:** faz CORS, confere token Firebase, envia push e pronto
+- **Limite:** 30 notificações por minuto (429 acima disso)
+- **Cache de acesso:** 10 min (perfil do aluno)
+
+### Proteção contra cobrança
+
+Plano Spark do Firebase:
+
+- Sem cartão no console: ataque não gera cobrança
+- Quota de `npm audit`: 10.000 avaliações/mês (grátis, monitorar uso)
+- Logs no Firestore: máx. 20 por aparelho por dia (cliente limita)
+
+### Procedimento ao receber alerta
+
+1. Abrir a Issue no GitHub
+2. Chamar o Claude: "Recebemos um alerta de `<tipo>`. Olha a Issue e o que fazer?"
+3. Resolver o problema (atualizar pacote, desativar 2º fator, etc.)
+4. Fechar a Issue quando pronto
