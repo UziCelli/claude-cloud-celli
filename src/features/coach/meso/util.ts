@@ -33,3 +33,21 @@ export function semanasComHistorico(
   }
   return semanas
 }
+
+// Repete o treino `de` no treino `para` (slots novos, métodos e progressão por exercício junto).
+export function copiarTreino(meso: Meso, de: number, para: number) {
+  const progressaoExercicio = { ...meso.progressaoExercicio }
+  for (const s of meso.divisao[para - 1] ?? []) delete progressaoExercicio[s.slotId]
+  const divisao = [...meso.divisao]
+  divisao[para - 1] = (meso.divisao[de - 1] ?? []).map((s) => {
+    const novo = { ...s, slotId: crypto.randomUUID() }
+    const prog = meso.progressaoExercicio?.[s.slotId]
+    if (prog) progressaoExercicio[novo.slotId] = structuredClone(prog)
+    return novo
+  })
+  const metodos = [
+    ...meso.metodos.filter((m) => m.treino !== para),
+    ...meso.metodos.filter((m) => m.treino === de).map((m) => ({ ...structuredClone(m), treino: para })),
+  ]
+  return { divisao, metodos, progressaoExercicio }
+}

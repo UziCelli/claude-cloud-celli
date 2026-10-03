@@ -9,12 +9,14 @@ export default function CampoExercicio({
   placeholder,
   onTexto,
   onConfirmar,
+  onAvancar,
   className = '',
 }: {
   inicial?: string
   placeholder?: string
   onTexto?: (t: string) => void
   onConfirmar?: (t: string) => void
+  onAvancar?: (para: 'exercicio' | 'treino') => void
   className?: string
 }) {
   const [texto, setTexto] = useState(inicial)
@@ -27,6 +29,7 @@ export default function CampoExercicio({
     onTexto?.(nome)
     setAberto(false)
     onConfirmar?.(nome)
+    onAvancar?.('exercicio')
   }
 
   function tecla(e: React.KeyboardEvent) {
@@ -42,6 +45,15 @@ export default function CampoExercicio({
       } else {
         setAberto(false)
         onConfirmar?.(texto)
+        onAvancar?.(texto.trim() ? 'exercicio' : 'treino')
+      }
+    } else if (e.key === 'Tab' && onAvancar && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      e.preventDefault()
+      if (sugestoes[ativo]) escolher(sugestoes[ativo].nome)
+      else {
+        setAberto(false)
+        onConfirmar?.(texto)
+        onAvancar('exercicio')
       }
     } else if (e.key === 'Escape') setAberto(false)
   }

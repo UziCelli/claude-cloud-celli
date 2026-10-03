@@ -270,3 +270,33 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
   await expect(page.getByRole('heading', { name: /Treinos acima do tempo/ })).toHaveCount(0, { timeout: 10_000 })
   await expect.poll(async () => Boolean(((await lerDoc(`mesos/${id}`))?.fields as Record<string, unknown> | undefined)?.adaptadoEm), { timeout: 10_000 }).toBe(true)
 })
+
+test('divisão: navegação por teclado e copiar treino', async ({ page }) => {
+  const alunoId = await criarAluno('Teclado Teste', 'teclado.e2e@teste.com', 'senha123')
+  const linha = { w1: [10, 10, 10, null, null, null], w2: [10, 10, 10, null, null, null] }
+  const id = await criarMeso({
+    alunoId, nome: 'Meso Teclado', frequencia: 3, semanas: 2, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: [], t2: [], t3: [] }, progressao: { principais: linha, auxiliares: linha },
+  })
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.goto(`/#/meso/${id}`)
+  await page.getByRole('button', { name: 'Divisão', exact: true }).click()
+
+  const campo = (t: number, p: number) => page.getByTestId(`treino-${t}`).getByRole('combobox').nth(p - 1)
+  await campo(1, 1).fill(NOMES[0])
+  await campo(1, 1).press('Enter')
+  await expect(campo(1, 2)).toBeFocused()
+  await campo(1, 2).fill(NOMES[1])
+  await campo(1, 2).press('Tab')
+  await expect(campo(1, 3)).toBeFocused()
+  await campo(1, 3).press('Enter')
+  await expect(campo(2, 1)).toBeFocused()
+
+  await page.getByTestId('treino-3').getByLabel('Copiar outro treino para o Treino 3').selectOption({ label: 'Treino 1' })
+  await expect(campo(3, 1)).toHaveValue(NOMES[0])
+  await expect(campo(3, 2)).toHaveValue(NOMES[1])
+})
