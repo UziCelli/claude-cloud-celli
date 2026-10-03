@@ -65,6 +65,8 @@ test('fluxo completo do painel do coach', async ({ page }) => {
         const input = page.getByTestId(`treino-${t}`).locator(CAMPO).nth(p - 1)
         await input.fill(NOMES[p - 1])
         await input.press('Tab')
+        // O app move o foco depois do re-render; sem esperar, esse foco atrasado roubava o foco do próximo fill.
+        await expect(page.getByTestId(`treino-${t}`).locator(CAMPO).nth(p)).toBeFocused()
       }
     }
 
@@ -105,6 +107,8 @@ test('fluxo completo do painel do coach', async ({ page }) => {
   await test.step('semana 1 mostra o tempo estimado do treino 1', async () => {
     await page.getByRole('button', { name: 'Ver semanas' }).click()
     await page.waitForURL(/#\/meso\/.+\/semana\/1/)
+    // A URL muda antes da tela: sem esperar a visão da semana, o editor (que também tem tabelas e "30 min") ainda estava montado.
+    await expect(page.getByRole('button', { name: 'Editar meso' })).toBeVisible()
 
     await expect(page.getByText(/^30 min$/).first()).toBeVisible()
 
