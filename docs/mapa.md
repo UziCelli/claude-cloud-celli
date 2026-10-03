@@ -14,13 +14,14 @@ Comece por aqui para achar onde mexer.
 | Gravação de cargas/reps no Firestore | `src/lib/acoes.ts` + `firestore.rules` |
 | Estrutura de dados (Meso, Registro, tipos) | `src/engine/tipos.ts` + `src/lib/conversores.ts` |
 | Cores, fontes, grid | `marcas/<id>/tema.css` (escalas slate/marca) + `src/index.css` (fontes; Tailwind 4, sem tailwind.config) |
-| Nome, logo, ícones, cores e dados do responsável de uma marca | `marcas/<id>/` (`marca.json`, `tema.css`, `Logo.tsx`, `public/`) |
+| Nome, logo, ícones, cores e dados do responsável de uma marca | `marcas/<id>/` (`marca.json` com `cores`, `tema.css`, `Logo.tsx`, `logoPaths.ts`, `public/`) |
 | Cabeçalhos HTTP, CSP, PWA | `firebase.json` |
 | Importar mesociclo de planilha | `tools/planilha_para_meso.py` + `tools/importar-meso.mjs` + workflow `.github/workflows/importar-meso.yml` |
 | Monitoramento de segurança | `tools/vigia.mjs` + `.github/workflows/vigia.yml` + `tests/vigia.test.ts` |
 | Offline/sync Firebase | `src/lib/firebase.ts` + `firestore.rules` |
 | Roteamento (hash, /aluno/123, etc.) | `src/rota.ts` + `src/App.tsx` |
 | Notificação "Descanso acabou" (push, app fechado) | `src/lib/push.ts` + `public/sw-push.js` + `push/` (Worker Cloudflare) — veja `docs/push.md` |
+| Painel de evolução, conquistas, ranking | `src/lib/evolucao.ts` + `src/features/evolucao/` + `src/features/coach/RankingAlunos.tsx` |
 
 ## Árvore por pasta
 
@@ -41,6 +42,9 @@ Comece por aqui para achar onde mexer.
 - `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada)
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
+- `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `comparacaoToneladas()`, `recordeAnterior()`, `rankingAlunos()`: cálculos do painel de evolução
+- `recorde.ts` — `ehRecorde()`: verifica se uma carga é recorde
+- `evolucao.test.ts`, `recorde.test.ts` — testes desses cálculos
 - `*.test.ts` — testes
 
 ### `push/` — Worker Cloudflare (notificação do descanso)
@@ -56,12 +60,17 @@ Comece por aqui para achar onde mexer.
 ### `src/features/aluno/` — App do aluno
 - `AlunoApp.tsx` — roteador do aluno
 - `Hoje.tsx` — treino de hoje
-- `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro)
+- `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro, festa no recorde)
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
-- `EvolucaoAluno.tsx` — gráficos: reps, força, volume
+- `EvolucaoAluno.tsx` — reexporta o painel de evolução
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor
+
+### `src/features/evolucao/` — Painel de evolução, conquistas, cartão
+- `PainelEvolucao.tsx` — tela única para aluno (`#/evolucao`) e coach (`#/aluno/:uid/evolucao`): números, calendário, maiores evoluções, recordes, conquistas, tabela por exercício
+- `cartaoStory.ts` — imagem Canvas 1080×1920 com logo, primeiro nome e números para compartilhar no Instagram
+- `BotaoCompartilhar.tsx` — botão "Compartilhar no story" (usa `navigator.share` ou download PNG)
 
 ### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
 - `IconeMetodo.tsx` — ícone SVG animado por método
@@ -121,6 +130,7 @@ Comece por aqui para achar onde mexer.
 - `tests/rules.test.ts` — segurança Firestore (emulador)
 - `tests/ataques.test.ts` — teste de ataques (troca de ID, escalada, anônimo, abuso); todo caso deve ser negado
 - `e2e/*.spec.ts` — fluxo aluno/coach (Playwright); `e2e/varredura.spec.ts` abre todas as telas em 1280/390 px (erro, rolagem horizontal, "undefined"/"NaN")
+- `e2e/evolucao.spec.ts`, `e2e/recorde.spec.ts`, `e2e/ranking.spec.ts` — fluxos do painel de evolução, recorde e ranking
 - `e2e/seed.ts` — fixture: usuários, mesos
 
 ### `tools/` — Scripts offline
@@ -159,9 +169,12 @@ Comece por aqui para achar onde mexer.
 | `/alunos` | Alunos | Coach |
 | `/alunos/novo` | NovoAluno | Coach |
 | `/aluno/:uid` | MesosDoAluno | Coach |
+| `/aluno/:uid/evolucao` | EvolucaoCoach (`PainelEvolucao.tsx`) | Coach |
 | `/meso/:id` | EditorMeso | Coach |
 | `/meso/:id/semana/:n` | VisaoSemana | Coach |
+| `/ranking` | RankingAlunos | Coach |
 | `/conta` | MinhaConta | Ambos |
+| `/evolucao` | EvolucaoAluno (`PainelEvolucao.tsx`) | Aluno |
 | (padrão) | AlunoApp | Aluno |
 
 ---
@@ -251,4 +264,5 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | e2e do editor de divisão | `e2e/coach.spec.ts` (`CAMPO`), `TabDivisao.tsx` (`foco`) | Campos de exercício são `input[role="combobox"]`; o select "Copiar de…" (PR #37) também tem papel combobox. O Tab move o foco **depois** do re-render (efeito em 2 passos); o teste deve esperar `toBeFocused()` no campo seguinte antes do próximo `fill`, senão o foco atrasado rouba o foco do campo já preenchido (falha intermitente 1 em 6: "campo seguinte nunca aparece" / lista de sugestões fechada). Evidência: snapshot da falha com o campo ativo no treino 3 enquanto o `fill` era no treino 1. Mesma família: depois de "Ver semanas" a URL muda antes da tela, então o teste espera o botão "Editar meso" (a visão da semana) antes de usar `table`; sem isso a carga ia para um input do editor, que era desmontado ("carga não gravada"). Corrigido em 03/10/2026. | `e2e/coach.spec.ts` |
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |
 | Aluno de exemplo | `tools/aluno-exemplo.mjs`, `aluno-exemplo.yml` | Escreve em **produção**, só no aluno "Victor Aluno"/"Victor C.L. Silva" (falha se não houver exatamente 1). Nunca cria, altera ou apaga registros da **semana 2** (o Victor registra ao vivo); só grava a semana 1, com merge. Em outros mesos da conta só muda `inicio` dos que estiverem em andamento (guarda `inicioOriginal`). | `tests/aluno-exemplo.test.ts` (emulador) |
+| Evolução e recorde | `src/lib/evolucao.ts`, `Treino.tsx` (festa no recorde), `RankingAlunos.tsx` | Tudo calculado no aparelho, sem dado novo nem regra nova; cargas sempre via `docsParaRegistros` (peso do corpo); exercícios casam pelo nome entre mesos; a festa no recorde só lê (não mexe na gravação) e compara o TOTAL gravado; o aluno lê todos os próprios registros na Evolução e no Treino (custo ~100–300 docs/ano por aluno); o ranking lê só os mesos atuais; o Início não ganhou consulta (frequenciaCaindo usa os 14 dias já carregados, meso com < 7 dias não conta); cartão do story só com primeiro nome e números (LGPD), CSP `img-src 'self' data:` (nada de blob: em <img>). | `evolucao.test.ts`, `resumo.test.ts`, `recorde.test.ts`, e2e `evolucao`/`recorde`/`ranking`/`layout` |
 | LGPD / exclusão | `Alunos.tsx` ("Apagar de vez") → `apagarAluno` (`acoes.ts`), `exclusoes/{uid}`, `tools/limpeza-lgpd.mjs` | "Apagar de vez" grava `exclusoes/{uid}` **antes** de apagar; Limpeza LGPD (diária) termina Auth/logs/dados, se apagou alguém faz backup novo e apaga os antigos (backups guardados 30 dias); resumo do workflow nunca expõe nome/e-mail/uid; nunca apagar pedido de coach; quem mudar política troca `VERSAO_PRIVACIDADE`. | `tests/limpeza-lgpd.test.ts` |

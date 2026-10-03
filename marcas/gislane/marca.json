@@ -14,5 +14,16 @@
     "papel": "a responsável (controladora)",
     "cref": "180464-G/SP",
     "contato": "o WhatsApp que você já usa com ela"
+  },
+  "cores": {
+    "s950": "#0e0a09",
+    "s800": "#2c211e",
+    "s300": "#d4b8b0",
+    "m300": "#d4a79c",
+    "m400": "#ea4a50",
+    "m500": "#e21e27",
+    "m600": "#b81a22",
+    "m700": "#5a2a24",
+    "m900": "#1a0f0d"
   }
 }

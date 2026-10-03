@@ -14,5 +14,16 @@
     "papel": "o responsável (controlador)",
     "cref": "177235-G/SP",
     "contato": "o WhatsApp que você já usa com ele"
+  },
+  "cores": {
+    "s950": "#0a1424",
+    "s800": "#1e2c46",
+    "s300": "#c3cee0",
+    "m300": "#7faedd",
+    "m400": "#5c93cc",
+    "m500": "#3f72a6",
+    "m600": "#2c5c8f",
+    "m700": "#0f2a52",
+    "m900": "#0b1e3d"
   }
 }

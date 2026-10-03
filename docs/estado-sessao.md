@@ -49,6 +49,12 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 ## 03/10/2026
 
 - **Cadastro próprio:** continua aberto (decisão do Victor, risco controlado com alertas).
+- **PR #41 "Painel de Evolução"** (juntada):
+  - Painel do aluno: números (treinos, semanas seguidas, toneladas), calendário 12 semanas, maiores evoluções, recordes, conquistas, tabela por exercício.
+  - Cartão do story (Instagram): imagem Canvas 1080×1920 com logo, primeiro nome e números.
+  - "Novo recorde! 🎉" no treino + vibração (leitura, não mexe na gravação).
+  - Coach: botão "Evolução" em cada aluno, página `/ranking` (Mais evoluíram / Mais frequentes / Em risco), cartão "Frequência caindo" no Início.
+  - Plano completo em `docs/plano-evolucao.md`.
 - **Vigia de segurança + Dependabot:** PR a abrir (Victor autorizou juntar direto). Workflow roda a cada 6h e abre Issues com @UziCelli sem repetir. Alertas com contagens apenas, limites em `tools/vigia.mjs`, falha do vigia também alerta. Documentação em `docs/seguranca.md` seção "## 6. Monitoramento".
 - **PR #37 "Coach mais rápido"** (juntado com autorização do Victor):
   - Prescrição rápida: Tab ou Enter (com texto/sugestão) confirma e vai ao próximo exercício; Enter no campo vazio vai ao próximo treino.
@@ -73,12 +79,14 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Pendências antigas achadas nas PRs: conferir login, "Esqueci minha senha" e o app no iPhone/Android (#13); rodar "Aluno de exemplo" para acertar a semana 1 (#33).
 - Aprovados pelo Victor: ícone "G", nome "Gislane" embaixo do ícone e botão "perigo" em vinho escuro.
 - Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP.
+- PR #42 recebeu a `main` com o Painel de Evolução (#41): o cartão do story agora lê logo (`@marca/logoPaths`), cores (`marca.json` → `cores`, conferidas contra o `tema.css` por teste) e nome da marca. Toda tela ou imagem nova deve ler a marca assim, nunca ter VFIT fixo.
 - **Falta do Victor:** comprar o domínio na Squarespace (por enquanto só local). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
   - avaliação física (Fase 3): dados de saúde, com acesso só do coach e do próprio aluno, e auditoria das regras;
   - cartão no app (Apple Pay, Google Pay, Samsung Pay…): o app nunca guarda nem vê dados de cartão, tudo via gateway com tokenização (PCI); precisa de servidor (Worker da Cloudflare, já que o Spark não tem Functions).
+  - **Relatórios escritos de evolução** quando chegar a avaliação física (Fase 3).
 - Senha provisória pelo WhatsApp em vez do e-mail do Firebase (o nome "forca--app" aparece nos e-mails).
 - Botão "ver vídeo" em cada exercício, quando o Victor gravar os vídeos.
 - App da Gislane (`docs/plano-app-gislane.md`):
