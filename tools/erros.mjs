@@ -3,7 +3,16 @@ import { appendFileSync } from 'node:fs'
 import { initializeApp, applicationDefault } from 'firebase-admin/app'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 
-initializeApp({ credential: applicationDefault(), projectId: 'forca--app' })
+// Projeto SEMPRE explícito (env PROJETO): nunca vem do JSON da credencial nem de padrão. Sem ele, sai.
+const PROJETOS = { 'forca--app': 'vfit', 'gislane-personal-trainer': 'gislane' }
+const emulador = !!process.env.FIRESTORE_EMULATOR_HOST
+const projeto = process.env.PROJETO?.trim()
+if (!projeto || !(projeto in PROJETOS || (emulador && projeto.startsWith('demo-')))) {
+  console.error(`Informe PROJETO: ${Object.keys(PROJETOS).join(' ou ')} (recebido: ${projeto || 'nada'}).`)
+  process.exit(1)
+}
+const marca = PROJETOS[projeto] ?? projeto
+initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: projeto })
 const db = getFirestore()
 
 const snap = await db.collection('logs').orderBy('em', 'desc').limit(100).get()
@@ -27,6 +36,6 @@ for (;;) {
   apagados += velhos.size
 }
 
-const saida = `## Erros do app (${snap.size} mais recentes)\n\n${snap.size ? linhas.join('\n') : 'Nenhum erro registrado.'}\n\nApagados (mais de 30 dias): ${apagados}\n`
+const saida = `## Erros do app ${marca} (${snap.size} mais recentes)\n\n${snap.size ? linhas.join('\n') : 'Nenhum erro registrado.'}\n\nApagados (mais de 30 dias): ${apagados}\n`
 console.log(saida)
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, saida)

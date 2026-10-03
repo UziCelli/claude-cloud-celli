@@ -3,30 +3,65 @@ name: Limpeza LGPD
 # Todo dia: atende os pedidos de "Apagar de vez" (coleção exclusoes) apagando o que o app não alcança
 # (registros, mesos, notas, perfil, logs e o login). Se apagou alguém, faz um backup novo e remove
 # TODOS os backups antigos (eles ainda guardariam os dados da pessoa). O resumo só tem contagens.
+# Roda para as duas marcas, cada uma só no PRÓPRIO projeto (Auth, Firestore e backups da mesma marca).
+# Backups: vfit = backup-firestore-*; gislane = backup-gislane-firestore-* (um prefixo nunca casa com o outro).
 on:
   schedule:
     - cron: '17 6 * * *'
   workflow_dispatch:
+    inputs:
+      marca:
+        description: Marca (projeto Firebase); o agendado roda as duas
+        type: choice
+        default: vfit
+        options:
+          - vfit
+          - gislane
 
 permissions:
   contents: read
   actions: write
 
-concurrency:
-  group: firestore-backup
-
 jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    outputs:
+      matriz: ${{ steps.m.outputs.matriz }}
+    steps:
+      # Agendado: as duas marcas. Manual: só a escolhida. Marca desconhecida = erro.
+      - id: m
+        env:
+          EVENTO: ${{ github.event_name }}
+          MARCA: ${{ inputs.marca }}
+        run: |
+          V='{"marca":"vfit","projeto":"forca--app"}'
+          G='{"marca":"gislane","projeto":"gislane-personal-trainer"}'
+          if [ "$EVENTO" != workflow_dispatch ]; then M="$V,$G"
+          elif [ "$MARCA" = vfit ]; then M="$V"
+          elif [ "$MARCA" = gislane ]; then M="$G"
+          else echo "Marca inválida: '$MARCA'"; exit 1; fi
+          echo "matriz={\"include\":[$M]}" >> "$GITHUB_OUTPUT"
+
   limpeza:
     runs-on: ubuntu-latest
+    needs: preparar
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preparar.outputs.matriz) }}
+    concurrency:
+      group: firestore-backup-${{ matrix.marca }}
+    env:
+      PREFIXO: ${{ matrix.marca == 'vfit' && 'backup-firestore' || format('backup-{0}-firestore', matrix.marca) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apagar pedidos
+      - name: Apagar pedidos (${{ matrix.marca }})
         id: limpeza
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJETO: ${{ matrix.projeto }}
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           mkdir -p "$RUNNER_TEMP/adm" && cp tools/limpeza-lgpd.mjs tools/backup.mjs "$RUNNER_TEMP/adm/"
@@ -46,17 +81,17 @@ jobs:
         id: up
         uses: actions/upload-artifact@v4
         with:
-          name: backup-firestore-${{ steps.data.outputs.d }}-lgpd
+          name: ${{ env.PREFIXO }}-${{ steps.data.outputs.d }}-lgpd
           path: backup.json
           retention-days: 30
-      - name: Apagar backups antigos
+      - name: Apagar backups antigos (${{ matrix.marca }})
         if: steps.limpeza.outputs.apagados != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           NOVO: ${{ steps.up.outputs.artifact-id }}
         run: |
           gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
-            --jq '.artifacts[] | select((.name | startswith("backup-firestore-")) and (.expired | not)) | .id' |
+            --jq ".artifacts[] | select((.name | startswith(\"${PREFIXO}-\")) and (.expired | not)) | .id" |
           while read -r id; do
             [ "$id" = "$NOVO" ] && continue
             gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" > /dev/null
