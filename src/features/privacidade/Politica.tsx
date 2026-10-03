@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import Logo from '../../Logo'
+import Logo from '@marca/Logo'
 import { Cartao } from '../../ui'
+import marca from '@marca/marca.json'
 
 // Caixa obrigatória do cadastro e da tela de aceite (mesmo texto nos dois).
 export function CaixaAceite({ marcada, onChange }: { marcada: boolean; onChange: (v: boolean) => void }) {
@@ -30,14 +31,14 @@ export default function Politica() {
   return (
     <main className="mx-auto max-w-md space-y-4 px-4 pb-8 pt-[calc(2rem+env(safe-area-inset-top))]">
       <h1 className="flex flex-col items-center gap-3 text-center text-2xl font-bold">
-        <Logo className="h-10 text-white" faixa="#3F72A6" />
+        <Logo className="h-10 text-white" />
         Política de Privacidade
       </h1>
       <p className="text-center text-xs text-slate-500">Versão vigente: 02/10/2026</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
-          Victor Celli, personal trainer (CREF 177235-G/SP), é o responsável (controlador) pelos dados do app VFITCOACH. Contato: o
-          WhatsApp que você já usa com ele.
+          {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
+          {marca.responsavel.contato}.
         </p>
       </Secao>
       <Secao n={2} titulo="Dados que usamos">
@@ -86,7 +87,7 @@ export default function Politica() {
       <Secao n={7} titulo="Seus direitos (LGPD art. 18)">
         <p>
           Confirmar se usamos seus dados, ver e receber uma cópia, corrigir, pedir a exclusão, revogar o consentimento (o que encerra o uso
-          do app) e tirar dúvidas. Basta pedir ao Victor pelo WhatsApp. Respondemos em até 15 dias.
+          do app) e tirar dúvidas. Basta pedir {marca.responsavel.pedirA} pelo WhatsApp. Respondemos em até 15 dias.
         </p>
       </Secao>
       <Secao n={8} titulo="Segurança">

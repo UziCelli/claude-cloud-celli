@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import Logo from '../../Logo'
+import Logo from '@marca/Logo'
 import { Botao, Cartao, Centro } from '../../ui'
+import marca from '@marca/marca.json'
 
 type EventoInstalar = Event & { prompt: () => Promise<void> }
 
@@ -45,7 +46,7 @@ export default function Instalar() {
       <Centro>
         <h1 className="text-2xl font-bold">O app já está instalado ✓</h1>
         <Botao tipo="primario" className="w-full" onClick={() => (location.href = '/')}>
-          Abrir o VFITCOACH
+          Abrir o {marca.nome}
         </Botao>
       </Centro>
     )
@@ -54,7 +55,7 @@ export default function Instalar() {
   return (
     <main className="mx-auto max-w-md space-y-4 px-4 pb-8 pt-[calc(2rem+env(safe-area-inset-top))]">
       <h1 className="flex flex-col items-center gap-3 text-center text-2xl font-bold">
-        <Logo className="h-10 text-white" faixa="#3F72A6" />
+        <Logo className="h-10 text-white" />
         Instalar o app
       </h1>
 
@@ -79,7 +80,7 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
         <ol className="space-y-3 text-sm">
           <Passo n={1}>Abra o arquivo <strong>forca.apk</strong> que seu coach enviou no WhatsApp.</Passo>
           <Passo n={2}>Se o celular pedir, permita "instalar apps desconhecidos" para o app que abriu o arquivo (WhatsApp ou Arquivos).</Passo>
-          <Passo n={3}>Toque em <strong>Instalar</strong> e depois abra o <strong>VFITCOACH</strong>.</Passo>
+          <Passo n={3}>Toque em <strong>Instalar</strong> e depois abra o <strong>{marca.nome}</strong>.</Passo>
           <Passo n={4}>Entre com seu e-mail e senha.</Passo>
         </ol>
         <p className="mt-3 text-xs text-slate-500">Não recebeu o arquivo? Peça ao seu coach.</p>
@@ -124,7 +125,7 @@ function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => vo
             Role a lista para baixo e toque em "Adicionar à Tela de Início". Não apareceu? Toque em "Ver mais" ou "Editar ações" e procure lá.
           </Passo>
           <Passo n={3}>Toque em "Adicionar"</Passo>
-          <Passo n={4}>Sempre abra o VFITCOACH pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
+          <Passo n={4}>Sempre abra o {marca.nome} pela tela inicial — assim seus treinos ficam guardados no celular</Passo>
         </ol>
         <p className="mt-3 text-xs text-slate-500">Precisa do iOS 16.4 ou mais novo.</p>
       </Cartao>
@@ -136,7 +137,7 @@ function PassosDesktop() {
   return (
     <Cartao className="space-y-3 text-center">
       <p className="text-sm">Abra este link no celular para instalar o app:</p>
-      <p className="break-all text-lg font-bold text-marca-300">app.vfitcoachapp.com/instalar</p>
+      <p className="break-all text-lg font-bold text-marca-300">{marca.dominio}/instalar</p>
     </Cartao>
   )
 }

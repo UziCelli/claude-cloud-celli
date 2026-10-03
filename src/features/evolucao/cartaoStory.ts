@@ -1,4 +1,5 @@
-import { LOGO_COACH, LOGO_VFIT, LOGO_VIEWBOX } from '../../logoPaths'
+import marca from '@marca/marca.json'
+import { LOGO_PARTES, LOGO_VIEWBOX } from '@marca/logoPaths'
 
 // Cartão 1080×1920 para o story do Instagram. Só estes dados entram na imagem (LGPD: sem e-mail, sem sobrenome).
 export type DadosCartao = {
@@ -29,12 +30,13 @@ export function textosCartao(d: DadosCartao) {
           pct: `${d.destaque.pct > 0 ? '+' : ''}${Math.round(d.destaque.pct).toLocaleString('pt-BR')}%`,
         }
       : undefined,
-    rodape: 'VFITCOACH',
+    rodape: marca.nome.toUpperCase(),
   }
 }
 
-// Cores do @theme (src/index.css).
-const C = { s950: '#0a1424', s800: '#1e2c46', s300: '#c3cee0', m300: '#7faedd', m400: '#5c93cc', m500: '#3f72a6', m700: '#0f2a52', m900: '#0b1e3d' }
+// Cores da marca (marcas/<id>/marca.json, iguais às do tema.css).
+const C = marca.cores
+const rgba = (hex: string, a: number) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',')},${a})`
 const W = 1080
 const H = 1920
 
@@ -64,8 +66,8 @@ function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
   ctx.fillRect(0, 0, W, H)
   for (const [x, y, r, a] of [[1000, 260, 520, 0.22], [60, 1500, 600, 0.16]] as const) {
     const rg = ctx.createRadialGradient(x, y, 0, x, y, r)
-    rg.addColorStop(0, `rgba(92,147,204,${a})`)
-    rg.addColorStop(1, 'rgba(92,147,204,0)')
+    rg.addColorStop(0, rgba(C.m400, a))
+    rg.addColorStop(1, rgba(C.m400, 0))
     ctx.fillStyle = rg
     ctx.fillRect(0, 0, W, H)
   }
@@ -76,10 +78,10 @@ function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
   ctx.save()
   ctx.translate((W - lw) / 2, 130)
   ctx.scale(k, k)
-  ctx.fillStyle = '#fff'
-  ctx.fill(new Path2D(LOGO_VFIT), 'evenodd')
-  ctx.fillStyle = C.m400
-  ctx.fill(new Path2D(LOGO_COACH), 'evenodd')
+  for (const p of LOGO_PARTES) {
+    ctx.fillStyle = p.cor
+    ctx.fill(new Path2D(p.d), 'evenodd')
+  }
   ctx.restore()
 
   // Título e nome
@@ -101,10 +103,10 @@ function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
   const alt = 245
   t.numeros.forEach((n, i) => {
     const y = y0 + i * (alt + 28)
-    ctx.fillStyle = 'rgba(30,44,70,0.72)'
+    ctx.fillStyle = rgba(C.s800, 0.72)
     caixa(ctx, 70, y, W - 140, alt, 40)
     ctx.fill()
-    ctx.strokeStyle = 'rgba(127,174,221,0.25)'
+    ctx.strokeStyle = rgba(C.m300, 0.25)
     ctx.lineWidth = 3
     ctx.stroke()
     ctx.fillStyle = '#fff'
@@ -120,7 +122,7 @@ function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
     const y = y0 + 3 * (alt + 28) + 10
     const gd = ctx.createLinearGradient(70, y, W - 70, y + 230)
     gd.addColorStop(0, C.m500)
-    gd.addColorStop(1, '#2c5c8f')
+    gd.addColorStop(1, C.m600)
     ctx.fillStyle = gd
     caixa(ctx, 70, y, W - 140, 230, 40)
     ctx.fill()

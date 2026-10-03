@@ -74,8 +74,8 @@ jobs:
             FINGERPRINT=$(keytool -list -v -keystore forca.keystore -alias forca -storepass "$APK_SENHA" \
               | grep 'SHA256:' | sed 's/.*SHA256: //')
 
-            mkdir -p ../public/.well-known
-            cat > ../public/.well-known/assetlinks.json <<EOF
+            mkdir -p ../marcas/vfit/public/.well-known
+            cat > ../marcas/vfit/public/.well-known/assetlinks.json <<EOF
           [{
             "relation": ["delegate_permission/common.handle_all_urls"],
             "target": {
@@ -89,7 +89,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             # Estamos dentro de twa/: caminhos relativos à raiz via -C ..
-            git -C .. add twa/forca.keystore.enc public/.well-known/assetlinks.json
+            git -C .. add twa/forca.keystore.enc marcas/vfit/public/.well-known/assetlinks.json
             git commit -m "Gerar keystore de assinatura do APK e assetlinks.json"
             git push origin HEAD:main
           fi

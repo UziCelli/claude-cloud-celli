@@ -13,7 +13,8 @@ Comece por aqui para achar onde mexer.
 | Cálculo de reps, séries, dropset, tempo | `src/engine/sessao.ts` + `src/engine/metricas.ts` |
 | Gravação de cargas/reps no Firestore | `src/lib/acoes.ts` + `firestore.rules` |
 | Estrutura de dados (Meso, Registro, tipos) | `src/engine/tipos.ts` + `src/lib/conversores.ts` |
-| Cores, fontes, grid | `src/index.css` (`@theme`: escalas slate/marca e fontes; Tailwind 4, sem tailwind.config) |
+| Cores, fontes, grid | `marcas/<id>/tema.css` (escalas slate/marca) + `src/index.css` (fontes; Tailwind 4, sem tailwind.config) |
+| Nome, logo, ícones, cores e dados do responsável de uma marca | `marcas/<id>/` (`marca.json` com `cores`, `tema.css`, `Logo.tsx`, `logoPaths.ts`, `public/`) |
 | Cabeçalhos HTTP, CSP, PWA | `firebase.json` |
 | Importar mesociclo de planilha | `tools/planilha_para_meso.py` + `tools/importar-meso.mjs` + workflow `.github/workflows/importar-meso.yml` |
 | Monitoramento de segurança | `tools/vigia.mjs` + `.github/workflows/vigia.yml` + `tests/vigia.test.ts` |
@@ -101,7 +102,15 @@ Comece por aqui para achar onde mexer.
 - `Instalar.tsx` — página de instalação
 - `AvisoIOS.tsx` — instrução iOS
 
-### `public/`
+### `marcas/<id>/` — uma pasta por marca (`vfit`, `gislane`)
+- `marca.json` — nome, título, nome curto, cores do manifest, domínio e dados do responsável (Política). Os textos do app leem daqui (`import marca from '@marca/marca.json'`).
+- `tema.css` — `@theme` com as escalas `slate` e `marca`; `Logo.tsx` — logo; `public/` — ícones, favicon, `icon.svg`, `.well-known/assetlinks.json`.
+- A marca vem do `--mode` do Vite: existe `marcas/<mode>` → essa marca; senão `vfit`. `@marca` aponta para a pasta (no `tsc` sempre `vfit`).
+- `public/` da marca é mesclada com `public/` por um plugin em `vite.config.ts` (dev serve, build emite antes do SW, então entra no precache).
+- Gislane local: `npm run emuladores` + `npm run dev:gislane` (sem `.env.production` cai no emulador). Build: `npm run build:gislane`. Ícones: `npm run icones:gislane`. e2e: `MARCA=gislane npm run test:e2e`.
+- `A CONFIRMAR` em `marcas/gislane/marca.json`: nome completo, CREF, endereço (domínio).
+
+### `public/` (comum às marcas)
 - `sw-push.js` — trata o push e o clique na notificação (importado pelo service worker via `workbox.importScripts`)
 
 ### `src/` — Raiz
@@ -111,8 +120,8 @@ Comece por aqui para achar onde mexer.
 - `ui.tsx` — componentes comuns: `Botao`, `Centro`, `Tab`, etc.
 - `motionFeatures.ts` — recursos da biblioteca Motion carregados sob demanda; animações e componentes `Tela`, `Painel`, `Barra`, `cascata`/`item` ficam em `src/ui.tsx`
 - `ui.tsx` também tem `Abertura` (carregando), `Msg` (mensagem que aparece/some), `Deslizar` (troca de semana), `Contar`; toque/hover de botões, links, selects e checkboxes vêm do `index.css`
-- `index.css` — Tailwind, cores marca, fontes
-- `Logo.tsx` — marca VFITCOACH
+- `index.css` — Tailwind, fontes (as cores vêm de `marcas/<id>/tema.css`)
+- Logo: `marcas/<id>/Logo.tsx` (`import Logo from '@marca/Logo'`)
 
 ### `src/data/` — Dados estáticos
 - `exercicios.json` — catálogo de exercícios
@@ -212,7 +221,8 @@ Comece por aqui para achar onde mexer.
 | `npm run test:rules` | vitest + emulador Firestore: firestore.rules |
 | `npm run test:e2e` | playwright: fluxos aluno/coach |
 | `npm run emuladores` | inicia emulador Firebase (auth, Firestore) |
-| `npm run icones` | gera favicons/app icons |
+| `npm run icones` | gera favicons/app icons da VFIT (`icones:gislane` = da Gislane) |
+| `npm run dev:gislane` / `build:gislane` | app da Gislane (emulador local; o projeto Firebase dela vem depois) |
 
 | Workflow | Trigger | O que faz |
 |----------|---------|----------|
@@ -250,6 +260,8 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Anotações do aluno | `firestore.rules` (`notas`), `acoes.ts` | Até 300 exercícios por documento; a interface corta cada texto em 300 caracteres. As regras do Firestore não conseguem limitar o tamanho dos **valores** de um mapa: um aluno logado pode gravar até 1 MiB só no próprio documento. Risco aceito (afeta só o documento dele). | `tests/rules.test.ts` (notas) |
 | Alertas de segurança | `tools/vigia.mjs` | Alertas com **contagens** apenas (nunca nome, e-mail ou uid). Limites em topo de `vigia.mjs`: cadastros/24h (10), aguardando aprovação (20), erros/24h (100), acessos negados/24h (20), logs total (5000), limpeza LGPD atrasada (2 dias). A cada 6h o workflow abre Issues com @UziCelli sem repetir se houver aberta. Falha do vigia também abre Issue. Override de `@grpc/grpc-js` em `package.json` é falso positivo de `npm audit` (roda só no Node). | `tests/vigia.test.ts` |
 | Peso do corpo automático | `src/lib/pesoCorporal.ts` (`corpoEhCarga`, `rebasear`, `preencherCorpo`), `conversores.ts` (`normalizarCargas`), `Treino.tsx`, `SessaoCard.tsx` | **Detalhes, formatos antigos e como verificar: `docs/peso-corporal.md`.** Toda leitura de cargas passa por `docsParaRegistros(docs, meso)` (normaliza dado de versão antiga; nunca use `docParaCargas` cru em tela/cálculo). Barra fixa, flexão de braços, abdominal no solo sem carga e agachamento com peso do corpo já vêm com "Somar meu peso corporal" marcado. Só vale para slot **sem carga** e **sem `pc.<slot>` explícito**; ao gravar a 1ª carga, o `pc` é gravado junto, então histórico e métricas antigas não mudam. Sem `pesoKg` no perfil não há automático (fica a opção manual com aviso). **Convenção: `cargas.<slot>.s<n>` guarda o TOTAL (extra + `pc`)**; a tela mostra `total - corpo`. Ao marcar/desmarcar/trocar o `pc` (A para B), `rebasear` regrava campo a campo cada carga já preenchida como `c - A + B`; carga menor que A (gravada sem o corpo, dado antigo) fica como está, para nenhuma carga se perder. Ao "Concluir treino", `preencherCorpo` grava `pc` (se faltar) e `carga = corpo` nas séries prescritas **vazias** (nunca sobrescreve; drop fica de fora); `estadoCorpo` (Treino.tsx) é a regra única de `corpo`/`auto`. O coach vê "Inclui peso do corpo: X kg" no card. `tools/aluno-exemplo.mjs` também grava extra + pc. | `pesoCorporal.test.ts`, `conversores.test.ts`, `treino.test.ts`, `tests/aluno-exemplo.test.ts`, e2e `peso-corpo.spec.ts` |
+| Marcas | `vite.config.ts`, `marcas/`, `playwright.config.ts` | Build/dev **sem `--mode` = vfit** (o que vai para produção). Nunca publicar o build de uma marca no projeto Firebase da outra. Texto de identidade (nome, CREF, domínio) vem de `marca.json`, nunca fixo no código. | `npm run build` igual ao anterior (dist idêntico exceto hashes), e2e `MARCA=gislane` |
+| e2e do editor de divisão | `e2e/coach.spec.ts` (`CAMPO`), `TabDivisao.tsx` (`foco`) | Campos de exercício são `input[role="combobox"]`; o select "Copiar de…" (PR #37) também tem papel combobox. O Tab move o foco **depois** do re-render (efeito em 2 passos); o teste deve esperar `toBeFocused()` no campo seguinte antes do próximo `fill`, senão o foco atrasado rouba o foco do campo já preenchido (falha intermitente 1 em 6: "campo seguinte nunca aparece" / lista de sugestões fechada). Evidência: snapshot da falha com o campo ativo no treino 3 enquanto o `fill` era no treino 1. Mesma família: depois de "Ver semanas" a URL muda antes da tela, então o teste espera o botão "Editar meso" (a visão da semana) antes de usar `table`; sem isso a carga ia para um input do editor, que era desmontado ("carga não gravada"). Corrigido em 03/10/2026. | `e2e/coach.spec.ts` |
 | Volume de logs | `firestore.rules` (`logs`), `log.ts` | O limite de 20 por dia é do cliente; uma conta logada pode criar mais (documentos de até ~1 KB). Risco baixo, aceito. | — |
 | Aluno de exemplo | `tools/aluno-exemplo.mjs`, `aluno-exemplo.yml` | Escreve em **produção**, só no aluno "Victor Aluno"/"Victor C.L. Silva" (falha se não houver exatamente 1). Nunca cria, altera ou apaga registros da **semana 2** (o Victor registra ao vivo); só grava a semana 1, com merge. Em outros mesos da conta só muda `inicio` dos que estiverem em andamento (guarda `inicioOriginal`). | `tests/aluno-exemplo.test.ts` (emulador) |
 | Evolução e recorde | `src/lib/evolucao.ts`, `Treino.tsx` (festa no recorde), `RankingAlunos.tsx` | Tudo calculado no aparelho, sem dado novo nem regra nova; cargas sempre via `docsParaRegistros` (peso do corpo); exercícios casam pelo nome entre mesos; a festa no recorde só lê (não mexe na gravação) e compara o TOTAL gravado; o aluno lê todos os próprios registros na Evolução e no Treino (custo ~100–300 docs/ano por aluno); o ranking lê só os mesos atuais; o Início não ganhou consulta (frequenciaCaindo usa os 14 dias já carregados, meso com < 7 dias não conta); cartão do story só com primeiro nome e números (LGPD), CSP `img-src 'self' data:` (nada de blob: em <img>). | `evolucao.test.ts`, `resumo.test.ts`, `recorde.test.ts`, e2e `evolucao`/`recorde`/`ranking`/`layout` |

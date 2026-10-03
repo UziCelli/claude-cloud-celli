@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// MARCA=gislane roda o e2e no app da Gislane (mesmo código, outro --mode).
+const marca = process.env.MARCA && process.env.MARCA !== 'vfit' ? ` --mode ${process.env.MARCA}` : ''
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
@@ -23,7 +26,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx vite build && npx vite preview --host 127.0.0.1 --port 5173 --strictPort',
+    command: `npx vite build${marca} && npx vite preview --host 127.0.0.1 --port 5173 --strictPort`,
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
     env: { VITE_USE_EMULATOR: '1' },

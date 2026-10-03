@@ -1,0 +1,29 @@
+{
+  "id": "gislane",
+  "nome": "Gislane",
+  "titulo": "Gislane — Treino",
+  "doNome": "da Gislane",
+  "nomeCurto": "Gislane",
+  "themeColor": "#1A0F0D",
+  "backgroundColor": "#0E0A09",
+  "iconeFundo": "#1A0F0D",
+  "dominio": "A CONFIRMAR (endereço do app)",
+  "responsavel": {
+    "nome": "Gislane dos Santos Madeira",
+    "pedirA": "à Gislane",
+    "papel": "a responsável (controladora)",
+    "cref": "180464-G/SP",
+    "contato": "o WhatsApp que você já usa com ela"
+  },
+  "cores": {
+    "s950": "#0e0a09",
+    "s800": "#2c211e",
+    "s300": "#d4b8b0",
+    "m300": "#d4a79c",
+    "m400": "#ea4a50",
+    "m500": "#e21e27",
+    "m600": "#b81a22",
+    "m700": "#5a2a24",
+    "m900": "#1a0f0d"
+  }
+}

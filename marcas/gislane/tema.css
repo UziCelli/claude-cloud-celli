@@ -1,0 +1,25 @@
+/* Cores da marca Gislane (preto quente + vermelho). Paleta em docs/plano-app-gislane.md. */
+@theme {
+  --color-slate-950: #0e0a09;
+  --color-slate-900: #1a1311;
+  --color-slate-800: #2c211e;
+  --color-slate-700: #3d2e2a;
+  --color-slate-600: #54423c;
+  --color-slate-500: #937d76; /* 4,7:1 sobre slate-900 */
+  --color-slate-400: #b89a92;
+  --color-slate-300: #d4b8b0;
+  --color-slate-200: #e8d7d2;
+  --color-slate-100: #f6eeeb;
+  --color-slate-50: #fbf7f5;
+
+  --color-marca-300: #d4a79c;
+  --color-marca-400: #ea4a50;
+  --color-marca-500: #e21e27;
+  --color-marca-600: #b81a22;
+  --color-marca-700: #5a2a24;
+  --color-marca-900: #1a0f0d;
+
+  /* Botão "perigo" (e fundo do aviso de tempo) em vinho escuro, aprovado pelo Victor: não confunde com o vermelho da marca. */
+  --color-red-600: #7a1f2b;
+  --color-red-500: #94263a;
+}

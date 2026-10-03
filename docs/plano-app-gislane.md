@@ -40,7 +40,7 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
 
 ## Checklist antes de começar (Victor/Gislane)
 - [x] **Nome:** **Gislane** (confirmado pelo Victor; "Gislaine" era erro de transcrição).
-- [ ] **Nome do app** embaixo do ícone (curto, até 12 letras).
+- [x] **Nome do app** embaixo do ícone: **Gislane** (aprovado pelo Victor em 03/10/2026).
 - [x] **Logo:** já vetorizado em `docs/marca/gislane-logo.svg` (vermelho `#E21E27`, feito a partir do PNG oficial em fonte Gatwick).
 - [ ] **Cores e fontes** (paleta da prévia, a confirmar com o Victor: fundo preto quente, botões vermelho `#E21E27`, destaques rosé `#D4A79C`; escalas usadas na prévia: slate 950 `#0e0a09` · 900 `#1a1311` · 800 `#2c211e` · 700 `#3d2e2a` · 600 `#54423c` · 500 `#85706a` · 400 `#b89a92` · 300 `#d4b8b0` · 200 `#e8d7d2` · 100 `#f6eeeb`; marca 300 `#d4a79c` · 400 `#ea4a50` · 500 `#e21e27` · 600 `#b81a22` · 700 `#5a2a24` · 900 `#1a0f0d`): estão no Canva, no kit de marca "Gislane Personal Trainer". O Claude lê pelas miniaturas dos designs ("Cópia de Portfólio Gislane", "Proposta Comercial - Gislane") e pede confirmação.
 - [ ] **Endereço** escolhido (tabela acima). Se for domínio próprio, já comprado.
@@ -48,6 +48,37 @@ Trocar o endereço depois obriga cada aluno a reinstalar o app. Opções:
   1. Criar o projeto (ex.: `gislane-app`) e ativar Authentication (e-mail/senha) e Firestore em `southamerica-east1`.
   2. Registrar o app Web e colar aqui o `firebaseConfig`, que é público.
   3. Em IAM → Conceder acesso, dar à conta de serviço do GitHub (a mesma do `FIREBASE_SERVICE_ACCOUNT`) o papel **Administrador do Firebase** no projeto novo. Assim não precisa de secret novo.
+
+## Andamento
+- [x] **Fase A** (marca configurável): `marcas/<id>/`, alias `@marca`, `--mode`, scripts `dev:gislane`/`build:gislane`/`icones:gislane`, e2e com `MARCA=gislane`. Build vfit igual ao anterior.
+- [x] **Fase B** (identidade): paleta aprovada em `marcas/gislane/tema.css`, logo, ícone (o "G" em fundo #1a0f0d) e PNGs gerados. Fontes: Inter/Montserrat por enquanto.
+- [x] `apk.yml` (VFIT) já grava o `assetlinks.json` em `marcas/vfit/public/.well-known/`. `slate-500` da Gislane clareado para 4,7:1.
+- [x] Ícone (o "G" vermelho) e nome "Gislane" aprovados pelo Victor (03/10/2026).
+- [x] Botão "perigo" em vinho escuro (`red-600`/`red-500` sobrescritos só em `marcas/gislane/tema.css`), aprovado pelo Victor.
+- [x] Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP (`responsavel.papel` acerta "a responsável").
+- [ ] Pendência do Victor: domínio (comprar na Squarespace; por enquanto só local). Depois seguir o passo a passo abaixo.
+
+## Fase C — passo a passo do Victor (depois de comprar o domínio na Squarespace)
+Recomendado: o app em `app.<domínio>` (como `app.vfitcoachapp.com`); o domínio principal fica livre para um site dela.
+
+**1. Projeto Firebase novo** (console.firebase.google.com, mesma conta Google)
+1. "Adicionar projeto" → nome `gislane-app` → pode desligar o Google Analytics.
+2. Authentication → Começar → ativar **E-mail/senha**.
+3. Firestore Database → Criar banco → modo produção → local **southamerica-east1 (São Paulo)**.
+4. Configurações do projeto (engrenagem) → "Seus apps" → ícone **Web `</>`** → apelido "Gislane" → **não** marcar Hosting aqui → copiar o bloco `firebaseConfig` e mandar para o Claude (é público, pode colar no chat).
+5. console.cloud.google.com → projeto `gislane-app` → IAM → **Conceder acesso** → colar o e-mail da conta de serviço que o GitHub já usa no projeto da VFIT (aparece no IAM do `forca--app` e termina em `iam.gserviceaccount.com`; se houver mais de uma, pergunte ao Claude qual é) → papel **Administrador do Firebase** → Salvar.
+6. Avisar o Claude: ele faz a Fase C no código e publica a primeira versão (endereço provisório `gislane-app.web.app`).
+
+**2. Ligar o domínio** (só depois da 1ª publicação)
+1. Firebase do `gislane-app` → Hosting → **Adicionar domínio personalizado** → digitar `app.<domínio>` → Continuar.
+2. O Firebase mostra 1 a 3 registros (tipo **TXT**, **A** ou **CNAME**). Deixe essa aba aberta.
+3. Em outra aba: account.squarespace.com/domains → clicar no domínio → **DNS** → **DNS Settings**.
+4. Em **Custom Records** → **Add record**, crie cada registro **exatamente** como o Firebase mostrou: Host = `app` (o que vem antes do domínio), Type = o tipo, Data = o valor. Salvar.
+5. Não apague os registros de e-mail (MX), se houver. Se o domínio principal não for usar site da Squarespace, os "Squarespace Defaults" podem ficar como estão: eles não atrapalham o `app.`.
+6. Volte ao Firebase → **Verificar**. Pode levar de minutos até 24 h; o certificado (cadeado) vem sozinho depois.
+7. Authentication → Configurações → **Domínios autorizados** → Adicionar domínio → `app.<domínio>`.
+8. Avisar o Claude o endereço final: ele troca o `dominio` no `marca.json`, publica de novo e segue para a Fase D (APK) e a Fase E (conta de coach da Gislane, 2 etapas e e-mails com a marca dela).
+- [ ] Fases C e D: `twa/`, workflows de deploy/APK por marca, `firebase.json`, `.firebaserc`, `push/` (o Worker do descanso só aceita o projeto da VFIT; a Gislane precisa do dela, e sem `VITE_PUSH_URL` o push fica desligado). Antes de publicar, travar o build da Gislane se ainda houver "A CONFIRMAR" ou se faltar a chave do Firebase (sem chave o app cai no emulador).
 
 ## Passos técnicos (para o Claude)
 Siga o CLAUDE.md: Superpowers + Ponytail, delegando para o agente mais barato. A VFITCOACH não pode mudar nada, e os prints dela devem ficar iguais antes e depois.

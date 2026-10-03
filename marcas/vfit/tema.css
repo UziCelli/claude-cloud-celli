@@ -1,0 +1,21 @@
+/* Cores da marca VFITCOACH (escalas slate e marca). */
+@theme {
+  --color-slate-950: #0a1424;
+  --color-slate-900: #101b30;
+  --color-slate-800: #1e2c46;
+  --color-slate-700: #2a3b5c;
+  --color-slate-600: #3a4d70;
+  --color-slate-500: #6b7a99;
+  --color-slate-400: #98a6c2;
+  --color-slate-300: #c3cee0;
+  --color-slate-200: #dde4ef;
+  --color-slate-100: #edf1f8;
+  --color-slate-50: #f5f7fa;
+
+  --color-marca-300: #7faedd;
+  --color-marca-400: #5c93cc;
+  --color-marca-500: #3f72a6;
+  --color-marca-600: #2c5c8f;
+  --color-marca-700: #0f2a52;
+  --color-marca-900: #0b1e3d;
+}

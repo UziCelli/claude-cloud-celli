@@ -1,6 +1,8 @@
 import { expect, test, devices } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { criarAluno, limparEmuladores, lerDoc } from './seed'
 
+const marca = JSON.parse(readFileSync(`marcas/${process.env.MARCA ?? 'vfit'}/marca.json`, 'utf8'))
 const ALUNO = { nome: 'Bia Aluna', email: 'bia.privacidade-e2e@teste.com', senha: 'senha123' }
 
 test.use({ ...devices['Pixel 7'] })
@@ -9,7 +11,7 @@ test.beforeAll(limparEmuladores)
 test('política abre sem login', async ({ page }) => {
   await page.goto('/privacidade')
   await expect(page.getByRole('heading', { name: 'Política de Privacidade' })).toBeVisible()
-  await expect(page.getByText('CREF 177235-G/SP')).toBeVisible()
+  await expect(page.getByText(`CREF ${marca.responsavel.cref}`)).toBeVisible()
 })
 
 test('cadastro: botão só habilita com a caixa marcada', async ({ page }) => {
