@@ -19,7 +19,7 @@ export default function Inicio() {
   const chave = inicioJanela(agora, 14)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<RegistroResumo>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
-  const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora)
+  const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
   // Só mesos em andamento com tempo limite.
   const acima = mesos.dados
     .filter((d) => d.tempoLimiteMin)
@@ -52,9 +52,13 @@ export default function Inicio() {
     ['Vencidos', r.vencidos, 'Nenhum vencido.'],
     ['Treinaram hoje', r.treinaramHoje, 'Ninguém treinou hoje ainda.'],
     ['Sumidos (7+ dias sem treinar)', r.sumidos, 'Ninguém sumido.'],
+    ['Frequência caindo (14 dias)', r.frequenciaCaindo, 'Ninguém com frequência caindo.'],
   ]
   return (
     <Pagina titulo="Início" acoes={novo}>
+      <a href="#/ranking" className="mb-3 block text-sm text-marca-300 hover:underline">
+        Ranking de evolução →
+      </a>
       {acima.length > 0 && (
         <Cartao className="mb-3 space-y-3">
           <h2 className="font-semibold">

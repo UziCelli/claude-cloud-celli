@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
 import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
+import { mesoParaDoc } from './conversores'
 import { inicioJanela, resumoCoach, type AlunoComId } from './resumo'
+import type { Meso } from '../engine'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const ts = (iso: string) => Timestamp.fromDate(sp(iso))
@@ -123,6 +125,112 @@ describe('resumoCoach', () => {
       agora,
     )
     expect(ids(r.sumidos)).toEqual(['sete', 'nada'])
+  })
+})
+
+describe('frequenciaCaindo', () => {
+  const slot = { slotId: 'A', nome: 'Supino' }
+  const meso = (inicio: string, semanas: number, frequencia: number): Meso => ({
+    frequencia,
+    semanas,
+    inicio,
+    pausaS: 60,
+    divisao: [[slot]],
+    progressao: { principais: [[10]], auxiliares: [[10]] },
+    metodos: [],
+  })
+  // Meso em andamento (semana 2 de 6), 3 por semana: caindo = menos de 3 treinos feitos em 14 dias.
+  const mesoDe = (alunoId: string, m = meso('2026-09-28', 6, 3)) => ({ ...mesoParaDoc(m), alunoId, nome: 'Meso', id: `m-${alunoId}` })
+  const feito = (alunoId: string, treino: number, iso: string, extra = {}) => ({
+    alunoId,
+    mesoId: `m-${alunoId}`,
+    semana: 1,
+    treino,
+    realizado: true,
+    realizadoEm: ts(iso),
+    atualizadoEm: ts(iso),
+    ...extra,
+  })
+  // Atividade recente que tira o aluno de "sumidos" sem contar como treino feito.
+  const vivo = (alunoId: string) => ({ alunoId, atualizadoEm: ts('2026-10-09T10:00') })
+  const caindo = (alunos: AlunoComId[], registros: Parameters<typeof resumoCoach>[1], mesos = alunos.map((a) => mesoDe(a.id))) =>
+    ids(resumoCoach(alunos, registros, agora, mesos).frequenciaCaindo)
+
+  it('fez menos da metade de frequência × 2 nos últimos 14 dias (3 × 2 / 2 = 3)', () => {
+    const r = [
+      feito('pouco', 1, '2026-10-05T10:00'),
+      feito('pouco', 2, '2026-10-07T10:00'),
+      feito('ok', 1, '2026-10-01T10:00'),
+      feito('ok', 2, '2026-10-05T10:00'),
+      feito('ok', 3, '2026-10-07T10:00'),
+    ]
+    expect(caindo([aluno('pouco'), aluno('ok')], r)).toEqual(['pouco'])
+  })
+
+  it('meso com menos de 7 dias não conta; com menos de 14, o previsto é proporcional aos dias', () => {
+    const novo = [mesoDe('novo', meso('2026-10-05', 6, 3))] // 6 dias: cedo demais
+    expect(caindo([aluno('novo')], [vivo('novo')], novo)).toEqual([])
+    // 9 dias (10 com hoje): previsto 3 × 10/7 ≈ 4,3; metade ≈ 2,1 → 2 feitos ainda é pouco, 3 não.
+    const m = (id: string) => mesoDe(id, meso('2026-10-01', 6, 3))
+    const r = [feito('dois', 1, '2026-10-02T10:00'), feito('dois', 2, '2026-10-06T10:00'), ...[1, 2, 3].map((t) => feito('tres', t, `2026-10-0${t + 1}T10:00`))]
+    expect(caindo([aluno('dois'), aluno('tres')], r, [m('dois'), m('tres')])).toEqual(['dois'])
+  })
+
+  it('treino feito = realizado true, no dia de realizadoEm; só atualizadoEm ou realizado false não contam', () => {
+    const r = [
+      feito('a', 1, '2026-10-05T10:00'),
+      feito('a', 2, '2026-10-06T10:00', { realizado: false }),
+      { alunoId: 'a', mesoId: 'm-a', semana: 1, treino: 3, realizado: true, realizadoEm: null, atualizadoEm: ts('2026-10-07T10:00') },
+    ]
+    expect(caindo([aluno('a')], r)).toEqual(['a']) // só 1 treino feito de verdade
+  })
+
+  it('janela de 14 dias de São Paulo: 27/09 ainda conta (13 dias), 26/09 não (14 dias)', () => {
+    const base = [feito('dentro', 1, '2026-10-05T10:00'), feito('dentro', 2, '2026-10-06T10:00'), feito('fora', 1, '2026-10-05T10:00'), feito('fora', 2, '2026-10-06T10:00')]
+    const r = [...base, feito('dentro', 3, '2026-09-27T00:30'), feito('fora', 3, '2026-09-26T23:30'), vivo('dentro'), vivo('fora')]
+    expect(caindo([aluno('dentro'), aluno('fora')], r)).toEqual(['fora'])
+  })
+
+  it('o mesmo treino registrado 2× conta 1 vez', () => {
+    const r = [feito('a', 1, '2026-10-05T10:00'), feito('a', 1, '2026-10-05T11:00'), feito('a', 2, '2026-10-06T10:00')]
+    expect(caindo([aluno('a')], r)).toEqual(['a'])
+  })
+
+  it('só meso em andamento: sem meso, meso que acabou ou ainda não começou ficam de fora', () => {
+    const alunos = [aluno('sem'), aluno('acabou'), aluno('futuro'), aluno('durante')]
+    const mesos = [
+      mesoDe('acabou', meso('2026-08-03', 4, 3)),
+      mesoDe('futuro', meso('2026-10-12', 4, 3)),
+      mesoDe('durante'),
+    ]
+    expect(caindo(alunos, alunos.map((a) => vivo(a.id)), mesos)).toEqual(['durante'])
+  })
+
+  it('usa a frequência do meso do aluno: 2 por semana = menos de 2 treinos', () => {
+    const r = [feito('a', 1, '2026-10-05T10:00'), feito('b', 1, '2026-10-05T10:00'), feito('b', 2, '2026-10-06T10:00')]
+    const mesos = [mesoDe('a', meso('2026-09-28', 6, 2)), mesoDe('b', meso('2026-09-28', 6, 2))]
+    expect(caindo([aluno('a'), aluno('b')], r, mesos)).toEqual(['a'])
+  })
+
+  it('exclui sumidos, presencial, vencido, aguardando e arquivado', () => {
+    const alunos = [
+      aluno('sumido'), // 0 treinos e nada recente: já está em "Sumidos"
+      aluno('pres', { presencial: true, pagoAte: undefined }),
+      aluno('vencido', { pagoAte: paga('2026-10-01') }),
+      aluno('agu', { status: 'aguardando', pagoAte: undefined }),
+      aluno('arq', { status: 'arquivado' }),
+      aluno('caindo'),
+    ]
+    const r = ['pres', 'vencido', 'agu', 'arq', 'caindo'].map(vivo)
+    const res = resumoCoach(alunos, r, agora, alunos.map((a) => mesoDe(a.id)))
+    expect(ids(res.sumidos)).toEqual(['sumido'])
+    expect(ids(res.frequenciaCaindo)).toEqual(['caindo'])
+  })
+
+  it('sem `mesos`, a lista é vazia e o resto não muda', () => {
+    const r = resumoCoach([aluno('a')], [vivo('a')], agora)
+    expect(r.frequenciaCaindo).toEqual([])
+    expect(ids(r.treinaramHoje)).toEqual([])
   })
 })
 
