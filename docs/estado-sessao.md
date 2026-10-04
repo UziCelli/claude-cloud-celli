@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 03/10/2026
+# Estado da sessão (retomada) — atualizado em 04/10/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #19 estão juntados e publicados.
 
@@ -81,13 +81,26 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Responsável na Política: Gislane dos Santos Madeira, CREF 180464-G/SP.
 - PR #42 recebeu a `main` com o Painel de Evolução (#41): o cartão do story agora lê logo (`@marca/logoPaths`), cores (`marca.json` → `cores`, conferidas contra o `tema.css` por teste) e nome da marca. Toda tela ou imagem nova deve ler a marca assim, nunca ter VFIT fixo.
 - Domínio: `gislanepersonaltrainer.com` (landing na Cloudflare, igual ao VFIT; app em `app.`). Landing em `vfitcoach-site/gislane/` (PR #4 daquele repositório).
-- **Falta do Victor:** acesso da conta de serviço ao projeto dela (mesmo robô ou robô próprio) e dados da landing (foto, WhatsApp, Instagram, agenda, locais, resultado da aluna). Passo a passo da hospedagem em `docs/plano-app-gislane.md`, seção "Fase C — passo a passo do Victor".
-
 - **App da Gislane, Fase C no código** (03/10/2026): projeto `gislane-personal-trainer`, `.env.gislane`, aliases no `.firebaserc`, job `gislane` em `deploy.yml` (com trava) e `build:gislane` no CI.
-- PR #43 juntada: VFIT publicado; o job `gislane` deu 403 (faltava o papel "Consumidor do Service Usage" para o robô no projeto dela). Depois do papel: re-rodar o job `gislane` do "Publicar".
-- PR seguinte: APK reserva da Gislane + Instalar por marca (Android dela pelo Chrome) e scripts operacionais nos 2 projetos.
-- Landing: `vfitcoach-site` PR #4 (pasta `gislane/`, workflow manual "Publicar site da Gislane" com secrets `CLOUDFLARE_*_GISLANE` da conta Cloudflare dela). Faltam dados pessoais (marcadores [A CONFIRMAR]).
-- Workflows que ainda só rodam na VFIT (backup, LGPD, vigia, mfa, erros): ver `docs/plano-app-gislane.md`, antes de ela ter alunos.
+- PR #43 juntada. O job `gislane` deu 403 até o robô ganhar o papel "Consumidor do Service Usage" no projeto dela; depois, publicado.
+- PR #44 juntada e publicada nos 2 projetos:
+  - scripts operacionais (backup, LGPD, vigia, mfa, erros) exigem `PROJETO` e rodam nas 2 marcas;
+  - APK reserva da Gislane;
+  - Instalar por marca (Android dela pelo Chrome).
+
+## 04/10/2026 — Gislane no ar
+- **App:** https://app.gislanepersonaltrainer.com (Firebase `gislane-personal-trainer`). Victor e Gislane conferiram os 2 apps: tudo ok.
+- **2 etapas:** TOTP ligado no projeto dela (workflow "2 etapas do coach", marca gislane). A conta de coach dela já ativou.
+- **Landing:** https://gislanepersonaltrainer.com.
+  - Worker `gislane-site` na conta Cloudflare dela.
+  - Publica pelo workflow manual "Publicar site da Gislane" (`vfitcoach-site`); juntar no `master` não publica.
+  - PRs #3 (Dependabot), #4 e #5 daquele repositório juntadas.
+  - Conteúdo: foto dela (fundo vermelho), WhatsApp (11) 91568-8424, @gislane_personal, agenda do Google, Vila Andrade e Vila das Belezas (SP).
+  - Resultados: 4 alunas, **só iniciais** (G., G., B., J.), números exatos das fichas de avaliação, sem arredondar.
+  - Primeiros nomes só com termo de autorização das alunas (Victor vai perguntar a ela).
+- **DNS (Cloudflare dela):** os registros copiados da Squarespace (A 198.x e CNAME www) foram apagados. Sem isso, o Worker não liga o domínio (erro 100117). A Squarespace só registra o domínio.
+- **"Workers Builds: vfitcoach"** falha em todas as PRs do `vfitcoach-site`. O log só aparece no painel da Cloudflare do Victor. Não afeta a publicação da Gislane.
+- **Pendências da Gislane:** e-mails do Auth com a marca dela, Worker de push dela, DNSSEC/DMARC.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
@@ -96,8 +109,6 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - **Relatórios escritos de evolução** quando chegar a avaliação física (Fase 3).
 - Senha provisória pelo WhatsApp em vez do e-mail do Firebase (o nome "forca--app" aparece nos e-mails).
 - Botão "ver vídeo" em cada exercício, quando o Victor gravar os vídeos.
-- App da Gislane (`docs/plano-app-gislane.md`):
-  - faltam o nome embaixo do ícone (até 12 letras), o domínio próprio (ID do projeto Firebase já definido);
-  - as cores já estão aprovadas.
+- App da Gislane: no ar (ver "04/10/2026 — Gislane no ar"). Plano e histórico em `docs/plano-app-gislane.md`.
 - Importar planilhas de outros alunos: `tools/planilha_para_meso.py` + workflow "Importar mesociclo".
 - A migração do projeto Firebase foi descartada pelo Victor.
