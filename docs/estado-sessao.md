@@ -18,7 +18,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Worker: `https://vfit-descanso.vfitcoach-site.workers.dev`.
   - Falta o Victor testar a notificação num iPhone real.
 - **Entrega 4** (`docs/plano-entrega4.md`): juntada (PRs #25 e #26) e publicada.
-  - Inatividade: aluno 30 min, coach 20 min.
+  - Inatividade: aluno 4 h (era 30 min; mudado em 06/10/2026 a pedido do Victor), coach 20 min.
   - MFA TOTP só para o coach: ativo.
   - Sem tela de erros no painel: os erros ficam no workflow "Ver erros do app".
   - PR #27 (2 etapas obrigatórias + App Check) juntado e publicado. PR #28 corrigiu o login que caía na hora (marca de inatividade antiga).

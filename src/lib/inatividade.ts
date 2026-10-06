@@ -1,10 +1,10 @@
-// Desconectar por falta de uso: coach 20 min, aluno 30 min.
+// Desconectar por falta de uso: coach 20 min, aluno 4 h (era 30 min; aluno reclamou e o Victor pediu 4 h em 06/10/2026).
 import { useEffect, useRef, useState } from 'react'
 import { waitForPendingWrites } from 'firebase/firestore'
 import { db } from './firebase'
 import { sair } from './acoes'
 
-export const LIMITE_MIN = { coach: 20, aluno: 30 } as const
+export const LIMITE_MIN = { coach: 20, aluno: 240 } as const
 const ATIVIDADE = 'forca-ultima-atividade'
 export const AVISO_SAIU = 'forca-saiu-inatividade'
 
