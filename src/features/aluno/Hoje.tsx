@@ -16,7 +16,7 @@ import type { MesoSalvo } from '../../lib/conversores'
 
 const Msg = ({ children }: { children: ReactNode }) => <p className="mt-10 text-center text-slate-400">{children}</p>
 
-export default function Hoje({ uid }: { uid: string }) {
+export default function Hoje({ uid, base = '' }: { uid: string; base?: string }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
   if (carregando) return <Centro>Carregando…</Centro>
 
@@ -30,22 +30,22 @@ export default function Hoje({ uid }: { uid: string }) {
       <h1 className="mb-1 text-lg font-bold">{doc.nome}</h1>
       {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
-      {estado.estado === 'durante' && <Semana uid={uid} mesoId={doc.id} meso={meso} hoje={new Date()} />}
+      {estado.estado === 'durante' && <Semana uid={uid} base={base} mesoId={doc.id} meso={meso} hoje={new Date()} />}
     </main>
   )
 }
 
 type RegistroFlag = RegistroDoc & { realizado?: boolean }
 
-function Semana({ uid, mesoId, meso, hoje }: { uid: string; mesoId: string; meso: Meso; hoje: Date }) {
+function Semana({ uid, base, mesoId, meso, hoje }: { uid: string; base: string; mesoId: string; meso: Meso; hoje: Date }) {
   const { dados: registros, carregando } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   if (carregando) return <Centro>Carregando…</Centro>
-  return <SemanaCarregada uid={uid} mesoId={mesoId} meso={meso} registros={registros} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
+  return <SemanaCarregada base={base} mesoId={mesoId} meso={meso} registros={registros} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
 }
 
-function SemanaCarregada({ meso, mesoId, registros, semanaInicial }: { uid: string; mesoId: string; meso: Meso; registros: RegistroFlag[]; semanaInicial: number }) {
+function SemanaCarregada({ base, meso, mesoId, registros, semanaInicial }: { base: string; mesoId: string; meso: Meso; registros: RegistroFlag[]; semanaInicial: number }) {
   const [semana, setSemana] = useState(semanaInicial)
   const feitos = new Set(registros.filter((r) => r.realizado).map((r) => `${r.semana}-${r.treino}`))
   const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1).filter((t) => prescreverSessao(meso, semana, t))
@@ -83,7 +83,7 @@ function SemanaCarregada({ meso, mesoId, registros, semanaInicial }: { uid: stri
               key={treino}
               variants={item}
               whileTap={{ scale: 0.98 }}
-              onClick={() => ir(`/treino/${mesoId}/${semana}/${treino}`)}
+              onClick={() => ir(`${base}/treino/${mesoId}/${semana}/${treino}`)}
               className={`relative flex w-full min-h-[64px] items-center justify-between rounded-xl border p-4 text-left active:bg-slate-800 ${destaque ? 'border-emerald-500 bg-slate-800' : feito ? 'border-emerald-700 bg-slate-900' : 'border-slate-800 bg-slate-900'}`}
             >
               {destaque && !quieto && (

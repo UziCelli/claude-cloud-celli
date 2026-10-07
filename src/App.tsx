@@ -17,6 +17,7 @@ import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
 import RankingAlunos from './features/coach/RankingAlunos'
+import { PresencialHoje, PresencialTreino } from './features/coach/presencial/Presencial'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
 import Instalar from './features/instalar/Instalar'
@@ -114,6 +115,9 @@ function Coach({ uid, email }: { uid: string; email: string }) {
   else if (rota === '/alunos/novo') tela = <NovoAluno />
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/presencial', rota))) tela = <PresencialHoje key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/presencial/treino/:mesoId/:semana/:treino', rota)))
+    tela = <PresencialTreino key={`${p.uid}${p.mesoId}${p.semana}${p.treino}`} uid={p.uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
