@@ -39,6 +39,20 @@ A sessão principal (Opus) **orquestra**: planeja, decide e delega. Delegue semp
 - Tarefas independentes em paralelo; nunca dois agentes no mesmo arquivo ao mesmo tempo.
 - Pedido do Victor: tarefas executivas (merge de PR, disparar workflow, acompanhar CI/deploy, commit/push de rotina, conferir status) vão para o `auxiliar` (Haiku). Só faça direto quando for uma única chamada (delegar custaria mais do que fazer).
 
+## PRs: fluxo automático (autorizado pelo Victor em 07/10/2026)
+O Victor não revisa código: a revisão é nossa e o merge também, **sem pedir "pode juntar"**.
+1. Implementar e rodar as checagens locais: `typecheck`, `test`, `build` e os e2e afetados.
+2. Revisar o diff com o agente `revisor` e corrigir o que ele apontar. Não levar código ao Victor.
+3. Commit, push, PR e `subscribe_pr_activity`.
+4. Acompanhar o CI com um laço em segundo plano (`gh api …/check-runs`), **sem criar rotinas** (`send_later`/triggers).
+5. CI verde: marcar como pronto e juntar sozinho (`merge_pull_request` com `expectedHeadSha`).
+6. Depois de juntar:
+   - conferir os jobs `deploy` e `gislane` do "Publicar";
+   - recriar a branch a partir da `main`;
+   - avisar o Victor em 2–3 tópicos (o que mudou e se já está no ar).
+7. CI vermelho: corrigir e repetir. Se a falha não for nossa, explicar ao Victor em linguagem simples.
+- **Perguntar antes de juntar** só quando a mudança apagar ou migrar dados que já estão em produção, ou tiver custo em dinheiro.
+
 ## Plugins (ativados em `.claude/settings.json`)
 - **Superpowers**: fluxo brainstorming → writing-plans → subagent-driven-development; TDD; systematic-debugging.
 - **Ponytail** (modo `full`): escreva o mínimo que funciona — reuse o que existe, prefira recursos nativos, nenhuma abstração "para o futuro".

@@ -7,14 +7,40 @@
   },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {
-      "source": { "source": "github", "repo": "obra/superpowers-marketplace" }
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
     },
     "ponytail": {
-      "source": { "source": "github", "repo": "DietrichGebert/ponytail" }
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
     }
   },
   "enabledPlugins": {
     "superpowers@superpowers-marketplace": true,
     "ponytail@ponytail": true
+  },
+  "permissions": {
+    "allow": [
+      "mcp__github__create_pull_request",
+      "mcp__github__update_pull_request",
+      "mcp__github__merge_pull_request",
+      "mcp__github__pull_request_read",
+      "mcp__github__subscribe_pr_activity",
+      "mcp__github__unsubscribe_pr_activity",
+      "mcp__github__actions_list",
+      "mcp__github__actions_get",
+      "mcp__github__get_job_logs",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)"
+    ]
   }
 }

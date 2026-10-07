@@ -7,7 +7,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Economia:** a sessão principal só orquestra.
   - Código vai para agentes **Sonnet** (dev/arquiteto com `model: sonnet`).
   - Tarefas executivas (commit, push, PR, merge, acompanhar CI e deploy) vão para o **auxiliar (Haiku)**.
-- **Merge:** nunca juntar PR sem o Victor dizer "pode juntar". Depois de juntar, conferir o workflow "Publicar".
+- **Merge (desde 07/10/2026):** automático depois de revisão própria + CI verde, sem pedir ao Victor (fluxo em `CLAUDE.md`, "PRs: fluxo automático"). Depois de juntar, conferir o workflow "Publicar".
 
 ## Entregas
 - **Entrega 1** (`docs/plano-entrega1.md`): PR #20, juntado pelo Victor.
