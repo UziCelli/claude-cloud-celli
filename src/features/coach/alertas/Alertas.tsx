@@ -11,9 +11,10 @@ import { semanaAtual } from '../../../lib/treino'
 import { Botao, Painel, Pagina } from '../../../ui'
 import { LinhaAcima, treinosAcima } from '../meso/SugestaoTempo'
 
-type Reg = RegistroAlerta & RegistroResumo
+export type Reg = RegistroAlerta & RegistroResumo
 
-// Carrega tudo o que os alertas precisam (mesos em andamento, alunos não arquivados, registros de 14 dias).
+// Carrega tudo o que os alertas precisam (alunos, mesos, registros de 14 dias). O Início já tem esses dados
+// e chama `calcularAlertas` direto.
 export function useAlertasCoach() {
   const alunos = useLista<Usuario & { id: string }>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
   const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
@@ -21,25 +22,29 @@ export function useAlertasCoach() {
   const chave = inicioJanela(agora, 14)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
+  return {
+    ...calcularAlertas(alunos.dados, mesos.dados, registros.dados, agora),
+    carregando: alunos.carregando || mesos.carregando || registros.carregando,
+  }
+}
+
+// Mesos em andamento de alunos não arquivados.
+export function calcularAlertas(alunos: (Usuario & { id: string })[], mesos: (MesoSalvo & { id: string })[], registros: Reg[], agora: Date) {
   const abaixo: { id: string; aluno: string; mesoId: string; alerta: NonNullable<ReturnType<typeof repsAbaixo>> }[] = []
   const acima: { d: MesoSalvo & { id: string }; meso: ReturnType<typeof docParaMeso>; a: ReturnType<typeof treinosAcima>[number]; aluno: string }[] = []
   const demorados: { id: string; aluno: string; mesoId: string; semana: number; treino: number; minutos: number; previsto: number }[] = []
-  for (const d of mesos.dados) {
-    const aluno = alunos.dados.find((x) => x.id === d.alunoId)
+  for (const d of mesos) {
+    const aluno = alunos.find((x) => x.id === d.alunoId)
     if (!aluno || aluno.status === 'arquivado') continue
     const meso = docParaMeso(d)
     if (semanaAtual(meso, agora).estado !== 'durante') continue
-    const regs = registros.dados.filter((r) => r.mesoId === d.id)
+    const regs = registros.filter((r) => r.mesoId === d.id)
     const alerta = repsAbaixo(meso, regs, agora)
     if (alerta) abaixo.push({ id: d.id, aluno: aluno.nome, mesoId: d.id, alerta })
     for (const t of treinosDemorados(meso, regs, agora)) demorados.push({ id: `${d.id}-${t.semana}-${t.treino}`, aluno: aluno.nome, mesoId: d.id, ...t })
     if (d.tempoLimiteMin) for (const a of treinosAcima(meso)) acima.push({ d, meso, a, aluno: aluno.nome })
   }
-  return {
-    abaixo, acima, demorados,
-    total: abaixo.length + acima.length + demorados.length,
-    carregando: alunos.carregando || mesos.carregando || registros.carregando,
-  }
+  return { abaixo, acima, demorados, total: abaixo.length + acima.length + demorados.length }
 }
 
 const Grupo = ({ titulo, n, cor, children }: { titulo: string; n: number; cor: string; children: ReactNode }) =>

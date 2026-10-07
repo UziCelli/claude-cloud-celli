@@ -193,7 +193,7 @@ export type DadosTreino = {
 }
 
 const MAX_LISTA = 3
-export const limitar = (l: string[]) => (l.length > MAX_LISTA ? [...l.slice(0, MAX_LISTA), `+${l.length - MAX_LISTA}`] : l)
+export const limitar = (l: string[], max = MAX_LISTA) => (l.length > max ? [...l.slice(0, max), `+${l.length - max}`] : l)
 
 function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
   const disp = (px: number, peso = 800) => `${peso} ${px}px Montserrat, 'Arial Black', sans-serif`
@@ -206,11 +206,11 @@ function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
   ctx.textBaseline = 'alphabetic'
   fundoELogo(ctx, 110, 420)
   ctx.textAlign = 'center'
-  texto(d.data.toUpperCase(), 330, C.m300, 38, 700)
-  texto('TREINO CONCLUÍDO', 450, '#fff', 92, 900)
-  texto(d.nome, 560, C.m300, 76, 800)
+  texto(d.data.toUpperCase(), 300, C.m300, 38, 700)
+  texto('TREINO CONCLUÍDO', 410, '#fff', 92, 900)
+  texto(d.nome, 510, C.m300, 76, 800)
 
-  let y = 640
+  let y = 580
   for (const [valor, rotulo] of [[d.duracao, 'DURAÇÃO'], [d.volume, 'VOLUME']] as const) {
     if (!valor) continue
     ctx.fillStyle = rgba(C.s800, 0.72)
@@ -222,12 +222,19 @@ function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
     y += 296
   }
 
+  // Listas: só as linhas que cabem acima da barra da semana (recordes primeiro); o resto vira "+N".
+  // Cada lista ocupa título + espaço (2 linhas) + itens.
+  const LH = 54
+  const yb = H - 240
+  let linhas = Math.floor((yb - 40 - y) / LH)
   for (const [titulo, lista, cor] of [['🏆 RECORDES', d.recordes, '#fcd34d'], ['↑ SUBIU A CARGA', d.subiram, '#6ee7b7']] as const) {
-    if (!lista.length) continue
-    const l = limitar(lista)
-    texto(titulo, y + 50, cor, 40, 800)
-    l.forEach((t, i) => texto(t, y + 106 + i * 56, '#fff', 40, 600, sans))
-    y += 80 + l.length * 56 + 30
+    const max = Math.min(MAX_LISTA, linhas - 3)
+    const l = lista.length <= Math.min(MAX_LISTA, linhas - 2) ? lista : max >= 1 ? limitar(lista, max) : []
+    if (!l.length) continue
+    texto(titulo, y + 46, cor, 40, 800)
+    l.forEach((t, i) => texto(t, y + 100 + i * LH, '#fff', 40, 600, sans))
+    y += (l.length + 2) * LH
+    linhas -= l.length + 2
   }
 
   // Semana: um segmento por treino
@@ -235,13 +242,12 @@ function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
   const gap = 14
   const n = Math.min(Math.max(total, 1), 7)
   const sw = (W - 200 - gap * (n - 1)) / n
-  const yb = H - 250
   for (let i = 0; i < n; i++) {
     ctx.fillStyle = i < feitos ? C.m400 : rgba('#ffffff', 0.2)
     caixa(ctx, 100 + i * (sw + gap), yb, sw, 26, 13)
     ctx.fill()
   }
-  texto(`Semana: ${feitos} de ${total} treinos`, yb + 90, '#fff', 40, 600, sans)
+  texto(`Semana: ${feitos} de ${total} treinos`, yb + 85, '#fff', 40, 600, sans)
   ctx.fillStyle = C.m300
   ctx.font = disp(34, 700)
   if ('letterSpacing' in ctx) ctx.letterSpacing = '10px'

@@ -49,12 +49,12 @@ function Semana({ uid, base, mesoId, meso, hoje }: { uid: string; base: string; 
 function AvisoReps({ meso, mesoId, registros }: { meso: Meso; mesoId: string; registros: RegistroFlag[] }) {
   const a = repsAbaixo(meso, registros, new Date())
   const chave = `alerta-reps-${mesoId}-${a?.ultimoDia}`
-  const [visto, setVisto] = useState(() => {
-    try { return localStorage.getItem(chave) === '1' } catch { return false }
-  })
+  const [fechou, setFechou] = useState('') // chave dispensada nesta tela (vale mesmo sem localStorage)
+  let visto = fechou === chave
+  try { visto ||= localStorage.getItem(chave) === '1' } catch { /* sem armazenamento */ }
   if (!a || visto) return null
   const entendi = () => {
-    setVisto(true)
+    setFechou(chave)
     try { localStorage.setItem(chave, '1') } catch { /* sem armazenamento */ }
   }
   return (
@@ -78,7 +78,7 @@ function SemanaCarregada({ base, meso, mesoId, registros, semanaInicial }: { bas
 
   return (
     <>
-      <AvisoReps meso={meso} mesoId={mesoId} registros={registros} />
+      {!base && <AvisoReps meso={meso} mesoId={mesoId} registros={registros} />}
       <div className="mb-4 flex items-center justify-center gap-4">
         <Botao disabled={semana <= 1} onClick={() => setSemana((s) => s - 1)}>
           ←

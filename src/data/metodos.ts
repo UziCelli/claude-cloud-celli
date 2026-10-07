@@ -47,7 +47,7 @@ export const COR_METODO: Record<Metodo, { selo: string; faixa: string; texto: st
   Clusterset: { selo: 'bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-400/60', faixa: 'bg-fuchsia-400', texto: 'text-fuchsia-300', borda: 'border-fuchsia-400/60' },
 }
 
-export const ORDEM: Metodo[] =['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
+export const ORDEM: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
 
 // "Dropset [últimas 2]" → 'Dropset'
 export function metodoDoRotulo(parte: string): Metodo | null {

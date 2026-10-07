@@ -540,7 +540,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                             key={parte}
                             disabled={!mt}
                             onClick={() => mt && setExplicar(mt)}
-                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${mt ? COR_METODO[mt].selo : ''}`}
+                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${mt ? COR_METODO[mt].selo : 'bg-slate-700 text-slate-100 ring-slate-500'}`}
                           >
                             {mt && <IconeMetodo metodo={mt} tamanho={20} />}
                             {parte} <span aria-hidden>ⓘ</span>

@@ -5,10 +5,10 @@ import { consultaRegistrosRecentes } from '../../../lib/acoes'
 import type { MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
-import { inicioJanela, resumoCoach, type AlunoComId, type RegistroResumo } from '../../../lib/resumo'
+import { inicioJanela, resumoCoach, type AlunoComId } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
-import { useAlertasCoach } from '../alertas/Alertas'
+import { calcularAlertas, type Reg } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 
 export default function Inicio() {
@@ -17,9 +17,9 @@ export default function Inicio() {
   const agora = new Date()
   const chave = inicioJanela(agora, 14)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const registros = useLista<RegistroResumo>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
+  const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
-  const alertas = useAlertasCoach()
+  const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora)
   const novo = (
     <Botao tipo="primario" onClick={() => ir('/alunos/novo')}>
       Novo aluno
