@@ -13,6 +13,9 @@ describe('fracaoPC', () => {
     ['Hiperextensão Lombar', 0.55],
     ['Elevação Pélvica', 0.5],
     ['Abdominal Infra', 0.3],
+    ['Superman', 0.3],
+    ['Paraquedista', 0.3],
+    ['Rosca Superman Cabo Barra Reta', 1],
     ['Supino Reto Barra', 1],
   ])('%s -> %s', (nome, f) => expect(fracaoPC(nome)).toBe(f))
 })
@@ -30,6 +33,8 @@ describe('corpoEhCarga', () => {
     'Abdominal Recolhimento',
     'Abdominal Recolhimento Lateral',
     'Agachamento com Peso do Corpo',
+    'Superman',
+    'Paraquedista',
   ])('%s: corpo é a carga', (nome) => expect(corpoEhCarga(nome)).toBe(true))
 
   it.each([
