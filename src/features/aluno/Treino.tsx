@@ -9,13 +9,14 @@ import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
 import { seriesDestacadas } from '../../lib/metodoSeries'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
+import FimTreino from './FimTreino'
 import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
-import { historicoExercicios, recordeAnterior, type RegistroEvolucao } from '../../lib/evolucao'
+import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
 import { ir } from '../../rota'
@@ -290,20 +291,36 @@ function RelogioTreino({ inicio, fim, realizado, quieto, onIniciar }: { inicio: 
 
 const CONFETE = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#facc15', '#a78bfa']
 
-// Aviso de recorde: some sozinho em ~4 s (o pai troca a `key` a cada recorde).
+// Aviso de recorde: some sozinho em ~5 s (o pai troca a `key` a cada recorde).
+// Fica a 30% da área visível: no iPhone o app passa por baixo da barra de status (black-translucent) e,
+// com o teclado aberto, `fixed top` sai da tela; o visualViewport diz onde está a parte que se vê.
 function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolean | null; fechar: () => void }) {
+  const [topo, setTopo] = useState<number | null>(null)
   useEffect(() => {
-    const t = setTimeout(fechar, 4000)
+    const t = setTimeout(fechar, 5000)
     return () => clearTimeout(t)
   }, [fechar])
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const pos = () => setTopo(vv.offsetTop + vv.height * 0.3)
+    pos()
+    vv.addEventListener('resize', pos)
+    vv.addEventListener('scroll', pos)
+    return () => {
+      vv.removeEventListener('resize', pos)
+      vv.removeEventListener('scroll', pos)
+    }
+  }, [])
   return (
     <m.div
       role="status"
+      style={topo == null ? undefined : { top: topo }}
       initial={{ opacity: 0, y: quieto ? 0 : -16, scale: quieto ? 1 : 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={quieto ? { duration: 0.15 } : { type: 'spring', stiffness: 400, damping: 18 }}
-      className="pointer-events-none fixed inset-x-4 top-4 z-40 mx-auto max-w-sm rounded-xl border border-amber-400 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-amber-200 shadow-lg"
+      className="pointer-events-none fixed inset-x-4 top-[calc(env(safe-area-inset-top)+25vh)] z-40 mx-auto max-w-sm rounded-2xl border-2 border-amber-400 bg-slate-900 px-5 py-4 text-center text-base font-bold text-amber-200 shadow-2xl shadow-amber-500/20"
     >
       {!quieto &&
         CONFETE.map((cor, i) => (
@@ -347,6 +364,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const festejados = useRef(new Set<string>())
   const [festa, setFesta] = useState<{ n: number; texto: string } | null>(null)
   const fecharFesta = useCallback(() => setFesta(null), [])
+  const [verResumo, setVerResumo] = useState(false)
+  const [fimLocal, setFimLocal] = useState<number | null>(null) // hora do "Concluir", até o servidor confirmar
 
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Treino não encontrado.</Centro>
@@ -378,7 +397,11 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
   const ms = (t: unknown) => (t as { toMillis?: () => number } | null | undefined)?.toMillis?.() ?? null
   const inicioMs = ms(docAtual?.inicioEm) ?? inicioLocal
-  const fimMs = ms((docAtual as { realizadoEm?: unknown } | undefined)?.realizadoEm)
+  const fimMs = ms((docAtual as { realizadoEm?: unknown } | undefined)?.realizadoEm) ?? fimLocal
+  const abrirResumo = () => {
+    setVerResumo(true)
+    window.scrollTo(0, 0)
+  }
 
   // Peso do corpo de um exercício (render e "Concluir"). Automático só em slot sem carga e sem escolha explícita: o histórico nunca muda.
   const estadoCorpo = (e: (typeof sessao.exercicios)[number]) => {
@@ -399,7 +422,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
     }
     limparTreino()
     marcarRealizado(mesoId, uid, semana, treino, true)
-    ir(base || '/')
+    setFimLocal(Date.now())
+    abrirResumo()
   }
 
   // Exercícios do mesmo grupo de método ficam juntos (só a ordem de exibição muda).
@@ -418,6 +442,21 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   })
   const notaInicial = [...new Set(sessao.exercicios.flatMap((e) => (e.rotulo ? e.rotulo.split('; ') : []).map(metodoDoRotulo)))].filter((x): x is Metodo => x != null && !notaDispensada(x))
   const adaptadoEm = (meso as { adaptadoEm?: { toMillis(): number } }).adaptadoEm?.toMillis()
+
+  if (verResumo)
+    return (
+      <FimTreino
+        nome={perfil?.nome?.trim().split(/\s+/)[0]}
+        duracaoMs={inicioMs != null && fimMs != null ? fimMs - inicioMs : null}
+        resumo={resumoTreino(historico, { mesoId, semana, treino })}
+        semana={semana}
+        feitosSemana={new Set(docsRegistros.filter((r) => r.semana === semana && r.realizado).map((r) => r.treino)).size}
+        frequencia={meso.frequencia}
+        quieto={quieto}
+        voltar={() => ir(base || '/')}
+        verTreino={() => setVerResumo(false)}
+      />
+    )
 
   return (
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
@@ -608,7 +647,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                 ✓
               </m.span>
             </p>
-            <Botao onClick={() => marcarRealizado(mesoId, uid, semana, treino, false)}>Desfazer</Botao>
+            <div className="flex justify-center gap-2">
+              <Botao tipo="primario" onClick={abrirResumo}>
+                Ver resumo
+              </Botao>
+              <Botao onClick={() => marcarRealizado(mesoId, uid, semana, treino, false)}>Desfazer</Botao>
+            </div>
           </div>
         ) : (
           <Botao
