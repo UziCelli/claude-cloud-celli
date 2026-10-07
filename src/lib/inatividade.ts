@@ -38,6 +38,33 @@ const cronometroRodando = () => {
   }
 }
 
+// Treino em andamento neste aparelho conta como uso, com teto de 3 h (treino esquecido não segura o login para sempre).
+const TREINO = 'forca-treino-andamento'
+const TETO_TREINO_MS = 3 * 60 * 60_000
+type Armazem = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+export function treinoEmAndamento(agora: number, arm?: Armazem) {
+  try {
+    const s = JSON.parse((arm ?? localStorage).getItem(TREINO) ?? 'null')
+    return typeof s?.ate === 'number' && agora < s.ate
+  } catch {
+    return false
+  }
+}
+export function marcarTreino(inicio = Date.now(), arm?: Armazem) {
+  try {
+    ;(arm ?? localStorage).setItem(TREINO, JSON.stringify({ inicio, ate: inicio + TETO_TREINO_MS }))
+  } catch {
+    /* sem armazenamento */
+  }
+}
+export function limparTreino(arm?: Armazem) {
+  try {
+    ;(arm ?? localStorage).removeItem(TREINO)
+  } catch {
+    /* sem armazenamento */
+  }
+}
+
 // Devolve true se há aviso "conecte-se" na tela.
 export function useInatividade(papel: keyof typeof LIMITE_MIN) {
   const [aviso, setAviso] = useState(false)
@@ -49,7 +76,7 @@ export function useInatividade(papel: keyof typeof LIMITE_MIN) {
       if (document.visibilityState === 'visible') conferir(true)
     }
     async function conferir(voltou = false) {
-      if (cronometroRodando()) marcar()
+      if (cronometroRodando() || treinoEmAndamento(Date.now())) marcar()
       if (saindo.current) return
       if (!expirou(lerUltima(), Date.now(), papel)) {
         if (voltou) marcar() // voltar ao app conta como uso (só se ainda não expirou)

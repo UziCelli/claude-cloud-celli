@@ -102,6 +102,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **"Workers Builds: vfitcoach"** falha em todas as PRs do `vfitcoach-site`. O log só aparece no painel da Cloudflare do Victor. Não afeta a publicação da Gislane.
 - **Pendências da Gislane:** e-mails do Auth com a marca dela, Worker de push dela, DNSSEC/DMARC.
 
+## 07/10/2026
+- Treino: "▶ Iniciar treino" + relógio "Treino em andamento · mm:ss" até concluir (duração final parada depois). Treino em andamento neste aparelho conta como uso na inatividade (teto 3 h). Não commitado. e2e `relogio.spec.ts`.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
   - avaliação física (Fase 3): dados de saúde, com acesso só do coach e do próprio aluno, e auditoria das regras;

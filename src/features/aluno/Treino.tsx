@@ -3,6 +3,7 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { prescreverSessao, type Metodo } from '../../engine'
 import { METODOS, metodoDoRotulo } from '../../data/metodos'
+import { limparTreino, marcarTreino } from '../../lib/inatividade'
 import { mmss, useDescanso } from '../../lib/descanso'
 import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
 import { seriesDestacadas } from '../../lib/metodoSeries'
@@ -258,6 +259,35 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
   )
 }
 
+const hms = (ms: number) => {
+  const t = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(t / 3600)
+  const r = `${String(Math.floor((t % 3600) / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+  return h ? `${h}:${r}` : r
+}
+
+// Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
+function RelogioTreino({ inicio, fim, realizado, quieto, onIniciar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; onIniciar: () => void }) {
+  const [agora, setAgora] = useState(Date.now)
+  const rodando = inicio != null && !realizado
+  // A marca de treino em andamento só sai no "Concluir treino" (abrir um treino antigo já concluído não pode
+  // apagar a de outro treino que está rodando neste aparelho).
+  useEffect(() => {
+    if (!rodando) return
+    setAgora(Date.now())
+    const id = setInterval(() => setAgora(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [rodando])
+  if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span></p> : null
+  if (inicio == null) return <Botao tipo="primario" className="mb-3 w-full" onClick={onIniciar}>▶ Iniciar treino</Botao>
+  return (
+    <p role="timer" className="mb-3 flex items-center gap-2 text-sm text-slate-400">
+      <span aria-hidden className={`h-2 w-2 rounded-full bg-emerald-400 ${quieto ? '' : 'animate-pulse'}`} />
+      Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{hms(agora - inicio)}</span>
+    </p>
+  )
+}
+
 const CONFETE = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#facc15', '#a78bfa']
 
 // Aviso de recorde: some sozinho em ~4 s (o pai troca a `key` a cada recorde).
@@ -302,6 +332,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const descanso = useDescanso()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
+  const [inicioLocal, setInicioLocal] = useState<number | null>(null) // hora do toque, até o servidor confirmar
+  const jaIniciou = useRef(false)
   // Festa no recorde: só leitura do histórico inteiro do aluno.
   const quieto = useReducedMotion()
   const qTodos = useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid])
@@ -334,9 +366,19 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const cargasCruas = docParaCargas(docAtual?.cargas) // o que está gravado de fato (para decidir o que gravar)
   const pcsPorRegistro = Object.fromEntries(docsRegistros.map((r) => [`${r.semana}-${r.treino}`, r.pc]))
   const iniciado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.inicioEm)
-  const iniciou = () => { if (!iniciado) marcarInicio(mesoId, uid, semana, treino) }
+  const iniciou = () => {
+    if (iniciado || jaIniciou.current) return
+    jaIniciou.current = true
+    const t = Date.now()
+    setInicioLocal(t)
+    marcarTreino(t) // treino em andamento neste aparelho conta como uso (inatividade)
+    marcarInicio(mesoId, uid, semana, treino)
+  }
   const vermelho = acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin)
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
+  const ms = (t: unknown) => (t as { toMillis?: () => number } | null | undefined)?.toMillis?.() ?? null
+  const inicioMs = ms(docAtual?.inicioEm) ?? inicioLocal
+  const fimMs = ms((docAtual as { realizadoEm?: unknown } | undefined)?.realizadoEm)
 
   // Peso do corpo de um exercício (render e "Concluir"). Automático só em slot sem carga e sem escolha explícita: o histórico nunca muda.
   const estadoCorpo = (e: (typeof sessao.exercicios)[number]) => {
@@ -355,6 +397,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
       // Crua: série vazia só com reps feitas (que a leitura já conta como corpo) também é gravada.
       for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
+    limparTreino()
     marcarRealizado(mesoId, uid, semana, treino, true)
     ir(base || '/')
   }
@@ -393,6 +436,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
+      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} onIniciar={iniciou} />
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
