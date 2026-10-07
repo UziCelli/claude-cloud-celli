@@ -250,6 +250,26 @@ export function recordeAnterior(historico: Record<string, Ocorrencia[]>, nome: s
   return cs.length ? Math.max(...cs) : null
 }
 
+// Tela de fim de treino: volume, recordes e cargas que subiram, contra os treinos anteriores a este (ordem do histórico).
+export function resumoTreino(historico: Record<string, Ocorrencia[]>, atual: { mesoId: string; semana: number; treino: number }) {
+  const r = { volumeKg: 0, recordes: [] as { nome: string; kg: number; antes: number }[], subiram: [] as { nome: string; antes: number; agora: number }[] }
+  const deste = (o: Ocorrencia) => o.mesoId === atual.mesoId && o.semana === atual.semana && o.treino === atual.treino
+  for (const [nome, os] of Object.entries(historico)) {
+    const i = os.findIndex(deste)
+    if (i < 0) continue
+    const agoras = os.filter(deste)
+    r.volumeKg += soma(agoras.map((o) => o.volume ?? 0))
+    const agora = Math.max(0, ...cargasPositivas(agoras))
+    const antes = cargasPositivas(os.slice(0, i))
+    if (!agora || !antes.length) continue
+    const recorde = Math.max(...antes)
+    if (agora > recorde) r.recordes.push({ nome, kg: agora, antes: recorde })
+    else if (agora > antes.at(-1)!) r.subiram.push({ nome, antes: antes.at(-1)!, agora })
+  }
+  r.volumeKg = arred(r.volumeKg)
+  return r
+}
+
 // Meso atual de cada aluno = o mais recente que já começou. Evolução e frequência (4 últimas semanas de
 // calendário, de segunda a domingo) são desse meso; sequência e recordes usam o que foi passado do aluno.
 export function rankingAlunos(

@@ -8,6 +8,7 @@ import {
   painelEvolucao,
   rankingAlunos,
   recordeAnterior,
+  resumoTreino,
   treinosFeitos,
   type MesoEvolucao,
   type RegistroEvolucao,
@@ -388,6 +389,40 @@ describe('recordeAnterior', () => {
     expect(recordeAnterior(h, 'Supino', { mesoId: 'm1', semana: 2, treino: 1 })).toBe(50)
     expect(recordeAnterior(h, 'Supino', { mesoId: 'm2', semana: 2, treino: 1 })).toBe(60) // outro meso
     expect(recordeAnterior({ Supino: [o(1, 1, 40)] }, 'Supino', { mesoId: 'm1', semana: 1, treino: 1 })).toBeNull()
+  })
+})
+
+describe('resumoTreino', () => {
+  const o = (semana: number, cargaMax: number | null, volume: number | null = null) => ({ mesoId: 'm1', semana, treino: 1, dia: null, cargaMax, volume })
+  const h = {
+    Supino: [o(1, 40, 800), o(2, 60, 1200), o(3, 70, 1400)], // recorde (antes 60)
+    Agachamento: [o(1, 80, 1600), o(2, 100, 2000), o(3, 90, 1800)], // caiu: nada
+    Terra: [o(3, 100, 2000)], // 1ª vez: não é recorde
+    Rosca: [o(1, 20, 400), o(2, 10, 200), o(3, 15, 300)], // subiu 10 → 15, abaixo do recorde 20
+    Remada: [o(1, 50, 1000), o(2, null, null)], // não treinou na semana 3
+  }
+
+  it('volume do treino, recordes contra os treinos anteriores e cargas que subiram', () => {
+    expect(resumoTreino(h, { mesoId: 'm1', semana: 3, treino: 1 })).toEqual({
+      volumeKg: 1400 + 1800 + 2000 + 300,
+      recordes: [{ nome: 'Supino', kg: 70, antes: 60 }],
+      subiram: [{ nome: 'Rosca', antes: 10, agora: 15 }],
+    })
+  })
+
+  it('treino antigo compara só com o que veio antes dele', () => {
+    expect(resumoTreino(h, { mesoId: 'm1', semana: 2, treino: 1 })).toEqual({
+      volumeKg: 1200 + 2000 + 200,
+      recordes: [
+        { nome: 'Supino', kg: 60, antes: 40 },
+        { nome: 'Agachamento', kg: 100, antes: 80 },
+      ],
+      subiram: [],
+    })
+  })
+
+  it('treino sem nada registrado: tudo vazio', () => {
+    expect(resumoTreino(h, { mesoId: 'm2', semana: 1, treino: 1 })).toEqual({ volumeKg: 0, recordes: [], subiram: [] })
   })
 })
 
