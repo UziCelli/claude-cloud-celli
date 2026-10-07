@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { sair } from '../../lib/acoes'
 import { casar, useRota } from '../../rota'
 import { Botao, Tela } from '../../ui'
@@ -6,9 +7,11 @@ import EvolucaoAluno from './EvolucaoAluno'
 import GuiaMetodos from '../metodos/GuiaMetodos'
 import Hoje from './Hoje'
 import Treino from './Treino'
+import Tutorial, { tutorialNaoVisto } from './Tutorial'
 
 export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
   const rota = useRota()
+  const [tutorial, setTutorial] = useState(tutorialNaoVisto)
   let p: Record<string, string> | null
   let tela = <Hoje uid={uid} />
   if ((p = casar('/treino/:mesoId/:semana/:treino', rota)))
@@ -25,10 +28,14 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
             <a href="#/evolucao" className="hover:text-marca-400">
               Evolução
             </a>
+            <button type="button" onClick={() => setTutorial(true)} className="hover:text-marca-400">
+              Como usar
+            </button>
             <Botao onClick={sair}>Sair</Botao>
           </div>
         </div>
       </header>
+      {tutorial && <Tutorial fechar={() => setTutorial(false)} />}
       <AvisoIOS />
       <Tela chave={rota} abrir={rota.startsWith('/treino')}>{tela}</Tela>
     </>

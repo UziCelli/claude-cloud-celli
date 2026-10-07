@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { METODOS, ORDEM } from '../../data/metodos'
+import { COR_METODO, METODOS, ORDEM } from '../../data/metodos'
 import { mostrarNotasDeNovo } from '../../lib/notasMetodo'
 import { Botao, Cartao } from '../../ui'
 import IconeMetodo from './IconeMetodo'
@@ -17,9 +17,9 @@ export default function GuiaMetodos() {
           const t = METODOS[nome]
           return (
             <Cartao key={nome}>
-              <div className="mb-2 flex items-center gap-3 text-fuchsia-200">
+              <div className={`mb-2 flex items-center gap-3 ${COR_METODO[nome].texto}`}>
                 <IconeMetodo metodo={nome} tamanho={56} />
-                <span className="rounded bg-fuchsia-500/20 px-2 py-1 text-base font-bold text-fuchsia-200">{nome}</span>
+                <span className={`rounded-full px-3 py-1 text-base font-bold ring-1 ${COR_METODO[nome].selo}`}>{nome}</span>
               </div>
               <h2 className="text-xs font-semibold uppercase text-slate-400">O que é</h2>
               <p className="mb-2 text-sm">{t.oQueE}</p>

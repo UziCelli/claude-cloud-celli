@@ -35,6 +35,18 @@ export const METODOS: Record<Metodo, { oQueE: string; comoFazer: string[]; dica?
   },
 }
 
+// Cor de cada método (selo, faixa na série, borda do grupo): métodos juntos no mesmo exercício não se confundem.
+// Classes escritas por extenso: o Tailwind só gera as que aparecem no código.
+export const COR_METODO: Record<Metodo, { selo: string; faixa: string; texto: string; borda: string }> = {
+  Dropset: { selo: 'bg-rose-500/20 text-rose-100 ring-rose-400/60', faixa: 'bg-rose-400', texto: 'text-rose-300', borda: 'border-rose-400/60' },
+  Biset: { selo: 'bg-sky-500/20 text-sky-100 ring-sky-400/60', faixa: 'bg-sky-400', texto: 'text-sky-300', borda: 'border-sky-400/60' },
+  Triset: { selo: 'bg-violet-500/20 text-violet-100 ring-violet-400/60', faixa: 'bg-violet-400', texto: 'text-violet-300', borda: 'border-violet-400/60' },
+  Superset: { selo: 'bg-lime-500/20 text-lime-100 ring-lime-400/60', faixa: 'bg-lime-400', texto: 'text-lime-300', borda: 'border-lime-400/60' },
+  Circuito: { selo: 'bg-emerald-500/20 text-emerald-100 ring-emerald-400/60', faixa: 'bg-emerald-400', texto: 'text-emerald-300', borda: 'border-emerald-400/60' },
+  'Rest-pause': { selo: 'bg-amber-500/20 text-amber-100 ring-amber-400/60', faixa: 'bg-amber-400', texto: 'text-amber-300', borda: 'border-amber-400/60' },
+  Clusterset: { selo: 'bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-400/60', faixa: 'bg-fuchsia-400', texto: 'text-fuchsia-300', borda: 'border-fuchsia-400/60' },
+}
+
 export const ORDEM: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
 
 // "Dropset [últimas 2]" → 'Dropset'

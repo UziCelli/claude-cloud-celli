@@ -18,8 +18,8 @@ Aba e celular antigos continuam rodando versões velhas do app (o service worker
 - `n` (séries prescritas) vem do meso (`docsParaRegistros(docs, meso)`). Sem `n`, usa o maior índice com dado em cargas/reps do slot.
 
 ## Marcação automática (`corpoEhCarga`)
-- Barra fixa, flexão de braços, abdominal no solo sem carga, Superman/Paraquedista e agachamento com peso do corpo já vêm com "Somar meu peso corporal" marcado.
-- Superman/Paraquedista contam 30% do peso do corpo, como o abdominal (deitado de bruços, só o tronco sobe). Antes de 07/10/2026 contavam 100%: registros antigos com o corpo inteiro ficam como estão até alguém desmarcar e marcar de novo "Somar meu peso corporal" naquele treino (o `rebasear` corrige as cargas).
+- Barra fixa, flexão de braços, abdominal no solo sem carga, Superman/Paraquedista e agachamento com peso do corpo já vêm com "Feito com o peso do corpo" marcado.
+- Superman/Paraquedista contam 30% do peso do corpo, como o abdominal (deitado de bruços, só o tronco sobe). Antes de 07/10/2026 contavam 100%: registros antigos com o corpo inteiro ficam como estão até alguém desmarcar e marcar de novo "Feito com o peso do corpo" naquele treino (o `rebasear` corrige as cargas).
 - Só em slot **sem carga** e **sem `pc` explícito**; sem `pesoKg` no perfil não há automático.
 - Ao gravar a 1ª carga, o `pc` é gravado junto: o histórico não muda.
 

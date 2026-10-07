@@ -165,7 +165,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await page.getByRole('button', { name: /Treino 2/ }).click()
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
     page.once('dialog', (d) => d.accept('80'))
-    await cartao.getByRole('checkbox', { name: /Somar meu peso corporal/ }).check()
+    await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
     await expect(cartao.getByText('Peso do corpo contado: 80 kg (100% de 80 kg)')).toBeVisible()
 
     const kg = cartao.locator('input[type="number"]').first()
@@ -269,7 +269,7 @@ test('selos de método, nota, guia e cronômetro que sobrevive ao reload', async
 
   const nota = page.getByRole('dialog', { name: 'Métodos deste treino' })
   await expect(nota).toBeVisible()
-  await expect(nota.getByText('Toque no selo rosa do exercício para ver esta explicação de novo.')).toBeVisible()
+  await expect(nota.getByText('Toque no selo colorido do exercício para ver esta explicação de novo.')).toBeVisible()
   await page.screenshot({ path: 'test-results/prints/91-nota.png' })
   await nota.getByRole('button', { name: 'Não mostrar de novo' }).click()
   await expect(nota).toBeHidden()

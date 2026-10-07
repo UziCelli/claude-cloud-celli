@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { textosCartao } from './cartaoStory'
+import { limitar, textosCartao } from './cartaoStory'
 
 describe('textosCartao', () => {
   it('formata em pt-BR com vírgula e plural', () => {
@@ -11,5 +11,12 @@ describe('textosCartao', () => {
     const t = textosCartao({ nome: 'Bia', treinos: 2, semanasSeguidas: 0, toneladas: '1,2 t' })
     expect(t.destaque).toBeUndefined()
     expect(t.numeros[2].rotulo).toBe('levantadas no total')
+  })
+})
+
+describe('limitar', () => {
+  it('até 3 itens e "+N" se houver mais', () => {
+    expect(limitar(['a', 'b'])).toEqual(['a', 'b'])
+    expect(limitar(['a', 'b', 'c', 'd', 'e'])).toEqual(['a', 'b', 'c', '+2'])
   })
 })
