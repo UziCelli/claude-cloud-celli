@@ -67,7 +67,7 @@ for (const presencial of [false, true]) {
     await reps.blur()
     await page.screenshot({ path: '/tmp/claude-0/-home-user-claude-cloud-celli/7bb1957b-62c0-5c39-98cc-434448e8e65a/scratchpad/presencial-treino.png' })
     const fixa = page.locator('.rounded-xl.border').filter({ hasText: 'Barra Fixa Aberta' })
-    await fixa.getByRole('checkbox', { name: /Somar meu peso corporal/ }).check()
+    await fixa.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
 
     await page.getByRole('button', { name: 'Concluir treino' }).click()
     await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()

@@ -2,11 +2,11 @@ import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { prescreverSessao, type Metodo } from '../../engine'
-import { METODOS, metodoDoRotulo } from '../../data/metodos'
+import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
 import { limparTreino, marcarTreino } from '../../lib/inatividade'
 import { mmss, useDescanso } from '../../lib/descanso'
 import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
-import { seriesDestacadas } from '../../lib/metodoSeries'
+import { seriesDoRotulo } from '../../lib/metodoSeries'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
@@ -54,7 +54,7 @@ function Novidades() {
       <div className="mb-1 font-semibold">Novidades</div>
       <ul className="mb-3 space-y-1 text-slate-300">
         <li>📝 Anotação em cada exercício</li>
-        <li>Somar meu peso corporal: já vem marcado na barra fixa e na flexão; nos campos, anote só o peso extra</li>
+        <li>Feito com o peso do corpo: já vem marcado na barra fixa e na flexão; nos campos, anote só o peso extra</li>
         <li>Número cinza = carga da semana passada</li>
         <li>▶ Treino do dia em destaque na tela Hoje</li>
       </ul>
@@ -92,7 +92,7 @@ function ExplicacaoMetodo({ metodo, fechar }: { metodo: Metodo; fechar: () => vo
   const t = METODOS[metodo]
   return (
     <Modal rotulo={`Como fazer ${metodo}`}>
-      <div className="mb-3 flex items-center gap-3 text-fuchsia-200">
+      <div className={`mb-3 flex items-center gap-3 ${COR_METODO[metodo].texto}`}>
         <IconeMetodo metodo={metodo} tamanho={48} />
         <h2 className="text-lg font-bold text-slate-100">{metodo}</h2>
       </div>
@@ -123,7 +123,7 @@ function NotaMetodos({ metodos }: { metodos: Metodo[] }) {
           <h2 className="mb-3 text-lg font-bold">Métodos deste treino</h2>
           <div className="mb-3 space-y-3">
             {metodos.map((x) => (
-              <div key={x} className="flex gap-3 text-fuchsia-200">
+              <div key={x} className={`flex gap-3 ${COR_METODO[x].texto}`}>
                 <IconeMetodo metodo={x} tamanho={40} />
                 <div className="min-w-0 text-sm text-slate-300">
                   <div className="font-bold text-slate-100">{x}</div>
@@ -132,7 +132,7 @@ function NotaMetodos({ metodos }: { metodos: Metodo[] }) {
               </div>
             ))}
           </div>
-          <p className="mb-4 text-xs text-slate-400">Toque no selo rosa do exercício para ver esta explicação de novo.</p>
+          <p className="mb-4 text-xs text-slate-400">Toque no selo colorido do exercício para ver esta explicação de novo.</p>
           <div className="flex flex-col gap-2">
             <Botao tipo="primario" className="w-full" onClick={() => setVer(false)}>
               Entendi
@@ -233,15 +233,15 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     setEditando(true)
   }
   const fechado = texto ? (
-    <p className="mb-2 break-words text-xs italic text-slate-400">
-      {texto}{' '}
-      <button onClick={abrir} className="not-italic text-slate-300 underline">
-        editar
+    <div className="mb-3 flex items-start justify-between gap-3 rounded-lg border border-amber-500/60 bg-amber-500/10 px-3 py-2">
+      <p className="min-w-0 break-words text-sm text-amber-100">{texto}</p>
+      <button onClick={abrir} className="shrink-0 py-1 text-sm font-semibold text-amber-300 underline">
+        ✏️ editar
       </button>
-    </p>
+    </div>
   ) : (
-    <button onClick={abrir} className="mb-2 text-xs text-slate-500">
-      📝 Anotação
+    <button onClick={abrir} className="mb-3 w-full rounded-lg border border-dashed border-slate-500 px-3 py-2.5 text-left text-sm text-slate-300">
+      📝 Anotação — toque para escrever
     </button>
   )
   return (
@@ -268,7 +268,7 @@ const hms = (ms: number) => {
 }
 
 // Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
-function RelogioTreino({ inicio, fim, realizado, quieto, onIniciar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; onIniciar: () => void }) {
+function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void }) {
   const [agora, setAgora] = useState(Date.now)
   const rodando = inicio != null && !realizado
   // A marca de treino em andamento só sai no "Concluir treino" (abrir um treino antigo já concluído não pode
@@ -279,12 +279,13 @@ function RelogioTreino({ inicio, fim, realizado, quieto, onIniciar }: { inicio: 
     const id = setInterval(() => setAgora(Date.now()), 1000)
     return () => clearInterval(id)
   }, [rodando])
-  if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span></p> : null
+  if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span> · previsto {previsto}</p> : null
   if (inicio == null) return <Botao tipo="primario" className="mb-3 w-full" onClick={onIniciar}>▶ Iniciar treino</Botao>
   return (
     <p role="timer" className="mb-3 flex items-center gap-2 text-sm text-slate-400">
       <span aria-hidden className={`h-2 w-2 rounded-full bg-emerald-400 ${quieto ? '' : 'animate-pulse'}`} />
       Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{hms(agora - inicio)}</span>
+      <span className="text-slate-500">· previsto {previsto}</span>
     </p>
   )
 }
@@ -475,7 +476,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
-      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} onIniciar={iniciou} />
+      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} />
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
@@ -492,7 +493,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
           const colunasReps = rs[e.slot.slotId] ?? []
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos, pcsPorRegistro) // só o extra, com o corpo do registro de origem
           const slot = e.slot.slotId
-          const destaque = seriesDestacadas(e.rotulo, e.n)
+          const partes = e.rotulo ? e.rotulo.split('; ').map((p) => ({ p, mt: metodoDoRotulo(p) })) : []
+          const gc = gk ? COR_METODO[gk.split('|')[0] as Metodo] : undefined
           const frac = fracaoPC(e.slot.nome)
           const { auto, corpo } = estadoCorpo(e)
           // Troca do corpo ainda não confirmada pelo Firestore: um 2º toque rebasearia sobre cargas velhas.
@@ -519,10 +521,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
             gravaPc(Math.round(peso * frac * 10) / 10)
           }
           return (
-            <m.div key={e.slot.slotId} variants={item} className={`relative rounded-xl border bg-slate-900 p-4 ${gk ? 'border-marca-500/60' : 'border-slate-800'}`}>
-              {gk && ordem > 0 && <span aria-hidden className="absolute -top-4 left-6 h-4 w-0.5 bg-marca-500" />}
+            <m.div key={e.slot.slotId} variants={item} className={`relative rounded-xl border bg-slate-900 p-4 ${gc ? gc.borda : 'border-slate-800'}`}>
+              {gk && ordem > 0 && <span aria-hidden className={`absolute -top-4 left-6 h-4 w-0.5 ${gc?.faixa}`} />}
               {gk && (
-                <div className="mb-2 text-xs font-semibold text-marca-500">
+                <div className={`mb-2 text-xs font-semibold ${gc?.texto}`}>
                   {gk.split('|')[0]} {membros.map((_, k) => <span key={k}>{k > 0 && ' / '}<span className={k === ordem ? 'text-slate-100' : ''}>{letra}{k + 1}</span></span>)}
                 </div>
               )}
@@ -538,7 +540,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                             key={parte}
                             disabled={!mt}
                             onClick={() => mt && setExplicar(mt)}
-                            className="flex items-center gap-1.5 rounded-full bg-fuchsia-500/20 px-2.5 py-1 text-sm font-bold text-fuchsia-100 ring-1 ring-fuchsia-400/60"
+                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${mt ? COR_METODO[mt].selo : ''}`}
                           >
                             {mt && <IconeMetodo metodo={mt} tamanho={20} />}
                             {parte} <span aria-hidden>ⓘ</span>
@@ -578,9 +580,18 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                     : anterior?.[k] != null
                       ? fmt(anterior[k]!)
                       : null
+                  // Uma faixa colorida por método que cobre esta série (etapas do drop = Dropset).
+                  const cores = [...new Set(partes.filter(({ p, mt }) => mt && (dropStage ? mt === 'Dropset' : seriesDoRotulo(p, e.n).includes(k + 1))).map(({ mt }) => mt!))]
                   return (
-                    <div key={k} className={`grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5 ${dropStage || destaque.has(k + 1) ? 'rounded-lg border border-fuchsia-400 px-1 py-1 ring-1 ring-fuchsia-400/30' : ''}`}>
-                      <span className="text-xs text-slate-400">{rotuloCol}</span>
+                    <div key={k} className={`relative grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5 ${e.rotulo ? 'pl-3' : ''}`}>
+                      {cores.length > 0 && (
+                        <span aria-hidden className="absolute inset-y-0 left-0 flex gap-0.5">
+                          {cores.map((c) => (
+                            <span key={c} className={`w-1 rounded-full ${COR_METODO[c].faixa}`} />
+                          ))}
+                        </span>
+                      )}
+                      <span className={`text-xs ${cores[0] ? `font-bold ${COR_METODO[cores[0]].texto}` : 'text-slate-400'}`}>{rotuloCol}</span>
                       <span className="truncate text-xs text-slate-400">{repAlvo} reps</span>
                       <LoadInput
                         className="w-full min-w-0"
@@ -614,7 +625,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
               <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
                 <input type="checkbox" checked={!!corpo} disabled={trocandoPc} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
                 <span>
-                  <b>Somar meu peso corporal</b>
+                  <b>Feito com o peso do corpo</b>
                   <span className="block text-xs text-slate-400">
                     {auto || (corpo > 0 && corpoEhCarga(e.slot.nome))
                       ? 'Já vem marcado porque neste exercício o corpo é a carga. Nos campos, anote só o peso extra (anilha, colete, cinto).'

@@ -24,7 +24,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - PR #27 (2 etapas obrigatórias + App Check) juntado e publicado. PR #28 corrigiu o login que caía na hora (marca de inatividade antiga).
   - App Check: **reCAPTCHA Enterprise** registrado no Firebase em modo Monitorar (01/10/2026). Após alguns dias sem erros, conferir o uso (grátis até 10 mil/mês) e mudar para **Aplicar**.
 - **01/10/2026 (madrugada, autorizado pelo Victor a juntar sozinho):** PRs #29 e #30 juntados e publicados.
-  - Peso do corpo automático (barra fixa, flexão de braços, abdominais no solo sem carga, "Agachamento com Peso do Corpo") + opção "Somar meu peso corporal" abaixo das séries; campo de anotação limpo; menu do topo sem cortes (ícone de conta no celular).
+  - Peso do corpo automático (barra fixa, flexão de braços, abdominais no solo sem carga, "Agachamento com Peso do Corpo") + opção "Feito com o peso do corpo" abaixo das séries; campo de anotação limpo; menu do topo sem cortes (ícone de conta no celular).
   - Aluno de exemplo "Victor C.L. Silva" (antes "Victor Aluno") com o meso `exemplo-victor`; workflow "Aluno de exemplo" (rodar em `gravar` antes de cada apresentação); roteiro em `docs/apresentacao.md`. O meso de teste antigo "Teste 1" dessa conta foi encerrado (só a data; `inicioOriginal` guarda a antiga).
   - Para o Victor decidir: marcar também como peso do corpo Abdominal Paralela (4 variações), Abdominal Declinado, Tríceps Barra Paralela, Flexão Nórdica?
 - **01/10/2026 (dia, Victor autorizou juntar direto):**

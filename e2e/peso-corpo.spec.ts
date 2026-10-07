@@ -33,18 +33,18 @@ test('peso do corpo: marcar depois de digitar mantém o extra; concluir preenche
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
 
-  await test.step('(a) digita o extra e depois marca "Somar meu peso corporal"', async () => {
+  await test.step('(a) digita o extra e depois marca "Feito com o peso do corpo"', async () => {
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
     const kg = cartao.locator('input[type="number"]').first()
     await kg.fill('20')
     await kg.blur()
     await expect.poll(() => cargaDe('a', 's1'), { timeout: 15_000 }).toBe(20)
-    await cartao.getByRole('checkbox', { name: /Somar meu peso corporal/ }).check()
+    await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
     await expect(cartao.getByText('Peso do corpo contado: 80 kg')).toBeVisible()
     await expect(kg).toHaveValue('20')
     await expect.poll(() => cargaDe('a', 's1'), { timeout: 15_000 }).toBe(100)
     // desmarcar volta ao extra
-    await cartao.getByRole('checkbox', { name: /Somar meu peso corporal/ }).uncheck()
+    await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).uncheck()
     await expect(kg).toHaveValue('20')
     await expect.poll(() => cargaDe('a', 's1'), { timeout: 15_000 }).toBe(20)
   })
@@ -140,7 +140,7 @@ test('formato antigo concluído: coach soma o corpo (80 + extra) e o aluno vê "
     await expect(kg.nth(2)).toHaveValue('5')
     await expect(kg.nth(4)).toHaveValue('0')
     // desmarcar grava o extra de volta (2), sem perder nada
-    await cartao.getByRole('checkbox', { name: /Somar meu peso corporal/ }).uncheck()
+    await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).uncheck()
     await expect
       .poll(async () => num((((await lerDoc(`registros/${regId}`))?.fields ?? {}) as any).cargas?.mapValue?.fields?.a?.mapValue?.fields?.s1), { timeout: 15_000 })
       .toBe(2)
