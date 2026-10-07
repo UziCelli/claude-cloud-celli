@@ -8,6 +8,8 @@ const TABELA: [RegExp, number][] = [
   [/remada invertida|australiana/, 0.6],
   [/agachamento|afundo|passada|bulgaro|avanco|step|subida/, 0.88],
   [/panturrilha/, 0.95],
+  // Superman/paraquedista (deitado de bruços, ergue o tronco): move uns 30% do corpo, como o abdominal supra.
+  [/^superman|paraquedista/, 0.3],
   [/lombar|hiperextensao|banco romano/, 0.55],
   [/elevacao pelvica|ponte|gluteo no solo/, 0.5],
   [/abdominal/, 0.3],
@@ -21,11 +23,11 @@ export function fracaoPC(nome: string) {
 }
 
 // Exercícios em que o corpo É a carga: já vêm com "somar peso corporal" marcado (se o slot ainda não tem carga).
-// Barra fixa, flexão de braços, abdominal no solo sem carga extra e agachamento sem implemento.
+// Barra fixa, flexão de braços, abdominal no solo sem carga extra, superman/paraquedista e agachamento sem implemento.
 // Fica de fora: flexão nórdica/de joelhos/palmar, agachamento com barra/halter/Smith/máquina, abdominal de máquina/polia/peso.
 export function corpoEhCarga(nome: string) {
   const n = semAcento(nome).trim()
-  if (/^barra fixa|^flexao de bracos|^agachamento com peso do corpo$/.test(n)) return true
+  if (/^barra fixa|^flexao de bracos|^agachamento com peso do corpo$|^superman$|^paraquedista$/.test(n)) return true
   return /^abdominal (infra no solo|tesoura|recolhimento)/.test(n) && !/peso|caneleira|anilha|halter|maquina|polia|cabo/.test(n)
 }
 
