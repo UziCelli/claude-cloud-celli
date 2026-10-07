@@ -127,3 +127,18 @@ Plano Spark do Firebase:
   - os valores dentro de `cargas`, `reps`, `pc` e `notas` não têm o tipo validado; o dano fica só nos dados do próprio aluno, e o motor ignora o que não é número;
   - login anônimo: fechado nas regras em 03/10/2026 (`signedIn()` não conta o provider `anonymous`). Mesmo se alguém ligar "Anônimo" no console, ele não grava nada. Mesmo assim, mantenha desligado.
 - `e2e/varredura.spec.ts` abre todas as telas (coach, aluno e públicas) em 1280 e 390 px e falha em caso de erro, rolagem horizontal ou "undefined"/"NaN".
+
+## 8. Verificação 07/10/2026 (depois do Painel de Evolução, do app da Gislane e da inatividade de 4 h)
+- **Testes:** regras + ataques (199 testes, 79 casos de ataque) passando; nenhum furo novo.
+- **Regras do Firestore:** iguais às da auditoria de 02/10; o app da Gislane publica as MESMAS regras no projeto dela.
+- **Workflows das duas marcas** (backup, Limpeza LGPD, vigia, erros, 2 etapas, APK): cada execução só toca o próprio projeto (`PROJETO` obrigatório e validado), backups com prefixos que não se misturam, entradas manuais validadas por `case`. Nenhum gatilho perigoso (`pull_request_target`, comentário de issue); permissões mínimas. O CI ganhou `permissions: contents: read`.
+- **Cabeçalhos do site:** CSP estrita (sem script de terceiros além do reCAPTCHA), HSTS, `X-Frame-Options: DENY`, `nosniff`, `Permissions-Policy`.
+- **Segredos:** nenhum no repositório (`.env.*` só têm a configuração pública do Firebase; o keystore do APK está criptografado). Repositório privado.
+- **Dependências:** app em produção com 0 vulnerabilidades. Ferramentas de desenvolvimento: 2 alertas novos corrigidos (`@modelcontextprotocol/sdk`, `source-map-js`; `firebase-tools` 15.32.1). Restam alertas só dentro do `firebase-tools` (roda no GitHub, nunca no celular), sem correção ainda; o Dependabot avisa quando sair.
+- **Evolução/ranking/recorde:** só leitura de dados que as regras já liberam (aluno: só os próprios; coach: todos). Cartão do story leva só o primeiro nome e números.
+- **Inatividade do aluno em 4 h** (pedido do Victor): risco baixo (celular do próprio aluno, só vê o próprio treino). Coach continua com 20 min.
+- **Pendências (console, Victor):**
+  - App Check da VFIT: mudar de Monitorar para **Aplicar**;
+  - App Check da Gislane: ainda **não existe** (o `.env.gislane` não tem `VITE_RECAPTCHA_KEY`). Criar a chave reCAPTCHA Enterprise no projeto `gislane-personal-trainer` (domínio `app.gislanepersonaltrainer.com`), registrar no App Check e me passar a chave do site;
+  - Gislane: conferir se a chave de navegador (API key) está restrita aos domínios dela, como na VFIT (não há registro disso nos docs);
+  - as duas marcas usam a mesma conta de serviço (`FIREBASE_SERVICE_ACCOUNT`): se vazar, afeta os dois projetos. Aceitável hoje; separar se a Gislane crescer.
