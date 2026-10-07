@@ -50,6 +50,8 @@ async function iniciarEConcluir(page: Page, print = false) {
   await expect.poll(() => seg(page), { timeout: 8000 }).toBeGreaterThan(a)
   if (print) await page.screenshot({ path: PRINT })
   await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
   await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
   await expect(page.getByText('Treino em andamento')).toHaveCount(0)
 }

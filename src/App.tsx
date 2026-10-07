@@ -60,7 +60,7 @@ function Principal() {
 function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
   const aviso = useInatividade(papel)
   return aviso ? (
-    <div role="alert" className="fixed inset-x-0 top-0 z-50 bg-amber-950 px-4 py-2 text-center text-sm text-amber-200">
+    <div role="alert" className="fixed inset-x-0 top-0 z-50 bg-amber-950 px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] text-center text-sm text-amber-200">
       Conecte-se à internet para salvar suas cargas antes de sair.
     </div>
   ) : null
