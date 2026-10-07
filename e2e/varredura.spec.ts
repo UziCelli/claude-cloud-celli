@@ -104,6 +104,11 @@ for (const largura of [1280, 390]) {
     await confere('coach-aluno')
     await ir(`/#/aluno/${alunoId}/evolucao`, 'Evolução')
     await confere('coach-evolucao')
+    await ir(`/#/aluno/${alunoId}/presencial`, 'Presencial:')
+    await confere('coach-presencial-hoje')
+    await ir(`/#/aluno/${alunoId}/presencial/treino/${mesoId}/1/2`, 'Presencial:')
+    await expect(page.getByRole('heading', { name: 'Treino 2' })).toBeVisible()
+    await confere('coach-presencial-treino')
     await ir('/#/ranking', 'Ranking de evolução')
     await confere('coach-ranking')
 

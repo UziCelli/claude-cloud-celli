@@ -44,6 +44,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       acoes={
         <>
           <Botao onClick={() => ir(`/aluno/${uid}/evolucao`)}>Evolução</Botao>
+          <Botao onClick={() => ir(`/aluno/${uid}/presencial`)}>Treino presencial</Botao>
           <Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>
         </>
       }

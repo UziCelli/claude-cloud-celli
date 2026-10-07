@@ -292,7 +292,7 @@ function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolea
   )
 }
 
-export default function Treino({ uid, mesoId, semana, treino }: { uid: string; mesoId: string; semana: number; treino: number }) {
+export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid: string; mesoId: string; semana: number; treino: number; base?: string }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', mesoId))
   const { dados: docsRegistros, pendente } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
@@ -356,7 +356,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
       for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     marcarRealizado(mesoId, uid, semana, treino, true)
-    ir('/')
+    ir(base || '/')
   }
 
   // Exercícios do mesmo grupo de método ficam juntos (só a ordem de exibição muda).
@@ -379,7 +379,7 @@ export default function Treino({ uid, mesoId, semana, treino }: { uid: string; m
   return (
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
       <AvisoNotificacoes />
-      <button onClick={() => ir('/')} className="mb-2 text-sm text-slate-400">
+      <button onClick={() => ir(base || '/')} className="mb-2 text-sm text-slate-400">
         ← Hoje
       </button>
       <div className="mb-4 flex items-center justify-between gap-3">
