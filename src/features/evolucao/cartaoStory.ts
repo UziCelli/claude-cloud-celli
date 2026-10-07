@@ -51,12 +51,7 @@ function caixa(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.roundRect(x, y, w, h, r)
 }
 
-function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
-  const t = textosCartao(d)
-  const disp = (px: number, peso = 800) => `${peso} ${px}px Montserrat, 'Arial Black', sans-serif`
-  const sans = (px: number, peso = 500) => `${peso} ${px}px Inter, system-ui, sans-serif`
-  ctx.textBaseline = 'alphabetic'
-
+function fundoELogo(ctx: CanvasRenderingContext2D, y: number, lw: number) {
   // Fundo
   const g = ctx.createLinearGradient(0, 0, W * 0.6, H)
   g.addColorStop(0, C.m700)
@@ -73,16 +68,24 @@ function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
   }
 
   // Logo (o "COACH" é vazado: aparece o fundo)
-  const lw = 560
   const k = lw / LOGO_VIEWBOX.w
   ctx.save()
-  ctx.translate((W - lw) / 2, 130)
+  ctx.translate((W - lw) / 2, y)
   ctx.scale(k, k)
   for (const p of LOGO_PARTES) {
     ctx.fillStyle = p.cor
     ctx.fill(new Path2D(p.d), 'evenodd')
   }
   ctx.restore()
+}
+
+function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
+  const t = textosCartao(d)
+  const disp = (px: number, peso = 800) => `${peso} ${px}px Montserrat, 'Arial Black', sans-serif`
+  const sans = (px: number, peso = 500) => `${peso} ${px}px Inter, system-ui, sans-serif`
+  ctx.textBaseline = 'alphabetic'
+
+  fundoELogo(ctx, 130, 560)
 
   // Título e nome
   ctx.textAlign = 'center'
@@ -175,4 +178,85 @@ export async function compartilharCartao(blob: Blob): Promise<'compartilhado' | 
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 10000)
   return 'baixado'
+}
+
+// ---- Cartão do fim do treino (story 1080×1920) ----
+export type DadosTreino = {
+  nome: string // só o primeiro nome
+  data: string
+  duracao: string | null
+  volume: string | null // ex.: "12.500 kg"
+  comparacao?: string
+  recordes: string[] // "Supino: 60 kg"
+  subiram: string[] // "Remada: 40 → 45 kg"
+  semana: { feitos: number; total: number }
+}
+
+const MAX_LISTA = 3
+export const limitar = (l: string[]) => (l.length > MAX_LISTA ? [...l.slice(0, MAX_LISTA), `+${l.length - MAX_LISTA}`] : l)
+
+function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
+  const disp = (px: number, peso = 800) => `${peso} ${px}px Montserrat, 'Arial Black', sans-serif`
+  const sans = (px: number, peso = 600) => `${peso} ${px}px Inter, system-ui, sans-serif`
+  const texto = (t: string, y: number, cor: string, px: number, peso = 800, fam = disp) => {
+    ctx.fillStyle = cor
+    ajustar(ctx, t, (p) => fam(p, peso), px, W - 160)
+    ctx.fillText(t, W / 2, y)
+  }
+  ctx.textBaseline = 'alphabetic'
+  fundoELogo(ctx, 110, 420)
+  ctx.textAlign = 'center'
+  texto(d.data.toUpperCase(), 330, C.m300, 38, 700)
+  texto('TREINO CONCLUÍDO', 450, '#fff', 92, 900)
+  texto(d.nome, 560, C.m300, 76, 800)
+
+  let y = 640
+  for (const [valor, rotulo] of [[d.duracao, 'DURAÇÃO'], [d.volume, 'VOLUME']] as const) {
+    if (!valor) continue
+    ctx.fillStyle = rgba(C.s800, 0.72)
+    caixa(ctx, 70, y, W - 140, 270, 40)
+    ctx.fill()
+    texto(rotulo, y + 60, C.s300, 34, 700, sans)
+    texto(valor, y + 190, '#fff', 150, 900)
+    if (rotulo === 'VOLUME' && d.comparacao) texto(d.comparacao, y + 244, C.m300, 36, 600, sans)
+    y += 296
+  }
+
+  for (const [titulo, lista, cor] of [['🏆 RECORDES', d.recordes, '#fcd34d'], ['↑ SUBIU A CARGA', d.subiram, '#6ee7b7']] as const) {
+    if (!lista.length) continue
+    const l = limitar(lista)
+    texto(titulo, y + 50, cor, 40, 800)
+    l.forEach((t, i) => texto(t, y + 106 + i * 56, '#fff', 40, 600, sans))
+    y += 80 + l.length * 56 + 30
+  }
+
+  // Semana: um segmento por treino
+  const { feitos, total } = d.semana
+  const gap = 14
+  const n = Math.min(Math.max(total, 1), 7)
+  const sw = (W - 200 - gap * (n - 1)) / n
+  const yb = H - 250
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = i < feitos ? C.m400 : rgba('#ffffff', 0.2)
+    caixa(ctx, 100 + i * (sw + gap), yb, sw, 26, 13)
+    ctx.fill()
+  }
+  texto(`Semana: ${feitos} de ${total} treinos`, yb + 90, '#fff', 40, 600, sans)
+  ctx.fillStyle = C.m300
+  ctx.font = disp(34, 700)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '10px'
+  ctx.fillText(marca.nome.toUpperCase(), W / 2, H - 70)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+}
+
+export async function gerarCartaoTreino(d: DadosTreino): Promise<Blob> {
+  await document.fonts.ready
+  await Promise.all([document.fonts.load("800 40px Montserrat"), document.fonts.load("600 40px Inter")]).catch(() => {})
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')
+  if (!ctx) throw new Error('Canvas indisponível')
+  desenharTreino(ctx, d)
+  return new Promise((ok, erro) => c.toBlob((b) => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'))
 }
