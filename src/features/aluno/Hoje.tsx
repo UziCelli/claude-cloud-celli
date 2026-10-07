@@ -2,7 +2,7 @@ import { collection, query, where } from 'firebase/firestore'
 import { m, useReducedMotion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { prescreverSessao, type Meso } from '../../engine'
-import type { RegistroDoc } from '../../lib/conversores'
+import { repsAbaixo, type RegistroAlerta } from '../../lib/alertas'
 import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
 import { ir } from '../../rota'
@@ -35,7 +35,7 @@ export default function Hoje({ uid, base = '' }: { uid: string; base?: string })
   )
 }
 
-type RegistroFlag = RegistroDoc & { realizado?: boolean }
+type RegistroFlag = RegistroAlerta
 
 function Semana({ uid, base, mesoId, meso, hoje }: { uid: string; base: string; mesoId: string; meso: Meso; hoje: Date }) {
   const { dados: registros, carregando } = useLista<RegistroFlag>(
@@ -43,6 +43,29 @@ function Semana({ uid, base, mesoId, meso, hoje }: { uid: string; base: string; 
   )
   if (carregando) return <Centro>Carregando…</Centro>
   return <SemanaCarregada base={base} mesoId={mesoId} meso={meso} registros={registros} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
+}
+
+// Aviso de reps abaixo da meta nos últimos 7 dias; "Entendi" guarda no aparelho (sem armazenamento, volta no próximo acesso).
+function AvisoReps({ meso, mesoId, registros }: { meso: Meso; mesoId: string; registros: RegistroFlag[] }) {
+  const a = repsAbaixo(meso, registros, new Date())
+  const chave = `alerta-reps-${mesoId}-${a?.ultimoDia}`
+  const [visto, setVisto] = useState(() => {
+    try { return localStorage.getItem(chave) === '1' } catch { return false }
+  })
+  if (!a || visto) return null
+  const entendi = () => {
+    setVisto(true)
+    try { localStorage.setItem(chave, '1') } catch { /* sem armazenamento */ }
+  }
+  return (
+    <div role="alert" className="mb-4 space-y-3 rounded-xl border-2 border-amber-500 bg-amber-950 p-4 text-sm text-amber-100">
+      <p>
+        <b>Reps abaixo da meta:</b> nos últimos 7 dias você fez menos reps que o previsto em {a.abaixo} séries (ex.: {a.exercicios[0].nome}).
+        Pode ser descanso curto, sono ou alimentação. No próximo treino, diminua um pouco o peso para completar as reps.
+      </p>
+      <Botao onClick={entendi}>Entendi</Botao>
+    </div>
+  )
 }
 
 function SemanaCarregada({ base, meso, mesoId, registros, semanaInicial }: { base: string; mesoId: string; meso: Meso; registros: RegistroFlag[]; semanaInicial: number }) {
@@ -55,6 +78,7 @@ function SemanaCarregada({ base, meso, mesoId, registros, semanaInicial }: { bas
 
   return (
     <>
+      <AvisoReps meso={meso} mesoId={mesoId} registros={registros} />
       <div className="mb-4 flex items-center justify-center gap-4">
         <Botao disabled={semana <= 1} onClick={() => setSemana((s) => s - 1)}>
           ←

@@ -11,6 +11,7 @@ import { Abertura, Aviso, Botao, Centro, Tela } from './ui'
 import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
 import Inicio from './features/coach/inicio/Inicio'
+import Alertas from './features/coach/alertas/Alertas'
 import NovoAluno from './features/coach/alunos/NovoAluno'
 import Alunos from './features/coach/alunos/Alunos'
 import MesosDoAluno from './features/coach/meso/MesosDoAluno'
@@ -87,6 +88,7 @@ function MenuRolavel() {
         className="-m-1 flex gap-3 overflow-x-auto p-1 sm:gap-4 text-sm text-slate-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap [&>a]:py-2"
       >
         <a href="#/" className="hover:text-marca-400">Início</a>
+        <a href="#/alertas" className="hover:text-marca-400">Alertas</a>
         <a href="#/alunos" className="hover:text-marca-400">Alunos</a>
         <a href="#/metodos" className="hover:text-marca-400">Métodos</a>
         <a href="#/conta" aria-label="Minha conta" title="Minha conta" className="hover:text-marca-400">
@@ -111,7 +113,8 @@ function Coach({ uid, email }: { uid: string; email: string }) {
   }, [uid])
   let p: Record<string, string> | null
   let tela = <Inicio />
-  if (rota === '/alunos') tela = <Alunos />
+  if (rota === '/alertas') tela = <Alertas />
+  else if (rota === '/alunos') tela = <Alunos />
   else if (rota === '/alunos/novo') tela = <NovoAluno />
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />

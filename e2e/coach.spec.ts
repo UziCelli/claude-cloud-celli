@@ -265,9 +265,11 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
   await page.getByRole('button', { name: 'Voltar ao padrão' }).click()
   await expect(page.getByRole('button', { name: 'Voltar ao padrão' })).toHaveCount(0)
 
-  // Início: cartão com aluno, semana, treino e tempo
+  // Alertas: cartão com aluno, semana, treino e tempo; Início só mostra o banner
   await page.getByRole('link', { name: 'Início' }).click()
-  const cartao = page.locator('div').filter({ has: page.getByRole('heading', { name: /Treinos acima do tempo/ }) }).last()
+  await expect(page.getByRole('link', { name: /alerta/ })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('link', { name: 'Alertas', exact: true }).click()
+  const cartao = page.locator('section').filter({ has: page.getByRole('heading', { name: /Treinos acima do tempo/ }) })
   await expect(cartao.getByText(/Bia Tempo/).first()).toBeVisible({ timeout: 10_000 })
   await cartao.getByRole('button', { name: 'Ver sugestão' }).first().click()
   await expect(cartao.getByText(/(Biset|Triset) · \d+ min → \d+ min/).first()).toBeVisible()

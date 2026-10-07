@@ -1,15 +1,14 @@
 import { useMemo } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
-import { consultaRegistrosRecentes, marcarAdaptado, salvarMeso } from '../../../lib/acoes'
-import { docParaMeso, type MesoSalvo } from '../../../lib/conversores'
-import { semanaAtual } from '../../../lib/treino'
+import { consultaRegistrosRecentes } from '../../../lib/acoes'
+import type { MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { inicioJanela, resumoCoach, type AlunoComId, type RegistroResumo } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
-import { LinhaAcima, treinosAcima } from '../meso/SugestaoTempo'
+import { useAlertasCoach } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 
 export default function Inicio() {
@@ -20,14 +19,7 @@ export default function Inicio() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<RegistroResumo>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
-  // Só mesos em andamento com tempo limite.
-  const acima = mesos.dados
-    .filter((d) => d.tempoLimiteMin)
-    .flatMap((d) => {
-      const meso = docParaMeso(d)
-      if (semanaAtual(meso, agora).estado !== 'durante') return []
-      return treinosAcima(meso).map((a) => ({ d, meso, a, aluno: (alunos.dados as AlunoComId[]).find((x) => x.id === d.alunoId)?.nome ?? 'Aluno' }))
-    })
+  const alertas = useAlertasCoach()
   const novo = (
     <Botao tipo="primario" onClick={() => ir('/alunos/novo')}>
       Novo aluno
@@ -59,23 +51,13 @@ export default function Inicio() {
       <a href="#/ranking" className="mb-3 block text-sm text-marca-300 hover:underline">
         Ranking de evolução →
       </a>
-      {acima.length > 0 && (
-        <Cartao className="mb-3 space-y-3">
-          <h2 className="font-semibold">
-            Treinos acima do tempo <span className="font-display text-lg font-bold text-amber-300">{acima.length}</span>
-          </h2>
-          {acima.map(({ d, meso, a, aluno }) => (
-            <LinhaAcima
-              key={`${d.id}-${a.treino}`}
-              meso={meso}
-              acima={a}
-              prefixo={aluno}
-              onAplicar={(novo) => {
-                salvarMeso(d.id, d.alunoId, d.nome, novo).gravado.then(() => marcarAdaptado(d.id)).catch(() => {})
-              }}
-            />
-          ))}
-        </Cartao>
+      {alertas.total > 0 && (
+        <a href="#/alertas" className="mb-3 flex items-center justify-between gap-3 rounded-xl border-2 border-rose-500 bg-rose-950 p-4 text-rose-100">
+          <span className="font-semibold">
+            ⚠️ <span className="font-display text-3xl font-bold text-rose-300">{alertas.total}</span> {alertas.total === 1 ? 'alerta' : 'alertas'}
+          </span>
+          <span className="font-semibold underline">Ver alertas</span>
+        </a>
       )}
       <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
         {blocos.map(([titulo, lista, vazio]) => (
