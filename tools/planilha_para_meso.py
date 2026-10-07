@@ -86,12 +86,14 @@ def main():
             vistos.add(chave)
             metodos.append(ap_)
 
-    # Semanas: blocos de 79 linhas; treinos: blocos de 13 (cabeçalho "Realizado" em B).
+    # Semanas: blocos de 1 + 13·n linhas, n = treinos do modelo da aba (79 no "6x", 53 no "4x"); acha pela
+    # 2ª linha "Semana" em B. Treinos: blocos de 13 (cabeçalho "Realizado" em C).
     # Nome diferente da divisão numa semana = troca. Cargas em J:O (séries 1–6).
+    bloco = next((r for r in range(3, ws.max_row + 1) if texto(c(r, 'B')) == 'Semana'), 81) - 2
     trocas, registros = {}, []
     for w in range(1, semanas + 1):
         for t in range(1, frequencia + 1):
-            topo = 3 + 79 * (w - 1) + 13 * (t - 1)
+            topo = 3 + bloco * (w - 1) + 13 * (t - 1)
             if texto(c(topo, 'C')) not in ('Realizado', 'Não realizado'):
                 sys.exit(f'Layout inesperado na semana {w}, treino {t} (linha {topo})')
             cargas = {}
