@@ -18,7 +18,7 @@ test.beforeAll(async () => {
 test('fluxo completo do painel do coach', async ({ page }) => {
   await test.step('aluno se cadastra e vê a tela de espera', async () => {
     await page.goto('/')
-    await page.getByText('Não tenho conta — Criar conta').click()
+    await page.getByRole('button', { name: 'Criar minha conta' }).click()
     await page.getByLabel('Nome').fill(ALUNO.nome)
     await page.getByLabel('E-mail').fill(ALUNO.email)
     await page.getByLabel('Senha').fill(ALUNO.senha)
@@ -268,7 +268,7 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
   // Alertas: cartão com aluno, semana, treino e tempo; Início só mostra o banner
   await page.getByRole('link', { name: 'Início' }).click()
   await expect(page.getByRole('link', { name: /alerta/ })).toBeVisible({ timeout: 10_000 })
-  await page.getByRole('link', { name: 'Alertas', exact: true }).click()
+  await page.getByRole('link', { name: /^Alertas/ }).click()
   const cartao = page.locator('section').filter({ has: page.getByRole('heading', { name: /Treinos acima do tempo/ }) })
   await expect(cartao.getByText(/Bia Tempo/).first()).toBeVisible({ timeout: 10_000 })
   await cartao.getByRole('button', { name: 'Ver sugestão' }).first().click()

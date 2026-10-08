@@ -1,9 +1,13 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { aceitouPrivacidade } from './lib/privacidade'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
-import { auth } from './lib/firebase'
-import { sair } from './lib/acoes'
-import { useUsuarioAtual } from './lib/hooks'
+import { collection, query, where } from 'firebase/firestore'
+import { auth, db } from './lib/firebase'
+import { consultaRegistrosRecentes, sair } from './lib/acoes'
+import { useLista, useUsuarioAtual } from './lib/hooks'
+import { inicioJanela, type AlunoComId } from './lib/resumo'
+import type { MesoSalvo } from './lib/conversores'
+import { calcularAlertas, type Reg } from './features/coach/alertas/Alertas'
 import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
@@ -77,10 +81,18 @@ const ativaAba = (rota: string) =>
 // Menu do coach: abas embaixo no celular, menu lateral fixo no computador (≥ lg).
 function Menu({ rota }: { rota: string }) {
   const at = ativaAba(rota)
+  // Mesmas 3 consultas do Início: o Firestore junta as iguais (sem leitura extra). Menu não existe no presencial.
+  const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
+  const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
+  const agora = new Date()
+  const chave = inicioJanela(agora, 14)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
+  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora).total
   const itens = [
     { id: 'inicio', rotulo: 'Início', href: '#/', Icone: IcCasa },
     { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },
-    { id: 'alertas', rotulo: 'Alertas', href: '#/alertas', Icone: IcSino },
+    { id: 'alertas', rotulo: 'Alertas', href: '#/alertas', Icone: IcSino, selo },
     { id: 'ranking', rotulo: 'Ranking', href: '#/ranking', Icone: IcTrofeu },
     { id: 'metodos', rotulo: 'Métodos', href: '#/metodos', Icone: IcLivro },
     { id: 'conta', rotulo: 'Minha conta', href: '#/conta', Icone: IcPessoa },
@@ -92,14 +104,15 @@ function Menu({ rota }: { rota: string }) {
           <Logo className="h-5" />
         </a>
         <nav aria-label="Menu lateral" className="flex-1 space-y-1">
-          {itens.map(({ id, rotulo, href, Icone }) => (
+          {itens.map(({ id, rotulo, href, Icone, selo }) => (
             <a
               key={id}
               href={href}
               aria-current={at === id ? 'page' : undefined}
               className={`flex h-12 items-center gap-3 rounded-2xl px-4 text-base font-semibold ${at === id ? 'lente text-white' : 'text-slate-300 hover:text-white'}`}
             >
-              <Icone className={`size-5 ${at === id ? 'text-marca-400' : ''}`} /> {rotulo}
+              <Icone className={`size-5 ${at === id ? 'text-marca-400' : ''}`} /> <span className="flex-1">{rotulo}</span>
+              {selo ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-xs font-bold text-white">{selo}</span> : null}
             </a>
           ))}
         </nav>
@@ -111,7 +124,7 @@ function Menu({ rota }: { rota: string }) {
         className="lg:hidden"
         abas={itens
           .filter((i) => i.id !== 'ranking')
-          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: at === i.id }))}
+          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: at === i.id, selo: i.selo }))}
       />
     </>
   )

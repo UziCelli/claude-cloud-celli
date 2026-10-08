@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { prescreverSessao, type Meso } from '../engine'
+import { comVolta } from './agenda'
 import { MIN_ABAIXO, PROPORCAO_ABAIXO, repsAbaixo, treinosDemorados, type RegistroAlerta } from './alertas'
 
 const agora = new Date('2026-10-07T15:00:00Z')
@@ -89,6 +90,36 @@ describe('repsAbaixo', () => {
   it('peso do corpo: série só com pc conta como feita', () => {
     const r = reg({ pc: { a: 70 }, realizado: true, reps: { a: { s1: 5, s2: 5, s3: 5 } } })
     expect(repsAbaixo(meso, [r], agora)).toMatchObject({ feitas: 3, abaixo: 3, faltaram: 9 })
+  })
+})
+
+// Semana de volta (agora = semana 2 deste meso): a meta do aluno é a prescrição com −5%, não a original.
+describe('semana de volta nos alertas', () => {
+  const m2: Meso = { ...meso, inicio: '2026-09-28' } // 07/10 cai na semana 2
+  const sem2 = reg({ semana: 2, realizado: true, cargas: { a: { s1: 1, s2: 1, s3: 1 }, b: { s1: 1, s2: 1, s3: 1 } }, reps: { a: { s1: 7, s2: 7, s3: 7 }, b: { s1: 7, s2: 7, s3: 7 } } })
+  const sem1 = reg({ semana: 1, realizado: true, realizadoEm: ha(9) })
+
+  it('reps abaixo comparam com a meta reduzida (8,7,7), então 7,7,7 quase não alerta', () => {
+    expect(repsAbaixo(m2, [sem2], agora)).toBeNull() // só s1 de cada exercício fica abaixo: 2 séries
+  })
+  it('sem volta (semana 1 treinada) a meta é a original e alerta', () => {
+    expect(repsAbaixo(m2, [sem1, sem2], agora)).toMatchObject({ abaixo: 6 })
+  })
+  it('tempo previsto usa a prescrição da volta', () => {
+    const normal = prescreverSessao(m2, 2, 1)!.tempoMin
+    const volta = prescreverSessao(comVolta(m2, [], agora), 2, 1)!.tempoMin
+    expect(volta).toBeLessThan(normal)
+    const lim = (p: number) => Math.max(p * 1.3, p + 15)
+    const min = (lim(normal) + lim(volta)) / 2 // acima do limite da volta, abaixo do original
+    const fim = agora.getTime() - DIA
+    const r = reg({ semana: 2, realizado: true, realizadoEm: ts(fim), inicioEm: ts(fim - min * 60_000) })
+    expect(treinosDemorados(m2, [r], agora)).toHaveLength(1)
+    expect(treinosDemorados(m2, [sem1, r], agora)).toHaveLength(0)
+  })
+  it('a janela curta só reduz a semana atual (a w−2 pode estar fora dos 14 dias)', () => {
+    const m3: Meso = { ...meso, inicio: '2026-09-21' } // 07/10 cai na semana 3; semanas 1 e 2 sem registros
+    const r = reg({ semana: 2, realizado: true, cargas: sem2.cargas, reps: sem2.reps })
+    expect(repsAbaixo(m3, [r], agora)).toMatchObject({ abaixo: 6 }) // semana 2 mantém a meta original
   })
 })
 

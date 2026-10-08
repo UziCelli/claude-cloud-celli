@@ -27,6 +27,8 @@ export function mesoParaDoc(meso: Meso): MesoDoc {
     ...meso,
     // Sempre presente: ao editar (updateDoc), trocas removidas não podem sobrar no documento.
     trocas: meso.trocas ?? {},
+    // Idem: sem agenda grava [] (nunca undefined); docParaMeso lê [] como "sem dias".
+    dias: meso.dias ?? [],
     // Idem: "Voltar ao padrão" precisa apagar o override do documento.
     progressaoExercicio: Object.fromEntries(
       Object.entries(meso.progressaoExercicio ?? {}).map(([k, l]) => [k, paraMapa(l, 'w')]),
@@ -58,6 +60,7 @@ export function docParaMeso(d: MesoDoc): Meso {
     ...(d.progressaoPct != null && { progressaoPct: d.progressaoPct }),
     ...(d.limiteReps != null && { limiteReps: d.limiteReps }),
     ...(d.tempoLimiteMin != null && { tempoLimiteMin: d.tempoLimiteMin }),
+    ...((d.dias?.length ?? 0) > 0 && { dias: d.dias }),
     ...(Object.keys(d.progressaoExercicio ?? {}).length > 0 && {
       progressaoExercicio: Object.fromEntries(
         Object.entries(d.progressaoExercicio!).map(([k, m]) => [k, deMapa(m, 'w')]),

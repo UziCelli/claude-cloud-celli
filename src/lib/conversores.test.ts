@@ -85,6 +85,18 @@ describe('meso <-> documento', () => {
     expect(docParaMeso(mesoParaDoc(meso)).progressaoExercicio).toBeUndefined()
   })
 
+  it('dias de treino: ida e volta; sem dias o documento leva [] (limpa no updateDoc, nunca undefined) e o meso volta sem o campo', () => {
+    const doc = mesoParaDoc({ ...meso, dias: [1, 3, 5] })
+    expect(doc.dias).toEqual([1, 3, 5])
+    expect(docParaMeso(doc)).toEqual({ ...meso, dias: [1, 3, 5] })
+    expect(mesoParaDoc(meso).dias).toEqual([])
+    expect(mesoParaDoc({ ...meso, dias: undefined }).dias).toEqual([])
+    expect(docParaMeso(mesoParaDoc(meso))).not.toHaveProperty('dias')
+    const antigo = mesoParaDoc(meso)
+    delete antigo.dias // documento gravado antes de existir o campo
+    expect(docParaMeso(antigo)).not.toHaveProperty('dias')
+  })
+
   it('ignora campos do documento que não são do motor', () => {
     const doc = { ...mesoParaDoc(meso), alunoId: 'ana', nome: 'Meso 1', criadoEm: 1, atualizadoEm: 2 }
     expect(docParaMeso(doc)).toEqual(meso)

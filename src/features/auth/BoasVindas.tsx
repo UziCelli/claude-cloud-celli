@@ -57,7 +57,7 @@ function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
         aria-label="Instalar no iPhone"
         className="fixed inset-x-3 bottom-[148px] z-40 mx-auto max-w-[406px] rounded-3xl bg-slate-900 p-5 text-left ring-1 ring-white/15 shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_20px_50px_rgb(0_0_0/0.6)]"
       >
-        <h2 className="flex items-center gap-2 text-[26px] leading-tight text-white">Toque em <IcPontos className="size-7 text-marca-300" /> aqui embaixo</h2>
+        <h2 className="text-[26px] leading-tight text-white">Toque em <IcPontos className="inline size-7 text-marca-300" /> aqui embaixo</h2>
         <div className="mt-4 space-y-2 rounded-2xl bg-black/30 p-2.5">
           <Linha>Compartilhar <IcCompartilhar className="size-5" /></Linha>
           <Linha destaque>Adicionar à Tela de Início <span className="grid size-6 place-items-center rounded-md border-2 border-white"><IcMais className="size-4" /></span></Linha>

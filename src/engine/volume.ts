@@ -23,7 +23,7 @@ export function ajustarSeries(reps: Linha, pct: number, limite: number): Linha {
   return saida
 }
 
-const limiteDe = (m: Meso) => m.limiteReps ?? LIMITE_PADRAO
+export const limiteDe = (m: Meso) => m.limiteReps ?? LIMITE_PADRAO
 
 // Aplica `f` (recebe as linhas semana a semana, devolve as novas) aos exercícios do alvo. Devolve um meso novo.
 // Treino/exercício viram override em progressaoExercicio[slotId] (nasce como cópia da linha que o motor usa hoje).
