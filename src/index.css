@@ -54,5 +54,36 @@ body {
 }
 button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer; }
 
+/* Vidro (imitação do Liquid Glass do iOS 26). Em @layer components para as classes do Tailwind poderem sobrescrever. */
+@layer components {
+  .vidro {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.05)),
+      color-mix(in srgb, var(--color-slate-900) 55%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgb(255 255 255 / 0.18);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -1px 0 rgb(255 255 255 / 0.06), 0 12px 32px rgb(0 0 0 / 0.5);
+  }
+  /* Bolha da aba ativa. */
+  .lente {
+    background: rgb(255 255 255 / 0.14);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 0 14px rgb(255 255 255 / 0.07);
+  }
+  /* Cartão de vidro escuro sobre o fundo com brilho. */
+  .vidro-escuro {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.03));
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgb(255 255 255 / 0.09);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+}
+
+/* Espaço para o conteúdo não ficar atrás da barra de abas (66px + margem + área segura). */
+@utility pb-barra {
+  padding-bottom: calc(66px + 2rem + env(safe-area-inset-bottom));
+}
+
 /* Selo do reCAPTCHA tapa botões no celular; o aviso legal fica na tela de login. */
 .grecaptcha-badge { visibility: hidden; }

@@ -3,14 +3,28 @@ import Logo from '@marca/Logo'
 import { Botao, Cartao, Centro } from '../../ui'
 import marca from '@marca/marca.json'
 
-type EventoInstalar = Event & { prompt: () => Promise<void> }
+export type EventoInstalar = Event & { prompt: () => Promise<void> }
 
 const ua = () => navigator.userAgent
-const eAndroid = () => /Android/.test(ua())
-const eIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua()))
-const navegadorEmbutido = () => /CriOS|FxiOS|FBAN|FBAV|Instagram|WhatsApp/.test(ua())
-const jaInstalado = () =>
+export const eAndroid = () => /Android/.test(ua())
+export const eIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua()))
+export const navegadorEmbutido = () => /CriOS|FxiOS|FBAN|FBAV|Instagram|WhatsApp/.test(ua())
+export const jaInstalado = () =>
   matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
+
+// Guarda o evento do Chrome que abre o "Instalar" nativo (só existe no Android/Chrome).
+export function useEventoInstalar() {
+  const [evento, setEvento] = useState<EventoInstalar | null>(null)
+  useEffect(() => {
+    const ouvir = (e: Event) => {
+      e.preventDefault()
+      setEvento(e as EventoInstalar)
+    }
+    addEventListener('beforeinstallprompt', ouvir)
+    return () => removeEventListener('beforeinstallprompt', ouvir)
+  }, [])
+  return evento
+}
 
 const IconeCompartilhar = () => (
   <svg viewBox="0 0 24 24" className="inline h-5 w-5 -translate-y-0.5" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -29,17 +43,8 @@ const Passo = ({ n, children }: { n: number; children: React.ReactNode }) => (
 )
 
 export default function Instalar() {
-  const [promptEvento, setPromptEvento] = useState<EventoInstalar | null>(null)
+  const promptEvento = useEventoInstalar()
   const [copiado, setCopiado] = useState(false)
-
-  useEffect(() => {
-    const ouvir = (e: Event) => {
-      e.preventDefault()
-      setPromptEvento(e as EventoInstalar)
-    }
-    addEventListener('beforeinstallprompt', ouvir)
-    return () => removeEventListener('beforeinstallprompt', ouvir)
-  }, [])
 
   if (jaInstalado()) {
     return (

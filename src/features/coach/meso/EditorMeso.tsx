@@ -17,6 +17,8 @@ import TabMetodos from './TabMetodos'
 import TabProgressao from './TabProgressao'
 import { redimensionar } from './util'
 
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
 const ABAS = ['config', 'divisao', 'progressao', 'metodos'] as const
 type Aba = (typeof ABAS)[number]
 const TITULO_ABA: Record<Aba, string> = { config: 'Config', divisao: 'Divisão', progressao: 'Progressão', metodos: 'Métodos' }
@@ -68,7 +70,7 @@ export default function EditorMeso({ id }: { id: string }) {
   }
 
   function salvar(novo = meso, adaptou = false) {
-    if (!novo) return
+    if (!novo || diasInvalidos(novo)) return
     if (novo !== meso) setMeso(novo)
     setDirty(false)
     setErro(null)
@@ -88,9 +90,17 @@ export default function EditorMeso({ id }: { id: string }) {
     })
   const AVISO_CORTE = 'já têm cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?'
 
+  // "Dias de treino" é opcional; se usado, tem de ter exatamente `frequencia` dias.
+  const diasInvalidos = (x: Meso) => !!x.dias?.length && x.dias.length !== x.frequencia
+  const alternarDia = (d: number) => {
+    const atual = meso!.dias ?? []
+    const novo = (atual.includes(d) ? atual.filter((x) => x !== d) : [...atual, d]).sort((a, b) => a - b)
+    atualizar({ dias: novo.length ? novo : undefined })
+  }
+
   function setFrequencia(n: number) {
     if (n < meso!.frequencia && temCargas((_, t) => t > n) && !confirm(`Os treinos removidos ${AVISO_CORTE}`)) return
-    atualizar({ frequencia: n, divisao: redimensionar(meso!.divisao, n, () => []) })
+    atualizar({ frequencia: n, dias: undefined, divisao: redimensionar(meso!.divisao, n, () => []) })
   }
 
   const linhas = (l: (number | null)[][], n: number) => redimensionar(l, n, () => Array(6).fill(null))
@@ -129,7 +139,7 @@ export default function EditorMeso({ id }: { id: string }) {
       acoes={
         <>
           <span className="self-center text-sm text-slate-400">{status}</span>
-          <Botao tipo="primario" disabled={!dirty} onClick={() => salvar()}>
+          <Botao tipo="primario" disabled={!dirty || diasInvalidos(meso)} onClick={() => salvar()}>
             Salvar
           </Botao>
           <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
@@ -203,6 +213,30 @@ export default function EditorMeso({ id }: { id: string }) {
             value={meso.frequencia}
             onChange={(e) => setFrequencia(Math.min(7, Math.max(2, Number(e.target.value) || 2)))}
           />
+          <fieldset>
+            <legend className="mb-1 text-sm text-slate-300">Dias de treino (opcional)</legend>
+            <div className="grid grid-cols-7 gap-1.5">
+              {DIAS_SEMANA.map((n, d) => {
+                const on = !!meso.dias?.includes(d)
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => alternarDia(d)}
+                    className={`h-11 rounded-lg text-sm font-semibold ${on ? 'bg-marca-500 text-white' : 'bg-slate-800 text-slate-300'}`}
+                  >
+                    {n}
+                  </button>
+                )
+              })}
+            </div>
+            {diasInvalidos(meso) && (
+              <p className="mt-1 text-sm text-red-400">
+                Escolha exatamente {meso.frequencia} dias (um por treino). Hoje: {meso.dias!.length}.
+              </p>
+            )}
+          </fieldset>
           <Campo
             rotulo="Semanas"
             type="number"

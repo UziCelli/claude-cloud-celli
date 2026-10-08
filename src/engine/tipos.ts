@@ -50,6 +50,9 @@ export interface Meso {
   progressaoPct?: number // % de volume por semana (padrão 5)
   limiteReps?: number // máximo de reps por série (padrão 15)
   tempoLimiteMin?: number // sem valor = sem aviso de tempo
+  // Dias da semana de treino (0 = domingo … 6 = sábado), ordenados, um por treino (tamanho = frequencia).
+  // Sem valor = sem agenda: o app sugere o próximo treino não feito da semana.
+  dias?: number[]
   // Progressão própria de cada exercício: chave = slotId do slot da divisão, valor [semana-1][serie-1].
   // (Legado: chave `${treino}-${pos}`, ainda lida pelo motor até migrarProgressao.)
   progressaoExercicio?: Record<string, (number | null)[][]>

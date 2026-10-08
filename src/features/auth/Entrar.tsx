@@ -1,10 +1,13 @@
-import { AnimatePresence, m } from 'motion/react'
+import { m } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import type { MultiFactorResolver } from 'firebase/auth'
 import { cadastrar, confirmarLoginTotp, entrar, recuperarSenha, resolverMfa } from '../../lib/acoes'
 import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
-import { Aviso, Botao, Campo, Cartao, Centro, Msg, Painel, cascata, item } from '../../ui'
+import { Aviso, Msg, Painel } from '../../ui'
+import { Brilho } from '../../vidro'
+import BoasVindas, { deveMostrarBoasVindas } from './BoasVindas'
+import { jaInstalado } from '../instalar/Instalar'
 import Logo from '@marca/Logo'
 import { CaixaAceite } from '../privacidade/Politica'
 import { registrarFalha, restanteSeg, zerarFalhas } from '../../lib/tentativas'
@@ -12,6 +15,9 @@ import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
 import { atualizarNaEntrada } from '../../lib/atualizar'
 import marca from '@marca/marca.json'
+
+const rotulo = 'block text-[15px] font-semibold text-slate-300'
+const campo = 'h-14 w-full rounded-2xl bg-white/10 px-4 text-[17px] text-white ring-1 ring-white/25 placeholder:text-slate-400'
 
 const erros: Record<string, string> = {
   'auth/wrong-password': 'E-mail ou senha incorretos.',
@@ -45,6 +51,8 @@ const mensagemRecuperar = (e: unknown) => {
 
 export default function Entrar() {
   const [cadastro, setCadastro] = useState(false)
+  const [boasVindas, setBoasVindas] = useState(() => deveMostrarBoasVindas(jaInstalado()))
+  const [verSenha, setVerSenha] = useState(false)
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -139,112 +147,147 @@ export default function Entrar() {
     }
   }
 
+  function trocarModo(paraCadastro: boolean) {
+    setErro('')
+    setMsgRecuperar('')
+    setResolver(null)
+    setCadastro(paraCadastro)
+  }
+
+  if (boasVindas)
+    return (
+      <BoasVindas
+        onCriar={() => {
+          trocarModo(true)
+          setBoasVindas(false)
+        }}
+        onEntrar={() => {
+          trocarModo(false)
+          setBoasVindas(false)
+        }}
+      />
+    )
+
   return (
-    <Centro>
+    <div className="min-h-dvh">
+      <Brilho />
       <m.div
         variants={{ a: { x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } }, b: { x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } }, quieto: { x: 0 } }}
         animate={tremor ? (tremor % 2 ? 'a' : 'b') : 'quieto'}
       >
-      <m.div variants={cascata} initial="hidden" animate="show">
-      <Cartao className="text-left">
-        <m.h1 variants={item} className="mb-4 flex flex-col items-center gap-3 text-center">
-          <Logo className="h-10 text-white" />
-          <AnimatePresence mode="wait" initial={false}>
-            <m.span
-              key={cadastro ? 'c' : 'l'}
-              className="text-sm font-semibold text-slate-400"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.15 } }}
-              exit={{ opacity: 0, y: -4, transition: { duration: 0.1 } }}
-            >
-              {cadastro ? 'Criar conta' : 'Área do aluno e do coach'}
-            </m.span>
-          </AnimatePresence>
-        </m.h1>
-        <form
-          className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault()
-            enviar()
-          }}
-        >
-          {resolver ? (
-            <div className="space-y-2">
-              <Campo
-                rotulo="Código de 6 dígitos do Google Authenticator"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                autoFocus
-                value={codigo}
-                onChange={(e) => setCodigo(limparCodigo(e.target.value))}
-                required
-              />
-              <button type="button" className="text-sm text-slate-400 hover:text-slate-200" onClick={() => voltar()}>
-                Voltar
-              </button>
-            </div>
-          ) : (
-            <>
-              <Painel aberto={cadastro} className="-mx-1 px-1">
-                <Campo rotulo="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required={cadastro} />
-              </Painel>
-              <m.div variants={item}>
-                <Campo rotulo="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </m.div>
-              <m.div variants={item}>
-                <Campo rotulo="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-              </m.div>
-            </>
-          )}
-          <Painel aberto={cadastro && !resolver}>
-            <CaixaAceite marcada={aceito} onChange={setAceito} />
-          </Painel>
-          <Msg>{saiu && <Aviso>Você saiu por inatividade.</Aviso>}</Msg>
-          <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
-          <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
-          <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
-          <m.div variants={item}>
-            <Botao tipo="primario" className="w-full" disabled={enviando || (cadastro && !aceito) || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))} carregando={enviando}>
-              {enviando ? 'Enviando…' : !cadastro && espera > 0 ? `Aguarde ${espera} s` : cadastro ? 'Criar conta' : resolver ? 'Confirmar' : 'Entrar'}
-            </Botao>
-          </m.div>
-        </form>
-        <Painel aberto={!cadastro}>
-          <button
-            type="button"
-            className="mt-3 w-full text-center text-sm text-slate-400 hover:text-slate-200"
-            onClick={esqueciSenha}
+        <main className="mx-auto flex min-h-dvh max-w-sm flex-col px-5 pb-6 pt-[calc(1rem+env(safe-area-inset-top))] text-left">
+          <Logo className="h-9 self-start text-white" />
+          <h1 className="mt-8 text-[30px] leading-tight">{cadastro ? 'Criar conta' : 'Entrar'}</h1>
+
+          <form
+            className="mt-5 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              enviar()
+            }}
           >
-            Esqueci minha senha
+            {resolver ? (
+              <div className="space-y-2">
+                <label htmlFor="codigo" className={rotulo}>Código de 6 dígitos do Google Authenticator</label>
+                <input
+                  id="codigo"
+                  name="codigo"
+                  className={`${campo} mt-1.5`}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  autoFocus
+                  value={codigo}
+                  onChange={(e) => setCodigo(limparCodigo(e.target.value))}
+                  required
+                />
+                <button type="button" className="text-[15px] text-slate-200" onClick={() => voltar()}>
+                  Voltar
+                </button>
+              </div>
+            ) : (
+              <>
+                <Painel aberto={cadastro} className="-mx-1 px-1">
+                  <label htmlFor="nome" className={rotulo}>Nome</label>
+                  <input id="nome" name="name" autoComplete="name" className={`${campo} mt-1.5`} value={nome} onChange={(e) => setNome(e.target.value)} required={cadastro} />
+                </Painel>
+                <div>
+                  <label htmlFor="email" className={rotulo}>E-mail</label>
+                  <input id="email" name="email" type="email" autoComplete="username" placeholder="voce@email.com" className={`${campo} mt-1.5`} value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div>
+                  <label htmlFor="senha" className={rotulo}>Senha</label>
+                  <span className="relative mt-1.5 block">
+                    <input
+                      id="senha"
+                      name="password"
+                      type={verSenha ? 'text' : 'password'}
+                      autoComplete={cadastro ? 'new-password' : 'current-password'}
+                      className={`${campo} pr-14`}
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      aria-label={verSenha ? 'Ocultar' : 'Mostrar'}
+                      aria-pressed={verSenha}
+                      className="absolute right-0 top-0 grid size-14 place-items-center text-slate-200"
+                      onClick={() => setVerSenha((v) => !v)}
+                    >
+                      <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                        <circle cx="12" cy="12" r="3" />
+                        {verSenha && <path d="M4 4l16 16" />}
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+              </>
+            )}
+            <Painel aberto={cadastro && !resolver}>
+              <CaixaAceite marcada={aceito} onChange={setAceito} />
+            </Painel>
+            <Msg>{saiu && <Aviso>Você saiu por inatividade.</Aviso>}</Msg>
+            <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
+            <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
+            <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
+            <button
+              className="h-14 w-full rounded-2xl bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50"
+              disabled={enviando || (cadastro && !aceito) || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))}
+            >
+              {enviando ? 'Enviando…' : !cadastro && espera > 0 ? `Aguarde ${espera} s` : cadastro ? 'Criar conta' : resolver ? 'Confirmar' : 'Entrar'}
+            </button>
+          </form>
+
+          <Painel aberto={!cadastro && !resolver}>
+            <p className="mt-4 text-center">
+              <button type="button" className="text-[15px] font-semibold text-marca-300" onClick={esqueciSenha}>
+                Esqueci minha senha
+              </button>
+            </p>
+          </Painel>
+
+          <div className="mt-6 flex items-center gap-3 text-[15px] text-slate-200">
+            <span className="h-px flex-1 bg-white/20" />
+            {cadastro ? 'Já tem conta?' : 'Primeira vez aqui?'}
+            <span className="h-px flex-1 bg-white/20" />
+          </div>
+          <button type="button" className="vidro-escuro mt-4 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={() => trocarModo(!cadastro)}>
+            {cadastro ? 'Já tenho conta' : 'Criar minha conta'}
           </button>
-        </Painel>
-        <m.button
-          variants={item}
-          type="button"
-          className="mt-2 w-full text-center text-sm text-slate-400 hover:text-slate-200"
-          onClick={() => {
-            setErro('')
-            setMsgRecuperar('')
-            setResolver(null)
-            setCadastro((c) => !c)
-          }}
-        >
-          {cadastro ? 'Já tenho conta — Entrar' : 'Não tenho conta — Criar conta'}
-        </m.button>
-        <a href="/instalar" className="mt-4 block text-center text-xs text-slate-500 hover:text-slate-300">
-          Como instalar o app
-        </a>
-        <p className="mt-3 text-center text-xs text-slate-500">
-          <a href="/privacidade" className="underline">Política de Privacidade</a> {marca.doNome}. Protegido pelo reCAPTCHA. Valem a{' '}
-          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline">Política de Privacidade</a> e os{' '}
-          <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline">Termos de Serviço</a> do Google.
-        </p>
-        <p className="mt-1 text-center text-xs text-slate-600">Versão {__VERSAO__}</p>
-      </Cartao>
+
+          <footer className="mt-auto pt-6 text-center text-xs leading-relaxed text-slate-300">
+            <p>
+              <a href="/privacidade" className="underline">Política de Privacidade</a> {marca.doNome}. Protegido pelo reCAPTCHA. Valem a{' '}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline">Política de Privacidade</a> e os{' '}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline">Termos de Serviço</a> do Google.
+            </p>
+            <p className="mt-1">Versão {__VERSAO__}</p>
+          </footer>
+        </main>
       </m.div>
-      </m.div>
-    </Centro>
+    </div>
   )
 }

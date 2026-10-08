@@ -10,8 +10,15 @@ import { ir } from '../../../rota'
 import { m } from 'motion/react'
 import { calcularAlertas, type Reg } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
+import { IcMais } from '../../../icones'
+import { Quadro } from '../../../vidro'
 
-export default function Inicio() {
+const saudacao = (d: Date) => {
+  const h = Number(d.toLocaleString('pt-BR', { hour: 'numeric', hour12: false, timeZone: 'America/Sao_Paulo' }))
+  return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
+}
+
+export default function Inicio({ nome }: { nome: string }) {
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
   const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
   const agora = new Date()
@@ -20,12 +27,6 @@ export default function Inicio() {
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
   const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora)
-  const novo = (
-    <Botao tipo="primario" onClick={() => ir('/alunos/novo')}>
-      Novo aluno
-    </Botao>
-  )
-
   if (!alunos.carregando && alunos.dados.length === 0)
     return (
       <Pagina titulo="Início">
@@ -46,15 +47,34 @@ export default function Inicio() {
     ['Sumidos (7+ dias sem treinar)', r.sumidos, 'Ninguém sumido.'],
     ['Frequência caindo (14 dias)', r.frequenciaCaindo, 'Ninguém com frequência caindo.'],
   ]
+  const kpis: [number, string, string][] = [
+    [alunos.dados.filter((a) => a.status === 'ativo').length, 'Alunos ativos', 'text-white'],
+    [r.treinaramHoje.length, 'Treinaram hoje', 'text-emerald-400'],
+    [alertas.total, 'Alertas', 'text-rose-400'],
+    [r.vencendo.length, 'Vencem em 7 dias', 'text-amber-300'],
+  ]
   return (
-    <Pagina titulo="Início" acoes={novo}>
-      <a href="#/ranking" className="mb-3 block text-sm text-marca-300 hover:underline">
-        Ranking de evolução →
-      </a>
+    <Pagina titulo={<><span className="sr-only">Início</span><span className="block text-[15px] font-normal text-slate-300">{agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })}</span>{saudacao(agora)}, {nome.split(' ')[0]}</>}>
+      <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {kpis.map(([n, rotulo, cor]) => (
+          <Quadro key={rotulo} className="!p-3">
+            <p className={`font-display text-3xl font-extrabold leading-none lg:text-5xl ${cor}`}><Contar n={n} /></p>
+            <p className="mt-1.5 text-[15px] leading-tight text-slate-300 lg:text-base">{rotulo}</p>
+          </Quadro>
+        ))}
+      </div>
+      <div className="mb-3 grid grid-cols-[1fr_auto] gap-3 lg:max-w-md">
+        <Botao tipo="primario" className="flex h-12 items-center justify-center gap-2 rounded-2xl text-base font-bold" onClick={() => ir('/alunos/novo')}>
+          <IcMais className="size-5" /> Novo aluno
+        </Botao>
+        <a href="#/ranking" className="grid h-12 place-items-center rounded-2xl bg-white/10 px-6 text-base font-bold ring-1 ring-white/20">
+          Ranking de evolução
+        </a>
+      </div>
       {alertas.total > 0 && (
-        <a href="#/alertas" className="mb-3 flex items-center justify-between gap-3 rounded-xl border-2 border-rose-500 bg-rose-950 p-4 text-rose-100">
+        <a href="#/alertas" className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-rose-500/60 bg-rose-950/70 p-4 text-rose-100">
           <span className="font-semibold">
-            ⚠️ <span className="font-display text-3xl font-bold text-rose-300">{alertas.total}</span> {alertas.total === 1 ? 'alerta' : 'alertas'}
+            <span className="font-display text-3xl font-bold text-rose-300">{alertas.total}</span> {alertas.total === 1 ? 'alerta' : 'alertas'}
           </span>
           <span className="font-semibold underline">Ver alertas</span>
         </a>
@@ -62,7 +82,7 @@ export default function Inicio() {
       <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
         {blocos.map(([titulo, lista, vazio]) => (
           <m.div key={titulo} variants={item}>
-          <Cartao className="h-full space-y-2">
+          <Quadro className="h-full space-y-2 !p-3.5">
             <h2 className="font-semibold">
               {titulo} <span className="font-display text-lg font-bold text-marca-300"><Contar n={lista.length} /></span>
             </h2>
@@ -80,16 +100,19 @@ export default function Inicio() {
                       }))
                     : [{ k: a.id, href: `#/aluno/${a.id}`, texto: a.nome }]
                   return links.map((l) => (
-                    <li key={`${a.id}-${l.k}`} className="min-w-0">
-                      <a href={l.href} className="block max-w-full truncate rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">
+                    <li key={`${a.id}-${l.k}`} className="flex min-w-0 items-center gap-2">
+                      <a href={l.href} className="block min-h-11 max-w-full truncate rounded-full bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                         {l.texto}
                       </a>
+                      {titulo === 'Aguardando aprovação' && (
+                        <a href="#/alunos" className="grid h-11 place-items-center rounded-full bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
+                      )}
                     </li>
                   ))
                 })}
               </ul>
             )}
-          </Cartao>
+          </Quadro>
           </m.div>
         ))}
       </m.div>
