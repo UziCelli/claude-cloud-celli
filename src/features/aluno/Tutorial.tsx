@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { m, useReducedMotion } from 'motion/react'
+import marca from '@marca/marca.json'
 import { COR_METODO } from '../../data/metodos'
 
 const CHAVE = 'forca-tutorial-visto'
@@ -39,7 +40,7 @@ const Selo = ({ nome, cor }: { nome: string; cor: keyof typeof COR_METODO }) => 
 
 const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   {
-    titulo: 'Bem-vindo ao Força',
+    titulo: marca.boasVindas,
     texto: 'Em poucos passos você aprende a usar o app no treino. Dá menos de 1 minuto.',
     ilustracao: <div className="text-center text-5xl">💪</div>,
   },

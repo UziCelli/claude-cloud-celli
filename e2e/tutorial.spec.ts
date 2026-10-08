@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { criarAluno, criarCoach, limparEmuladores } from './seed'
+
+const marca = JSON.parse(readFileSync(`marcas/${process.env.MARCA ?? 'vfit'}/marca.json`, 'utf8'))
 
 const COACH = { nome: 'Victor', email: 'victor.tutorial-e2e@teste.com', senha: 'senha123' }
 const ALUNO = { nome: 'Tati Aluna', email: 'tati.tutorial-e2e@teste.com', senha: 'senha123' }
@@ -23,6 +26,7 @@ test('tutorial do aluno: Próximo até Começar e Pular', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Como usar' }).click()
   await expect(dialogo).toBeVisible()
+  await expect(dialogo.getByRole('heading', { name: marca.boasVindas })).toBeVisible()
   for (let n = 1; n <= 10; n++) {
     await expect(dialogo.getByText(`${n} de 11`)).toBeVisible()
     await dialogo.getByRole('button', { name: 'Próximo' }).click()
