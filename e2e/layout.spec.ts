@@ -86,6 +86,11 @@ for (const vp of [
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
     await expect(page.getByText('Semana 1 de 4')).toBeVisible()
     await confere(page)
+    if (prints) await page.screenshot({ path: 'test-results/prints/21-iphone14-inicio.png' })
+
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+    await expect(page.getByRole('button', { name: /Treino 1/ })).toBeVisible()
+    await confere(page)
     if (prints) await page.screenshot({ path: 'test-results/prints/21-iphone14-hoje.png' })
 
     await page.getByRole('button', { name: /Treino 1/ }).click()

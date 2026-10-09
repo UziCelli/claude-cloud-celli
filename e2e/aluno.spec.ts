@@ -47,6 +47,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await page.getByLabel('E-mail').fill(ALUNO.email)
     await page.getByLabel('Senha').fill(ALUNO.senha)
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
 
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()
     await expect(page.getByText('Semana 1 de 4')).toBeVisible()
@@ -153,12 +154,13 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await expect(page.getByText('Semana 1: 1 de')).toBeVisible()
     await expect(page.getByText('Volume', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()
-    await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible()
   })
 
   await test.step('destaca o próximo treino da semana', async () => {
-    await expect(page.getByText('▶ Faça hoje: Treino 2')).toBeVisible()
+    await expect(page.getByRole('button', { name: /Treino 2.*Hoje/ })).toBeVisible()
   })
 
   await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
@@ -235,6 +237,7 @@ test('biset entre posições não vizinhas aparece junto', async ({ page }) => {
   await page.getByLabel('E-mail').fill(b.email)
   await page.getByLabel('Senha').fill(b.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
   await expect(page.getByRole('dialog', { name: 'Métodos deste treino' })).toBeVisible()
   await page.getByRole('dialog').getByRole('button', { name: 'Entendi', exact: true }).click()
@@ -265,6 +268,7 @@ test('selos de método, nota, guia e cronômetro que sobrevive ao reload', async
   await page.getByLabel('E-mail').fill(u.email)
   await page.getByLabel('Senha').fill(u.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
 
   const nota = page.getByRole('dialog', { name: 'Métodos deste treino' })

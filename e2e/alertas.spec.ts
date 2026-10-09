@@ -46,6 +46,7 @@ test('aluno vê o aviso e "Entendi" esconde', async ({ page }) => {
   await page.getByLabel('E-mail').fill(ALUNO.email)
   await page.getByLabel('Senha').fill(ALUNO.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   const aviso = page.getByText(/Reps abaixo da meta:/)
   await expect(aviso).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText(/ex\.: Supino Reto Barra/)).toBeVisible()

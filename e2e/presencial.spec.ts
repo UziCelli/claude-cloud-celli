@@ -72,7 +72,7 @@ for (const presencial of [false, true]) {
     await page.getByRole('button', { name: 'Concluir treino' }).click()
     await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
-    await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible() // voltou ao Hoje presencial
+    await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible() // voltou ao Hoje presencial
     await expect(page.getByText(`Presencial: ${ALUNO.nome}`)).toBeVisible()
 
     await expect.poll(async () => {
@@ -84,7 +84,8 @@ for (const presencial of [false, true]) {
       const ctx = await browser.newContext(devices['Pixel 7'])
       const p2 = await ctx.newPage()
       await entrar(p2, ALUNO.email, ALUNO.senha)
-      await expect(p2.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
+      await p2.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+      await expect(p2.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible()
       await ctx.close()
     }
   })

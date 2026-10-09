@@ -31,6 +31,7 @@ test('peso do corpo: marcar depois de digitar mantém o extra; concluir preenche
   await page.getByLabel('E-mail').fill(ALUNO.email)
   await page.getByLabel('Senha').fill(ALUNO.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
 
   await test.step('(a) digita o extra e depois marca "Feito com o peso do corpo"', async () => {
@@ -55,7 +56,8 @@ test('peso do corpo: marcar depois de digitar mantém o extra; concluir preenche
     await page.getByRole('button', { name: 'Concluir treino' }).click()
     await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
-    await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+    await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible()
     for (const s of ['s1', 's2', 's3']) await expect.poll(() => cargaDe('b', s), { timeout: 15_000 }).toBe(76)
     expect(num((await campos()).pc?.mapValue?.fields?.b)).toBe(76)
     expect(await cargaDe('b', 's4')).toBeNull()
@@ -102,6 +104,7 @@ const entrar = async (page: import('@playwright/test').Page, email: string, senh
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  if (esperar instanceof RegExp) await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click() // aluno: abre a aba Treino
   await expect(page.getByRole('heading', { name: esperar }).or(page.getByRole('button', { name: esperar }))).toBeVisible()
 }
 

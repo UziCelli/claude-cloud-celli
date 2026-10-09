@@ -27,6 +27,7 @@ test('recorde: carga maior que a anterior festeja; menor não', async ({ page })
   await page.getByLabel('E-mail').fill(ALUNO.email)
   await page.getByLabel('Senha').fill(ALUNO.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await expect(page.getByRole('button', { name: /Treino 1/ })).toBeVisible()
   await page.goto(`/#/treino/${mesoId}/2/1`)
 

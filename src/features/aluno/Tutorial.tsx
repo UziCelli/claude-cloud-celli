@@ -41,12 +41,12 @@ const Selo = ({ nome, cor }: { nome: string; cor: keyof typeof COR_METODO }) => 
 const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   {
     titulo: marca.boasVindas,
-    texto: 'Em poucos passos você aprende a usar o app no treino. Dá menos de 1 minuto.',
+    texto: 'Embaixo ficam Início, Treino, Evolução e Conta. Em poucos passos você aprende a usar o app no treino. Dá menos de 1 minuto.',
     ilustracao: <div className="text-center text-5xl">💪</div>,
   },
   {
     titulo: 'Comece o treino',
-    texto: 'Toque em "Iniciar treino". O tempo começa a correr, ao lado do tempo previsto do treino, para você comparar.',
+    texto: 'Na aba Treino (ou em "Ver treino de hoje", no Início), abra o treino e toque em "Iniciar treino". O tempo começa a correr, ao lado do tempo previsto do treino, para você comparar.',
     ilustracao: (
       <div className="space-y-2">
         <Botaozinho className="w-full justify-center bg-marca-500 text-white">▶ Iniciar treino</Botaozinho>
@@ -83,7 +83,7 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   },
   {
     titulo: 'Toque no selo do método',
-    texto: 'Não sabe como fazer um Biset, Rest-pause ou Cluster? Toque no selo colorido e leia o passo a passo.',
+    texto: 'Não sabe como fazer um Biset, Rest-pause ou Cluster? Toque no selo colorido e leia o passo a passo. O Guia de métodos completo fica no Início e em Conta.',
     ilustracao: (
       <div className="flex items-center gap-3">
         <Selo nome="Biset" cor="Biset" />
