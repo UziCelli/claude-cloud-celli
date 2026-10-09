@@ -8,6 +8,7 @@ import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
 import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
+import { agil, elastico } from '../../movimento'
 import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
 import { Chip, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
@@ -83,7 +84,10 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
   }, [aviso])
   const bloqueado = (w: number) => {
     setAviso(w)
-    if (!quieto) tremer.start({ x: [0, -10, 10, -8, 8, -4, 0], transition: { duration: 0.4 } })
+    if (!quieto) {
+      tremer.set({ x: -12 })
+      tremer.start({ x: 0, transition: elastico })
+    }
   }
 
   const feitos = new Set(registros.filter((r) => r.realizado).map((r) => `${r.semana}-${r.treino}`))
@@ -100,10 +104,10 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
   return (
     <m.div animate={tremer}>
       {aviso != null && (
-        <div role="alert" className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
+        <m.div role="alert" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-rose-500/20 text-rose-400"><IcCadeado className="size-6" /></span>
           <p className="text-[15px] leading-snug text-slate-100">Semana {aviso} já passou. Faça o treino desta semana 💪</p>
-        </div>
+        </m.div>
       )}
       <header className="pt-2">
         <h1 className="text-[30px] leading-tight">Semana {semana} de {meso.semanas}</h1>
@@ -160,6 +164,7 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
                 type="button"
                 variants={item}
                 whileTap={{ scale: 0.98 }}
+                transition={agil}
                 onClick={() => (trava ? bloqueado(semana) : ir(`${base}/treino/${mesoId}/${semana}/${treino}`))}
                 className="block w-full text-left"
               >

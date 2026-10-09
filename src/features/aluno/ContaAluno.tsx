@@ -20,10 +20,10 @@ export default function ContaAluno({ nome, abrirTutorial }: { nome: string; abri
         <button type="button" onClick={abrirTutorial} className="block w-full py-2">
           <Linha icone={<IcPrancheta className="size-5" />}>Como usar</Linha>
         </button>
-        <a href="#/metodos" className="block py-2">
+        <a href="#/metodos" className="toque block py-2">
           <Linha icone={<IcLivro className="size-5" />}>Guia de métodos</Linha>
         </a>
-        <a href="/privacidade" className="block py-2">
+        <a href="/privacidade" className="toque block py-2">
           <Linha icone={<IcPessoa className="size-5" />}>Política de Privacidade</Linha>
         </a>
       </Quadro>

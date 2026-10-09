@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { m, useReducedMotion } from 'motion/react'
+import { saida, suave } from '../../movimento'
 import marca from '@marca/marca.json'
 import { COR_METODO } from '../../data/metodos'
 
@@ -156,7 +157,7 @@ export default function Tutorial({ fechar }: { fechar: () => void }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: saida }} transition={suave} className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
       <m.div
         ref={ref}
         tabIndex={-1}
@@ -164,8 +165,9 @@ export default function Tutorial({ fechar }: { fechar: () => void }) {
         aria-modal="true"
         aria-labelledby="tutorial-titulo"
         key={i}
-        initial={quieto ? false : { opacity: 0, y: 12 }}
+        initial={quieto ? false : { opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={suave}
         className="max-h-full w-full max-w-sm overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-5 outline-none"
       >
         <div aria-hidden className="mb-4 rounded-xl bg-slate-950 p-3">{p.ilustracao}</div>
@@ -189,6 +191,6 @@ export default function Tutorial({ fechar }: { fechar: () => void }) {
           </div>
         </div>
       </m.div>
-    </div>
+    </m.div>
   )
 }

@@ -1,4 +1,5 @@
 import { m } from 'motion/react'
+import { confete } from '../../movimento'
 import type { ReactNode } from 'react'
 import { comparacaoToneladas, type resumoTreino } from '../../lib/evolucao'
 import { fmt } from '../coach/semana/format'
@@ -86,7 +87,7 @@ export default function FimTreino({
               style={{ backgroundColor: cor }}
               initial={{ x: 0, y: 0, opacity: 1 }}
               animate={{ x: (i - 2.5) * 52, y: i % 2 ? 90 : -40, rotate: i * 120, opacity: 0 }}
-              transition={{ duration: 1.1, ease: 'easeOut' }}
+              transition={confete}
             />
           ))}
         <m.div variants={item}>

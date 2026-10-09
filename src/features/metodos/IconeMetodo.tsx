@@ -53,7 +53,7 @@ const desenhos: Record<Metodo, ReactNode> = {
   'Rest-pause': (
     <>
       <rect x="3" y="9" width="18" height="6" rx="3" fill="none" stroke="currentColor" strokeWidth="2" />
-      <m.rect x="5" y="11" height="2" rx="1" fill="currentColor" animate={{ width: [0, 8, 8, 14, 0] }} transition={loop(3.2, { times: [0, 0.3, 0.55, 0.85, 1] })} />
+      <m.rect x="5" y="11" height="2" rx="1" fill="currentColor" initial={{ width: 0 }} animate={{ width: [0, 8, 8, 14, 0] }} transition={loop(3.2, { times: [0, 0.3, 0.55, 0.85, 1] })} />
     </>
   ),
   // blocos com espaços aparecendo

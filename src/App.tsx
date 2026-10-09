@@ -32,7 +32,7 @@ import Politica from './features/privacidade/Politica'
 import Aceite from './features/privacidade/Aceite'
 import marca from '@marca/marca.json'
 import { IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
-import { BarraAbas, Brilho } from './vidro'
+import { BarraAbas, Bolha, Brilho } from './vidro'
 
 // /instalar e /privacidade são públicas (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
@@ -109,8 +109,9 @@ function Menu({ rota }: { rota: string }) {
               key={id}
               href={href}
               aria-current={at === id ? 'page' : undefined}
-              className={`flex h-12 items-center gap-3 rounded-2xl px-4 text-base font-semibold ${at === id ? 'lente text-white' : 'text-slate-300 hover:text-white'}`}
+              className={`relative flex h-12 items-center gap-3 rounded-2xl px-4 text-base font-semibold ${at === id ? 'text-white' : 'text-slate-300 hover:text-white'}`}
             >
+              {at === id && <Bolha id="bolha-lateral" className="rounded-2xl" />}
               <Icone className={`size-5 ${at === id ? 'text-marca-400' : ''}`} /> <span className="flex-1">{rotulo}</span>
               {selo ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-xs font-bold text-white">{selo}</span> : null}
             </a>
@@ -174,7 +175,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
             </Aviso>
           </div>
         )}
-        <Tela chave={rota}>{tela}</Tela>
+        <Tela chave={rota} abrir={/^\/(aluno|meso)\/|^\/alunos\/novo/.test(rota)}>{tela}</Tela>
       </div>
     </div>
   )

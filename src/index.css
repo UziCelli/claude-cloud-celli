@@ -41,13 +41,28 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Molas da Apple (iguais a src/movimento.ts). Pontos gerados uma vez com `spring` do pacote `motion`
+   (visualDuration 0.3/bounce 0.15 e 0.5/0; 29 amostras até assentar). O cubic-bezier é o fallback do Safari antigo. */
+:root {
+  --mola-agil: cubic-bezier(0.2, 0.9, 0.3, 1.05);
+  --mola-suave: cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --mola-agil: linear(0, 0.047, 0.157, 0.291, 0.428, 0.554, 0.664, 0.754, 0.827, 0.882, 0.924, 0.954, 0.974, 0.988, 0.997, 1.002, 1.005, 1.006, 1.006, 1.006, 1.005, 1.004, 1.003, 1.003, 1.002, 1.001, 1.001, 1.001, 1);
+    --mola-suave: linear(0, 0.043, 0.14, 0.258, 0.377, 0.487, 0.585, 0.668, 0.737, 0.793, 0.838, 0.875, 0.903, 0.926, 0.943, 0.957, 0.967, 0.975, 0.981, 0.986, 0.989, 0.992, 0.994, 0.995, 0.997, 0.997, 0.998, 0.999, 1);
+  }
+}
+
 /* Feedback de toque e de mouse em tudo que é clicável (botões, links, selects, abas, checkboxes). */
 @media (prefers-reduced-motion: no-preference) {
   button, a, select, summary, input[type='checkbox'] {
-    transition: scale 0.12s ease-out, opacity 0.12s ease-out, background-color 0.15s, color 0.15s, filter 0.15s;
+    transition: scale 0.55s var(--mola-agil), opacity 0.55s var(--mola-agil), background-color 0.55s var(--mola-suave), color 0.55s var(--mola-suave), filter 0.55s var(--mola-suave);
   }
   button:not(:disabled):not([data-m]):active, select:active, summary:active, input[type='checkbox']:active { scale: 0.95; }
   a:active { opacity: 0.6; }
+  .toque { transition: scale 0.55s var(--mola-agil); }
+  .toque:active { scale: 0.97; }
   @media (hover: hover) {
     button:not(:disabled):hover, select:hover, input[type='checkbox']:hover { filter: brightness(1.12); }
   }

@@ -1,4 +1,5 @@
 import { AnimatePresence, m } from 'motion/react'
+import { agil, saida } from '../../../movimento'
 import { useEffect, useRef, useState } from 'react'
 
 // Input de carga (kg): grava no blur/Enter, sem esperar confirmação do servidor (offline-first).
@@ -47,8 +48,8 @@ export default function LoadInput({
           className="pointer-events-none absolute -right-1 -top-2 text-xs font-bold text-emerald-400"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          exit={{ opacity: 0, transition: saida }}
+          transition={agil}
         >
           ✓
         </m.span>

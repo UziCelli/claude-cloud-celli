@@ -1,4 +1,5 @@
 import { AnimatePresence, m } from 'motion/react'
+import { agil, saida, suave } from '../../../movimento'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import { migrarProgressao } from '../../../engine'
@@ -184,7 +185,7 @@ export default function EditorMeso({ id }: { id: string }) {
               <m.span
                 layoutId="aba-ativa"
                 className="absolute inset-0 rounded-lg bg-marca-500"
-                transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                transition={agil}
               />
             )}
             <span className="relative">{TITULO_ABA[a]}</span>
@@ -200,8 +201,8 @@ export default function EditorMeso({ id }: { id: string }) {
         <m.div
           key={aba}
           initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0, transition: { duration: 0.18, ease: 'easeOut' } }}
-          exit={{ opacity: 0, transition: { duration: 0.08 } }}
+          animate={{ opacity: 1, x: 0, transition: suave }}
+          exit={{ opacity: 0, transition: saida }}
         >
       {aba === 'config' && (
         <div className="grid max-w-md gap-3">

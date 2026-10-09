@@ -1,4 +1,5 @@
 import { m } from 'motion/react'
+import { agil } from '../../../movimento'
 import { useState } from 'react'
 import { criarAlunoComApp, criarAlunoPresencial } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
@@ -38,7 +39,7 @@ export default function NovoAluno() {
   }
 
   const aba = (ativo: boolean) => `relative flex-1 rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold ${ativo ? 'text-white' : ''}`
-  const pilula = <m.span layoutId="novo-aba" className="absolute inset-0 rounded-lg bg-marca-500" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />
+  const pilula = <m.span layoutId="novo-aba" className="absolute inset-0 rounded-lg bg-marca-500" transition={agil} />
   return (
     <Pagina titulo="Novo aluno">
       <Cartao className="max-w-md">

@@ -1,5 +1,6 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { m, useReducedMotion } from 'motion/react'
+import { suave } from '../../movimento'
 import { useMemo, useState } from 'react'
 import { evolucaoExercicio } from '../../engine'
 import type { Usuario } from '../../lib/acesso'
@@ -29,7 +30,7 @@ function Faixa({ frac, className = 'bg-marca-500' }: { frac: number; className?:
         style={{ width: `${Math.max(3, Math.round(Math.min(1, frac) * 100))}%` }}
         initial={{ scaleX: quieto ? 1 : 0 }}
         animate={{ scaleX: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={suave}
       />
     </div>
   )

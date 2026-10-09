@@ -1,5 +1,12 @@
+import { m } from 'motion/react'
 import type { ReactNode } from 'react'
 import type { Icone } from './icones'
+import { agil } from './movimento'
+
+// Bolha da aba ativa: desliza até a aba tocada (layoutId) com mola ágil, como no iOS 26.
+export const Bolha = ({ id, className = 'rounded-full' }: { id: string; className?: string }) => (
+  <m.span aria-hidden layoutId={id} transition={agil} className={`lente absolute inset-0 -z-10 ${className}`} />
+)
 
 // Peças do visual "vidro" (aluno e coach): barra de abas embaixo, fundo com brilho e cartão.
 
@@ -16,8 +23,9 @@ export function BarraAbas({ abas, className = '' }: { abas: Aba[]; className?: s
             key={href}
             href={href}
             aria-current={ativo ? 'page' : undefined}
-            className={`relative flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold tracking-wide ${ativo ? 'lente text-white' : 'text-slate-300/85'}`}
+            className={`relative flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold tracking-wide ${ativo ? 'text-white' : 'text-slate-300/85'}`}
           >
+            {ativo && <Bolha id="bolha-barra" />}
             <Icone className={`size-[22px] ${ativo ? 'text-marca-400' : ''}`} />
             <span className="truncate">{rotulo}</span>
             {selo ? (
