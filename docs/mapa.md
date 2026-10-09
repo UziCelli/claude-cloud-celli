@@ -38,6 +38,7 @@ Comece por aqui para achar onde mexer.
 - `acesso.ts` — `liberado()`, `bloqueado()`: verifica status/pagamento
 - `acoes.ts` — `salvarRegistro()`, `atualizarRegistro()`: grava no Firestore campo a campo
 - `alertas.ts` (+ `alertas.test.ts`) — `repsAbaixo()` e `treinosDemorados()` (7 dias; limites em constantes no topo)
+- `agenda.ts` (+ `agenda.test.ts`) — agenda da semana do aluno, pura: `diasDaSemana()`, `treinoDeHoje()`, `travado()`, `semanaDeVolta()`, `comVolta()` (prescrição com −5% na semana de volta), `cargaVolta()`
 - `conversores.ts` — `mesoParaDoc()`, `docParaMeso()`, `registroId()`: serialização; `normalizarCargas()`/`docsParaRegistros()`: leitura única das cargas (peso do corpo)
 - `hooks.ts` — `useUsuarioAtual()`, `useMeso()`, etc.: React hooks
 - `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada)
@@ -57,18 +58,21 @@ Comece por aqui para achar onde mexer.
 
 ### `src/features/auth/` — Autenticação
 - `Entrar.tsx` — login Google/e-mail, cadastro
+- `BoasVindas.tsx` — boas-vindas da 1ª visita no navegador (marca `forca-boas-vindas-visto`) e folha "instalar no iPhone"
 
 ### `src/features/aluno/` — App do aluno
-- `AlunoApp.tsx` — roteador do aluno
-- `Hoje.tsx` — treino de hoje (prop `base`: prefixo das rotas; o presencial do coach usa) + aviso "Reps abaixo da meta"
+- `AlunoApp.tsx` — roteador do aluno + barra de abas embaixo (Início, Treino, Evolução, Conta; some em `#/treino/…`)
+- `InicioAluno.tsx` — aba Início: cartão do treino de hoje, "Sua semana", quadros (Evolução, Pagamento, Avaliações, Guia)
+- `Hoje.tsx` — aba Treino (`#/treino`): semanas com trava, aviso da semana de volta, cartões dos treinos (prop `base`: prefixo das rotas; o presencial do coach usa e nada trava) + aviso "Reps abaixo da meta"
+- `ContaAluno.tsx` — aba Conta: Como usar, Guia de métodos, Política, Sair
 - `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro, festa no recorde)
 - `FimTreino.tsx` — tela de fim de treino estilo story (duração, volume, recordes, cargas que subiram, semana) + "Compartilhar no story"; abre no "Concluir treino" e no "Ver resumo"; vale também no presencial
-- `Tutorial.tsx` — passo a passo do aluno (abre 1x no 1º acesso; botão "Como usar" no topo; título de boas-vindas em `marca.json` → `boasVindas`)
+- `Tutorial.tsx` — passo a passo do aluno (abre 1x no 1º acesso; "Como usar" na aba Conta; título de boas-vindas em `marca.json` → `boasVindas`)
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — reexporta o painel de evolução
-- `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor
+- `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor; `dataSP`, `diaCurto`, `DIAS_CURTO` (datas curtas)
 
 ### `src/features/evolucao/` — Painel de evolução, conquistas, cartão
 - `PainelEvolucao.tsx` — tela única para aluno (`#/evolucao`) e coach (`#/aluno/:uid/evolucao`): números, calendário, maiores evoluções, recordes, conquistas, tabela por exercício
@@ -82,7 +86,7 @@ Comece por aqui para achar onde mexer.
 
 ### `src/features/coach/` — App do coach
 - `presencial/Presencial.tsx` — `PresencialHoje`/`PresencialTreino`: faixa "Presencial: aluno" + as telas Hoje/Treino do aluno com `base`
-- `inicio/Inicio.tsx` — dashboard do coach (faixa "⚠️ N alertas" no topo)
+- `inicio/Inicio.tsx` — dashboard do coach: saudação, 4 números, aguardando aprovação, Novo aluno/Ranking, treinaram hoje, sumidos e vencimentos (faixa "⚠️ N alertas")
 - `alertas/Alertas.tsx` — aba Alertas (`#/alertas`): reps abaixo da meta, treinos acima do tempo, treinos que demoraram; hook `useAlertasCoach()` (também usado no Início)
 - `alunos/Alunos.tsx`, `NovoAluno.tsx` — lista, cadastro
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão
@@ -104,7 +108,7 @@ Comece por aqui para achar onde mexer.
 - `privacidade.ts` — `VERSAO_PRIVACIDADE` (troca = novo aceite obrigatório)
 
 ### `src/features/instalar/` — PWA/Android
-- `Instalar.tsx` — página de instalação
+- `Instalar.tsx` — página de instalação; exporta `jaInstalado`, `eIOS`, `eAndroid`, `navegadorEmbutido` e `useEventoInstalar` (`beforeinstallprompt`), usados também nas boas-vindas
 - `AvisoIOS.tsx` — instrução iOS
 
 ### `marcas/<id>/` — uma pasta por marca (`vfit`, `gislane`)
@@ -119,13 +123,15 @@ Comece por aqui para achar onde mexer.
 - `sw-push.js` — trata o push e o clique na notificação (importado pelo service worker via `workbox.importScripts`)
 
 ### `src/` — Raiz
-- `App.tsx` — roteador principal: rotas, verificação de permissão
+- `App.tsx` — roteador principal: rotas, verificação de permissão; `Menu` do coach (barra de abas no celular, menu lateral ≥ lg, selo de alertas)
+- `vidro.tsx` — visual "vidro": `BarraAbas`, `Brilho`, `Quadro`, `Chip`, `IconeQuadrado`
+- `icones.tsx` — ícones de traço (barra de abas e cartões)
 - `rota.ts` — `useRota()`, `ir()`, `casar()`: hash routing
 - `main.tsx` — entry point React
 - `ui.tsx` — componentes comuns: `Botao`, `Centro`, `Tab`, etc.
 - `motionFeatures.ts` — recursos da biblioteca Motion carregados sob demanda; animações e componentes `Tela`, `Painel`, `Barra`, `cascata`/`item` ficam em `src/ui.tsx`
 - `ui.tsx` também tem `Abertura` (carregando), `Msg` (mensagem que aparece/some), `Deslizar` (troca de semana), `Contar`; toque/hover de botões, links, selects e checkboxes vêm do `index.css`
-- `index.css` — Tailwind, fontes (as cores vêm de `marcas/<id>/tema.css`)
+- `index.css` — Tailwind, fontes (as cores vêm de `marcas/<id>/tema.css`), classes `.vidro`/`.lente`/`.vidro-escuro` e o espaço `pb-barra`
 - Logo: `marcas/<id>/Logo.tsx` (`import Logo from '@marca/Logo'`)
 
 ### `src/data/` — Dados estáticos
@@ -182,9 +188,11 @@ Comece por aqui para achar onde mexer.
 | `/meso/:id` | EditorMeso | Coach |
 | `/meso/:id/semana/:n` | VisaoSemana | Coach |
 | `/ranking` | RankingAlunos | Coach |
-| `/conta` | MinhaConta | Ambos |
+| `/conta` | MinhaConta (coach) · ContaAluno (aluno) | Ambos |
 | `/evolucao` | EvolucaoAluno (`PainelEvolucao.tsx`) | Aluno |
-| (padrão) | AlunoApp | Aluno |
+| `/treino` | Hoje (aba Treino) | Aluno |
+| `/treino/:mesoId/:semana/:treino` | Treino | Aluno |
+| (padrão) | AlunoApp → InicioAluno | Aluno |
 
 ---
 
@@ -257,7 +265,12 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Push do descanso | `push/src/` | Token do Firebase verificado (aud/iss/exp/assinatura); só endpoints de push conhecidos (`HOSTS`); chaves VAPID nunca regeneradas. | `push/src/*.test.ts`, conferência no `push.yml` |
 | CSP | `firebase.json` | `connect-src` só com os domínios usados (Google APIs e o Worker); o e2e usa a mesma CSP. | e2e completo |
 | Registro de erros | `firestore.rules` (`logs`), `src/lib/log.ts` | Criar só logado, com `hasOnly` e tamanhos fixos, `uid == auth.uid` e `em == request.time`; só o coach lê e apaga; ninguém edita. O log nunca registra o próprio erro, e `promessa` ignora o que já foi registrado como `gravacao`. Antes do login fica numa fila local; máx. 20 por aparelho por dia. | `tests/rules.test.ts` (logs), `log.test.ts` |
-| Menu do topo | `src/App.tsx` (coach), `src/features/aluno/AlunoApp.tsx` | Logo fixo (posição e tamanho combinados com o Victor, não mexer). Links sem quebra; abaixo de `sm` "Minha conta" vira ícone (nome acessível "Minha conta"); a fileira rola para o lado com degradê só como reserva em telas muito estreitas. A página não pode ganhar rolagem horizontal. | `e2e/layout.spec.ts` |
+| Menu do coach | `src/App.tsx` (`Menu`) | Celular (< lg): topo só com o logo + `BarraAbas` embaixo (Início, Alunos, Alertas com selo, Métodos, Conta); "Sair" fica em Minha conta. Computador (≥ lg): menu lateral fixo. Aba ativa pela rota. Presencial sem barra e sem as consultas do selo. O selo usa as mesmas consultas do Início (o SDK junta consultas iguais) e fica ligado em todas as telas do coach: uma leitura inicial por sessão, depois só mudanças. Com selo, o nome do link vira "Alertas N" (e2e usam `/^Alertas/`). A página não pode ganhar rolagem horizontal. | `e2e/layout.spec.ts`, `coach.spec.ts` |
+| Navegação do aluno | `AlunoApp.tsx`, `InicioAluno.tsx`, `Hoje.tsx`, `ContaAluno.tsx` | Sem cabeçalho no topo; `BarraAbas` embaixo some em `#/treino/…` (inclui o fim do treino); as outras telas usam `pb-barra`. "Ver treino de hoje" só navega: o cronômetro liga só no "Iniciar treino". | e2e `aluno`, `layout`, `varredura`, `tutorial` |
+| Agenda, travas e semana de volta | `src/lib/agenda.ts`, `Hoje.tsx`, `InicioAluno.tsx`, `Treino.tsx`, `VisaoSemana.tsx`, `alertas.ts` | Tudo calculado na hora a partir dos registros (`realizado`), nada gravado. Trava só para o aluno (`base` do presencial não trava; `Treino.tsx` não trava). Volta: semana `w` ≥ 2 sem treino feito na `w−1` → `ajustarSeries(−5%)` só nessa semana e carga cinza × 0,95 (passo de 0,5). Quem tem só 14 dias de registros (alertas do coach) usa `comVolta(…, soAtual=true)`, senão dá volta falsa. Limitação aceita: treino da semana anterior que foi de volta é comparado sem o −5% (pode dar alerta falso de reps). | `agenda.test.ts`, `alertas.test.ts` |
+| Entrada (boas-vindas) | `BoasVindas.tsx`, `Entrar.tsx` | Marca `forca-boas-vindas-visto` no aparelho (sem IP). Some no app instalado e com `navigator.webdriver`, salvo `forca-boas-vindas-forcar` (e2e). Rótulos "E-mail"/"Senha" são usados por todos os e2e: o botão de ver senha não pode ter "senha" no `aria-label`. | `entrada.spec.ts` |
+| Campos fora do motor no meso | `conversores.ts` (`docParaMeso`), `Treino.tsx` | `docParaMeso` só traz o que o motor usa: `adaptadoEm` (aviso "treino adaptado") e outros campos do documento se leem do doc cru (`dados`), nunca do meso convertido (bug corrigido em 08/10/2026: o aviso nunca aparecia). | — |
+| Visual vidro | `src/index.css`, `src/vidro.tsx` | `.vidro`/`.lente`/`.vidro-escuro` ficam em `@layer components`: fora dela venceriam as classes do Tailwind (a folha do iPhone ficou transparente assim). Folha/aviso que precisa ser opaco usa fundo sólido, não `vidro`. | build, prints |
 | Inatividade | `src/lib/inatividade.ts` | Coach 20 min, aluno 4 h (era 30 min até 06/10/2026; aluno reclamou); o cronômetro rodando conta como uso; **treino em andamento neste aparelho também** (marca `forca-treino-andamento` = `{inicio, ate: +3 h}` gravada ao iniciar em `Treino.tsx`, apagada no "Concluir"/realizado; teto de 3 h para treino esquecido; `treinoEmAndamento` em `inatividade.ts`); só sai depois de `waitForPendingWrites` (offline = avisa e espera). Bug corrigido em 01/10/2026: a marca de uso fica no aparelho depois de sair, então o login novo derrubava a pessoa na hora (e o código do 2º fator, já usado, dava "incorreto" até travar em quota-exceeded). Por isso o `Entrar.tsx` chama `marcar()` ao enviar.  Sem marca (0, navegador sem armazenamento) não expira. | `inatividade.test.ts`, e2e "login novo não cai por inatividade antiga", `relogio.spec.ts` |
 | Aba antiga após publicar | `src/lib/atualizar.ts`, `Entrar.tsx`, plugin `versao` em `vite.config.ts` | O service worker novo assume, mas a página aberta continua com o JS antigo (foi o login que caía no PC em 01/10/2026). Na tela de login, compara `__VERSAO__` com `versao.json` (do mesmo cache do SW) e recarrega uma vez por versão (marca em sessionStorage evita laço). Só na tela de login: em telas logadas um reload poderia perder edição. A versão aparece no rodapé do login. | `atualizar.test.ts`, e2e `atualizar.spec.ts` |
 | Tentativas de login | `src/lib/tentativas.ts`, `Entrar.tsx` | Depois de 5 falhas, espera crescente (30 s → máx. 15 min) por aparelho; zera no sucesso. | `tentativas.test.ts` |

@@ -42,7 +42,7 @@ async function entrar(page: Page, email: string, senha: string, esperado: string
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
-  await expect(page.getByText(esperado).first()).toBeVisible()
+  await expect(page.getByText(esperado).locator('visible=true').first()).toBeVisible()
 }
 
 for (const largura of [1280, 390]) {
@@ -134,6 +134,9 @@ for (const largura of [1280, 390]) {
     page = await ctx2.newPage()
     ouvir(page)
     await entrar(page, ALUNO.email, ALUNO.senha, 'Semana 1 de 3')
+    await confere('aluno-inicio')
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+    await expect(page.getByText('Semana 1 de 3').first()).toBeVisible()
     await confere('aluno-hoje')
     await page.getByRole('button', { name: /Treino 1/ }).click()
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
@@ -141,7 +144,8 @@ for (const largura of [1280, 390]) {
     await confere('aluno-treino')
     await ir('/#/evolucao', 'Evolução')
     await confere('aluno-evolucao')
-    // O aluno não tem "Minha conta" (só o coach; ver AlunoApp.tsx): cobre o guia de métodos no lugar.
+    await ir('/#/conta', 'Como usar')
+    await confere('aluno-conta')
     await page.goto('/#/metodos')
     await expect(page.getByRole('heading').first()).toBeVisible()
     await confere('aluno-metodos')

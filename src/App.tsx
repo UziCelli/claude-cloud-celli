@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { aceitouPrivacidade } from './lib/privacidade'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
-import { auth } from './lib/firebase'
-import { sair } from './lib/acoes'
-import { useUsuarioAtual } from './lib/hooks'
+import { collection, query, where } from 'firebase/firestore'
+import { auth, db } from './lib/firebase'
+import { consultaRegistrosRecentes, sair } from './lib/acoes'
+import { useLista, useUsuarioAtual } from './lib/hooks'
+import { inicioJanela, type AlunoComId } from './lib/resumo'
+import type { MesoSalvo } from './lib/conversores'
+import { calcularAlertas, type Reg } from './features/coach/alertas/Alertas'
 import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
@@ -27,6 +31,8 @@ import MinhaConta from './features/conta/MinhaConta'
 import Politica from './features/privacidade/Politica'
 import Aceite from './features/privacidade/Aceite'
 import marca from '@marca/marca.json'
+import { IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
+import { BarraAbas, Brilho } from './vidro'
 
 // /instalar e /privacidade são públicas (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
@@ -41,7 +47,7 @@ function Principal() {
   if (carregando) [estagio, tela] = ['abertura', <Abertura />]
   else if (!user) [estagio, tela] = ['entrar', <Entrar />]
   else if (!perfil) [estagio, tela] = ['abertura', <Abertura texto="Preparando sua conta…" />]
-  else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} />
+  else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
   else if (!aceitouPrivacidade(perfil)) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} />]
   else tela = <AlunoApp uid={user.uid} nome={perfil.nome} />
@@ -67,44 +73,64 @@ function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
   ) : null
 }
 
-// Links do topo: não cortam; se não couberem, rolam para o lado com degradê na borda direita.
-function MenuRolavel() {
-  const ref = useRef<HTMLElement>(null)
-  const [mais, setMais] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ver = () => setMais(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
-    ver()
-    el.addEventListener('scroll', ver, { passive: true })
-    const ro = new ResizeObserver(ver)
-    ro.observe(el)
-    return () => (el.removeEventListener('scroll', ver), ro.disconnect())
-  }, [])
+const ativaAba = (rota: string) =>
+  rota === '/' ? 'inicio'
+  : rota === '/alertas' || rota === '/ranking' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
+  : 'alunos' // /alunos, /aluno/..., /meso/...
+
+// Menu do coach: abas embaixo no celular, menu lateral fixo no computador (≥ lg).
+function Menu({ rota }: { rota: string }) {
+  const at = ativaAba(rota)
+  // Mesmas 3 consultas do Início: o Firestore junta as iguais (sem leitura extra). Menu não existe no presencial.
+  const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
+  const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
+  const agora = new Date()
+  const chave = inicioJanela(agora, 14)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
+  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora).total
+  const itens = [
+    { id: 'inicio', rotulo: 'Início', href: '#/', Icone: IcCasa },
+    { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },
+    { id: 'alertas', rotulo: 'Alertas', href: '#/alertas', Icone: IcSino, selo },
+    { id: 'ranking', rotulo: 'Ranking', href: '#/ranking', Icone: IcTrofeu },
+    { id: 'metodos', rotulo: 'Métodos', href: '#/metodos', Icone: IcLivro },
+    { id: 'conta', rotulo: 'Minha conta', href: '#/conta', Icone: IcPessoa },
+  ]
   return (
-    <div className="relative min-w-0 flex-1">
-      <nav
-        ref={ref}
-        className="-m-1 flex gap-3 overflow-x-auto p-1 sm:gap-4 text-sm text-slate-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap [&>a]:py-2"
-      >
-        <a href="#/" className="hover:text-marca-400">Início</a>
-        <a href="#/alertas" className="hover:text-marca-400">Alertas</a>
-        <a href="#/alunos" className="hover:text-marca-400">Alunos</a>
-        <a href="#/metodos" className="hover:text-marca-400">Métodos</a>
-        <a href="#/conta" aria-label="Minha conta" title="Minha conta" className="hover:text-marca-400">
-          <svg viewBox="0 0 24 24" className="size-5 sm:hidden" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
-          </svg>
-          <span className="hidden sm:inline">Minha conta</span>
+    <>
+      <aside className="vidro-escuro sticky top-0 hidden self-start h-dvh w-64 shrink-0 flex-col p-5 lg:flex">
+        <a href="#/" className="mb-8 text-white" aria-label={marca.nome}>
+          <Logo className="h-5" />
         </a>
-      </nav>
-      {mais && <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-marca-900" />}
-    </div>
+        <nav aria-label="Menu lateral" className="flex-1 space-y-1">
+          {itens.map(({ id, rotulo, href, Icone, selo }) => (
+            <a
+              key={id}
+              href={href}
+              aria-current={at === id ? 'page' : undefined}
+              className={`flex h-12 items-center gap-3 rounded-2xl px-4 text-base font-semibold ${at === id ? 'lente text-white' : 'text-slate-300 hover:text-white'}`}
+            >
+              <Icone className={`size-5 ${at === id ? 'text-marca-400' : ''}`} /> <span className="flex-1">{rotulo}</span>
+              {selo ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-xs font-bold text-white">{selo}</span> : null}
+            </a>
+          ))}
+        </nav>
+        <button onClick={sair} className="flex h-12 items-center gap-3 px-4 text-base font-semibold text-slate-400 hover:text-white">
+          <IcSair className="size-5" /> Sair
+        </button>
+      </aside>
+      <BarraAbas
+        className="lg:hidden"
+        abas={itens
+          .filter((i) => i.id !== 'ranking')
+          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: at === i.id, selo: i.selo }))}
+      />
+    </>
   )
 }
 
-function Coach({ uid, email }: { uid: string; email: string }) {
+function Coach({ uid, email, nome }: { uid: string; email: string; nome: string }) {
   const rota = useRota()
   const [semFator, setSemFator] = useState(false)
   useEffect(() => {
@@ -112,7 +138,7 @@ function Coach({ uid, email }: { uid: string; email: string }) {
     auth.currentUser?.getIdTokenResult().then((t) => setSemFator(faltaSegundoFator(t.claims))).catch(() => {})
   }, [uid])
   let p: Record<string, string> | null
-  let tela = <Inicio />
+  let tela = <Inicio nome={nome} />
   if (rota === '/alertas') tela = <Alertas />
   else if (rota === '/alunos') tela = <Alunos />
   else if (rota === '/alunos/novo') tela = <NovoAluno />
@@ -126,27 +152,31 @@ function Coach({ uid, email }: { uid: string; email: string }) {
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
+  // Treino presencial: sem barra, para não cobrir a tela do treino.
+  const presencial = rota.startsWith('/aluno/') && rota.includes('/presencial')
   return (
-    <>
-      <header className="border-b border-slate-800 bg-marca-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <a href="#/" className="shrink-0 text-white" aria-label={marca.nome}>
-            <Logo className="h-5" />
-          </a>
-          <MenuRolavel />
-          <Botao className="shrink-0" onClick={sair}>Sair</Botao>
-        </div>
-      </header>
-      {semFator && (
-        <div className="mx-auto max-w-6xl px-4 pt-3">
-          <Aviso>
-            Por segurança, o painel exige a verificação em 2 etapas. Ative em Minha conta (se ainda não ativou) e depois
-            saia e entre de novo com o código.
-          </Aviso>
-        </div>
-      )}
-      <Tela chave={rota}>{tela}</Tela>
-    </>
+    <div className="lg:flex">
+      <Brilho />
+      {!presencial && <Menu rota={rota} />}
+      <div className={`min-w-0 flex-1 ${presencial ? '' : 'pb-barra lg:pb-0'}`}>
+        <header className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] lg:hidden">
+          <div className="mx-auto max-w-6xl px-4 py-3">
+            <a href="#/" className="inline-block text-white" aria-label={marca.nome}>
+              <Logo className="h-5" />
+            </a>
+          </div>
+        </header>
+        {semFator && (
+          <div className="mx-auto max-w-6xl px-4 pt-3">
+            <Aviso>
+              Por segurança, o painel exige a verificação em 2 etapas. Ative em Minha conta (se ainda não ativou) e depois
+              saia e entre de novo com o código.
+            </Aviso>
+          </div>
+        )}
+        <Tela chave={rota}>{tela}</Tela>
+      </div>
+    </div>
   )
 }
 

@@ -1,7 +1,12 @@
 // Alertas do coach e do aluno, calculados no aparelho a partir dos registros (sem dado novo). Funções puras.
 import { prescreverSessao, type Meso } from '../engine'
 import { diaSP } from './acesso'
+import { comVolta } from './agenda'
 import { docParaReps, normalizarCargas, type RegistroDoc } from './conversores'
+
+// Meta do aluno = prescrição com a semana de volta (−5%). Só a semana atual: o coach carrega ~14 dias de
+// registros, e para uma semana passada faltaria a semana anterior a ela (daria "volta" falsa).
+const prescrito = (meso: Meso, registros: RegistroAlerta[], agora: Date) => comVolta(meso, registros, agora, true)
 
 export const JANELA_DIAS = 7
 export const MIN_ABAIXO = 3 // séries abaixo da meta para alertar
@@ -17,11 +22,12 @@ const dentro = (ms: number | undefined, agora: Date): ms is number =>
   ms != null && diaSP(agora.getTime()) - diaSP(ms) < JANELA_DIAS
 
 export function repsAbaixo(meso: Meso, registros: RegistroAlerta[], agora: Date) {
+  const prescricao = prescrito(meso, registros, agora)
   let feitas = 0, abaixo = 0, faltaram = 0, ultimo = { ms: -1, dia: 0, semana: 0 }
   const porNome = new Map<string, { abaixo: number; faltaram: number }>()
   for (const r of registros) {
     const ms = (r.realizadoEm ?? r.atualizadoEm)?.toMillis()
-    const sessao = dentro(ms, agora) ? prescreverSessao(meso, r.semana, r.treino) : null
+    const sessao = dentro(ms, agora) ? prescreverSessao(prescricao, r.semana, r.treino) : null
     if (!sessao) continue
     const cargas = normalizarCargas(r, Object.fromEntries(sessao.exercicios.map((e) => [e.slot.slotId, e.n])))
     const reps = docParaReps(r.reps)
@@ -49,10 +55,11 @@ export function repsAbaixo(meso: Meso, registros: RegistroAlerta[], agora: Date)
 
 export function treinosDemorados(meso: Meso, registros: RegistroAlerta[], agora: Date) {
   const lista: { semana: number; treino: number; minutos: number; previsto: number }[] = []
+  const prescricao = prescrito(meso, registros, agora)
   for (const r of registros) {
     const fim = r.realizadoEm?.toMillis(), ini = r.inicioEm?.toMillis()
     if (!r.realizado || ini == null || !dentro(fim, agora)) continue
-    const previsto = prescreverSessao(meso, r.semana, r.treino)?.tempoMin
+    const previsto = prescreverSessao(prescricao, r.semana, r.treino)?.tempoMin
     if (previsto == null) continue
     const min = (fim - ini) / 60_000
     if (min > DEMORA_MAX || min < previsto * DEMORA_FATOR || min - previsto < DEMORA_MIN) continue

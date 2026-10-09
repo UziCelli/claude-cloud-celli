@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 04/10/2026
+# Estado da sessão (retomada) — atualizado em 08/10/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #19 estão juntados e publicados.
 
@@ -105,7 +105,36 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 ## 07/10/2026
 - Treino: "▶ Iniciar treino" + relógio "Treino em andamento · mm:ss" até concluir (duração final parada depois). Treino em andamento neste aparelho conta como uso na inatividade (teto 3 h). Não commitado. e2e `relogio.spec.ts`.
 
+## 08/10/2026 — Redesenho (PR 56)
+- Plano aprovado em `docs/plano-redesenho.md` a partir dos prints do protótipo (local, fora do git: `prototipo.html`, `src/prototipo/`).
+- Feito:
+  - visual vidro;
+  - barra de abas embaixo (aluno e coach) e menu lateral do coach no computador;
+  - Início do aluno e do coach;
+  - aba Treino com travas e semana de volta (−5%);
+  - Conta do aluno;
+  - boas-vindas, instalar e login;
+  - "Dias de treino" no editor do meso.
+- `Treino.tsx` manteve o visual; só ganhou a carga −5% na semana de volta.
+- Corrigido: o aviso de "treino adaptado" nunca aparecia, porque lia `adaptadoEm` do meso convertido.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
+- **Próximo depois do redesenho (pedido em 08/10/2026): Pix simples.**
+  - QR Code e "copia e cola" gerados no app com o valor.
+  - O aluno toca em "Já paguei"; o coach recebe o aviso e toca em "Confirmar", e `pagoAte` avança 1 mês.
+  - Custo zero e sem dado novo do aluno.
+  - Falta o Victor passar a chave Pix e o valor.
+  - Pix automático (gateway + webhook) só depois de ~6 meses: tem taxa por Pix e o gateway pede CPF.
+- **Notificações (tema importante, a planejar depois):**
+  - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";
+  - para o aluno: avisos do coach, treino do dia.
+  - Reaproveitar o Worker de push que já existe (`push/`, Cloudflare, grátis).
+- **Lojas (App Store / Google Play), ideia de 08/10/2026:**
+  - embrulhar o mesmo código com Capacitor; nada de reescrever nativo;
+  - mesmo projeto Firebase (aceita web + iOS + Android);
+  - custo: Apple US$ 99/ano, Google US$ 25 uma vez;
+  - risco: revisão da Apple (regra 4.2, app que é "só um site"); notificações ajudam a passar;
+  - fazer depois das notificações.
 - **Segurança é prioridade contínua** (pedido do Victor em 01/10/2026), antes de entrarem dados sensíveis:
   - avaliação física (Fase 3): dados de saúde, com acesso só do coach e do próprio aluno, e auditoria das regras;
   - cartão no app (Apple Pay, Google Pay, Samsung Pay…): o app nunca guarda nem vê dados de cartão, tudo via gateway com tokenização (PCI); precisa de servidor (Worker da Cloudflare, já que o Spark não tem Functions).

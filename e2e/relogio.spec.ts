@@ -40,7 +40,7 @@ const seg = async (page: Page) => {
   return t.reduce((a, n) => a * 60 + n, 0)
 }
 
-async function iniciarEConcluir(page: Page, print = false) {
+async function iniciarEConcluir(page: Page, print = false, aluno = false) {
   await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
   await expect(page.getByRole('timer')).toHaveCount(0)
   await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
@@ -52,15 +52,17 @@ async function iniciarEConcluir(page: Page, print = false) {
   await page.getByRole('button', { name: 'Concluir treino' }).click()
   await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
   await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
-  await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
+  if (aluno) await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click() // aluno volta ao Início
+  await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible()
   await expect(page.getByText('Treino em andamento')).toHaveCount(0)
 }
 
 test('aluno: iniciar, relógio andando, concluir mostra duração parada', async ({ page }) => {
   await semear()
   await entrar(page, ALUNO.email, ALUNO.senha)
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
-  await iniciarEConcluir(page, true)
+  await iniciarEConcluir(page, true, true)
   await page.getByRole('button', { name: /Treino 1/ }).click()
   await expect(page.getByText('Duração do treino')).toBeVisible()
   await expect(page.getByRole('button', { name: '▶ Iniciar treino' })).toHaveCount(0)

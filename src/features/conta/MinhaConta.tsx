@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { doc } from 'firebase/firestore'
 import type { TotpSecret } from 'firebase/auth'
-import { alterarEmail, ativarTotp, iniciarTotp, reautenticar, recuperarSenha, salvarPeso, sincronizarEmail, temTotp } from '../../lib/acoes'
+import { alterarEmail, ativarTotp, iniciarTotp, reautenticar, recuperarSenha, sair, salvarPeso, sincronizarEmail, temTotp } from '../../lib/acoes'
 import { chaveManual, codigoCompleto, limparCodigo, mensagemMfa, qrDataUrl } from '../../lib/mfa'
 import type { Usuario } from '../../lib/acesso'
 import { db } from '../../lib/firebase'
@@ -232,6 +232,9 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
         <Msg>{ok && <Aviso>{ok}</Aviso>}</Msg>
         <Botao type="button" className="w-full" onClick={trocarSenha}>
           Trocar senha
+        </Botao>
+        <Botao type="button" className="w-full lg:hidden" onClick={sair}>
+          Sair
         </Botao>
         <a href="/privacidade" className="block text-center text-sm text-slate-400 underline hover:text-slate-200">Política de Privacidade</a>
       </div>

@@ -19,6 +19,7 @@ import { useDoc, useLista } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
+import { cargaVolta, comVolta, semanaDeVolta } from '../../lib/agenda'
 import { ir } from '../../rota'
 import { Botao, cascata, Centro, item, Painel } from '../../ui'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
@@ -371,7 +372,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Treino não encontrado.</Centro>
 
-  const meso = docParaMeso(dados)
+  const hoje = new Date()
+  const meso = comVolta(docParaMeso(dados), docsRegistros, hoje) // semana de volta: prescrição com −5%
+  const volta = semanaDeVolta(meso, docsRegistros, hoje, semana) // e a carga anterior (número cinza) também
   const sessao = prescreverSessao(meso, semana, treino)
   if (!sessao) return <Centro>Treino não encontrado.</Centro>
 
@@ -442,7 +445,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
     return membros
   })
   const notaInicial = [...new Set(sessao.exercicios.flatMap((e) => (e.rotulo ? e.rotulo.split('; ') : []).map(metodoDoRotulo)))].filter((x): x is Metodo => x != null && !notaDispensada(x))
-  const adaptadoEm = (meso as { adaptadoEm?: { toMillis(): number } }).adaptadoEm?.toMillis()
+  const adaptadoEm = (dados as { adaptadoEm?: { toMillis(): number } }).adaptadoEm?.toMillis() // docParaMeso não traz adaptadoEm
 
   if (verResumo)
     return (
@@ -578,7 +581,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                   const placeholderKg = dropStage
                     ? (e.cargaSugerida[k] ?? null)
                     : anterior?.[k] != null
-                      ? fmt(anterior[k]!)
+                      ? fmt(volta ? cargaVolta(anterior[k]!) : anterior[k]!)
                       : null
                   // Uma faixa colorida por método que cobre esta série (etapas do drop = Dropset).
                   const cores = [...new Set(partes.filter(({ p, mt }) => mt && (dropStage ? mt === 'Dropset' : seriesDoRotulo(p, e.n).includes(k + 1))).map(({ mt }) => mt!))]

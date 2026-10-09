@@ -86,6 +86,11 @@ for (const vp of [
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
     await expect(page.getByText('Semana 1 de 4')).toBeVisible()
     await confere(page)
+    if (prints) await page.screenshot({ path: 'test-results/prints/21-iphone14-inicio.png' })
+
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+    await expect(page.getByRole('button', { name: /Treino 1/ })).toBeVisible()
+    await confere(page)
     if (prints) await page.screenshot({ path: 'test-results/prints/21-iphone14-hoje.png' })
 
     await page.getByRole('button', { name: /Treino 1/ }).click()
@@ -109,13 +114,21 @@ for (const vp of [
   })
 }
 
+// Menu do coach: abas embaixo abaixo de 1024px; menu lateral fixo a partir daí. Nunca rolagem horizontal.
 for (const vp of [
+  { width: 320, height: 640 },
   { width: 390, height: 844 },
-  { width: 375, height: 667 },
-  { width: 360, height: 800 },
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1280, height: 800 },
 ]) {
-  test(`coach iPhone ${vp.width}x${vp.height}: sem overflow e inputs >= 16px`, async ({ browser }) => {
-    const ctx = await browser.newContext({ viewport: vp, userAgent: UA_IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 3 })
+  const lateral = vp.width >= 1024
+  test(`coach ${vp.width}x${vp.height}: menu ${lateral ? 'lateral' : 'embaixo'}, sem overflow e inputs >= 16px`, async ({ browser }) => {
+    const ctx = await browser.newContext(
+      vp.width <= 430
+        ? { viewport: vp, userAgent: UA_IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 3 }
+        : { viewport: vp },
+    )
     const page = await ctx.newPage()
     const prints = vp.width === 390
     const foto = (n: string) => prints && page.screenshot({ path: `test-results/prints/${n}.png`, fullPage: n.startsWith('3') && n > '33' })
@@ -126,8 +139,29 @@ for (const vp of [
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
     await expect(page.getByText(ALUNO.nome).first()).toBeVisible()
+    // O menu certo aparece e o outro fica escondido.
+    const abas = page.getByRole('navigation', { name: 'Menu', exact: true })
+    const menuLateral = page.getByRole('navigation', { name: 'Menu lateral' })
+    if (lateral) {
+      await expect(menuLateral).toBeVisible()
+      await expect(abas).toBeHidden()
+      for (const n of ['Início', 'Alunos', 'Alertas', 'Ranking', 'Métodos', 'Minha conta']) await expect(menuLateral.getByRole('link', { name: n })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+    } else {
+      await expect(abas).toBeVisible()
+      await expect(menuLateral).toBeHidden()
+      for (const n of ['Início', 'Alunos', 'Alertas', 'Métodos', 'Conta']) await expect(abas.getByRole('link', { name: new RegExp(`^${n}`) })).toBeVisible()
+      await expect(abas.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
+    }
     await confere(page)
     await foto('32-coach-inicio-iphone')
+
+    // Aba ativa pela rota: editor de meso e página do aluno contam como Alunos.
+    if (!lateral) {
+      await page.goto(`/#/aluno/${alunoId}`)
+      await expect(abas.getByRole('link', { name: 'Alunos' })).toHaveAttribute('aria-current', 'page')
+      await page.goto('/#/')
+    }
 
     await page.goto('/#/alunos/novo')
     await expect(page.getByRole('heading', { name: 'Novo aluno' })).toBeVisible()
@@ -138,7 +172,7 @@ for (const vp of [
 
     await page.goto('/#/alunos')
     await expect(page.getByRole('heading', { name: 'Alunos' })).toBeVisible()
-    await expect(page.getByText(ALUNO.email).first()).toBeVisible()
+    await expect(page.getByText(ALUNO.email).locator('visible=true').first()).toBeVisible()
     await confere(page)
     await foto('30-coach-alunos-iphone')
 
@@ -170,6 +204,8 @@ for (const vp of [
     await page.goto('/#/conta')
     await expect(page.getByRole('heading', { name: 'Minha conta' })).toBeVisible()
     await confere(page)
+    // "Sair" fica na Minha conta no celular e no menu lateral no computador (um só visível).
+    await expect(page.getByRole('button', { name: 'Sair' })).toHaveCount(1)
     await ctx.close()
   })
 }

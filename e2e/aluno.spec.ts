@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, devices } from '@playwright/test'
 import { criarAluno, criarCoach, criarMeso, hojeSaoPaulo, lerDoc, limparEmuladores } from './seed'
 
@@ -47,6 +48,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await page.getByLabel('E-mail').fill(ALUNO.email)
     await page.getByLabel('Senha').fill(ALUNO.senha)
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
 
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()
     await expect(page.getByText('Semana 1 de 4')).toBeVisible()
@@ -153,12 +155,13 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await expect(page.getByText('Semana 1: 1 de')).toBeVisible()
     await expect(page.getByText('Volume', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
+    await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
     await expect(page.getByText('Mesociclo E2E')).toBeVisible()
-    await expect(page.getByRole('button', { name: /Treino 1.*✓/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible()
   })
 
   await test.step('destaca o próximo treino da semana', async () => {
-    await expect(page.getByText('▶ Faça hoje: Treino 2')).toBeVisible()
+    await expect(page.getByRole('button', { name: /Treino 2.*Hoje/ })).toBeVisible()
   })
 
   await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
@@ -192,8 +195,12 @@ test('/instalar mostra o passo certo por sistema', async ({ browser }) => {
     })
     const page = await context.newPage()
     await page.goto('/instalar')
-    await expect(page.getByText('forca.apk')).toBeVisible()
-    await expect(page.getByText(/WhatsApp ou Arquivos/)).toBeVisible()
+    // Marca sem APK (Gislane): só o caminho pelo Chrome.
+    const { apk } = JSON.parse(readFileSync(`marcas/${process.env.MARCA ?? 'vfit'}/marca.json`, 'utf8'))
+    if (apk) {
+      await expect(page.getByText(apk)).toBeVisible()
+      await expect(page.getByText(/WhatsApp ou Arquivos/)).toBeVisible()
+    } else await expect(page.getByText('Instale pelo Chrome')).toBeVisible()
     const apkLink = page.locator('a[href="/forca.apk"]')
     await expect(apkLink).toHaveCount(0)
     await page.screenshot({ path: 'test-results/prints/12-instalar-android.png' })
@@ -235,6 +242,7 @@ test('biset entre posições não vizinhas aparece junto', async ({ page }) => {
   await page.getByLabel('E-mail').fill(b.email)
   await page.getByLabel('Senha').fill(b.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
   await expect(page.getByRole('dialog', { name: 'Métodos deste treino' })).toBeVisible()
   await page.getByRole('dialog').getByRole('button', { name: 'Entendi', exact: true }).click()
@@ -265,6 +273,7 @@ test('selos de método, nota, guia e cronômetro que sobrevive ao reload', async
   await page.getByLabel('E-mail').fill(u.email)
   await page.getByLabel('Senha').fill(u.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
 
   const nota = page.getByRole('dialog', { name: 'Métodos deste treino' })

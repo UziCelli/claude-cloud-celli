@@ -4,6 +4,7 @@ import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
 import { diaSP } from '../../../lib/acesso'
+import { comVolta } from '../../../lib/agenda'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
@@ -41,7 +42,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Meso não encontrado.</Centro>
 
-  const meso = docParaMeso(dados)
+  const meso = comVolta(docParaMeso(dados), docsRegistros, new Date()) // prescrito = o que o aluno viu (semana de volta −5%)
   const registros = docsParaRegistros(docsRegistros, meso)
   const reps = docsParaRegistrosReps(docsRegistros)
   const realizados = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, !!d.realizado]))

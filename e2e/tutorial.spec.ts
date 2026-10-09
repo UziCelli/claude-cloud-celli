@@ -21,9 +21,10 @@ test('tutorial do aluno: Próximo até Começar e Pular', async ({ page }) => {
   await page.getByLabel('Senha').fill(ALUNO.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   const dialogo = page.getByRole('dialog')
-  await expect(page.getByText('Olá, Tati Aluna')).toBeVisible()
+  await expect(page.getByText('Olá, Tati')).toBeVisible()
   await expect(dialogo).toBeHidden() // no e2e (webdriver) não abre sozinho
 
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Conta' }).click()
   await page.getByRole('button', { name: 'Como usar' }).click()
   await expect(dialogo).toBeVisible()
   await expect(dialogo.getByRole('heading', { name: marca.boasVindas })).toBeVisible()
