@@ -28,7 +28,8 @@ const Linha = ({ icone, children }: { icone: ReactNode; children: ReactNode }) =
   </span>
 )
 
-// Chave liga/desliga (role="switch").
+// Chave liga/desliga (role="switch"). A bolinha anda por `x`, não por `layout`: com `layout` ela animava
+// também quando a tela mudava de lugar (entrada da aba, foto carregando) e chegava atrasada, vindo de baixo.
 function Chave({ ligada, rotulo, onChange }: { ligada: boolean; rotulo: string; onChange: (v: boolean) => void }) {
   return (
     <button
@@ -37,9 +38,9 @@ function Chave({ ligada, rotulo, onChange }: { ligada: boolean; rotulo: string; 
       aria-checked={ligada}
       aria-label={rotulo}
       onClick={() => onChange(!ligada)}
-      className={`relative flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors after:absolute after:-inset-2 ${ligada ? 'justify-end bg-marca-500' : 'justify-start bg-white/15'}`}
+      className={`relative flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors after:absolute after:-inset-2 ${ligada ? 'bg-marca-500' : 'bg-white/15'}`}
     >
-      <m.span layout transition={agil} className="size-6 rounded-full bg-white shadow" />
+      <m.span initial={false} animate={{ x: ligada ? 24 : 0 }} transition={agil} className="size-6 rounded-full bg-white shadow" />
     </button>
   )
 }

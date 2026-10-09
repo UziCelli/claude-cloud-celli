@@ -33,9 +33,11 @@ html {
   @apply bg-slate-950;
 }
 
-/* PWA em tela cheia no iPhone: conteúdo não pode ficar sob a Dynamic Island / barra inicial. */
+/* PWA em tela cheia no iPhone: conteúdo não pode ficar sob a Dynamic Island / barra inicial.
+   Sem fundo no body: o fundo é o do html; com fundo, o body (alto só como o conteúdo) tapa o <Brilho>
+   e a borda dele aparece como um corte no meio da tela quando a página troca de altura. */
 body {
-  @apply bg-slate-950 text-slate-100 antialiased;
+  @apply text-slate-100 antialiased;
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
@@ -92,6 +94,36 @@ button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer
     -webkit-backdrop-filter: blur(18px) saturate(160%);
     border: 1px solid rgb(255 255 255 / 0.09);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+}
+
+/* Brilho que corre pela borda do cartão (treino de hoje). Fica dentro do cartão: a lista que desliza
+   (`Deslizar`, overflow-hidden) corta o que passa da borda. Giro linear porque é um laço contínuo. */
+@property --giro {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes giro {
+  to { --giro: 360deg; }
+}
+@layer components {
+  .borda-brilho { position: relative; }
+  .borda-brilho::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: conic-gradient(from var(--giro), transparent 0 60%, var(--color-marca-400) 82%, #fff 90%, var(--color-marca-400) 95%, transparent);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: giro 4s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .borda-brilho::before { animation: none; }
   }
 }
 
