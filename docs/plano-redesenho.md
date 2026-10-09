@@ -20,7 +20,7 @@ Vale para as duas marcas (mesmo código; cores e nome vêm de `marcas/<id>/`).
 
 ## 1. Agenda e regras da semana (lógica pura, TDD) — `src/lib/agenda.ts`
 - **Meso ganha `dias?: number[]`** (0 = dom … 6 = sáb), um dia por treino, marcado pelo coach na aba Config do editor.
-  - Sem `dias`, o app segue como hoje: o "treino de hoje" é o próximo treino não feito da semana atual.
+  - Sem `dias`, calendário automático por frequência (`DIAS_AUTO`): o próximo treino não feito tem data = max(planejada, dia seguinte ao último feito), limitada ao fim do bloco. É "Hoje" só quando a data ≤ hoje; antes disso aparece como "Próximo · <dia>".
 - **Ordem dos treinos com `dias`:** cada semana é um bloco de 7 dias a partir de `inicio` (como `semanaAtual`). Dentro do bloco, o k-ésimo dia de treino em ordem de calendário recebe o Treino k.
 - **Treino de hoje:**
   - com `dias`: o treino marcado para a data de hoje (calendário de São Paulo); num dia de descanso, não há treino de hoje e aparece o próximo dia de treino;

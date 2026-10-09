@@ -136,6 +136,13 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - `VERSAO_PRIVACIDADE` = 2026-10-10 (a política cita a mensalidade): os alunos aceitam de novo uma vez.
 - Pix automático (gateway + webhook) só depois de ~6 meses: tem taxa por Pix e o gateway pede CPF.
 
+## 09/10/2026 (noite) — Animações e calendário automático
+- PR #61: fundo sem corte na troca de tela, chave da Conta sem atraso, brilho correndo na borda do treino de hoje.
+- Calendário automático (meso sem `dias`): os treinos ganham dia pela frequência a partir do início (3x = dias 0, 2, 4 do bloco). "Hoje" só no dia; antes, "Próximo · Amanhã/Qua, 14". Nunca dois no mesmo dia (dia seguinte ao último feito), limitado ao fim do bloco.
+  - Atraso no começo: decidido "só a 1ª semana se ajusta" (o fim do meso não muda). Se o Victor pedir, a alternativa é o meso todo andar junto (mexe nas telas do coach).
+  - Presencial do coach: o próximo treino sempre em destaque.
+- Próximo combinado: compartilhar foto no fim do treino com a marca.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Notificações (tema importante, a planejar depois):**
   - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";

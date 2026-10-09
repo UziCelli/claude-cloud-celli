@@ -5,14 +5,14 @@ import { comVolta, diasDaSemana, treinoDeHoje } from '../../lib/agenda'
 import type { RegistroAlerta } from '../../lib/alertas'
 import type { MesoSalvo } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
-import { useDoc, useLista } from '../../lib/hooks'
+import { useDoc, useHoje, useLista } from '../../lib/hooks'
 import { fmtMin } from '../../lib/tempo'
 import { IcCartao, IcCheck, IcFogo, IcGrafico, IcLivro, IcPrancheta, IcRelogio, IcSeta } from '../../icones'
 import { ir } from '../../rota'
 import { Avatar } from '../../avatar'
 import { Chip, IconeQuadrado, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
-import { dataSP, diaCurto, mesoAtual } from './mesoAtual'
+import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
 import { Centro } from '../../ui'
 import { PIX } from './PagarPix'
 
@@ -26,11 +26,11 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
   const { dados: registros, carregando: carregandoReg } = useLista<RegistroAlerta>(
     atual ? query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', atual.doc.id)) : null,
   )
+  const hoje = useHoje()
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
-  const hoje = new Date()
   const data = hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })
   return (
     <main className="mx-auto max-w-md space-y-4 px-4 py-4">
@@ -56,12 +56,15 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
   const h = treinoDeHoje(meso, registros, hoje)
   if (!h) return null
   const feitos = new Set(registros.filter((r) => r.realizado).map((r) => `${r.semana}-${r.treino}`))
-  const treinoHoje = 'treino' in h ? h.treino : null
-  const sessao = treinoHoje ? prescreverSessao(comVolta(meso, registros, hoje), h.semana, treinoHoje) : null
-  const abrir = () => ir(`/treino/${mesoId}/${h.semana}/${treinoHoje}`) // só abre a tela: o cronômetro liga no "Iniciar treino"
+  const hojeISO = dataSP(hoje)
+  const treinoProx = 'treino' in h ? h.treino : null
+  const dataTreino = 'treino' in h ? h.dataTreino : ''
+  const ehHoje = !!dataTreino && dataTreino <= hojeISO
+  const treinoHoje = ehHoje ? treinoProx : null // só vira "hoje" no dia dele
+  const sessao = treinoProx ? prescreverSessao(comVolta(meso, registros, hoje), h.semana, treinoProx) : null
+  const abrir = () => ir(`/treino/${mesoId}/${h.semana}/${treinoProx}`) // só abre a tela: o cronômetro liga no "Iniciar treino"
 
   // Sua semana: 7 dias do calendário (com "dias" no meso) ou só os treinos, sem datas.
-  const hojeISO = dataSP(hoje)
   const itens = meso.dias?.length
     ? diasDaSemana(meso, h.semana).map((d) => ({ rot: diaCurto(d.data), n: Number(d.data.slice(8)), treino: d.treino, data: d.data as string | null }))
     : Array.from({ length: meso.frequencia }, (_, i) => ({ rot: `T${i + 1}`, n: i + 1, treino: i + 1, data: null as string | null }))
@@ -75,15 +78,15 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
 
   return (
     <>
-      {sessao && treinoHoje ? (
+      {sessao && treinoProx ? (
         <section className={cartaoGrande}>
           <div aria-hidden className="absolute -right-16 -top-20 size-56 rounded-full bg-white/10 blur-2xl" />
           <div className="relative">
             <div className="flex items-center justify-between">
-              <Chip cor="bg-white/15 text-white">Hoje</Chip>
+              <Chip cor="bg-white/15 text-white">{ehHoje ? 'Hoje' : `Próximo · ${quando(dataTreino, hojeISO)}`}</Chip>
               <span className="text-xs font-semibold text-white/70">Semana {h.semana} de {meso.semanas}</span>
             </div>
-            <h2 className="mt-3 text-[34px] leading-none text-white">{'feito' in h && h.feito ? 'Treino de hoje concluído ✓' : `Treino ${treinoHoje}`}</h2>
+            <h2 className="mt-3 text-[34px] leading-none text-white">{'feito' in h && h.feito ? 'Treino de hoje concluído ✓' : `Treino ${treinoProx}`}</h2>
             <p className="mt-2 flex items-center gap-3 text-sm text-white/80">
               <span>{sessao.exercicios.length} exercícios</span>
               <span className="flex items-center gap-1"><IcRelogio className="size-4" /> ≈ {fmtMin(sessao.tempoMin)}</span>
@@ -93,7 +96,7 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
               {sessao.exercicios.length > 2 && <span className="text-white/60"> +{sessao.exercicios.length - 2}</span>}
             </p>
             <button type="button" onClick={abrir} className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-white text-base font-bold text-marca-900 shadow-lg">
-              {'feito' in h && h.feito ? 'Ver treino' : 'Ver treino de hoje'} <IcSeta className="size-5" />
+              {'feito' in h && h.feito ? 'Ver treino' : ehHoje ? 'Ver treino de hoje' : 'Ver próximo treino'} <IcSeta className="size-5" />
             </button>
           </div>
         </section>

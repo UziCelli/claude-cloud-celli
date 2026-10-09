@@ -100,20 +100,61 @@ describe('treinoDeHoje', () => {
     expect(treinoDeHoje(base, [], sp('2026-10-06T10:00'))).toBeNull()
   })
 
-  it('sem dias: próximo treino não feito da semana (como Hoje.tsx)', () => {
-    expect(treinoDeHoje(base, [], sp('2026-10-08T10:00'))).toEqual({ semana: 1, treino: 1, feito: false })
-    expect(treinoDeHoje(base, [feito(1, 1)], sp('2026-10-08T10:00'))).toEqual({ semana: 1, treino: 2, feito: false })
-    expect(treinoDeHoje(base, [feito(1, 1), feito(1, 3)], sp('2026-10-08T10:00'))).toEqual({ semana: 1, treino: 2, feito: false })
+  // base: frequência 3 → DIAS_AUTO [0,2,4]: T1 07/10, T2 09/10, T3 11/10 (bloco da semana 1 vai até 13/10).
+  const em = (semana: number, treino: number, iso: string) => ({ semana, treino, realizado: true, realizadoEm: { toMillis: () => sp(iso).getTime() } })
+
+  it('sem dias: planejado pelo calendário automático', () => {
+    expect(treinoDeHoje(base, [], sp('2026-10-07T10:00'))).toEqual({ semana: 1, treino: 1, dataTreino: '2026-10-07', feito: false })
+    expect(treinoDeHoje(base, [em(1, 1, '2026-10-07T09:00')], sp('2026-10-08T10:00'))).toEqual({ semana: 1, treino: 2, dataTreino: '2026-10-09', feito: false })
   })
 
-  it('sem dias: semana concluída adianta a próxima; meso todo feito = descanso', () => {
-    expect(treinoDeHoje(base, [feito(1, 1), feito(1, 2), feito(1, 3)], sp('2026-10-08T10:00'))).toEqual({ semana: 2, treino: 1, feito: false })
+  it('sem dias: feito hoje → o próximo fica para amanhã (mesmo que o planejado fosse hoje)', () => {
+    expect(treinoDeHoje(base, [em(1, 1, '2026-10-09T08:00')], sp('2026-10-09T10:00'))).toMatchObject({ treino: 2, dataTreino: '2026-10-10' })
+  })
+
+  it('sem dias: adiantado → o próximo fica na data planejada', () => {
+    expect(treinoDeHoje(base, [em(1, 1, '2026-10-07T08:00'), em(1, 2, '2026-10-08T08:00')], sp('2026-10-08T10:00'))).toMatchObject({ treino: 3, dataTreino: '2026-10-11' })
+  })
+
+  it('sem dias: atrasado → a data planejada já passou (vira Hoje)', () => {
+    expect(treinoDeHoje(base, [em(1, 1, '2026-10-07T08:00')], sp('2026-10-10T10:00'))).toMatchObject({ treino: 2, dataTreino: '2026-10-09' })
+  })
+
+  it('sem dias: limitado ao último dia do bloco da semana', () => {
+    const regs = [em(1, 1, '2026-10-13T08:00'), em(1, 2, '2026-10-13T09:00')]
+    expect(treinoDeHoje(base, regs, sp('2026-10-13T10:00'))).toMatchObject({ semana: 1, treino: 3, dataTreino: '2026-10-13' })
+  })
+
+  it('sem dias: realizadoEm null (gravação pendente offline) conta como feito agora', () => {
+    expect(treinoDeHoje(base, [{ ...feito(1, 1), realizadoEm: null }], sp('2026-10-09T10:00'))).toMatchObject({ treino: 2, dataTreino: '2026-10-10' })
+  })
+
+  it('sem dias: 23:30 em São Paulo (02:30Z do dia seguinte) ainda é o dia de São Paulo', () => {
+    const regs = [em(1, 1, '2026-10-08T23:30')]
+    expect(treinoDeHoje(base, regs, new Date('2026-10-09T02:30:00Z'))).toMatchObject({ treino: 2, dataTreino: '2026-10-09' })
+  })
+
+  it('sem dias: treino feito na semana anterior conta para o dia seguinte; registro antigo sem realizadoEm não', () => {
+    expect(treinoDeHoje(base, [em(1, 1, '2026-10-13T08:00'), feito(1, 2), feito(1, 3)], sp('2026-10-14T10:00'))).toMatchObject({ semana: 2, treino: 1, dataTreino: '2026-10-14' })
+    expect(treinoDeHoje(base, [feito(1, 1)], sp('2026-10-08T10:00'))).toMatchObject({ treino: 2, dataTreino: '2026-10-09' })
+  })
+
+  it('sem dias: frequência 2 → [0,3]; frequência 4 → [0,1,3,4]', () => {
+    const f2: Meso = { ...base, frequencia: 2, divisao: base.divisao.slice(0, 2) }
+    expect(treinoDeHoje(f2, [em(1, 1, '2026-10-07T08:00')], sp('2026-10-08T10:00'))).toMatchObject({ treino: 2, dataTreino: '2026-10-10' })
+    const f4: Meso = { ...base, frequencia: 4, divisao: [...base.divisao, base.divisao[0]] }
+    const regs = [em(1, 1, '2026-10-07T08:00'), em(1, 2, '2026-10-08T08:00'), em(1, 3, '2026-10-08T09:00')]
+    expect(treinoDeHoje(f4, regs, sp('2026-10-08T10:00'))).toMatchObject({ treino: 4, dataTreino: '2026-10-11' })
+  })
+
+  it('sem dias: semana concluída adianta a próxima, na data planejada; meso todo feito = descanso', () => {
+    expect(treinoDeHoje(base, [feito(1, 1), feito(1, 2), feito(1, 3)], sp('2026-10-08T10:00'))).toEqual({ semana: 2, treino: 1, dataTreino: '2026-10-14', feito: false })
     const tudo = [1, 2, 3, 4].flatMap((w) => [1, 2, 3].map((t) => feito(w, t)))
     expect(treinoDeHoje(base, tudo, sp('2026-11-02T10:00'))).toEqual({ semana: 4, descanso: true })
   })
 
   it('sem dias: atrasado, abre a semana pela data (semanaParaAbrir)', () => {
-    expect(treinoDeHoje(base, [], sp('2026-10-15T10:00'))).toEqual({ semana: 2, treino: 1, feito: false })
+    expect(treinoDeHoje(base, [], sp('2026-10-15T10:00'))).toEqual({ semana: 2, treino: 1, dataTreino: '2026-10-14', feito: false })
   })
 })
 

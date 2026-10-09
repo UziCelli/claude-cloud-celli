@@ -160,8 +160,8 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible()
   })
 
-  await test.step('destaca o próximo treino da semana', async () => {
-    await expect(page.getByRole('button', { name: /Treino 2.*Hoje/ })).toBeVisible()
+  await test.step('mostra o próximo treino da semana como Próximo (só é Hoje no dia dele)', async () => {
+    await expect(page.getByRole('button', { name: /Treino 2.*Próximo/ })).toBeVisible()
   })
 
   await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
