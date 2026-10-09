@@ -91,7 +91,8 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
         </section>
       ) : (
         <section className={cartaoGrande}>
-          <h2 className="text-[28px] leading-tight text-white">Hoje é descanso</h2>
+          {/* Sem `dias`, "descanso" quer dizer que todos os treinos da semana foram feitos. */}
+          <h2 className="text-[28px] leading-tight text-white">{meso.dias?.length ? 'Hoje é descanso' : 'Semana concluída ✓'}</h2>
           {'proximo' in h && h.proximo && (
             <p className="mt-2 text-[15px] text-white/85">Próximo: Treino {h.proximo.treino} · {diaCurto(h.proximo.dataTreino)}, {Number(h.proximo.dataTreino.slice(8))}</p>
           )}

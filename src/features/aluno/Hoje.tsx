@@ -173,7 +173,7 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
                         {naoFeito && <span className="text-[15px] font-bold text-amber-300">Não feito</span>}
                       </div>
                       <p className="text-[15px] text-slate-300">{datas[treino] ? `${diaCurto(datas[treino])}, ${Number(datas[treino].slice(8))} · ` : ''}{sessao.exercicios.length} exercícios</p>
-                      {naoFeito && !trava && <p className="text-[15px] font-semibold text-amber-200">Ainda dá tempo nesta semana</p>}
+                      {naoFeito && !trava && semana >= semanaData && <p className="text-[15px] font-semibold text-amber-200">Ainda dá tempo nesta semana</p>}
                     </div>
                     <span className={`flex items-center gap-1 rounded-full px-3 py-1.5 font-display text-base font-extrabold ${acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin) ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white'}`}>
                       <IcRelogio className="size-4" /> {fmtMin(sessao.tempoMin)}
