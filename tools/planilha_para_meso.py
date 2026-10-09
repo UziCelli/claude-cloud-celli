@@ -32,16 +32,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('xlsx')
     ap.add_argument('aba')
-    ap.add_argument('--frequencia', type=int, help='sobrescreve "Sessões [nx]" (AZ5)')
+    ap.add_argument('--frequencia', type=int, help='sobrescreve "Sessões [nx]" (AZ5 ou BO7)')
     a = ap.parse_args()
     ws = openpyxl.load_workbook(a.xlsx, data_only=True)[a.aba]
     c = lambda r, cl: ws.cell(r, cl if isinstance(cl, int) else col(cl)).value
 
-    semanas = int(c(3, 'AZ'))
-    inicio = c(4, 'AZ')
+    # Config: rótulo "Semana [n]" em AY3 (abas antigas) ou BN5 (abas novas, com o monitoramento em AY);
+    # valores na coluna ao lado; a tabela de métodos começa 7 linhas abaixo do rótulo.
+    cr, cc = next(((r, k) for r in range(1, 11) for k in range(1, ws.max_column + 1)
+                   if texto(c(r, k)) == 'Semana [n]'), (3, col('AY')))
+    semanas = int(c(cr, cc + 1))
+    inicio = c(cr + 1, cc + 1)
     if not isinstance(inicio, datetime):
-        sys.exit(f'Data inicial (AZ4) não é uma data: {inicio!r}')
-    frequencia = a.frequencia or int(c(5, 'AZ'))
+        sys.exit(f'Data inicial ({ws.cell(cr + 1, cc + 1).coordinate}) não é uma data: {inicio!r}')
+    frequencia = a.frequencia or int(c(cr + 2, cc + 1))
     pausa = int(num(c(33, 'Z')) or 120)
 
     # Divisão: T4:Y13 (coluna = treino, linha = posição).
@@ -62,10 +66,10 @@ def main():
     progressao = {'principais': [linha(18 + w) for w in range(semanas)],
                   'auxiliares': [linha(33 + w) for w in range(semanas)]}
 
-    # Métodos: tabela AY10:BU109. Linhas repetidas (mesmo conteúdo) entram uma vez.
+    # Métodos: tabela AY10:BU109 (abas novas: BN12:CJ111). Linhas repetidas (mesmo conteúdo) entram uma vez.
     metodos, vistos = [], set()
-    for r in range(10, 110):
-        m = dict(zip(METODO_COLS, (c(r, col('AY') + i) for i in range(len(METODO_COLS)))))
+    for r in range(cr + 7, cr + 107):
+        m = dict(zip(METODO_COLS, (c(r, cc + i) for i in range(len(METODO_COLS)))))
         if not texto(m['metodo']) or not num(m['semana']) or not num(m['treino']) or not num(m['exercicio']):
             continue
         if m['treino'] > frequencia:
