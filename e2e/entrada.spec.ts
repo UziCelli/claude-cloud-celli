@@ -14,7 +14,7 @@ test('1ª visita: boas-vindas, folha do iPhone e "Já tenho conta" grava a marca
   await page.getByRole('button', { name: 'Como instalar' }).click()
   const folha = page.getByRole('dialog', { name: 'Instalar no iPhone' })
   await expect(folha).toBeVisible()
-  await expect(folha.getByText('Adicionar à Tela de Início')).toBeVisible()
+  await expect(folha.getByText('Adicionar à Tela de Início').first()).toBeVisible() // aparece no passo e no menu desenhado
   await folha.getByRole('button', { name: 'Agora não' }).click()
   await expect(folha).toHaveCount(0)
 

@@ -20,7 +20,7 @@ export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Me
         <select
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className={`${campoBase} px-3 py-2 outline-none focus:border-marca-500`}
+          className={`${campoBase} min-w-0 max-w-full px-3 py-2 outline-none focus:border-marca-500`}
         >
           {lista.map((n) => (
             <option key={n} value={n}>

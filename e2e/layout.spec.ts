@@ -172,7 +172,7 @@ for (const vp of [
 
     await page.goto('/#/alunos')
     await expect(page.getByRole('heading', { name: 'Alunos' })).toBeVisible()
-    await expect(page.getByText(ALUNO.email).first()).toBeVisible()
+    await expect(page.getByText(ALUNO.email).locator('visible=true').first()).toBeVisible()
     await confere(page)
     await foto('30-coach-alunos-iphone')
 

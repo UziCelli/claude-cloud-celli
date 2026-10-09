@@ -42,7 +42,7 @@ async function entrar(page: Page, email: string, senha: string, esperado: string
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
-  await expect(page.getByText(esperado).first()).toBeVisible()
+  await expect(page.getByText(esperado).locator('visible=true').first()).toBeVisible()
 }
 
 for (const largura of [1280, 390]) {
