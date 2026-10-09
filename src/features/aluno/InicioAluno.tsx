@@ -134,7 +134,7 @@ function Quadros({ pagoAte }: { pagoAte?: number }) {
   const emDia = pagoAte != null && pagoAte > Date.now()
   return (
     <div className="grid grid-cols-2 gap-3">
-      <a href="#/evolucao" className="block">
+      <a href="#/evolucao" className="toque block">
         <Quadro className="h-full space-y-3">
           <IconeQuadrado><IcGrafico className="size-5" /></IconeQuadrado>
           <div>
@@ -159,7 +159,7 @@ function Quadros({ pagoAte }: { pagoAte?: number }) {
           <p className="text-xs text-slate-400">peso, medidas e % de gordura</p>
         </div>
       </Quadro>
-      <a href="#/metodos" className="block">
+      <a href="#/metodos" className="toque block">
         <Quadro className="h-full space-y-3">
           <IconeQuadrado cor="bg-fuchsia-500/15 text-fuchsia-300"><IcLivro className="size-5" /></IconeQuadrado>
           <div>

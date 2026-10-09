@@ -1,4 +1,5 @@
-import { m } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
+import { saida, suave } from '../../movimento'
 import { useState } from 'react'
 import Logo from '@marca/Logo'
 import { Brilho, IconeQuadrado } from '../../vidro'
@@ -42,7 +43,7 @@ const Linha = ({ children, destaque = false }: { children: React.ReactNode; dest
 function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
   return (
     <>
-      <div className="fixed inset-0 z-30 bg-black/65" onClick={onFechar} />
+      <m.div className="fixed inset-0 z-30 bg-black/65" onClick={onFechar} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: saida }} transition={suave} />
       <m.div
         aria-hidden
         initial={{ y: -8 }}
@@ -52,9 +53,13 @@ function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
       >
         <IcSeta className="size-14 rotate-90" />
       </m.div>
-      <section
+      <m.section
         role="dialog"
         aria-label="Instalar no iPhone"
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 80, opacity: 0, transition: saida }}
+        transition={suave}
         className="fixed inset-x-3 bottom-[148px] z-40 mx-auto max-w-[406px] rounded-3xl bg-slate-900 p-5 text-left ring-1 ring-white/15 shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_20px_50px_rgb(0_0_0/0.6)]"
       >
         <h2 className="text-[26px] leading-tight text-white">Toque em <IcPontos className="inline size-7 text-marca-300" /> aqui embaixo</h2>
@@ -66,7 +71,7 @@ function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
         <p className="mt-4 text-base leading-snug text-white">O menu do iPhone vai cobrir esta tela. Siga: Compartilhar → Adicionar à Tela de Início → Adicionar.</p>
         {navegadorEmbutido() && <p className="mt-2 text-[15px] leading-snug text-marca-300">Só funciona no Safari. Se abriu por outro app, copie o link e cole no Safari.</p>}
         <button type="button" className="mt-3 h-11 w-full text-[16px] font-semibold text-slate-200 underline underline-offset-4" onClick={onFechar}>Agora não</button>
-      </section>
+      </m.section>
     </>
   )
 }
@@ -122,7 +127,7 @@ export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void;
 
         <p className="mt-4 text-center"><a href="/privacidade" className="text-[15px] font-medium text-slate-200 underline underline-offset-4">Política de Privacidade</a></p>
       </main>
-      {folha && <FolhaIPhone onFechar={() => setFolha(false)} />}
+      <AnimatePresence>{folha && <FolhaIPhone onFechar={() => setFolha(false)} />}</AnimatePresence>
     </div>
   )
 }

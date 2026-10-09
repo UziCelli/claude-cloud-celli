@@ -1,6 +1,7 @@
-import { AnimatePresence, m } from 'motion/react'
+import { AnimatePresence, m, useIsPresent, useReducedMotion, type Variants } from 'motion/react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 import Logo from '@marca/Logo'
+import { agil, saida, suave } from './movimento'
 
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
 
@@ -44,8 +45,7 @@ export const Botao = ({
   <m.button
     data-m
     whileTap={{ scale: 0.96 }}
-    whileHover={{ scale: 1.02 }}
-    transition={{ duration: 0.12 }}
+    transition={agil}
     {...p}
     className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${estilos[tipo]} ${className}`}
   >
@@ -62,10 +62,10 @@ export const Botao = ({
 
 export const Campo = ({ rotulo, className = '', ...p }: InputHTMLAttributes<HTMLInputElement> & { rotulo: string }) => (
   <label className={`group flex min-w-0 flex-col gap-1 text-sm ${className}`}>
-    <span className="text-slate-400 transition-colors duration-150 group-focus-within:text-marca-300">{rotulo}</span>
+    <span className="text-slate-400 transition-colors group-focus-within:text-marca-300">{rotulo}</span>
     <input
       {...p}
-      className={`${campoBase} px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]`}
+      className={`${campoBase} px-3 py-2 outline-none transition-[border-color,box-shadow] focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]`}
     />
   </label>
 )
@@ -74,7 +74,7 @@ export const Aviso = ({ children }: { children: ReactNode }) => (
   <m.div
     initial={{ opacity: 0, y: -6 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.2 }}
+    transition={agil}
     className="rounded-lg border border-amber-700 bg-amber-950/50 px-3 py-2 text-sm text-amber-200"
   >
     {children}
@@ -89,8 +89,8 @@ export const Msg = ({ children, className = '' }: { children?: ReactNode; classN
         key={typeof children === 'string' ? children : 'msg'}
         initial={{ opacity: 0, height: 0, y: -4 }}
         animate={{ opacity: 1, height: 'auto', y: 0 }}
-        exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
+        exit={{ opacity: 0, height: 0, transition: saida }}
+        transition={agil}
         className={`overflow-hidden ${className}`}
       >
         {children}
@@ -105,7 +105,7 @@ export const Abertura = ({ texto }: { texto?: string }) => (
     <m.div
       initial={{ opacity: 0, scale: 0.85, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      transition={suave}
     >
       <m.div
         animate={{ opacity: [1, 0.55, 1], scale: [1, 1.04, 1] }}
@@ -119,13 +119,13 @@ export const Abertura = ({ texto }: { texto?: string }) => (
       className="h-0.5 w-24 origin-left rounded bg-marca-500"
       initial={{ scaleX: 0, opacity: 0 }}
       animate={{ scaleX: 1, opacity: 1 }}
-      transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+      transition={{ ...suave, delay: 0.2 }}
     />
     <m.p
       className="h-5 text-sm text-slate-400"
       initial={{ opacity: 0 }}
       animate={{ opacity: texto ? 1 : 0 }}
-      transition={{ duration: 0.3, delay: 0.4 }}
+      transition={{ ...suave, delay: 0.4 }}
     >
       {texto}
     </m.p>
@@ -134,25 +134,52 @@ export const Abertura = ({ texto }: { texto?: string }) => (
 
 export const Centro = ({ children }: { children: ReactNode }) => (
   <div className="flex min-h-dvh items-center justify-center px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] text-center">
-    <m.div className="w-full max-w-sm min-w-0 space-y-4" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+    <m.div className="w-full max-w-sm min-w-0 space-y-4" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
       {children}
     </m.div>
   </div>
 )
 
-// Troca de tela: fade + leve deslocamento; `chave` = rota. `abrir` = efeito de "abrir" (zoom + subida).
-export const Tela = ({ chave, abrir = false, children }: { chave: string; abrir?: boolean; children: ReactNode }) => (
-  <AnimatePresence mode="wait">
-    <m.div
-      key={chave}
-      initial={abrir ? { opacity: 0, scale: 0.96, y: 16 } : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: abrir ? 0.26 : 0.18, ease: 'easeOut' } }}
-      exit={{ opacity: 0, transition: { duration: 0.08 } }}
-    >
+// Navegação estilo iOS. `chave` = rota; `abrir` = tela de detalhe.
+// abrir false→true = push (nova entra da direita; a anterior sai recuando); true→false = pop (inverso).
+// Mesmo nível (troca de aba) = só fade, sem deslize.
+// Modo "wait" (saída curta, depois a entrada): com as duas telas sobrepostas (popLayout) o texto da tela que
+// sai repete na página e quebra o e2e (getByText estrito), então a sobreposição ficou de fora.
+const camada: Variants = {
+  entra: (d: number) => (d ? { x: d > 0 ? '100%' : '-25%', opacity: d > 0 ? 1 : 0.5 } : { opacity: 0 }),
+  fica: (d: number) => ({ x: 0, opacity: 1, transition: d ? suave : saida }),
+  sai: (d: number) => ({ opacity: 0, x: d > 0 ? '-25%' : d < 0 ? '25%' : 0, transition: saida }),
+}
+const reduzida: Variants = { entra: { opacity: 0 }, fica: { opacity: 1, transition: saida }, sai: { opacity: 0, transition: saida } }
+
+// A tela que está saindo fica `inert` e escondida dos leitores de tela.
+const Camada = ({ children, ...p }: { children: ReactNode; custom?: number; variants: Variants; initial: string; animate: string; exit: string }) => {
+  const presente = useIsPresent()
+  return (
+    <m.div {...p} inert={!presente} aria-hidden={presente ? undefined : true}>
       {children}
     </m.div>
-  </AnimatePresence>
-)
+  )
+}
+
+export const Tela = ({ chave, abrir = false, children }: { chave: string; abrir?: boolean; children: ReactNode }) => {
+  const quieto = useReducedMotion()
+  // Chave nova a cada troca: voltar à mesma rota durante a saída cria uma tela nova (não "ressuscita" a que estava saindo).
+  // A direção é fixada na troca: outro render (ex.: snapshot do Firestore) antes da entrada não vira fade.
+  const visita = useRef({ chave, n: 0, abrir, dir: 0 })
+  const v = visita.current
+  if (v.chave !== chave) visita.current = { chave, n: v.n + 1, abrir, dir: abrir === v.abrir ? 0 : abrir ? 1 : -1 }
+  const dir = quieto ? 0 : visita.current.dir
+  return (
+    <div className="relative overflow-x-clip">
+      <AnimatePresence mode="wait" custom={dir}>
+        <Camada key={`${chave}#${visita.current.n}`} custom={dir} variants={quieto ? reduzida : camada} initial="entra" animate="fica" exit="sai">
+          {children}
+        </Camada>
+      </AnimatePresence>
+    </div>
+  )
+}
 
 // Painel que abre/fecha com altura + opacidade (use no lugar de `{aberto && <X/>}`).
 export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => (
@@ -161,8 +188,8 @@ export const Painel = ({ aberto, children, className }: { aberto: boolean; child
       <m.div
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: 'auto', opacity: 1 }}
-        exit={{ height: 0, opacity: 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
+        exit={{ height: 0, opacity: 0, transition: saida }}
+        transition={suave}
         className={`overflow-hidden ${className ?? ''}`}
       >
         {children}
@@ -172,8 +199,8 @@ export const Painel = ({ aberto, children, className }: { aberto: boolean; child
 )
 
 // Cascata: <Cascata> (container) + <Item> (filhos diretos). Sem delay em campos de digitação.
-export const cascata = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } }
-export const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2 } } }
+export const cascata = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } }
+export const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: suave } }
 
 // Barra que cresce da esquerda até `frac` (0–1) ao aparecer.
 export const Barra = ({ frac }: { frac: number }) => (
@@ -182,15 +209,15 @@ export const Barra = ({ frac }: { frac: number }) => (
     style={{ width: `${Math.max(2, Math.round(frac * 100))}%` }}
     initial={{ scaleX: 0 }}
     animate={{ scaleX: 1 }}
-    transition={{ duration: 0.3, ease: 'easeOut' }}
+    transition={suave}
   />
 )
 
 // Troca com deslize na direção da seta: `chave` numérica (ex.: semana). Maior = desliza para a esquerda.
 const desliza = {
   entra: (d: number) => ({ opacity: 0, x: d * 20 }),
-  fica: { opacity: 1, x: 0, transition: { duration: 0.2, ease: 'easeOut' as const } },
-  sai: (d: number) => ({ opacity: 0, x: -d * 20, transition: { duration: 0.12 } }),
+  fica: { opacity: 1, x: 0, transition: suave },
+  sai: (d: number) => ({ opacity: 0, x: -d * 20, transition: saida }),
 }
 export const Deslizar = ({ chave, children }: { chave: number; children: ReactNode }) => {
   const ant = useRef(chave)

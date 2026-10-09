@@ -1,5 +1,6 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
+import { confete, elastico, saida, suave } from '../../movimento'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { prescreverSessao, type Metodo } from '../../engine'
 import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
@@ -72,15 +73,15 @@ const Modal = ({ rotulo, children }: { rotulo: string; children: ReactNode }) =>
     aria-label={rotulo}
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.2 }}
+    exit={{ opacity: 0, transition: saida }}
+    transition={suave}
     className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
   >
     <m.div
-      initial={{ y: 16, scale: 0.96, opacity: 0 }}
-      animate={{ y: 0, scale: 1, opacity: 1 }}
-      exit={{ y: 16, scale: 0.96, opacity: 0 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      initial={{ y: 48, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 48, opacity: 0, transition: saida }}
+      transition={suave}
       className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
     >
       {children}
@@ -178,15 +179,15 @@ function AvisoAdaptado({ chave }: { chave: string }) {
           aria-label="Treino adaptado"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0, transition: saida }}
+          transition={suave}
           className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
         >
           <m.div
-            initial={{ y: 16, scale: 0.96, opacity: 0 }}
-            animate={{ y: 0, scale: 1, opacity: 1 }}
-            exit={{ y: 16, scale: 0.96, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            initial={{ y: 48, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 48, opacity: 0, transition: saida }}
+            transition={suave}
             className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5"
           >
             <p className="mb-4 text-sm text-slate-300">Seu coach adaptou seu treino para você progredir dentro do seu tempo.</p>
@@ -213,7 +214,7 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
           onChange={(ev) => setRascunho(ev.target.value)}
           placeholder="Ex.: banco na posição 3, aparelho Life"
           aria-label={`Anotação de ${nome}`}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none transition-[border-color,box-shadow] duration-150 focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 outline-none transition-[border-color,box-shadow] focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]"
         />
         <div className="mt-1 flex gap-2">
           <Botao
@@ -251,8 +252,8 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
         key={editando ? 'e' : 'v'}
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: 'auto', opacity: 1 }}
-        exit={{ height: 0, opacity: 0 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
+        exit={{ height: 0, opacity: 0, transition: saida }}
+        transition={suave}
         className="overflow-hidden"
       >
         {conteudo ?? fechado}
@@ -320,8 +321,8 @@ function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolea
       style={topo == null ? undefined : { top: topo }}
       initial={{ opacity: 0, y: quieto ? 0 : -16, scale: quieto ? 1 : 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0 }}
-      transition={quieto ? { duration: 0.15 } : { type: 'spring', stiffness: 400, damping: 18 }}
+      exit={{ opacity: 0, transition: saida }}
+      transition={elastico}
       className="pointer-events-none fixed inset-x-4 top-[calc(env(safe-area-inset-top)+25vh)] z-40 mx-auto max-w-sm rounded-2xl border-2 border-amber-400 bg-slate-900 px-5 py-4 text-center text-base font-bold text-amber-200 shadow-2xl shadow-amber-500/20"
     >
       {!quieto &&
@@ -333,7 +334,7 @@ function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolea
             style={{ backgroundColor: cor }}
             initial={{ x: 0, y: 0, opacity: 1 }}
             animate={{ x: (i - 2.5) * 44, y: i % 2 ? 56 : -40, rotate: i * 120, opacity: 0 }}
-            transition={{ duration: 1.1, ease: 'easeOut' }}
+            transition={confete}
           />
         ))}
       {texto}
@@ -656,7 +657,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                 className="inline-block"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 14 }}
+                transition={elastico}
               >
                 ✓
               </m.span>
@@ -684,8 +685,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
         <m.div
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 24, opacity: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          exit={{ y: 24, opacity: 0, transition: saida }}
+          transition={suave}
           className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
         >
           <div className="mx-auto mb-2 h-1.5 max-w-md overflow-hidden rounded bg-slate-800">

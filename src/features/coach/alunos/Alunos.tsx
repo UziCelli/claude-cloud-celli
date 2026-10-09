@@ -1,4 +1,5 @@
 import { AnimatePresence, m } from 'motion/react'
+import { saida, suave } from '../../../movimento'
 import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
@@ -44,8 +45,8 @@ function textoVencimento(a: Aluno) {
 const linha = (i: number) => ({
   layout: 'position' as const,
   initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.2, delay: Math.min(i, 8) * 0.04 } },
-  exit: { opacity: 0, x: 60, transition: { duration: 0.2 } },
+  animate: { opacity: 1, y: 0, transition: { ...suave, delay: Math.min(i, 8) * 0.04 } },
+  exit: { opacity: 0, x: 60, transition: saida },
 })
 
 const ordem = { aguardando: 0, ativo: 1, bloqueado: 2, arquivado: 3 }
@@ -235,7 +236,7 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
       className="w-full space-y-2 overflow-hidden"
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: 'auto', opacity: 1 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      transition={suave}
     >
       <p className="text-sm">
         {apagar

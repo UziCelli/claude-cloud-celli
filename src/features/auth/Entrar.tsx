@@ -1,4 +1,5 @@
-import { m } from 'motion/react'
+import { m, useAnimationControls } from 'motion/react'
+import { elastico } from '../../movimento'
 import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import type { MultiFactorResolver } from 'firebase/auth'
@@ -80,6 +81,12 @@ export default function Entrar() {
     const t = setTimeout(() => setEspera(restanteSeg()), 1000)
     return () => clearTimeout(t)
   }, [espera])
+  const tremer = useAnimationControls()
+  useEffect(() => {
+    if (!tremor) return
+    tremer.set({ x: -10 })
+    tremer.start({ x: 0, transition: elastico })
+  }, [tremor, tremer])
   const falhou = (msg: string) => {
     setErro(msg)
     setTremor((n) => n + 1)
@@ -171,10 +178,7 @@ export default function Entrar() {
   return (
     <div className="min-h-dvh">
       <Brilho />
-      <m.div
-        variants={{ a: { x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } }, b: { x: [0, -8, 8, -5, 5, 0], transition: { duration: 0.4 } }, quieto: { x: 0 } }}
-        animate={tremor ? (tremor % 2 ? 'a' : 'b') : 'quieto'}
-      >
+      <m.div animate={tremer}>
         <main className="mx-auto flex min-h-dvh max-w-sm flex-col px-5 pb-6 pt-[calc(1rem+env(safe-area-inset-top))] text-left">
           <Logo className="h-9 self-start text-white" />
           <h1 className="mt-8 text-[30px] leading-tight">{cadastro ? 'Criar conta' : 'Entrar'}</h1>

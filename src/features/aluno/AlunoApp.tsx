@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { casar, useRota } from '../../rota'
 import { Tela } from '../../ui'
@@ -36,7 +37,7 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
   return (
     <div className={comBarra ? 'pb-barra' : ''}>
       <Brilho />
-      {tutorial && <Tutorial fechar={() => setTutorial(false)} />}
+      <AnimatePresence>{tutorial && <Tutorial fechar={() => setTutorial(false)} />}</AnimatePresence>
       <AvisoIOS />
       <div className="pt-[env(safe-area-inset-top)]">
         <Tela chave={rota} abrir={!!p}>{tela}</Tela>
