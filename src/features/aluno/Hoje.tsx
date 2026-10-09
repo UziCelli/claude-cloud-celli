@@ -154,10 +154,11 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
             const trava = !feito && travada(semana, treino)
             const destaque = !feito && treino === hojeTreino
             const naoFeito = !feito && (semana < semanaData || (datas[treino] != null && datas[treino] < hojeISO))
-            const borda = feito ? 'ring-1 ring-emerald-400/60'
+            // Anéis por dentro (ring-inset): o Deslizar corta o que passa da borda do cartão.
+            const borda = feito ? 'ring-1 ring-inset ring-emerald-400/60'
               : trava ? 'opacity-60'
-              : naoFeito ? 'bg-amber-400/10 ring-1 ring-amber-300/40'
-              : destaque ? 'ring-2 ring-marca-400 shadow-[0_0_32px_-4px] shadow-marca-500/60' : ''
+              : naoFeito ? 'bg-amber-400/10 ring-1 ring-inset ring-amber-300/40'
+              : destaque ? 'borda-brilho ring-1 ring-inset ring-marca-400/50' : ''
             return (
               <m.button
                 key={treino}
