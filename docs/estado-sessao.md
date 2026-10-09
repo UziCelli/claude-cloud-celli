@@ -126,15 +126,17 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - peso (saiu da `MinhaConta`), trocar senha, liga/desliga do aviso de descanso;
   - foto aparece na lista do coach.
   - `VERSAO_PRIVACIDADE` = 2026-10-09: todos os alunos aceitam a política de novo uma vez.
-- Ordem combinada a seguir: **Pix** (falta a chave aleatória do Victor e o valor de cada aluno). Depois: compartilhar foto no fim do treino com a marca.
+- Ordem combinada a seguir: **Pix**. Depois: compartilhar foto no fim do treino com a marca.
+
+## 09/10/2026 (noite) — Pix simples
+- QR estático (BR Code, sem API e sem taxa) com a chave de cada marca (`marcas/<id>/marca.json` → `pix`): VFIT = CNPJ, Gislane = e-mail dela. Marca sem `pix` não mostra nada de Pix.
+- Coach: Alunos → Renovar → "Mensalidade (R$)". A lista mostra "R$ X/mês" e "Informou pagamento"; "Confirmar pagamento" leva o `pagoAte` do vencimento atual para +1 mês.
+- Aluno: Conta → Mensalidade → "Pagar com Pix" (QR, copiar código, "Já paguei"). A tela "Acesso pausado" também mostra o Pix.
+- Início do coach: cartão de avisos de Pix a confirmar.
+- `VERSAO_PRIVACIDADE` = 2026-10-10 (a política cita a mensalidade): os alunos aceitam de novo uma vez.
+- Pix automático (gateway + webhook) só depois de ~6 meses: tem taxa por Pix e o gateway pede CPF.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
-- **Próximo depois do redesenho (pedido em 08/10/2026): Pix simples.**
-  - QR Code e "copia e cola" gerados no app com o valor.
-  - O aluno toca em "Já paguei"; o coach recebe o aviso e toca em "Confirmar", e `pagoAte` avança 1 mês.
-  - Custo zero e sem dado novo do aluno.
-  - Falta o Victor passar a chave Pix e o valor.
-  - Pix automático (gateway + webhook) só depois de ~6 meses: tem taxa por Pix e o gateway pede CPF.
 - **Notificações (tema importante, a planejar depois):**
   - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";
   - para o aluno: avisos do coach, treino do dia.

@@ -1,5 +1,4 @@
 // Verificação em 2 etapas (TOTP): partes puras, sem Firebase (as chamadas ficam em acoes.ts).
-import { renderSVG } from 'uqr'
 import marca from '@marca/marca.json'
 
 export const limparCodigo = (s: string) => s.replace(/\D/g, '').slice(0, 6)
@@ -7,8 +6,6 @@ export const codigoCompleto = (s: string) => /^\d{6}$/.test(s)
 
 // Chave para digitar à mão, de 4 em 4 letras.
 export const chaveManual = (chave: string) => chave.replace(/(.{4})(?=.)/g, '$1 ')
-
-export const qrDataUrl = (uri: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderSVG(uri))}`
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
 const msgs: Record<string, string> = {

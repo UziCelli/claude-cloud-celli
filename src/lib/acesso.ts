@@ -13,6 +13,8 @@ export interface Usuario {
   privacidadeEm?: Timestamp // aceite da Política de Privacidade (LGPD)
   privacidadeVersao?: string // VERSAO_PRIVACIDADE aceita
   selo?: boolean // aluno escolheu mostrar o selo da marca na foto
+  mensalidade?: number // R$, definida pelo coach
+  pagamentoInformadoEm?: Timestamp // aluno tocou "Já paguei"
 }
 
 // fotos/{uid}: foto de perfil opcional (JPEG pequeno em data URL; sem Storage, que exige plano pago).
@@ -54,3 +56,13 @@ export const diasParaVencer = (pagoAte: Timestamp, agora: Date) =>
 // YYYY-MM-DD no calendário de São Paulo, daqui a `dias` (toISOString seria UTC: +1 dia depois das 21h).
 export const hojeMaisDias = (dias: number) =>
   new Date(Date.now() + dias * DIA).toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' })
+
+// Próximo vencimento (YYYY-MM-DD, São Paulo): 1 mês depois do pagoAte (se ainda não venceu) ou de hoje,
+// preso ao último dia do mês (31/01 → 28 ou 29/02).
+export function proximoVencimento(pagoAte: Timestamp | undefined, agora: Date) {
+  const emDia = !!pagoAte && agora.getTime() < pagoAte.toMillis()
+  const base = new Date(inicioDoDiaSP(diaSP(emDia ? pagoAte!.toMillis() : agora.getTime())))
+  const [a, m, d] = base.toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' }).split('-').map(Number)
+  const dia = Math.min(d, new Date(Date.UTC(a, m + 1, 0)).getUTCDate())
+  return new Date(Date.UTC(a, m, dia)).toISOString().slice(0, 10)
+}

@@ -29,6 +29,7 @@ import Instalar from './features/instalar/Instalar'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
 import Politica from './features/privacidade/Politica'
+import PagarPix, { PIX } from './features/aluno/PagarPix'
 import Aceite from './features/privacidade/Aceite'
 import marca from '@marca/marca.json'
 import { IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
@@ -48,7 +49,7 @@ function Principal() {
   else if (!user) [estagio, tela] = ['entrar', <Entrar />]
   else if (!perfil) [estagio, tela] = ['abertura', <Abertura texto="Preparando sua conta…" />]
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
-  else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
+  else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso uid={user.uid} perfil={perfil} />]
   else if (!aceitouPrivacidade(perfil)) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} />]
   else tela = <AlunoApp uid={user.uid} perfil={perfil} />
   useEffect(() => {
@@ -181,8 +182,9 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   )
 }
 
-function SemAcesso({ perfil }: { perfil: Usuario }) {
+function SemAcesso({ uid, perfil }: { uid: string; perfil: Usuario }) {
   const aguardando = perfil.status === 'aguardando'
+  const vencido = perfil.status === 'ativo' && !!PIX
   return (
     <Centro>
       <h1 className="text-2xl font-bold">{aguardando ? 'Cadastro recebido!' : 'Acesso pausado'}</h1>
@@ -191,6 +193,7 @@ function SemAcesso({ perfil }: { perfil: Usuario }) {
           ? 'Seu coach vai liberar seu acesso em breve.'
           : 'Seu acesso está pausado. Fale com seu coach para reativar.'}
       </p>
+      {vencido && <PagarPix uid={uid} perfil={perfil} />}
       <Botao onClick={sair}>Sair</Botao>
     </Centro>
   )

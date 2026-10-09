@@ -12,9 +12,10 @@ import { reduzirFoto } from '../../lib/foto'
 import { useDoc } from '../../lib/hooks'
 import { avisosLigados, cancelarPush, CHAVE_AVISOS } from '../../lib/push'
 import { agil } from '../../movimento'
-import { Aviso, Botao, Campo, Msg } from '../../ui'
+import { Aviso, Botao, Campo, Msg, Painel } from '../../ui'
 import { IconeQuadrado, Quadro } from '../../vidro'
 import { permissao } from './AvisoNotificacoes'
+import PagarPix, { dataCurta, PIX } from './PagarPix'
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
 const GRAVAR = 'Não deu para gravar. Tente de novo.'
@@ -116,6 +117,23 @@ const desde = (d: Date) => {
   return `${v('month').replace('.', '')}/${v('year')}`
 }
 
+// Mensalidade: vencimento e, se a marca tem Pix, o pagamento (abre ao tocar).
+function Mensalidade({ uid, perfil }: { uid: string; perfil: Usuario }) {
+  const [aberto, setAberto] = useState(false)
+  return (
+    <Quadro className="space-y-3">
+      <h2 className="text-base">Mensalidade</h2>
+      {perfil.pagoAte && <p className="text-sm text-slate-300">Vence em {dataCurta(perfil.pagoAte.toDate())}</p>}
+      {PIX && (
+        <>
+          <Botao type="button" className="w-full" aria-expanded={aberto} onClick={() => setAberto((v) => !v)}>Pagar com Pix</Botao>
+          <Painel aberto={aberto}><PagarPix uid={uid} perfil={perfil} /></Painel>
+        </>
+      )}
+    </Quadro>
+  )
+}
+
 // Aba Conta do aluno: perfil (foto, nome, selo), peso, avisos, segurança, ajuda e Sair.
 export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string; perfil: Usuario; abrirTutorial: () => void }) {
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
@@ -199,6 +217,7 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
         </div>
       </Quadro>
 
+      <Mensalidade uid={uid} perfil={perfil} />
       <Peso uid={uid} atual={perfil.pesoKg} />
       <AvisoDescanso />
 

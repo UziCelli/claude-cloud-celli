@@ -9,8 +9,10 @@ const chaves = (o: object): string[] =>
     .flatMap(([k, v]) => (v && typeof v === 'object' ? chaves(v).map((c) => `${k}.${c}`) : [k]))
     .sort()
 
+// `pix` é opcional: marca sem ele não mostra a interface do Pix.
+const semPix = (o: object) => chaves(o).filter((c) => !c.startsWith('pix.'))
 test('as marcas têm os mesmos campos', () => {
-  expect(chaves(gislane)).toEqual(chaves(vfit))
+  expect(semPix(gislane)).toEqual(semPix(vfit))
 })
 
 // O cartão do story (canvas) lê `cores` do marca.json: têm que bater com o tema.css.

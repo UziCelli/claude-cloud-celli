@@ -10,6 +10,7 @@ import {
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -315,6 +316,47 @@ describe('usuarios', () => {
     await assertFails(updateDoc(doc(db('blq'), 'usuarios', 'blq'), { status: 'ativo' }));
     await assertFails(updateDoc(doc(db('exp'), 'usuarios', 'exp'), { pagoAte: futuro }));
     await assertFails(updateDoc(doc(db('agu'), 'usuarios', 'agu'), { status: 'ativo' }));
+  });
+
+  // Pix simples: o aluno informa o pagamento (mesmo vencido/bloqueado); o coach define a mensalidade.
+  describe('pix', () => {
+    it('aluno informa o pagamento com a hora do servidor, mesmo vencido, bloqueado ou aguardando', async () => {
+      for (const uid of ['ana', 'exp', 'blq', 'agu'])
+        await assertSucceeds(updateDoc(doc(db(uid), 'usuarios', uid), { pagamentoInformadoEm: serverTimestamp() }));
+    });
+    it('data arbitrária, apagar o campo ou informar por outro aluno: negado', async () => {
+      const exp = doc(db('exp'), 'usuarios', 'exp');
+      await assertFails(updateDoc(exp, { pagamentoInformadoEm: passado }));
+      await assertFails(updateDoc(exp, { pagamentoInformadoEm: futuro }));
+      await assertFails(updateDoc(exp, { pagamentoInformadoEm: true }));
+      await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { pagamentoInformadoEm: serverTimestamp() }));
+      await env.withSecurityRulesDisabled((ctx) =>
+        updateDoc(doc(ctx.firestore() as unknown as Firestore, 'usuarios', 'exp'), { pagamentoInformadoEm: passado }));
+      await assertFails(updateDoc(exp, { pagamentoInformadoEm: deleteField() }));
+    });
+    it('aluno não grava mensalidade, pagoAte nem status junto com o aviso', async () => {
+      const exp = doc(db('exp'), 'usuarios', 'exp');
+      await assertFails(updateDoc(exp, { mensalidade: 1 }));
+      await assertFails(updateDoc(exp, { pagamentoInformadoEm: serverTimestamp(), mensalidade: 1 }));
+      await assertFails(updateDoc(exp, { pagamentoInformadoEm: serverTimestamp(), pagoAte: futuro }));
+      await assertFails(updateDoc(doc(db('blq'), 'usuarios', 'blq'), { pagamentoInformadoEm: serverTimestamp(), status: 'ativo' }));
+    });
+    it('coach grava a mensalidade (> 0 e até 100000) e apaga o campo', async () => {
+      const ana = doc(db('coach'), 'usuarios', 'ana');
+      await assertSucceeds(updateDoc(ana, { mensalidade: 150 }));
+      await assertSucceeds(updateDoc(ana, { mensalidade: 99.9 }));
+      await assertSucceeds(updateDoc(ana, { mensalidade: 100000 }));
+      await assertSucceeds(updateDoc(ana, { mensalidade: deleteField() }));
+    });
+    it('coach não grava mensalidade inválida', async () => {
+      const ana = doc(db('coach'), 'usuarios', 'ana');
+      for (const v of [0, -10, 100001, '150', null, true]) await assertFails(updateDoc(ana, { mensalidade: v }));
+    });
+    it('coach confirma: avança pagoAte e limpa o aviso', async () => {
+      await env.withSecurityRulesDisabled((ctx) =>
+        updateDoc(doc(ctx.firestore() as unknown as Firestore, 'usuarios', 'exp'), { pagamentoInformadoEm: Timestamp.now() }));
+      await assertSucceeds(updateDoc(doc(db('coach'), 'usuarios', 'exp'), { pagoAte: futuro, pagamentoInformadoEm: deleteField() }));
+    });
   });
 
   it('coach arquiva, reativa e apaga aluno arquivado', async () => {

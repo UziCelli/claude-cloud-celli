@@ -38,7 +38,7 @@ const paraCampos = (dados: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(dados).map(([k, v]) => [k, valorFirestore(v)]))
 
 // Grava um documento direto via REST do Firestore emulator (Bearer owner ignora as regras).
-async function gravarDoc(caminho: string, dados: Record<string, unknown>) {
+export async function gravarDoc(caminho: string, dados: Record<string, unknown>) {
   const r = await fetch(`${FIRESTORE}/v1/projects/${PROJETO}/databases/(default)/documents/${caminho}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },

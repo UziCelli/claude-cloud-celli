@@ -14,6 +14,7 @@ import { Chip, IconeQuadrado, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual } from './mesoAtual'
 import { Centro } from '../../ui'
+import { PIX } from './PagarPix'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
 
@@ -139,6 +140,17 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
 
 function Quadros({ pagoAte }: { pagoAte?: number }) {
   const emDia = pagoAte != null && pagoAte > Date.now()
+  const pagamento = (
+    <Quadro className="h-full space-y-3">
+      <IconeQuadrado cor={emDia ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}><IcCartao className="size-5" /></IconeQuadrado>
+      <div>
+        {!emDia && pagoAte != null && <Chip cor="bg-rose-500/15 text-rose-300">Vencido</Chip>}
+        <p className="mt-2 text-sm font-semibold">Pagamento</p>
+        <p className="text-xs text-slate-400">{pagoAte != null ? `${emDia ? 'Em dia · pago até' : 'Venceu em'} ${fmtData(new Date(pagoAte - 3 * 3600_000).toISOString())}` : '…'}</p>
+        {PIX && <p className="mt-1 text-xs font-semibold text-marca-300">Pagar com Pix</p>}
+      </div>
+    </Quadro>
+  )
   return (
     <div className="grid grid-cols-2 gap-3">
       <a href="#/evolucao" className="toque block">
@@ -150,14 +162,7 @@ function Quadros({ pagoAte }: { pagoAte?: number }) {
           </div>
         </Quadro>
       </a>
-      <Quadro className="space-y-3">
-        <IconeQuadrado cor={emDia ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}><IcCartao className="size-5" /></IconeQuadrado>
-        <div>
-          {!emDia && pagoAte != null && <Chip cor="bg-rose-500/15 text-rose-300">Vencido</Chip>}
-          <p className="mt-2 text-sm font-semibold">Pagamento</p>
-          <p className="text-xs text-slate-400">{pagoAte != null ? `${emDia ? 'Em dia · pago até' : 'Venceu em'} ${fmtData(new Date(pagoAte - 3 * 3600_000).toISOString())}` : '…'}</p>
-        </div>
-      </Quadro>
+      {PIX ? <a href="#/conta" className="toque block">{pagamento}</a> : pagamento}
       <Quadro className="space-y-3 opacity-80">
         <IconeQuadrado cor="bg-white/8 text-slate-300"><IcPrancheta className="size-5" /></IconeQuadrado>
         <div>

@@ -46,6 +46,7 @@ export default function Politica() {
           <li>Nome e e-mail (login).</li>
           <li>Peso corporal.</li>
           <li>Foto de perfil (opcional).</li>
+          <li>Valor da mensalidade e o aviso de pagamento ("Já paguei").</li>
           <li>Treinos, cargas, repetições e anotações.</li>
           <li>Horários de treino.</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
