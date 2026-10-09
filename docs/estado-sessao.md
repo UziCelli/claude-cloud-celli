@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 04/10/2026
+# Estado da sessão (retomada) — atualizado em 08/10/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #19 estão juntados e publicados.
 
@@ -104,6 +104,19 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 
 ## 07/10/2026
 - Treino: "▶ Iniciar treino" + relógio "Treino em andamento · mm:ss" até concluir (duração final parada depois). Treino em andamento neste aparelho conta como uso na inatividade (teto 3 h). Não commitado. e2e `relogio.spec.ts`.
+
+## 08/10/2026 — Redesenho (PR 56)
+- Plano aprovado em `docs/plano-redesenho.md` a partir dos prints do protótipo (local, fora do git: `prototipo.html`, `src/prototipo/`).
+- Feito:
+  - visual vidro;
+  - barra de abas embaixo (aluno e coach) e menu lateral do coach no computador;
+  - Início do aluno e do coach;
+  - aba Treino com travas e semana de volta (−5%);
+  - Conta do aluno;
+  - boas-vindas, instalar e login;
+  - "Dias de treino" no editor do meso.
+- `Treino.tsx` manteve o visual; só ganhou a carga −5% na semana de volta.
+- Corrigido: o aviso de "treino adaptado" nunca aparecia, porque lia `adaptadoEm` do meso convertido.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Próximo depois do redesenho (pedido em 08/10/2026): Pix simples.**
