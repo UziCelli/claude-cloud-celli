@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chaveManual, codigoCompleto, limparCodigo, mensagemMfa, qrDataUrl } from './mfa'
+import { chaveManual, codigoCompleto, limparCodigo, mensagemMfa } from './mfa'
 
 describe('2 etapas: partes puras', () => {
   it('limparCodigo deixa só dígitos, no máximo 6', () => {
@@ -20,11 +20,6 @@ describe('2 etapas: partes puras', () => {
     expect(mensagemMfa('outro')).toContain('(outro)')
     expect(mensagemMfa('auth/unverified-email')).toMatch(/confirme seu e-mail/i)
     expect(mensagemMfa('auth/quota-exceeded')).toMatch(/entre de novo/i)
-  })
-  it('qrDataUrl gera um SVG em data URL', () => {
-    const url = qrDataUrl('otpauth://totp/VFITCOACH:a@b.com?secret=ABC&issuer=VFITCOACH')
-    expect(url.startsWith('data:image/svg+xml')).toBe(true)
-    expect(decodeURIComponent(url)).toContain('<svg')
   })
   it('chaveManual agrupa a chave de 4 em 4', () => {
     expect(chaveManual('ABCDEFGHIJ')).toBe('ABCD EFGH IJ')

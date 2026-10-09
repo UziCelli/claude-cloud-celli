@@ -69,6 +69,11 @@ service cloud.firestore {
       return v is string && v.size() >= 1 && v.size() <= 20;
     }
 
+    // Mensalidade do Pix (R$, definida pelo coach): número maior que 0 e até 100000.
+    function mensalidadeValida(v) {
+      return v is number && v > 0 && v <= 100000;
+    }
+
     match /usuarios/{uid} {
       // Lê o próprio mesmo bloqueado (o app mostra a tela "bloqueado").
       allow read: if isCoach() || (signedIn() && request.auth.uid == uid);
@@ -76,7 +81,8 @@ service cloud.firestore {
       // Coach: no próprio perfil faz tudo; nos das outras pessoas, o resultado é sempre 'aluno'
       // (ninguém vira coach pelo app). Apagar: só o coach.
       allow create, update: if isCoach()
-        && (request.auth.uid == uid || request.resource.data.papel == 'aluno');
+        && (request.auth.uid == uid || request.resource.data.papel == 'aluno')
+        && (!('mensalidade' in request.resource.data) || mensalidadeValida(request.resource.data.mensalidade));
       allow delete: if isCoach();
 
       // Cadastro próprio: sempre aluno aguardando, sem pagoAte, com o e-mail do login.
@@ -91,11 +97,13 @@ service cloud.firestore {
         && nomeValido(request.resource.data.nome)
         && request.resource.data.email == request.auth.token.email;
 
-      // Só nome, pesoKg, selo e o aceite da privacidade. E-mail, papel, status e pagoAte: só o coach
+      // Só nome, pesoKg, selo, o aceite da privacidade e o aviso "Já paguei" (pagamentoInformadoEm,
+      // só com a hora do servidor; vale também vencido ou bloqueado, que é quando ele precisa pagar —
+      // por isso não exige liberado()). E-mail, papel, status, pagoAte e mensalidade: só o coach
       // (o coach troca o próprio e-mail em Minha conta; aluno troca por manutenção — workflow
       // "Alterar e-mail de aluno").
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg', 'selo', 'privacidadeEm', 'privacidadeVersao'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg', 'selo', 'privacidadeEm', 'privacidadeVersao', 'pagamentoInformadoEm'])
         && nomeValido(request.resource.data.nome)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['selo'])
             || request.resource.data.selo is bool)
@@ -104,7 +112,9 @@ service cloud.firestore {
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['privacidadeEm'])
             || request.resource.data.privacidadeEm == request.time)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['privacidadeVersao'])
-            || versaoValida(request.resource.data.privacidadeVersao));
+            || versaoValida(request.resource.data.privacidadeVersao))
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['pagamentoInformadoEm'])
+            || request.resource.data.pagamentoInformadoEm == request.time);
     }
 
     // Foto de perfil: fotos/{uid} = { img, atualizadoEm }. img é um JPEG de 192x192 em data URL

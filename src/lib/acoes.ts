@@ -20,6 +20,7 @@ import { registrarErro } from './log'
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocFromServer,
@@ -34,7 +35,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import type { Meso } from '../engine'
-import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
+import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
 import { auth, authCadastro, db } from './firebase'
 import { inicioJanela } from './resumo'
@@ -48,6 +49,25 @@ export const definirAcesso = (uid: string, a: { status: Usuario['status']; pagoA
     status: a.status,
     ...(a.pagoAte && { pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(a.pagoAte)) }),
   })
+
+// Pix simples: o coach define a mensalidade; o aluno toca "Já paguei"; o coach confirma (+1 mês).
+// Sempre campo a campo (updateDoc), nunca o documento inteiro.
+export const salvarMensalidade = (uid: string, valor: number | null) =>
+  updateDoc(doc(db, 'usuarios', uid), { mensalidade: valor === null ? deleteField() : valor })
+
+export const informarPagamento = (uid: string) =>
+  updateDoc(doc(db, 'usuarios', uid), { pagamentoInformadoEm: serverTimestamp() })
+
+// pagoAte = vencimento atual do aluno (quem paga adiantado não perde dias). Devolve o novo vencimento
+// (YYYY-MM-DD) na hora e a gravação à parte: offline a promessa só resolve ao reconectar.
+export function confirmarPagamento(uid: string, pagoAte: Timestamp | undefined) {
+  const data = proximoVencimento(pagoAte, new Date())
+  const gravando = updateDoc(doc(db, 'usuarios', uid), {
+    pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(data)),
+    pagamentoInformadoEm: deleteField(),
+  })
+  return { data, gravando }
+}
 
 const ERRO_EMAIL_EM_USO = 'Esse e-mail já tem conta — peça para o aluno entrar ou usar Esqueci minha senha'
 

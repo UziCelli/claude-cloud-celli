@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
-import { diasParaVencer, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, type Usuario } from './acesso'
+import { diasParaVencer, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, proximoVencimento, type Usuario } from './acesso'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const ts = (d: Date) => Timestamp.fromDate(d)
@@ -60,4 +60,29 @@ describe('faltaSegundoFator (espelha segundoFator() de firestore.rules)', () => 
   it('sem claims: falta', () => expect(faltaSegundoFator({})).toBe(true))
   it('mfaDispensado true (só emulador): não falta', () => expect(faltaSegundoFator({ mfaDispensado: true })).toBe(false))
   it('mfaDispensado que não é true: falta', () => expect(faltaSegundoFator({ mfaDispensado: 'true' })).toBe(true))
+})
+
+describe('proximoVencimento (+1 mês, calendário de São Paulo)', () => {
+  const pago = (data: string) => ts(fimDoDiaSaoPaulo(data))
+  it('ainda em dia: soma 1 mês ao dia do pagoAte', () => {
+    expect(proximoVencimento(pago('2026-10-20'), sp('2026-10-09T12:00'))).toBe('2026-11-20')
+  })
+  it('vence hoje ainda conta como em dia', () => {
+    expect(proximoVencimento(pago('2026-10-10'), sp('2026-10-10T23:00'))).toBe('2026-11-10')
+  })
+  it('vencido ou sem pagoAte: soma 1 mês a hoje', () => {
+    expect(proximoVencimento(pago('2026-09-01'), sp('2026-10-09T12:00'))).toBe('2026-11-09')
+    expect(proximoVencimento(undefined, sp('2026-10-09T12:00'))).toBe('2026-11-09')
+  })
+  it('hoje é o dia de São Paulo, não o de UTC (23h = já é o dia seguinte em UTC)', () => {
+    expect(proximoVencimento(undefined, sp('2026-10-09T23:30'))).toBe('2026-11-09')
+  })
+  it('prende ao último dia do mês', () => {
+    expect(proximoVencimento(pago('2026-01-31'), sp('2026-01-10T12:00'))).toBe('2026-02-28')
+    expect(proximoVencimento(pago('2028-01-31'), sp('2028-01-10T12:00'))).toBe('2028-02-29')
+    expect(proximoVencimento(pago('2026-03-31'), sp('2026-03-10T12:00'))).toBe('2026-04-30')
+  })
+  it('vira o ano', () => {
+    expect(proximoVencimento(pago('2026-12-15'), sp('2026-12-01T12:00'))).toBe('2027-01-15')
+  })
 })

@@ -10,6 +10,7 @@ import { ir } from '../../../rota'
 import { m } from 'motion/react'
 import { calcularAlertas, type Reg } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
+import { PIX } from '../../aluno/PagarPix'
 import { IcMais } from '../../../icones'
 import { Quadro } from '../../../vidro'
 
@@ -39,6 +40,7 @@ export default function Inicio({ nome }: { nome: string }) {
       </Pagina>
     )
 
+  const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm).length
   const blocos: [string, AlunoComId[], string][] = [
     ['Aguardando aprovação', r.aguardando, 'Ninguém aguardando.'],
     ['Vencendo em 7 dias', r.vencendo, 'Ninguém vencendo.'],
@@ -71,6 +73,14 @@ export default function Inicio({ nome }: { nome: string }) {
           Ranking de evolução
         </a>
       </div>
+      {PIX && avisosPix > 0 && (
+        <a href="#/alunos" className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-amber-500/60 bg-amber-950/70 p-4 text-amber-100">
+          <span className="font-semibold">
+            <span className="font-display text-3xl font-bold text-amber-300">{avisosPix}</span> {avisosPix === 1 ? 'aluno informou pagamento' : 'alunos informaram pagamento'}
+          </span>
+          <span className="font-semibold underline">Ver lista</span>
+        </a>
+      )}
       {alertas.total > 0 && (
         <a href="#/alertas" className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-rose-500/60 bg-rose-950/70 p-4 text-rose-100">
           <span className="font-semibold">

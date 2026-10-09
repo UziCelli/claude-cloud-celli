@@ -3,13 +3,14 @@ import { saida, suave } from '../../../movimento'
 import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
-import { apagarAluno, definirAcesso } from '../../../lib/acoes'
+import { apagarAluno, confirmarPagamento, definirAcesso, salvarMensalidade } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
+import { PIX, reais } from '../../aluno/PagarPix'
 import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
@@ -68,6 +69,7 @@ export default function Alunos() {
   const [busca, setBusca] = useState('')
   const [editando, setEditando] = useState<string | null>(null)
   const [erro, setErro] = useState('')
+  const [ok, setOk] = useState('')
   const [arquivados, setArquivados] = useState(false)
   const [confirmando, setConfirmando] = useState<{ id: string; tipo: 'arquivar' | 'apagar' } | null>(null)
   const nArquivados = alunos.filter((a) => a.status === 'arquivado').length
@@ -84,6 +86,17 @@ export default function Alunos() {
       setErro('Não deu para gravar. Tente de novo.')
     })
     setEditando(null)
+  }
+
+  function confirmarPix(uid: string, pagoAte: Usuario['pagoAte']) {
+    setErro('')
+    const { data, gravando } = confirmarPagamento(uid, pagoAte)
+    setOk(`Acesso até ${data.split('-').reverse().slice(0, 2).join('/')}`)
+    gravando.catch((e) => {
+      setOk('')
+      registrarErro('gravacao', `confirmar pagamento: ${e?.code ?? e}`, e)
+      setErro('Não deu para gravar. Tente de novo.')
+    })
   }
 
   function bloquear(uid: string) {
@@ -114,7 +127,10 @@ export default function Alunos() {
     ) : a.presencial ? (
       <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'arquivar' })}>Arquivar</Botao>
     ) : editando === a.id ? (
-      <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
+      <div className="w-full space-y-3">
+        <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
+        {PIX && <Mensalidade a={a} onSalvo={() => setEditando(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />}
+      </div>
     ) : (
       <div className="flex flex-wrap gap-2">
         {(a.status === 'aguardando' || a.status === 'bloqueado') && (
@@ -122,6 +138,7 @@ export default function Alunos() {
             Liberar
           </Botao>
         )}
+        {PIX && a.pagamentoInformadoEm && <Botao tipo="primario" onClick={() => confirmarPix(a.id, a.pagoAte)}>Confirmar pagamento</Botao>}
         {a.status === 'ativo' && <Botao onClick={() => setEditando(a.id)}>Renovar</Botao>}
         {a.status !== 'bloqueado' && (
           <Botao tipo="perigo" onClick={() => bloquear(a.id)}>
@@ -143,6 +160,7 @@ export default function Alunos() {
         </div>
       )}
       {arquivados && <p className="mb-4 text-sm text-slate-400">Apagar de vez apaga tudo do aluno, inclusive o login e as cópias de segurança (em até 24 h).</p>}
+      <Msg>{ok && <p className="mb-4 text-sm text-emerald-400">{ok}</p>}</Msg>
       <Msg>
         {erro && (
           <div className="mb-4">
@@ -269,7 +287,11 @@ function Chip({ a, s }: { a: Aluno; s: { texto: string; cor: string } }) {
   return a.presencial ? (
     <span className="rounded-full bg-sky-900/50 px-2 py-1 text-xs font-semibold text-sky-300">Presencial</span>
   ) : (
-    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
+    <>
+      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
+      {PIX && a.mensalidade != null && <span className="text-xs text-slate-400">{reais(a.mensalidade)}/mês</span>}
+      {PIX && a.pagamentoInformadoEm && <span className="rounded-full bg-amber-900/50 px-2 py-1 text-xs font-semibold text-amber-300">Informou pagamento</span>}
+    </>
   )
 }
 
@@ -296,5 +318,23 @@ function FormularioData({
       </Botao>
       <Botao onClick={onCancelar}>Cancelar</Botao>
     </div>
+  )
+}
+
+function Mensalidade({ a, onSalvo, onErro }: { a: Aluno; onSalvo: () => void; onErro: () => void }) {
+  const [v, setV] = useState(a.mensalidade != null ? String(a.mensalidade) : '')
+  const n = Number(v.replace(',', '.'))
+  return (
+    <form
+      className="flex flex-wrap items-end gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        salvarMensalidade(a.id, v.trim() === '' ? null : n).catch(onErro)
+        onSalvo() // fecha o formulário: o valor aparece na linha do aluno
+      }}
+    >
+      <Campo rotulo="Mensalidade (R$)" type="number" inputMode="decimal" min={0} step="0.01" value={v} onChange={(e) => setV(e.target.value)} />
+      <Botao disabled={v.trim() !== '' && !(n > 0)}>Salvar mensalidade</Botao>
+    </form>
   )
 }
