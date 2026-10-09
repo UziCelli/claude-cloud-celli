@@ -1,6 +1,6 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { prescreverSessao, type Meso } from '../../engine'
-import type { Usuario } from '../../lib/acesso'
+import type { Foto, Usuario } from '../../lib/acesso'
 import { comVolta, diasDaSemana, treinoDeHoje } from '../../lib/agenda'
 import type { RegistroAlerta } from '../../lib/alertas'
 import type { MesoSalvo } from '../../lib/conversores'
@@ -9,6 +9,7 @@ import { useDoc, useLista } from '../../lib/hooks'
 import { fmtMin } from '../../lib/tempo'
 import { IcCartao, IcCheck, IcFogo, IcGrafico, IcLivro, IcPrancheta, IcRelogio, IcSeta } from '../../icones'
 import { ir } from '../../rota'
+import { Avatar } from '../../avatar'
 import { Chip, IconeQuadrado, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual } from './mesoAtual'
@@ -25,15 +26,21 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
     atual ? query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', atual.doc.id)) : null,
   )
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
+  const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
   const hoje = new Date()
   const data = hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })
   return (
     <main className="mx-auto max-w-md space-y-4 px-4 py-4">
-      <div className="pt-2">
-        <p className="text-sm text-slate-400">{data[0].toUpperCase() + data.slice(1)}</p>
-        <h1 className="text-[28px] leading-tight">Olá, {nome.split(' ')[0]} 👋</h1>
+      <div className="flex items-center gap-3 pt-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-slate-400">{data[0].toUpperCase() + data.slice(1)}</p>
+          <h1 className="text-[28px] leading-tight">Olá, {nome.split(' ')[0]} 👋</h1>
+        </div>
+        <a href="#/conta" aria-label="Minha conta" className="toque rounded-full">
+          <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
+        </a>
       </div>
       {!atual && <Msg>Seu coach ainda não montou seu treino.</Msg>}
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}

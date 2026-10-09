@@ -34,7 +34,7 @@ export default function Politica() {
         <Logo className="h-10 text-white" />
         Política de Privacidade
       </h1>
-      <p className="text-center text-xs text-slate-500">Versão vigente: 02/10/2026</p>
+      <p className="text-center text-xs text-slate-500">Versão vigente: 09/10/2026</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
           {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
@@ -45,10 +45,15 @@ export default function Politica() {
         <Lista>
           <li>Nome e e-mail (login).</li>
           <li>Peso corporal.</li>
+          <li>Foto de perfil (opcional).</li>
           <li>Treinos, cargas, repetições e anotações.</li>
           <li>Horários de treino.</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
         </Lista>
+        <p>
+          A foto de perfil é opcional: só você e o seu coach a veem, e ela fica guardada em tamanho pequeno no banco de dados do app.
+          Você remove quando quiser (aba Conta) e ela é apagada junto com a conta.
+        </p>
         <p>Não pedimos CPF, data de nascimento, endereço nem cartão.</p>
       </Secao>
       <Secao n={3} titulo="Dados de saúde">

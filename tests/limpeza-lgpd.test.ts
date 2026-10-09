@@ -21,7 +21,7 @@ const rodar = () =>
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
-const COLECOES = ['usuarios', 'mesos', 'registros', 'notas', 'logs', 'exclusoes']
+const COLECOES = ['usuarios', 'mesos', 'registros', 'notas', 'fotos', 'logs', 'exclusoes']
 const existe = async (p: string) => (await db.doc(p).get()).exists
 const login = async (uid: string) => {
   try { await auth.getUser(uid); return true } catch { return false }
@@ -33,11 +33,12 @@ async function semear(uid: string, papel: string, pedido: boolean) {
   await db.doc(`mesos/m-${uid}`).set({ alunoId: uid, nome: 'Meso' })
   await db.doc(`registros/r-${uid}`).set({ alunoId: uid, cargas: { x: { s1: 10 } } })
   await db.doc(`notas/${uid}`).set({ texto: 'n' })
+  await db.doc(`fotos/${uid}`).set({ img: 'data:image/jpeg;base64,AAAA', atualizadoEm: Timestamp.now() })
   await db.doc(`logs/l-${uid}`).set({ uid, em: Timestamp.now() })
   if (pedido) await db.doc(`exclusoes/${uid}`).set({ em: Timestamp.now() })
 }
 const tudoDe = async (uid: string) =>
-  [`usuarios/${uid}`, `mesos/m-${uid}`, `registros/r-${uid}`, `notas/${uid}`, `logs/l-${uid}`]
+  [`usuarios/${uid}`, `mesos/m-${uid}`, `registros/r-${uid}`, `notas/${uid}`, `fotos/${uid}`, `logs/l-${uid}`]
 
 beforeEach(async () => {
   for (const c of COLECOES) for (const d of (await db.collection(c).get()).docs) await d.ref.delete()

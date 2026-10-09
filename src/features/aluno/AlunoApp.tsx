@@ -1,5 +1,6 @@
 import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
+import type { Usuario } from '../../lib/acesso'
 import { casar, useRota } from '../../rota'
 import { Tela } from '../../ui'
 import { IcCasa, IcGrafico, IcHaltere, IcPessoa } from '../../icones'
@@ -13,7 +14,8 @@ import InicioAluno from './InicioAluno'
 import Treino from './Treino'
 import Tutorial, { tutorialNaoVisto } from './Tutorial'
 
-export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
+export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario }) {
+  const nome = perfil.nome
   const rota = useRota()
   const [tutorial, setTutorial] = useState(tutorialNaoVisto)
   let p: Record<string, string> | null
@@ -23,7 +25,7 @@ export default function AlunoApp({ uid, nome }: { uid: string; nome: string }) {
   else if (rota === '/treino') tela = <Hoje uid={uid} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />
-  else if (rota === '/conta') tela = <ContaAluno nome={nome} abrirTutorial={() => setTutorial(true)} />
+  else if (rota === '/conta') tela = <ContaAluno uid={uid} perfil={perfil} abrirTutorial={() => setTutorial(true)} />
 
   // Sem barra na tela do treino (e no fim do treino, que mora nela): ela cobriria os botões.
   const comBarra = !p

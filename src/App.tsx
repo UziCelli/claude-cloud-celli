@@ -50,7 +50,7 @@ function Principal() {
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso perfil={perfil} />]
   else if (!aceitouPrivacidade(perfil)) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} />]
-  else tela = <AlunoApp uid={user.uid} nome={perfil.nome} />
+  else tela = <AlunoApp uid={user.uid} perfil={perfil} />
   useEffect(() => {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
     else telaPronta()

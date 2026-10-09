@@ -18,6 +18,16 @@ export function mesmaChave(atual: ArrayBuffer | null, vapid: string): boolean {
   return a.length === b.length && a.every((v, i) => v === b[i])
 }
 
+// Chave por aparelho: '0' = a pessoa desligou o aviso do fim do descanso (aba Conta).
+export const CHAVE_AVISOS = 'forca-avisos-descanso'
+export const avisosLigados = () => {
+  try {
+    return localStorage.getItem(CHAVE_AVISOS) !== '0'
+  } catch {
+    return true
+  }
+}
+
 const disponivel = () =>
   !!BASE && typeof Notification !== 'undefined' && Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window
 
@@ -67,7 +77,7 @@ const enfileirar = (tarefa: () => Promise<void>) => {
 
 // fimEm: instante (ms desde 1970) em que o descanso acaba.
 export function agendarPush(fimEm: number) {
-  if (!disponivel()) return
+  if (!disponivel() || !avisosLigados()) return
   const base = BASE!
   const meu = ++ultimo
   enfileirar(async () => {

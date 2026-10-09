@@ -275,6 +275,20 @@ describe('usuarios', () => {
     await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { privacidadeEm: serverTimestamp(), privacidadeVersao: '1' }));
   });
 
+  it('aluno grava o próprio selo (só booleano), sozinho ou com o nome', async () => {
+    const ana = doc(db('ana'), 'usuarios', 'ana');
+    await assertSucceeds(updateDoc(ana, { selo: true }));
+    await assertSucceeds(updateDoc(ana, { selo: false }));
+    await assertSucceeds(updateDoc(ana, { nome: 'Ana M', selo: true }));
+    await assertFails(updateDoc(ana, { selo: 'sim' }));
+    await assertFails(updateDoc(ana, { selo: 1 }));
+    await assertFails(updateDoc(ana, { selo: null }));
+    await assertFails(updateDoc(ana, { selo: true, papel: 'coach' }));
+    await assertFails(updateDoc(ana, { selo: true, status: 'bloqueado' }));
+    await assertFails(updateDoc(ana, { selo: true, email: 'x@x.com' }));
+    await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { selo: true }));
+  });
+
   it('usuário altera só o próprio nome', async () => {
     await assertSucceeds(updateDoc(doc(db('ana'), 'usuarios', 'ana'), { nome: 'Ana Maria' }));
     await assertFails(updateDoc(doc(db('ana'), 'usuarios', 'bia'), { nome: 'Hack' }));
@@ -747,5 +761,88 @@ describe('logs', () => {
     await assertFails(updateDoc(log('coach'), { mensagem: 'y' }));
     await assertSucceeds(deleteDoc(log('coach')));
     await assertSucceeds(setDoc(log('coach', 'c1'), valido('coach')));
+  });
+});
+
+// Foto de perfil (fotos/{uid}): JPEG 192x192 em data URL. Só o dono grava; dono e coach leem e apagam.
+describe('fotos', () => {
+  const foto = (uid: string | undefined, id = 'ana') => doc(db(uid), 'fotos', id);
+  const img = 'data:image/jpeg;base64,' + 'A'.repeat(20000);
+  const valida = (extra: object = {}) => ({ img, atualizadoEm: serverTimestamp(), ...extra });
+  const existente = () =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'fotos', 'ana'), { img, atualizadoEm: Timestamp.now() }),
+    );
+
+  it('aluno grava, troca, lê e apaga a própria foto (de qualquer status)', async () => {
+    await assertSucceeds(setDoc(foto('ana'), valida()));
+    await assertSucceeds(setDoc(foto('ana'), valida()));
+    await assertSucceeds(getDoc(foto('ana')));
+    await assertSucceeds(deleteDoc(foto('ana')));
+    await assertSucceeds(setDoc(foto('blq', 'blq'), valida()));
+    await assertSucceeds(setDoc(foto('exp', 'exp'), valida()));
+  });
+
+  it('aceita img com padding e no limite de 60000 caracteres', async () => {
+    await assertSucceeds(setDoc(foto('ana'), valida({ img: 'data:image/jpeg;base64,QUJD/+==' })));
+    const prefixo = 'data:image/jpeg;base64,';
+    await assertSucceeds(setDoc(foto('ana'), valida({ img: prefixo + 'A'.repeat(60000 - prefixo.length) })));
+  });
+
+  it('coach lê e apaga, mas não cria nem altera foto de aluno', async () => {
+    await existente();
+    await assertSucceeds(getDoc(foto('coach')));
+    await assertFails(setDoc(foto('coach'), valida()));
+    await assertFails(setDoc(foto('coach', 'bia'), valida()));
+    await assertFails(updateDoc(foto('coach'), { img: 'data:image/jpeg;base64,QUJD' }));
+    await assertSucceeds(deleteDoc(foto('coach')));
+  });
+
+  it('coach sem 2º fator não lê nem apaga', async () => {
+    await existente();
+    const c = doc(contexto('coach', SEM_FATOR).firestore() as unknown as Firestore, 'fotos', 'ana');
+    await assertFails(getDoc(c));
+    await assertFails(deleteDoc(c));
+  });
+
+  it('aluno não lê, grava nem apaga foto de outro', async () => {
+    await existente();
+    await assertFails(getDoc(foto('bia', 'ana')));
+    await assertFails(setDoc(foto('bia', 'ana'), valida()));
+    await assertFails(setDoc(foto('bia', 'nova'), valida()));
+    await assertFails(updateDoc(foto('bia', 'ana'), { img: 'data:image/jpeg;base64,QUJD' }));
+    await assertFails(deleteDoc(foto('bia', 'ana')));
+  });
+
+  it('nega img grande demais, de outro formato, ou que não é texto', async () => {
+    const prefixo = 'data:image/jpeg;base64,';
+    await assertFails(setDoc(foto('ana'), valida({ img: prefixo + 'A'.repeat(60001 - prefixo.length) })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'data:image/png;base64,AAAA' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'data:image/svg+xml;base64,AAAA' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'data:image/svg+xml,<svg onload=alert(1)/>' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'javascript:alert(1)' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'https://x.com/a.jpg' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'data:image/jpeg;base64,' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 'data:image/jpeg;base64,AA"onerror="x' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: ' data:image/jpeg;base64,AAAA' })));
+    await assertFails(setDoc(foto('ana'), valida({ img: 123 })));
+    await assertFails(setDoc(foto('ana'), valida({ img: null })));
+  });
+
+  it('nega campo extra, campo faltando e atualizadoEm que não é a hora do servidor', async () => {
+    await assertFails(setDoc(foto('ana'), valida({ extra: 1 })));
+    await assertFails(setDoc(foto('ana'), valida({ alunoId: 'ana' })));
+    await assertFails(setDoc(foto('ana'), { img }));
+    await assertFails(setDoc(foto('ana'), { atualizadoEm: serverTimestamp() }));
+    await assertFails(setDoc(foto('ana'), valida({ atualizadoEm: passado })));
+    await assertFails(setDoc(foto('ana'), valida({ atualizadoEm: futuro })));
+    await assertFails(setDoc(foto('ana'), valida({ atualizadoEm: 'agora' })));
+  });
+
+  it('sem login: nada', async () => {
+    await existente();
+    await assertFails(getDoc(foto(undefined)));
+    await assertFails(setDoc(foto(undefined), valida()));
+    await assertFails(deleteDoc(foto(undefined)));
   });
 });

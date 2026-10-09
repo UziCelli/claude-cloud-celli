@@ -8,6 +8,8 @@ import { registrarErro } from '../../../lib/log'
 import { db } from '../../../lib/firebase'
 import { useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
+import { Avatar } from '../../../avatar'
+import type { Foto } from '../../../lib/acesso'
 import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
@@ -60,6 +62,9 @@ function comparar(a: Aluno, b: Aluno) {
 export default function Alunos() {
   const { dados } = useLista<Usuario>(query(collection(db, 'usuarios'), where('papel', '==', 'aluno')))
   const alunos = dados as Aluno[]
+  const { dados: fotos } = useLista<Foto>(collection(db, 'fotos'))
+  const imgs = new Map(fotos.map((f) => [f.id, f.img]))
+  const avatar = (a: Aluno) => <Avatar img={imgs.get(a.id)} nome={a.nome} selo={a.selo} tamanho={36} />
   const [busca, setBusca] = useState('')
   const [editando, setEditando] = useState<string | null>(null)
   const [erro, setErro] = useState('')
@@ -158,9 +163,12 @@ export default function Alunos() {
             return (
               <m.div key={a.id} {...linha(i)}>
               <Cartao className="space-y-2">
-                <button className="block w-full min-w-0 text-left" onClick={() => ir('/aluno/' + a.id)}>
-                  <div className="truncate font-medium">{a.nome}</div>
-                  <div className="truncate text-xs text-slate-500">{a.email}</div>
+                <button className="flex w-full min-w-0 items-center gap-3 text-left" onClick={() => ir('/aluno/' + a.id)}>
+                  {avatar(a)}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{a.nome}</span>
+                    <span className="block truncate text-xs text-slate-500">{a.email}</span>
+                  </span>
                 </button>
                 <div className="flex flex-wrap items-center gap-2">
                   <Chip a={a} s={s} />
@@ -190,9 +198,12 @@ export default function Alunos() {
                 return (
                   <m.tr key={a.id} {...linha(i)} className="border-b border-slate-800 last:border-0">
                     <td className="p-3">
-                      <button className="text-left hover:underline" onClick={() => ir('/aluno/' + a.id)}>
-                        <div className="font-medium">{a.nome}</div>
-                        <div className="text-xs text-slate-500">{a.email}</div>
+                      <button className="flex items-center gap-3 text-left hover:underline" onClick={() => ir('/aluno/' + a.id)}>
+                        {avatar(a)}
+                        <span>
+                          <span className="block font-medium">{a.nome}</span>
+                          <span className="block text-xs text-slate-500">{a.email}</span>
+                        </span>
                       </button>
                     </td>
                     <td className="p-3">
