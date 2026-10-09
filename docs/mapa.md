@@ -41,7 +41,8 @@ Comece por aqui para achar onde mexer.
 - `agenda.ts` (+ `agenda.test.ts`) — agenda da semana do aluno, pura: `diasDaSemana()`, `treinoDeHoje()`, `travado()`, `semanaDeVolta()`, `comVolta()` (prescrição com −5% na semana de volta), `cargaVolta()`
 - `conversores.ts` — `mesoParaDoc()`, `docParaMeso()`, `registroId()`: serialização; `normalizarCargas()`/`docsParaRegistros()`: leitura única das cargas (peso do corpo)
 - `hooks.ts` — `useUsuarioAtual()`, `useMeso()`, etc.: React hooks
-- `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada)
+- `push.ts` — `agendarPush()`, `cancelarPush()`: avisam o Worker de push (sem `VITE_PUSH_URL`, não fazem nada; `agendarPush` não agenda com o aviso desligado: `avisosLigados()`, chave `forca-avisos-descanso`)
+- `foto.ts` — `reduzirFoto()`: recorte quadrado 192×192, JPEG ≤ 60000 caracteres (lê por data URL por causa da CSP)
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
 - `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `comparacaoToneladas()`, `recordeAnterior()`, `resumoTreino()` (tela de fim de treino), `rankingAlunos()`: cálculos do painel de evolução
@@ -64,7 +65,7 @@ Comece por aqui para achar onde mexer.
 - `AlunoApp.tsx` — roteador do aluno + barra de abas embaixo (Início, Treino, Evolução, Conta; some em `#/treino/…`)
 - `InicioAluno.tsx` — aba Início: cartão do treino de hoje, "Sua semana", quadros (Evolução, Pagamento, Avaliações, Guia)
 - `Hoje.tsx` — aba Treino (`#/treino`): semanas com trava, aviso da semana de volta, cartões dos treinos (prop `base`: prefixo das rotas; o presencial do coach usa e nada trava) + aviso "Reps abaixo da meta"
-- `ContaAluno.tsx` — aba Conta: Como usar, Guia de métodos, Política, Sair
+- `ContaAluno.tsx` — aba Conta (recebe `uid` e o `Usuario`): cabeçalho (foto, nome com Editar, e-mail, "aluno desde"), selo da marca, `Peso` (movido da `MinhaConta`), aviso do fim do descanso (chave por aparelho), Trocar senha, Como usar, Guia de métodos, Política, Sair
 - `Treino.tsx` — detalhe do treino (cargas, reps, selos de método, nota ao abrir, cronômetro, festa no recorde)
 - `FimTreino.tsx` — tela de fim de treino estilo story (duração, volume, recordes, cargas que subiram, semana) + "Compartilhar no story"; abre no "Concluir treino" e no "Ver resumo"; vale também no presencial
 - `Tutorial.tsx` — passo a passo do aluno (abre 1x no 1º acesso; "Como usar" na aba Conta; título de boas-vindas em `marca.json` → `boasVindas`)
@@ -98,7 +99,7 @@ Comece por aqui para achar onde mexer.
 - `semana/Monitoramento.tsx`, `LoadInput.tsx`, `SessaoCard.tsx` — cards de treino (treino de hoje em destaque: prop `hoje`, calculada em `VisaoSemana`; Início usa `resumoCoach().treinosHoje`)
 
 ### `src/features/conta/` — Minha Conta
-- `MinhaConta.tsx` — perfil, logout, solicitar exclusão
+- `MinhaConta.tsx` — só do coach: e-mail, trocar e-mail/senha, 2 etapas, Sair (o aluno usa a `ContaAluno`)
 
 ### `src/features/privacidade/` — Política e Aceite
 - `Politica.tsx` — página pública /privacidade + `CaixaAceite` (widget persistente)
@@ -124,6 +125,7 @@ Comece por aqui para achar onde mexer.
 
 ### `src/` — Raiz
 - `App.tsx` — roteador principal: rotas, verificação de permissão; `Menu` do coach (barra de abas no celular, menu lateral ≥ lg, selo de alertas)
+- `avatar.tsx` — `Avatar`: foto redonda ou iniciais, com selo da marca opcional (aluno e coach)
 - `vidro.tsx` — visual "vidro": `BarraAbas`, `Brilho`, `Quadro`, `Chip`, `IconeQuadrado`
 - `icones.tsx` — ícones de traço (barra de abas e cartões)
 - `rota.ts` — `useRota()`, `ir()`, `casar()`: hash routing
@@ -143,6 +145,7 @@ Comece por aqui para achar onde mexer.
 - `tests/ataques.test.ts` — teste de ataques (troca de ID, escalada, anônimo, abuso); todo caso deve ser negado
 - `e2e/*.spec.ts` — fluxo aluno/coach (Playwright); `e2e/varredura.spec.ts` abre todas as telas em 1280/390 px (erro, rolagem horizontal, "undefined"/"NaN")
 - `e2e/presencial.spec.ts` — coach treina o aluno (com app e presencial) no próprio celular
+- `e2e/conta.spec.ts` — aba Conta do aluno: nome, foto, selo, peso, trocar senha e foto na lista do coach
 - `e2e/evolucao.spec.ts`, `e2e/recorde.spec.ts`, `e2e/ranking.spec.ts` — fluxos do painel de evolução, recorde e ranking
 - `e2e/seed.ts` — fixture: usuários, mesos
 
@@ -202,7 +205,10 @@ Comece por aqui para achar onde mexer.
 ### `usuarios/{uid}`
 - `papel`: 'coach' \| 'aluno'
 - `status`: 'ativo' \| 'aguardando' \| 'bloqueado'
-- `nome`, `email`, `criadoEm`, `pagoAte` (timestamp)
+- `nome`, `email`, `criadoEm`, `pagoAte` (timestamp), `selo` (bool, opcional), `pesoKg`
+
+### `fotos/{uid}`
+- `img` (data URL JPEG 192×192, ≤ 60000 caracteres), `atualizadoEm`. Aluno grava a própria; o coach lê todas (`Alunos.tsx`).
 
 ### `mesos/{mesoId}`
 - `alunoId`, `nome`, `frequencia`, `semanas`
@@ -298,3 +304,5 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Importar planilha | `tools/planilha_para_meso.py`, `importar-meso.yml` | O bloco de cada semana tem `1 + 13·n` linhas, `n` = treinos do **modelo** da aba (79 no "6x", 53 no "4x"); o conversor acha pela 2ª linha "Semana" em B (antes era fixo em 79 e a aba M7 do Thiago, modelo 4x, dava "Layout inesperado"; corrigido em 07/10/2026). Antes de importar, confira treinos "Não realizado" com cargas copiadas de outro treino (ex.: Rosca Martelo 65 kg): ficam de fora para não virar recorde falso. O import grava em **produção**; aluno por e-mail ou nome exato (parecido = erro; sem nenhum = vira presencial). | conferência manual do JSON |
 | LGPD / exclusão (por projeto: `PROJETO` explícito; nunca lê `exclusoes` de um e apaga no outro) | `Alunos.tsx` ("Apagar de vez") → `apagarAluno` (`acoes.ts`), `exclusoes/{uid}`, `tools/limpeza-lgpd.mjs` | "Apagar de vez" grava `exclusoes/{uid}` **antes** de apagar; Limpeza LGPD (diária) termina Auth/logs/dados, se apagou alguém faz backup novo e apaga os antigos (backups guardados 30 dias); resumo do workflow nunca expõe nome/e-mail/uid; nunca apagar pedido de coach; quem mudar política troca `VERSAO_PRIVACIDADE`. | `tests/limpeza-lgpd.test.ts` |
 | Overrides de segurança (`npm audit`) | `package.json` (`overrides`) | Overrides de `basic-ftp`, `uuid` do `gaxios` e `@opentelemetry/core` do `@google-cloud/pubsub` corrigem alertas da firebase-tools. Revisar e tirar quando a CLI atualizar. O `braces` (via chokidar 3) não tem correção publicada: alerta aceito (só roda na CLI, com padrões nossos). | `npm audit` |
+| Perfil do aluno (aba Conta) | `ContaAluno.tsx`, `avatar.tsx`, `foto.ts`, `push.ts` | Nome e selo em `usuarios/{uid}`; foto em `fotos/{uid}` (data URL, sem Storage); aviso do fim do descanso por **aparelho** em `localStorage['forca-avisos-descanso']` (`'0'` = desligado; `agendarPush` respeita). `MinhaConta` é só do coach. Gravações sem `await` (offline). Foto lida por `FileReader` (CSP `img-src 'self' data:` bloqueia `blob:`). Política com foto: `VERSAO_PRIVACIDADE` = 2026-10-09. | e2e `conta.spec.ts` |
+| Foto de perfil | `firestore.rules` (`fotos`), `acoes.ts` | Só o dono cria/altera (chaves `img` e `atualizadoEm`, JPEG em data URL de até 60000 caracteres, `atualizadoEm == request.time`); dono e coach leem e apagam; o coach nunca grava foto de aluno; `apagarAluno` e a Limpeza LGPD apagam `fotos/{uid}`. Riscos aceitos: qualquer login grava a própria foto (até 60 KB, um doc por uid), e a lista do coach lê todas as fotos (1 leitura por aluno com foto; se pesar no plano gratuito, ler só as linhas visíveis). | `tests/rules.test.ts` (fotos), `limpeza-lgpd.test.ts` |

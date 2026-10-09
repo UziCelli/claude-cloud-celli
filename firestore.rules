@@ -91,18 +91,35 @@ service cloud.firestore {
         && nomeValido(request.resource.data.nome)
         && request.resource.data.email == request.auth.token.email;
 
-      // Só nome, pesoKg e o aceite da privacidade. E-mail, papel, status e pagoAte: só o coach
+      // Só nome, pesoKg, selo e o aceite da privacidade. E-mail, papel, status e pagoAte: só o coach
       // (o coach troca o próprio e-mail em Minha conta; aluno troca por manutenção — workflow
       // "Alterar e-mail de aluno").
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg', 'privacidadeEm', 'privacidadeVersao'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'pesoKg', 'selo', 'privacidadeEm', 'privacidadeVersao'])
         && nomeValido(request.resource.data.nome)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['selo'])
+            || request.resource.data.selo is bool)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['pesoKg'])
             || pesoValido(request.resource.data.pesoKg))
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['privacidadeEm'])
             || request.resource.data.privacidadeEm == request.time)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['privacidadeVersao'])
             || versaoValida(request.resource.data.privacidadeVersao));
+    }
+
+    // Foto de perfil: fotos/{uid} = { img, atualizadoEm }. img é um JPEG de 192x192 em data URL
+    // (~10 a 25 mil caracteres; teto de 60000). Só o dono grava (o coach não cria nem altera a de
+    // ninguém); dono e coach leem e apagam. A regex barra PNG/SVG/javascript:/qualquer outro texto.
+    match /fotos/{uid} {
+      allow read: if isCoach() || (signedIn() && request.auth.uid == uid);
+      allow delete: if isCoach() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['img', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['img', 'atualizadoEm'])
+        && request.resource.data.img is string
+        && request.resource.data.img.size() <= 60000
+        && request.resource.data.img.matches('data:image/jpeg;base64,[A-Za-z0-9+/]+=*')
+        && request.resource.data.atualizadoEm == request.time;
     }
 
     match /mesos/{mesoId} {

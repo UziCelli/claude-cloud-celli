@@ -118,6 +118,16 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - `Treino.tsx` manteve o visual; só ganhou a carga −5% na semana de volta.
 - Corrigido: o aviso de "treino adaptado" nunca aparecia, porque lia `adaptadoEm` do meso convertido.
 
+## 09/10/2026 — Segurança, movimento e aba Conta
+- PR #57: alertas do `npm audit` corrigidos com overrides; o `braces` fica aceito (sem correção publicada).
+- PR #58: movimento estilo iOS, com as molas em `src/movimento.ts`. Victor vai sentir no celular e pedir ajustes.
+- Aba Conta do aluno:
+  - foto redonda em `fotos/{uid}`, selo da marca, nome editável, "Aluno desde";
+  - peso (saiu da `MinhaConta`), trocar senha, liga/desliga do aviso de descanso;
+  - foto aparece na lista do coach.
+  - `VERSAO_PRIVACIDADE` = 2026-10-09: todos os alunos aceitam a política de novo uma vez.
+- Ordem combinada a seguir: **Pix** (falta a chave aleatória do Victor e o valor de cada aluno). Depois: compartilhar foto no fim do treino com a marca.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Próximo depois do redesenho (pedido em 08/10/2026): Pix simples.**
   - QR Code e "copia e cola" gerados no app com o valor.

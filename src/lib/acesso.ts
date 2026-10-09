@@ -12,6 +12,13 @@ export interface Usuario {
   presencial?: boolean // aluno sem app/login (o coach anota as cargas); email '' e sem pagoAte
   privacidadeEm?: Timestamp // aceite da Política de Privacidade (LGPD)
   privacidadeVersao?: string // VERSAO_PRIVACIDADE aceita
+  selo?: boolean // aluno escolheu mostrar o selo da marca na foto
+}
+
+// fotos/{uid}: foto de perfil opcional (JPEG pequeno em data URL; sem Storage, que exige plano pago).
+export interface Foto {
+  img: string
+  atualizadoEm?: Timestamp
 }
 
 // São Paulo = UTC−03:00 fixo: o Brasil não tem horário de verão desde 2019.

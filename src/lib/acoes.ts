@@ -170,6 +170,7 @@ export async function apagarAluno(uid: string) {
     }
   }
   await deleteDoc(doc(db, 'notas', uid))
+  await deleteDoc(doc(db, 'fotos', uid))
   await deleteDoc(doc(db, 'usuarios', uid))
 }
 
@@ -238,6 +239,13 @@ export const registrarPc = (
   })
 
 export const salvarPeso = (uid: string, kg: number) => updateDoc(doc(db, 'usuarios', uid), { pesoKg: kg })
+
+// Perfil do aluno (aba Conta). Nome: 1..80 caracteres (nomeValido nas regras).
+export const salvarNome = (uid: string, nome: string) => updateDoc(doc(db, 'usuarios', uid), { nome: nome.trim().slice(0, 80) })
+export const salvarSelo = (uid: string, selo: boolean) => updateDoc(doc(db, 'usuarios', uid), { selo })
+// img: data URL JPEG já reduzida (reduzirFoto em src/lib/foto.ts).
+export const salvarFoto = (uid: string, img: string) => setDoc(doc(db, 'fotos', uid), { img, atualizadoEm: serverTimestamp() })
+export const apagarFoto = (uid: string) => deleteDoc(doc(db, 'fotos', uid))
 
 // Aceite da Política de Privacidade (consentimento da LGPD, inclusive para dados de saúde).
 export const aceitarPrivacidade = (uid: string) =>

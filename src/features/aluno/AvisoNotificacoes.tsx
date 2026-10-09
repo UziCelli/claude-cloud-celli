@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Botao } from '../../ui'
 import marca from '@marca/marca.json'
 
-const permissao = (): NotificationPermission | null => {
+export const permissao = (): NotificationPermission | null => {
   try {
     return 'Notification' in window ? Notification.permission : null
   } catch {
