@@ -5,12 +5,14 @@ import { diaSP } from './acesso'
 import { semanaParaAbrir } from './semana'
 import { semanaAtual } from './treino'
 
-type Reg = { semana: number; treino: number; realizado?: boolean }
+type Reg = { semana: number; treino: number; realizado?: boolean; realizadoEm?: { toMillis(): number } | null }
 type Dia = { data: string; diaSemana: number; treino: number | null }
 type Proximo = { semana: number; treino: number; dataTreino: string }
 
 const DIA_MS = 86400_000
 const PCT_VOLTA = -5
+// Sem `dias`: dias do bloco (contados do início dele) em que cada treino cai, por frequência (índice = frequência − 1).
+const DIAS_AUTO = [[0], [0, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6]]
 
 // `dia` = número de diaSP: à meia-noite UTC do número cai a data do calendário de São Paulo.
 const dataDe = (dia: number) => new Date(dia * DIA_MS).toISOString().slice(0, 10)
@@ -30,19 +32,26 @@ export function diasDaSemana(meso: Meso, semana: number): Dia[] {
 }
 
 // Com `dias`: o treino marcado para hoje (feito diz se já foi concluído); em dia de descanso, o próximo treino.
-// Sem `dias`: o próximo treino não feito da semana que Hoje abre (semanaParaAbrir). Fora do meso: null.
+// Sem `dias`: o próximo treino não feito da semana que Hoje abre (semanaParaAbrir), com a data do calendário automático:
+// max(planejada, dia seguinte ao último feito), até o último dia do bloco. "Hoje" é quem chama: dataTreino <= hoje. Fora do meso: null.
 export function treinoDeHoje(
   meso: Meso,
   registros: Reg[],
   hoje: Date,
-): { semana: number; treino: number; dataTreino?: string; feito: boolean } | { semana: number; descanso: true; proximo?: Proximo } | null {
+): { semana: number; treino: number; dataTreino: string; feito: boolean } | { semana: number; descanso: true; proximo?: Proximo } | null {
   const atual = semanaAtual(meso, hoje)
   if (atual.estado !== 'durante') return null
 
   if (!meso.dias?.length) {
     const semana = semanaParaAbrir(meso, registros, hoje)
     const treino = Array.from({ length: meso.frequencia }, (_, i) => i + 1).find((t) => !feitoEm(registros, semana, t))
-    return treino ? { semana, treino, feito: false } : { semana, descanso: true }
+    if (!treino) return { semana, descanso: true }
+    const primeiro = diaSP(Date.parse(`${meso.inicio.slice(0, 10)}T00:00-03:00`)) + 7 * (semana - 1)
+    const planejado = primeiro + DIAS_AUTO[Math.min(meso.frequencia, 7) - 1][treino - 1]
+    // null = gravação pendente offline = feito agora; campo ausente (registro antigo) fica fora da conta.
+    const feitos = registros.filter((r) => r.realizado && r.realizadoEm !== undefined).map((r) => diaSP(r.realizadoEm?.toMillis() ?? hoje.getTime()))
+    const dia = Math.min(Math.max(planejado, ...feitos.map((d) => d + 1)), primeiro + 6)
+    return { semana, treino, dataTreino: dataDe(dia), feito: false }
   }
 
   const { semana } = atual

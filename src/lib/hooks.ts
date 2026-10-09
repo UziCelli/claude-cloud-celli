@@ -71,3 +71,14 @@ export function useUsuarioAtual() {
   const perfil = useDoc<Usuario>(user ? doc(db, 'usuarios', user.uid) : null)
   return { user: user ?? null, perfil: perfil.dados, carregando: user === undefined || perfil.carregando }
 }
+
+// Data de agora; renderiza de novo quando o app volta a ficar visível (PWA aberto depois da meia-noite).
+export function useHoje(): Date {
+  const [, atualizar] = useState(0)
+  useEffect(() => {
+    const f = () => document.visibilityState === 'visible' && atualizar((n) => n + 1)
+    document.addEventListener('visibilitychange', f)
+    return () => document.removeEventListener('visibilitychange', f)
+  }, [])
+  return new Date()
+}

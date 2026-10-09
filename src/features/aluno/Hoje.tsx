@@ -5,7 +5,7 @@ import { prescreverSessao, type Meso } from '../../engine'
 import { comVolta, diasDaSemana, semanaDeVolta, travado, treinoDeHoje } from '../../lib/agenda'
 import { repsAbaixo, type RegistroAlerta } from '../../lib/alertas'
 import { db } from '../../lib/firebase'
-import { useLista } from '../../lib/hooks'
+import { useHoje, useLista } from '../../lib/hooks'
 import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
 import { agil, elastico } from '../../movimento'
@@ -15,7 +15,7 @@ import { fmtData } from '../coach/semana/format'
 import { semanaParaAbrir } from '../../lib/semana'
 import { semanaAtual } from '../../lib/treino'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
-import { dataSP, diaCurto, mesoAtual } from './mesoAtual'
+import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import type { MesoSalvo } from '../../lib/conversores'
 
@@ -23,9 +23,10 @@ const Msg = ({ children }: { children: ReactNode }) => <p className="mt-10 text-
 
 export default function Hoje({ uid, base = '' }: { uid: string; base?: string }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
+  const hoje = useHoje()
   if (carregando) return <Centro>Carregando…</Centro>
 
-  const atual = mesoAtual(mesos)
+  const atual = mesoAtual(mesos, hoje)
   if (!atual) return <Msg>Seu coach ainda não montou seu treino.</Msg>
   const { doc, meso, estado } = atual
 
@@ -34,7 +35,7 @@ export default function Hoje({ uid, base = '' }: { uid: string; base?: string })
       <AvisoNotificacoes />
       {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
-      {estado.estado === 'durante' && <Semana uid={uid} base={base} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={new Date()} />}
+      {estado.estado === 'durante' && <Semana uid={uid} base={base} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={hoje} />}
     </main>
   )
 }
@@ -95,9 +96,10 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
   const mc = comVolta(meso, registros, hoje) // prescrição e tempo já com a semana de volta
   const treinos = todos.filter((t) => prescreverSessao(mc, semana, t))
   const agora = treinoDeHoje(meso, registros, hoje)
-  const hojeTreino = agora && 'treino' in agora && agora.semana === semana ? agora.treino : null
   const semanaData = semanaAtual(meso, hoje).semana
   const hojeISO = dataSP(hoje)
+  const proximo = agora && 'treino' in agora && agora.semana === semana ? agora : null
+  const hojeTreino = proximo && (base || proximo.dataTreino <= hojeISO) ? proximo.treino : null
   const datas = Object.fromEntries(meso.dias?.length ? diasDaSemana(meso, semana).filter((d) => d.treino).map((d) => [d.treino, d.data]) : [])
   const travada = (w: number, t?: number) => !base && travado(meso, registros, hoje, w, t)
 
@@ -175,6 +177,7 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xl font-bold text-white">Treino {treino}</span>
                         {destaque && <Chip cor="bg-marca-500 text-white">Hoje</Chip>}
+                        {!feito && !destaque && !trava && proximo?.treino === treino && <Chip cor="bg-white/10 text-slate-100">Próximo · {quando(proximo.dataTreino, hojeISO)}</Chip>}
                         {feito && <span className="flex items-center gap-1 text-[15px] font-bold text-emerald-300"><IcCheck className="size-4" /> Feito</span>}
                         {naoFeito && <span className="text-[15px] font-bold text-amber-300">Não feito</span>}
                       </div>

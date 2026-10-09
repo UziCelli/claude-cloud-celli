@@ -14,3 +14,7 @@ export function mesoAtual(mesos: (MesoSalvo & { id: string })[], hoje = new Date
   const doc = emAndamento ?? [...mesos].sort((a, b) => b.inicio.localeCompare(a.inicio))[0]
   return { doc, meso: docParaMeso(doc), estado: semanaAtual(docParaMeso(doc), hoje) }
 }
+
+// "Amanhã" ou "Qua, 14": quando o próximo treino acontece.
+export const quando = (iso: string, hojeISO: string) =>
+  Date.parse(iso) - Date.parse(hojeISO) === 86400_000 ? 'Amanhã' : `${diaCurto(iso)}, ${Number(iso.slice(8))}`
