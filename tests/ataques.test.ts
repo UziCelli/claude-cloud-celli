@@ -83,6 +83,9 @@ const dbEmail = (uid: string, email: string) =>
 
 const reg = (uid: string | undefined, id: string) => doc(db(uid), 'registros', id);
 const agora = () => ({ atualizadoEm: serverTimestamp() });
+// Hora do relógio do cliente, 1 s atrás: Timestamp.now() logo antes do pedido pode cair no mesmo milissegundo
+// do request.time do emulador (a regra aceita, e o teste falhava de vez em quando no CI).
+const quaseAgora = () => Timestamp.fromMillis(Date.now() - 1000);
 // Cria registro como o app faz (setDoc merge com atualizadoEm do servidor).
 const criarReg = (uid: string, id: string, dados: object) =>
   setDoc(reg(uid, id), { ...agora(), ...dados }, { merge: true });
@@ -622,7 +625,7 @@ describe('abuso', () => {
     it('hora forjada em em, e hora do servidor trocada por texto ou número', async () => {
       await negar(setDoc(log('ana'), valido('ana', { em: passado })));
       await negar(setDoc(log('ana'), valido('ana', { em: futuro })));
-      await negar(setDoc(log('ana'), valido('ana', { em: Timestamp.now() })));
+      await negar(setDoc(log('ana'), valido('ana', { em: quaseAgora() })));
       await negar(setDoc(log('ana'), valido('ana', { em: 'agora' })));
       await negar(setDoc(log('ana'), valido('ana', { em: 0 })));
     });
@@ -776,7 +779,7 @@ describe('abuso', () => {
       await negar(updateDoc(r, { realizadoEm: futuro, ...agora() }));
       await negar(updateDoc(r, { inicioEm: futuro, ...agora() }));
       await negar(updateDoc(r, { inicioEm: null, ...agora() }));
-      await negar(updateDoc(r, { realizadoEm: Timestamp.now(), ...agora() }));
+      await negar(updateDoc(r, { realizadoEm: quaseAgora(), ...agora() }));
     });
 
     it('sem atualizadoEm (para gravar sem deixar rastro) em criação e atualização', async () => {
