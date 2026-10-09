@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, devices } from '@playwright/test'
 import { criarAluno, criarCoach, criarMeso, hojeSaoPaulo, lerDoc, limparEmuladores } from './seed'
 
@@ -194,8 +195,12 @@ test('/instalar mostra o passo certo por sistema', async ({ browser }) => {
     })
     const page = await context.newPage()
     await page.goto('/instalar')
-    await expect(page.getByText('forca.apk')).toBeVisible()
-    await expect(page.getByText(/WhatsApp ou Arquivos/)).toBeVisible()
+    // Marca sem APK (Gislane): só o caminho pelo Chrome.
+    const { apk } = JSON.parse(readFileSync(`marcas/${process.env.MARCA ?? 'vfit'}/marca.json`, 'utf8'))
+    if (apk) {
+      await expect(page.getByText(apk)).toBeVisible()
+      await expect(page.getByText(/WhatsApp ou Arquivos/)).toBeVisible()
+    } else await expect(page.getByText('Instale pelo Chrome')).toBeVisible()
     const apkLink = page.locator('a[href="/forca.apk"]')
     await expect(apkLink).toHaveCount(0)
     await page.screenshot({ path: 'test-results/prints/12-instalar-android.png' })
