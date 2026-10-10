@@ -8,7 +8,9 @@ export default function LoadInput({
   placeholder,
   onSalvar,
   className = 'w-16',
+  disabled = false,
 }: {
+  disabled?: boolean
   valor: number | null
   placeholder?: number | string | null
   onSalvar: (v: number | null) => void
@@ -35,10 +37,11 @@ export default function LoadInput({
       step={0.5}
       key={valor ?? 'vazio'}
       defaultValue={valor ?? ''}
+      disabled={disabled}
       placeholder={placeholder == null ? undefined : String(placeholder)}
       onBlur={(e) => commit(e.target.value)}
       onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-      className={`w-full rounded border border-slate-700 bg-slate-950 px-1 py-1 text-center font-display text-base font-bold text-slate-100 outline-none focus:border-marca-500`}
+      className={`w-full rounded border border-slate-700 bg-slate-950 px-1 py-1 text-center font-display text-base font-bold text-slate-100 outline-none focus:border-marca-500 disabled:opacity-50`}
     />
     <AnimatePresence>
       {salvo && (

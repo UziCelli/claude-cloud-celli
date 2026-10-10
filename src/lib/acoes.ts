@@ -278,6 +278,26 @@ export const marcarRealizado = (mesoId: string, alunoId: string, semana: number,
 export const marcarInicio = (mesoId: string, alunoId: string, semana: number, treino: number) =>
   registro(mesoId, alunoId, semana, treino, { inicioEm: serverTimestamp() })
 
+// Cancelar treino iniciado: UM updateDoc que apaga inicioEm e cada campo já gravado (campo a campo, como
+// registrarCarga/Reps/Pc), para uma carga que chegar depois de outro aparelho não ser apagada. Sem registro, não faz nada.
+export const cancelarTreino = (
+  mesoId: string,
+  semana: number,
+  treino: number,
+  atual: { cargas?: Record<string, object>; reps?: Record<string, object>; pc?: Record<string, unknown> } | undefined,
+) => {
+  if (!atual) return
+  const apagar: Record<string, unknown> = { inicioEm: deleteField(), atualizadoEm: serverTimestamp() }
+  for (const mapa of ['cargas', 'reps'] as const)
+    for (const [slot, cols] of Object.entries(atual[mapa] ?? {}))
+      for (const k of Object.keys(cols)) apagar[`${mapa}.${slot}.${k}`] = deleteField()
+  for (const slot of Object.keys(atual.pc ?? {})) apagar[`pc.${slot}`] = deleteField()
+  updateDoc(doc(db, 'registros', registroId(mesoId, semana, treino)), apagar).catch((e) => {
+    registrarErro('gravacao', `registro: ${e?.code ?? e}`, e)
+    throw e
+  })
+}
+
 // Anotação do aluno por exercício (vale em todas as semanas/mesos). '' = sem nota.
 export const salvarNota = (alunoId: string, exercicio: string, texto: string) =>
   setDoc(

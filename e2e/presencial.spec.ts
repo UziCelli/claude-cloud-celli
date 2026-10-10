@@ -59,6 +59,7 @@ for (const presencial of [false, true]) {
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
     await expect(page.getByText(`Presencial: ${ALUNO.nome}`)).toBeVisible()
 
+    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
     const militar = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
     const [kg, reps] = [militar.locator('input[type="number"]').nth(0), militar.locator('input[type="number"]').nth(1)]
     await kg.fill('30')

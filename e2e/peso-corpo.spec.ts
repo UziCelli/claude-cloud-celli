@@ -33,6 +33,7 @@ test('peso do corpo: marcar depois de digitar mantém o extra; concluir preenche
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
   await page.getByRole('button', { name: /Treino 1/ }).click()
+  await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
 
   await test.step('(a) digita o extra e depois marca "Feito com o peso do corpo"', async () => {
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })

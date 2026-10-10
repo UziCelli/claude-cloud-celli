@@ -171,9 +171,9 @@ service cloud.firestore {
         && registroValido(request.resource.data)
         && request.resource.data.get('realizadoEm', null)
              in [resource.data.get('realizadoEm', null), null, request.time]
-        // inicioEm (tempo real do treino): só a hora do servidor, e nunca volta a null.
+        // inicioEm (tempo real do treino): só a hora do servidor; pode ser removido ("Cancelar treino").
         && request.resource.data.get('inicioEm', null)
-             in [resource.data.get('inicioEm', null), request.time];
+             in [resource.data.get('inicioEm', null), request.time, null];
     }
 
     // Notas por exercício do aluno: notas/{alunoId} = { alunoId, exercicios: {nome: texto}, atualizadoEm }.

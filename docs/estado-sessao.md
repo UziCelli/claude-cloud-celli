@@ -143,6 +143,12 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Presencial do coach: o próximo treino sempre em destaque.
 - Próximo combinado: compartilhar foto no fim do treino com a marca.
 
+## 10/10/2026 — Iniciar/Cancelar treino, pausas e Ajustar volume
+- Treino do aluno: só "Iniciar treino" inicia (com brilho da marca); campos travados antes; "Cancelar treino" apaga o tempo e as cargas daquele treino.
+- Editor: pausa dos principais (exercícios 1–2) e dos auxiliares na Config; pausa por exercício continua; % de progressão e limite de reps só no Ajustar volume (antes eram dois % diferentes); prévia automática com movimentos por semana, variação % e total.
+- "Ver semanas": borda do card "Treinando hoje" cabe no painel.
+- Próximo combinado (sem mudança): foto do treino com a marca; notificações; lojas.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Notificações (tema importante, a planejar depois):**
   - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";
