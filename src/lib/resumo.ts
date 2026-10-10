@@ -14,7 +14,14 @@ export interface RegistroResumo {
   realizado?: boolean
   realizadoEm?: Timestamp | null // null = gravação ainda pendente
   atualizadoEm?: Timestamp | null
+  inicioEm?: Timestamp | null // null = gravação ainda pendente; sem o campo = não iniciado ou cancelado
+  cargas?: Record<string, Record<string, number | null>>
 }
+
+// O registro é de um treino de verdade: concluído, iniciado ou com carga (o coach lança na visão da semana).
+// "Cancelar treino" apaga inicioEm e as cargas mas mexe em atualizadoEm: sem isto ele seguia "em andamento".
+export const treinoValido = (r: Pick<RegistroResumo, 'realizado' | 'inicioEm' | 'cargas'>) =>
+  !!r.realizado || r.inicioEm !== undefined || Object.values(r.cargas ?? {}).some((c) => Object.values(c ?? {}).some((kg) => kg != null))
 
 // Início (ms) do dia em São Paulo, `dias` dias antes de hoje. Muda só uma vez por dia:
 // a consulta montada com ele fica igual entre renders (useLista não reinscreve).
@@ -29,7 +36,7 @@ export function resumoCoach(todos: AlunoComId[], registros: RegistroResumo[], ag
   const ultimo = new Map<string, number>() // alunoId -> dia (SP) do registro atualizado mais recente
   for (const r of registros) {
     const dias = [r.realizadoEm, r.atualizadoEm].map((t) => t && diaSP(t.toMillis()))
-    if (dias.includes(hoje)) {
+    if (dias.includes(hoje) && treinoValido(r)) {
       treinouHoje.add(r.alunoId)
       if (ativos.has(r.alunoId) && r.mesoId && r.semana != null && r.treino != null) {
         const l = (treinosHoje[r.alunoId] ??= [])
