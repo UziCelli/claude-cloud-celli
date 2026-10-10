@@ -14,7 +14,7 @@ export type RegistroEvolucao = RegistroDoc & {
 }
 export type MesoEvolucao = { id: string; meso: Meso; nome?: string }
 export type TreinoFeito = { mesoId: string; semana: number; treino: number; dia: number | null }
-export type Ocorrencia = TreinoFeito & { cargaMax: number | null; volume: number | null }
+export type Ocorrencia = TreinoFeito & { cargaMax: number | null; volume: number | null; movimentos: number }
 export type Evolucao = { nome: string; de: number; ate: number; kg: number; pct: number }
 export type Conquista = {
   id: string
@@ -94,8 +94,8 @@ function ocorrencias(mesos: MesoEvolucao[], feitos: Feito[]): Record<string, Oco
     }
     const k = `${semana}-${treino}`
     for (const e of prescreverSessao(l.meso, semana, treino)?.exercicios ?? []) {
-      const { cargaMax, volume } = metricasExercicio(repsEfetivas(e.reps, l.reps[k]?.[e.slot.slotId]), l.cargas[k]?.[e.slot.slotId] ?? [])
-      ;(out[e.slot.nome] ??= []).push({ mesoId, semana, treino, dia, cargaMax, volume })
+      const { cargaMax, volume, movimentos } = metricasExercicio(repsEfetivas(e.reps, l.reps[k]?.[e.slot.slotId]), l.cargas[k]?.[e.slot.slotId] ?? [])
+      ;(out[e.slot.nome] ??= []).push({ mesoId, semana, treino, dia, cargaMax, volume, movimentos })
     }
   }
   return out
@@ -104,6 +104,20 @@ function ocorrencias(mesos: MesoEvolucao[], feitos: Feito[]): Record<string, Oco
 // Cada aparição de um exercício (pelo nome, já com trocas) em treino feito, em ordem cronológica.
 export const historicoExercicios = (mesos: MesoEvolucao[], registros: RegistroEvolucao[]) =>
   ocorrencias(mesos, coletar(mesos, registros))
+
+// Ocorrências que passaram a maior carga anterior do mesmo exercício (a 1ª carga do exercício não é recorde).
+export function recordesDe(hist: Record<string, Ocorrencia[]>) {
+  const out: (Ocorrencia & { nome: string })[] = []
+  for (const [nome, os] of Object.entries(hist)) {
+    let max = 0
+    for (const o of os) {
+      if (!positiva(o.cargaMax) || o.cargaMax <= max) continue
+      if (max > 0) out.push({ ...o, nome })
+      max = o.cargaMax
+    }
+  }
+  return out
+}
 
 function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: number): Omit<Painel, 'conquistas'> {
   const feitos = coletar(mesos, registros)
@@ -141,7 +155,7 @@ function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: nu
     .slice(0, 5)
 
   let maisConstante: Painel['maisConstante'] = null
-  const recordes: Ocorrencia[] = []
+  const recordes = recordesDe(hist)
   for (const [nome, os] of lista) {
     let seq = 0
     let anterior = 0
@@ -149,12 +163,6 @@ function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: nu
       seq = c >= anterior ? seq + 1 : 1
       anterior = c
       if (seq >= 3 && seq > (maisConstante?.sequencia ?? 0)) maisConstante = { nome, sequencia: seq }
-    }
-    let max = 0
-    for (const o of os) {
-      if (!positiva(o.cargaMax) || o.cargaMax <= max) continue
-      if (max > 0) recordes.push(o) // a 1ª carga do exercício não é recorde
-      max = o.cargaMax
     }
   }
 

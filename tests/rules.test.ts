@@ -893,3 +893,146 @@ describe('fotos', () => {
     await assertFails(deleteDoc(foto(undefined)));
   });
 });
+
+// Alertas arquivados pelo coach: arquivados/{chave} = { em }. Só o coach toca.
+describe('arquivados', () => {
+  const arq = (uid: string | undefined, id = 'abaixo_m_ana_20000') => doc(db(uid), 'arquivados', id);
+  const semCoach = (token: object) => doc(contexto('coach', token).firestore() as unknown as Firestore, 'arquivados', 'abaixo_m_ana_20000');
+  const existente = () =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'arquivados', 'abaixo_m_ana_20000'), { em: Timestamp.now() }),
+    );
+
+  it('coach com 2º fator cria, lê, lista, atualiza e apaga', async () => {
+    await assertSucceeds(setDoc(arq('coach'), { em: serverTimestamp() }));
+    await assertSucceeds(getDoc(arq('coach')));
+    await assertSucceeds(getDocs(collection(db('coach'), 'arquivados')));
+    await assertSucceeds(setDoc(arq('coach'), { em: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(arq('coach')));
+  });
+
+  it('coach: nega chave extra, em que não é a hora do servidor e sem em', async () => {
+    await assertFails(setDoc(arq('coach'), { em: serverTimestamp(), aluno: 'Ana' }));
+    await assertFails(setDoc(arq('coach'), { em: passado }));
+    await assertFails(setDoc(arq('coach'), { em: futuro }));
+    await assertFails(setDoc(arq('coach'), {}));
+  });
+
+  it('coach sem 2º fator, aluno e anônimo: tudo negado', async () => {
+    await existente();
+    await assertFails(setDoc(semCoach(SEM_FATOR), { em: serverTimestamp() }));
+    await assertFails(getDoc(semCoach(SEM_FATOR)));
+    await assertFails(deleteDoc(semCoach(SEM_FATOR)));
+    for (const uid of ['ana', undefined]) {
+      await assertFails(setDoc(arq(uid), { em: serverTimestamp() }));
+      await assertFails(getDoc(arq(uid)));
+      await assertFails(getDocs(collection(db(uid), 'arquivados')));
+      await assertFails(deleteDoc(arq(uid)));
+    }
+  });
+});
+
+// Relatório do fim do ciclo: relatorios/{mesoId}. O coach escreve; o aluno só lê depois de liberado.
+describe('relatorios', () => {
+  const rel = (uid: string | undefined, id = 'm_ana') => doc(db(uid), 'relatorios', id);
+  const valido = (extra: object = {}) => ({
+    alunoId: 'ana',
+    mesoId: 'm_ana',
+    comentario: 'Ótimo ciclo!',
+    liberado: false,
+    liberadoEm: null,
+    atualizadoEm: serverTimestamp(),
+    ...extra,
+  });
+  const existente = (aluno: string, liberado: boolean) =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'relatorios', `m_${aluno}`), {
+        alunoId: aluno,
+        mesoId: `m_${aluno}`,
+        comentario: 'x',
+        liberado,
+        liberadoEm: liberado ? Timestamp.now() : null,
+        atualizadoEm: Timestamp.now(),
+      }),
+    );
+  const liberados = (uid: string) =>
+    getDocs(query(collection(db(uid), 'relatorios'), where('alunoId', '==', uid), where('liberado', '==', true)));
+
+  describe('coach', () => {
+    it('cria rascunho, libera, recolhe (merge), lê, lista e apaga', async () => {
+      await assertSucceeds(setDoc(rel('coach'), valido(), { merge: true }));
+      await assertSucceeds(setDoc(rel('coach'), valido({ liberado: true, liberadoEm: serverTimestamp() }), { merge: true }));
+      await assertSucceeds(setDoc(rel('coach'), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() }, { merge: true }));
+      await assertSucceeds(getDoc(rel('coach')));
+      await assertSucceeds(getDocs(collection(db('coach'), 'relatorios')));
+      await assertSucceeds(deleteDoc(rel('coach')));
+    });
+
+    it('troca o alunoId junto com o meso (darAcessoAoApp)', async () => {
+      await existente('ana', false);
+      await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore() as unknown as Firestore, 'mesos', 'm_ana'), { alunoId: 'bia' }));
+      await assertFails(updateDoc(rel('coach'), { alunoId: 'bia' })); // sem atualizadoEm
+      await assertSucceeds(updateDoc(rel('coach'), { alunoId: 'bia', atualizadoEm: serverTimestamp() }));
+    });
+
+    it('nega campo extra, campo faltando, tipos errados e texto longo', async () => {
+      await assertFails(setDoc(rel('coach'), valido({ notas: 'x' })));
+      await assertFails(setDoc(rel('coach'), { alunoId: 'ana', mesoId: 'm_ana', comentario: 'x', atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(rel('coach'), valido({ comentario: 'x'.repeat(3001) })));
+      await assertSucceeds(setDoc(rel('coach'), valido({ comentario: 'x'.repeat(3000) })));
+      await assertFails(setDoc(rel('coach'), valido({ comentario: 5 })));
+      await assertFails(setDoc(rel('coach'), valido({ liberado: 'sim' })));
+      await assertFails(setDoc(rel('coach'), valido({ liberadoEm: 'ontem' })));
+      await assertFails(setDoc(rel('coach'), valido({ liberado: true, liberadoEm: null })));
+      await assertFails(setDoc(rel('coach'), valido({ liberado: false, liberadoEm: serverTimestamp() })));
+      await assertFails(setDoc(rel('coach'), valido({ atualizadoEm: passado })));
+    });
+
+    it('nega mesoId diferente do id, aluno que não é o dono do meso e meso inexistente', async () => {
+      await assertFails(setDoc(rel('coach'), valido({ mesoId: 'm_bia' })));
+      await assertFails(setDoc(rel('coach'), valido({ alunoId: 'bia' })));
+      await assertFails(setDoc(rel('coach', 'm_nao_existe'), valido({ mesoId: 'm_nao_existe' })));
+    });
+
+    it('coach sem 2º fator não lê nem escreve', async () => {
+      await existente('ana', true);
+      const r = doc(contexto('coach', SEM_FATOR).firestore() as unknown as Firestore, 'relatorios', 'm_ana');
+      await assertFails(getDoc(r));
+      await assertFails(setDoc(r, valido()));
+      await assertFails(deleteDoc(r));
+    });
+  });
+
+  describe('aluno', () => {
+    it('lê o próprio relatório liberado (doc e consulta)', async () => {
+      await existente('ana', true);
+      await assertSucceeds(getDoc(rel('ana')));
+      await assertSucceeds(liberados('ana'));
+    });
+
+    it('não lê rascunho, nem o de outro aluno, nem lista tudo', async () => {
+      await existente('ana', false);
+      await existente('bia', true);
+      await assertFails(getDoc(rel('ana')));
+      await assertFails(getDoc(rel('ana', 'm_bia')));
+      await assertFails(getDocs(query(collection(db('ana'), 'relatorios'), where('alunoId', '==', 'ana'))));
+      await assertFails(getDocs(collection(db('ana'), 'relatorios')));
+    });
+
+    it('vencido, bloqueado, aguardando e arquivado não leem nem o liberado', async () => {
+      for (const uid of ['exp', 'blq', 'agu', 'arq']) {
+        await existente(uid, true);
+        await assertFails(getDoc(rel(uid, `m_${uid}`)));
+        await assertFails(liberados(uid));
+      }
+    });
+
+    it('nunca escreve, nem no próprio', async () => {
+      await existente('ana', true);
+      await assertFails(updateDoc(rel('ana'), { comentario: 'eu mesmo', atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(rel('ana', 'm_ana'), valido()));
+      await assertFails(deleteDoc(rel('ana')));
+      await assertFails(getDoc(rel(undefined)));
+    });
+  });
+});
