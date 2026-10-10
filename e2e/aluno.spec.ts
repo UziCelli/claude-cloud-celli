@@ -327,6 +327,7 @@ test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({
     await cartao.getByRole('button', { name: /^▶ \d+ s$/ }).click()
     await expect(page.getByText('Treino em andamento')).toHaveCount(0)
     await expect(kg).toBeDisabled()
+    await expect(cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ })).toBeDisabled()
     await expect(page.getByText('Toque em Iniciar treino para anotar as cargas.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Concluir treino' })).toHaveCount(0)
     await page.getByRole('button', { name: 'Pular' }).click()

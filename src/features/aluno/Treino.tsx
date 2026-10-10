@@ -638,7 +638,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
               </div>
               {/* Logo abaixo das séries: o app soma o peso do corpo ao extra digitado. */}
               <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
-                <input type="checkbox" checked={!!corpo} disabled={trocandoPc} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
+                <input type="checkbox" checked={!!corpo} disabled={trocandoPc || travado} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
                 <span>
                   <b>Feito com o peso do corpo</b>
                   <span className="block text-xs text-slate-400">

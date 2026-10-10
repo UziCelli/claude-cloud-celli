@@ -292,10 +292,9 @@ export const cancelarTreino = (
     for (const [slot, cols] of Object.entries(atual[mapa] ?? {}))
       for (const k of Object.keys(cols)) apagar[`${mapa}.${slot}.${k}`] = deleteField()
   for (const slot of Object.keys(atual.pc ?? {})) apagar[`pc.${slot}`] = deleteField()
-  updateDoc(doc(db, 'registros', registroId(mesoId, semana, treino)), apagar).catch((e) => {
-    registrarErro('gravacao', `registro: ${e?.code ?? e}`, e)
-    throw e
-  })
+  updateDoc(doc(db, 'registros', registroId(mesoId, semana, treino)), apagar).catch((e) =>
+    registrarErro('gravacao', `registro: ${e?.code ?? e}`, e), // ninguém espera esta promessa: não relança
+  )
 }
 
 // Anotação do aluno por exercício (vale em todas as semanas/mesos). '' = sem nota.
