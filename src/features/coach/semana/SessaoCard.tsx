@@ -74,10 +74,11 @@ export default function SessaoCard({
 }) {
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', alunoId))
   const m = metricasSessao(sessao, cargas, reps)
+  const pausaPrincipais = sessao.exercicios.find((e) => e.pos <= 2 && e.slot.pausaS == null)?.pausaS // sem pausa própria do slot
   const nEtapas = Math.max(0, ...sessao.exercicios.map((e) => e.reps.length - e.n))
 
   return (
-    <Cartao className={hoje ? 'ring-2 ring-marca-400' : undefined}>
+    <Cartao className={hoje ? 'ring-2 ring-inset ring-marca-400' : undefined}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">
@@ -89,7 +90,7 @@ export default function SessaoCard({
             )}
           </h3>
           <p className="text-xs text-slate-400">
-            <b className={`text-sm ${acimaDoLimite(sessao.tempoMin, limite) ? 'text-red-400' : 'text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</b> · pausa {sessao.pausaS}s
+            <b className={`text-sm ${acimaDoLimite(sessao.tempoMin, limite) ? 'text-red-400' : 'text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</b> · pausa {pausaPrincipais !== undefined && pausaPrincipais !== sessao.pausaS ? `${pausaPrincipais}s/` : ''}{sessao.pausaS}s
             {inicioEm && realizadoEm && (
               <>
                 {' '}· real {Math.ceil((realizadoEm.toMillis() - inicioEm.toMillis()) / 60000)} min · previsto {fmtMin(sessao.tempoMin)}

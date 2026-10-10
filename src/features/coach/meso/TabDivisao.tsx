@@ -141,7 +141,7 @@ export default function TabDivisao({
                     inputMode="numeric"
                     min={0}
                     aria-label={`Pausa em segundos, posição ${p}`}
-                    placeholder="pausa (s)"
+                    placeholder={String(p <= 2 ? (meso.pausaPrincipaisS ?? meso.pausaS) : meso.pausaS)}
                     defaultValue={slot.pausaS ?? ''}
                     key={`${slot.slotId}-${slot.pausaS ?? ''}`}
                     onBlur={(e) => mudarPausa(t, p, e.target.value)}
