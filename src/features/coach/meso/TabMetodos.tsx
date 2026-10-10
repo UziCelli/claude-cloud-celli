@@ -137,12 +137,12 @@ function LinhaMetodo({
           opcoes={Array.from({ length: meso.frequencia }, (_, i) => i + 1)}
           onChange={(v) => onSet({ treino: v, exercicio: 1 })}
         />
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
           <span className="text-slate-400">Exercício</span>
           <select
             value={m.exercicio}
             onChange={(e) => onSet({ exercicio: Number(e.target.value) })}
-            className={`${campoBase} px-2 py-2`}
+            className={`${campoBase} w-full max-w-full px-2 py-2`}
           >
             {exerciciosDoTreino.map((s, i) => (
               <option key={s.slotId} value={i + 1}>
@@ -152,12 +152,12 @@ function LinhaMetodo({
             {exerciciosDoTreino.length === 0 && <option value={1}>(sem exercícios)</option>}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
           <span className="text-slate-400">Método</span>
           <select
             value={m.metodo}
             onChange={(e) => onSet(padrao(e.target.value as Metodo, meso, m.semana, m.treino, m.exercicio))}
-            className={`${campoBase} px-2 py-2`}
+            className={`${campoBase} w-full max-w-full px-2 py-2`}
           >
             {METODOS.map((op) => (
               <option key={op} value={op}>
@@ -166,12 +166,12 @@ function LinhaMetodo({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
           <span className="text-slate-400">Escopo</span>
           <select
             value={m.escopo}
             onChange={(e) => onSet({ escopo: e.target.value as Escopo })}
-            className={`${campoBase} px-2 py-2`}
+            className={`${campoBase} w-full max-w-full px-2 py-2`}
           >
             {ESCOPOS.map((op) => (
               <option key={op} value={op}>
@@ -253,9 +253,9 @@ function CampoNum({ rotulo, valor, onChange }: { rotulo: string; valor: number |
 
 function FiltroSelect({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor?: number; opcoes: string[]; onChange: (v?: number) => void }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
       <span className="text-slate-400">{rotulo}</span>
-      <select aria-label={`Filtrar por ${rotulo.toLowerCase()}`} value={valor ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${campoBase} px-2 py-2`}>
+      <select aria-label={`Filtrar por ${rotulo.toLowerCase()}`} value={valor ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${campoBase} w-full max-w-full px-2 py-2`}>
         <option value="">{rotulo === 'Semana' ? 'Todas' : 'Todos'}</option>
         {opcoes.map((o, i) => (
           <option key={i} value={i + 1}>
@@ -269,12 +269,12 @@ function FiltroSelect({ rotulo, valor, opcoes, onChange }: { rotulo: string; val
 
 function Selecao({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor: number; opcoes: number[]; onChange: (v: number) => void }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
       <span className="text-slate-400">{rotulo}</span>
       <select
         value={valor}
         onChange={(e) => onChange(Number(e.target.value))}
-        className={`${campoBase} px-2 py-2`}
+        className={`${campoBase} w-full max-w-full px-2 py-2`}
       >
         {opcoes.map((o) => (
           <option key={o} value={o}>
