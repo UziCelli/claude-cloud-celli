@@ -9,7 +9,7 @@ Tudo aqui vira funções puras em `src/engine/`. Onde a planilha tem bug, a regr
 | `frequencia` | `AZ5` | 2–7 treinos por semana |
 | `semanas` | `AZ3` | 1–12 |
 | `inicio` | `AZ4` | data; início da semana `w` = `inicio + 7·(w−1)` |
-| `pausaS` | `Z33` | pausa entre séries (s), única no meso |
+| `pausaS` | `Z33` | pausa entre séries (s). No app: pausa dos auxiliares (posição 3+); `pausaPrincipaisS` (opcional) = posições 1–2; o slot pode ter a própria `pausaS` |
 
 Semanas `> semanas` não existem (a planilha esconde com `cfgSemanas < w`).
 
@@ -71,6 +71,7 @@ tempo = 10 + ( Σ reps de todas as colunas da sessão
 - `nSeries` = maior nº de séries da sessão (cabeçalho `MAX(D4:I4)`, que na planilha olha só o 1º exercício — no app use o maior `n` entre os exercícios).
 - `nExercicios` = posições preenchidas. A planilha usa `paresBiset = INT(nº de linhas Biset ativas da semana+treino / 2)` (bloco "EXTRAS"); o app troca por `economizados` (abaixo).
 - As reps entram como segundos (≈1 s por rep) — manter.
+- **[APP]** `pausaS` na fórmula = pausa média dos exercícios da sessão; a de cada exercício é a do slot, senão `pausaPrincipaisS` nas posições 1–2, senão a `pausaS` do meso (devolvida em `ExercicioPrescrito.pausaS`).
 - `extraMetodos` (`AvTempo`) = soma por linha ativa da semana+treino, com `p = pausaInternaS`, `b = blocos`, `rp = repsPadrao > 0 ? repsPadrao : repsPorBloco`, `ad = adicional`, `et = etapas`:
   - Clusterset: `rp·(b−1) + p·(b−1)` se `b > 1`, senão 0. **[CORRIGIDO]** a planilha testa `"Cluster"`, nome que não existe na lista, e cai na regra genérica.
   - Dropset: `p · et`

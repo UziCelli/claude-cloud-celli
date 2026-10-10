@@ -85,7 +85,8 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
     }
 
     const rotulo = linhas.map((m) => `${m.metodo} [${sufixo(m)}]`).join('; ')
-    return { pos, slot, n, reps, rotulo, cargaSugerida }
+    const pausaS = slot.pausaS ?? (pos <= 2 ? (meso.pausaPrincipaisS ?? meso.pausaS) : meso.pausaS)
+    return { pos, slot, n, reps, rotulo, cargaSugerida, pausaS }
   })
 
   // §8 — tempo
@@ -106,8 +107,8 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
   }
   const somaReps = exercicios.reduce((s, e) => s + e.reps.reduce((a, r) => a + r, 0), 0)
   const extras = doTreino.reduce((s, m) => s + extraTempo(m), 0)
-  // A pausa de cada exercício é a do slot (se houver) ou a do meso; a economia usa a pausa média.
-  const somaPausas = exercicios.reduce((s, e) => s + (e.slot.pausaS ?? meso.pausaS), 0)
+  // A pausa de cada exercício é a do slot, senão a dos principais (pos 1–2), senão a do meso; a economia usa a pausa média.
+  const somaPausas = exercicios.reduce((s, e) => s + e.pausaS, 0)
   const pausas = exercicios.length ? series * (somaPausas / exercicios.length) * Math.max(0, exercicios.length - economizados) : 0
   const tempoMin = 10 + (somaReps + pausas + extras) / 60
 

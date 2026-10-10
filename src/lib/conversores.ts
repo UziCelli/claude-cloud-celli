@@ -57,6 +57,7 @@ export function docParaMeso(d: MesoDoc): Meso {
       ...(d.progressao.padrao && { padrao: deMapa(d.progressao.padrao, 'w') }),
     },
     metodos: d.metodos,
+    ...(d.pausaPrincipaisS != null && { pausaPrincipaisS: d.pausaPrincipaisS }),
     ...(d.progressaoPct != null && { progressaoPct: d.progressaoPct }),
     ...(d.limiteReps != null && { limiteReps: d.limiteReps }),
     ...(d.tempoLimiteMin != null && { tempoLimiteMin: d.tempoLimiteMin }),

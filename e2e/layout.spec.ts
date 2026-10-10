@@ -97,6 +97,9 @@ for (const vp of [
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
     expect(await confere(page)).toBeGreaterThan(0) // com a nota de métodos aberta
     await page.getByRole('dialog', { name: 'Métodos deste treino' }).getByRole('button', { name: 'Entendi', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: 'Métodos deste treino' })).toBeHidden()
+    // Os viewports repetem o mesmo aluno: o treino pode já estar iniciado por um deles.
+    await page.getByRole('button', { name: '▶ Iniciar treino' }).click({ timeout: 3000 }).catch(() => {})
     const kg = page.locator('input[type="number"]').first()
     await kg.fill('100.5')
     await kg.blur()

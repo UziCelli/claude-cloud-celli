@@ -64,6 +64,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
   await test.step('registra carga e vê o timer de descanso', async () => {
     await page.getByRole('button', { name: /Treino 1/ }).click()
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
+    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
 
     const cartaoExercicio1 = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' })
     const kgInputs = cartaoExercicio1.locator('input[type="number"]')
@@ -166,6 +167,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
 
   await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
     await page.getByRole('button', { name: /Treino 2/ }).click()
+    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
     page.once('dialog', (d) => d.accept('80'))
     await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
@@ -305,4 +307,53 @@ test('selos de método, nota, guia e cronômetro que sobrevive ao reload', async
   for (const nome of ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset'])
     await expect(page.getByText(nome, { exact: true }).first()).toBeVisible()
   await page.screenshot({ path: 'test-results/prints/92-guia.png' })
+})
+
+test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(ALUNO.email)
+  await page.getByLabel('Senha').fill(ALUNO.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+  await page.getByRole('button', { name: /Treino 3/ }).click()
+  await expect(page.getByRole('heading', { name: 'Treino 3' })).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.screenshot({ path: 'test-results/prints/93-treino-nao-iniciado.png' })
+
+  const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
+  const kg = cartao.locator('input[type="number"]').first()
+
+  await test.step('(a) tocar no cronômetro não inicia o treino', async () => {
+    await cartao.getByRole('button', { name: /^▶ \d+ s$/ }).click()
+    await expect(page.getByText('Treino em andamento')).toHaveCount(0)
+    await expect(kg).toBeDisabled()
+    await expect(cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ })).toBeDisabled()
+    await expect(page.getByText('Toque em Iniciar treino para anotar as cargas.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Concluir treino' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Pular' }).click()
+  })
+
+  await test.step('(b) iniciar, anotar, cancelar', async () => {
+    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
+    await expect(kg).toBeEnabled()
+    await kg.fill('25')
+    await kg.blur()
+    await page.screenshot({ path: 'test-results/prints/94-treino-iniciado.png' })
+    const regId = `${mesoId}_s01_t3`
+    await expect.poll(async () => JSON.stringify((((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>).cargas ?? null), { timeout: 15_000 }).toContain('25')
+
+    page.once('dialog', (d) => d.accept())
+    await page.getByRole('button', { name: 'Cancelar treino' }).click()
+    await expect(page.getByRole('button', { name: '▶ Iniciar treino' })).toBeVisible()
+    await expect(kg).toHaveValue('')
+    await expect
+      .poll(async () => {
+        const f = ((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>
+        return JSON.stringify([f.inicioEm ?? null, f.cargas ?? null, f.realizado ?? null])
+      }, { timeout: 15_000 })
+      .not.toContain('25')
+    const f = ((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>
+    expect(f.inicioEm).toBeUndefined()
+    expect(f.realizado?.booleanValue).not.toBe(true)
+  })
 })

@@ -778,7 +778,7 @@ describe('abuso', () => {
       const r = reg('ana', idReg('ana'));
       await negar(updateDoc(r, { realizadoEm: futuro, ...agora() }));
       await negar(updateDoc(r, { inicioEm: futuro, ...agora() }));
-      await negar(updateDoc(r, { inicioEm: null, ...agora() }));
+      await assertSucceeds(updateDoc(r, { inicioEm: deleteField(), ...agora() })); // "Cancelar treino" remove o início
       await negar(updateDoc(r, { realizadoEm: quaseAgora(), ...agora() }));
     });
 

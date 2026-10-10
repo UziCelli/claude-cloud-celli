@@ -33,14 +33,15 @@ export interface AplicacaoMetodo {
 export interface Slot {
   slotId: string
   nome: string
-  pausaS?: number // pausa deste exercício; sem valor = pausa do meso
+  pausaS?: number // pausa deste exercício; sem valor = pausa da posição (principais/auxiliares)
 }
 
 export interface Meso {
   frequencia: number
   semanas: number
   inicio: string // YYYY-MM-DD
-  pausaS: number
+  pausaS: number // pausa dos auxiliares (posição 3+) e de todos se não houver pausaPrincipaisS
+  pausaPrincipaisS?: number // pausa das posições 1–2; sem valor = pausaS
   divisao: Slot[][] // [treino-1][pos-1]
   trocas?: Record<string, Slot> // chave `${semana}-${treino}-${pos}`
   // [semana-1][serie-1]. `padrao` é a progressão do exercício sem linha própria; sem ele vale o legado
@@ -75,6 +76,7 @@ export interface ExercicioPrescrito {
   reps: number[] // n séries + etapas do dropset
   rotulo: string // '' sem método
   cargaSugerida: (number | null)[] // null nas séries; carga da etapa nas etapas do dropset
+  pausaS: number // pausa resolvida: slot > principais (pos 1–2) > meso
 }
 
 export interface Sessao {

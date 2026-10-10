@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { acimaDoLimite, fmtMin, fmtReps } from '../../../lib/tempo'
+import { useMemo, useState } from 'react'
+import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
-import { Botao, campoBase, Cartao, Painel } from '../../../ui'
+import { Botao, campoBase, Cartao } from '../../../ui'
 
 type Previa = { mov: number; tempo: number }[]
 
@@ -75,44 +75,38 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
 
 function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
   const [modo, setModo] = useState<'prog' | 'red'>('prog')
-  const [pct, setPct] = useState('5')
+  const [reducao, setReducao] = useState('5')
   const [de, setDe] = useState('2')
   const [ate, setAte] = useState(String(meso.semanas))
   const [retorno, setRetorno] = useState('2')
   const [onde, setOnde] = useState<'todos' | 'treino' | 'exercicio'>('todos')
   const [treino, setTreino] = useState('1')
   const [slotSel, setSlotSel] = useState('')
-  const [previa, setPrevia] = useState<{ antes: Previa; depois: Previa; novo: Meso } | null>(null)
-  const [verSem, setVerSem] = useState<number | null>(null)
 
-  const alvo = (): AlvoVolume =>
-    onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
+  const slots = meso.divisao[+treino - 1] ?? []
+  const slotId = slots.some((x) => x.slotId === slotSel) ? slotSel : (slots[0]?.slotId ?? '')
+  const pctSemana = meso.progressaoPct ?? 5
 
-  function calcular() {
-    const args = { pct: Number(pct) || 0, de: +de, ate: +ate, alvo: alvo() }
+  // Prévia sempre atual: recalcula quando o meso ou algum parâmetro muda.
+  const previa = useMemo(() => {
+    const alvo: AlvoVolume = onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
+    const args = { pct: modo === 'prog' ? pctSemana : Number(reducao) || 0, de: +de, ate: +ate, alvo }
     const novo = modo === 'prog' ? progressaoAutomatica(meso, args) : reduzirVolume(meso, { ...args, retorno: +retorno })
-    setPrevia({ antes: resumo(meso), depois: resumo(novo), novo })
-    setVerSem(null)
-  }
+    return { antes: resumo(meso), depois: resumo(novo), novo, igual: JSON.stringify(novo) === JSON.stringify(meso) }
+  }, [meso, modo, pctSemana, reducao, de, ate, retorno, onde, treino, slotId])
 
   function aplicar() {
-    if (!previa) return
     const limite = meso.tempoLimiteMin
     const pior = Math.max(...previa.depois.map((x) => x.tempo))
     if (limite && pior > limite && !confirm(`Vai passar do tempo limite: treino previsto ${fmtMin(pior)} (limite ${limite}). Aplicar mesmo assim?`)) return
     onAtualizar(previa.novo)
-    setPrevia(null)
   }
 
   const sel = `${campoBase} w-full px-2 py-1.5`
   const rot = 'grid gap-1 text-sm text-slate-400'
-  const mudou = (f: (v: string) => void) => (v: string) => {
-    f(v)
-    setPrevia(null)
-  }
-  const semVer = verSem ?? Math.min(meso.semanas, Math.max(1, +de || 1))
-  const slots = meso.divisao[+treino - 1] ?? []
-  const slotId = slots.some((x) => x.slotId === slotSel) ? slotSel : (slots[0]?.slotId ?? '')
+  const centro = `${sel} text-center`
+  const totalMov = previa.depois.reduce((s, x) => s + x.mov, 0)
+  const totalAntes = previa.antes.reduce((s, x) => s + x.mov, 0)
 
   return (
     <Cartao>
@@ -120,32 +114,42 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
       <div className="grid grid-cols-2 gap-3">
         <label className={`${rot} col-span-2`}>
           Modo
-          <select value={modo} onChange={(e) => mudou((v) => setModo(v as 'prog' | 'red'))(e.target.value)} className={sel}>
+          <select value={modo} onChange={(e) => setModo(e.target.value as 'prog' | 'red')} className={sel}>
             <option value="prog">Progressão</option>
             <option value="red">Reduzir com volta gradual</option>
           </select>
         </label>
         <label className={rot}>
-          {modo === 'prog' ? '% por semana' : '% de redução'}
-          <input type="number" min={0} value={pct} onChange={(e) => mudou(setPct)(e.target.value)} className={`${sel} text-center`} />
+          % por semana
+          <input type="number" min={0} value={pctSemana} onChange={(e) => onAtualizar({ progressaoPct: Math.max(0, Number(e.target.value) || 0) })} className={centro} />
+        </label>
+        <label className={rot}>
+          Limite de reps por série
+          <input type="number" min={1} value={meso.limiteReps ?? 15} onChange={(e) => onAtualizar({ limiteReps: Math.max(1, Number(e.target.value) || 1) })} className={centro} />
         </label>
         {modo === 'red' && (
-          <label className={rot}>
-            Semanas de volta
-            <input type="number" min={0} max={meso.semanas} value={retorno} onChange={(e) => mudou(setRetorno)(String(num(e.target.value, 0, meso.semanas)))} className={`${sel} text-center`} />
-          </label>
+          <>
+            <label className={rot}>
+              % de redução
+              <input type="number" min={0} value={reducao} onChange={(e) => setReducao(e.target.value)} className={centro} />
+            </label>
+            <label className={rot}>
+              Semanas de volta
+              <input type="number" min={0} max={meso.semanas} value={retorno} onChange={(e) => setRetorno(String(num(e.target.value, 0, meso.semanas)))} className={centro} />
+            </label>
+          </>
         )}
         <label className={rot}>
           Da semana
-          <input type="number" min={1} max={meso.semanas} value={de} onChange={(e) => mudou(setDe)(String(num(e.target.value, 1, meso.semanas)))} className={`${sel} text-center`} />
+          <input type="number" min={1} max={meso.semanas} value={de} onChange={(e) => setDe(String(num(e.target.value, 1, meso.semanas)))} className={centro} />
         </label>
         <label className={rot}>
           Até a semana
-          <input type="number" min={1} max={meso.semanas} value={ate} onChange={(e) => mudou(setAte)(String(num(e.target.value, 1, meso.semanas)))} className={`${sel} text-center`} />
+          <input type="number" min={1} max={meso.semanas} value={ate} onChange={(e) => setAte(String(num(e.target.value, 1, meso.semanas)))} className={centro} />
         </label>
         <label className={`${rot} col-span-2`}>
           Onde
-          <select value={onde} onChange={(e) => mudou((v) => setOnde(v as typeof onde))(e.target.value)} className={sel}>
+          <select value={onde} onChange={(e) => setOnde(e.target.value as typeof onde)} className={sel}>
             <option value="todos">Todos os exercícios</option>
             <option value="treino">Um treino</option>
             <option value="exercicio">Um exercício</option>
@@ -154,7 +158,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
         {onde !== 'todos' && (
           <label className={rot}>
             Treino
-            <select value={treino} onChange={(e) => mudou(setTreino)(e.target.value)} className={sel}>
+            <select value={treino} onChange={(e) => setTreino(e.target.value)} className={sel}>
               {Array.from({ length: meso.frequencia }, (_, i) => (
                 <option key={i} value={i + 1}>T{i + 1}</option>
               ))}
@@ -164,7 +168,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
         {onde === 'exercicio' && (
           <label className={rot}>
             Exercício
-            <select value={slotId} onChange={(e) => mudou(setSlotSel)(e.target.value)} className={sel}>
+            <select value={slotId} onChange={(e) => setSlotSel(e.target.value)} className={sel}>
               {slots.map((x, i) => (
                 <option key={x.slotId} value={x.slotId}>{i + 1}. {x.nome}</option>
               ))}
@@ -172,67 +176,39 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
           </label>
         )}
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Botao onClick={calcular}>Calcular prévia</Botao>
-        {previa && <Botao tipo="primario" onClick={aplicar}>Aplicar</Botao>}
-        {previa && <Botao onClick={() => setPrevia(null)}>Cancelar</Botao>}
-      </div>
-      <Painel aberto={!!previa}>
-      {previa && (
-        <table className="mt-3 w-full text-sm">
-          <thead>
-            <tr className="text-left text-slate-400">
-              <th className="font-normal">Sem</th>
-              <th className="font-normal">Movimentos</th>
-              <th className="font-normal">Tempo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {previa.antes.map((a, i) => (
-              <tr key={i}>
-                <td className="text-slate-400">S{i + 1}</td>
-                <td>{a.mov} → {previa.depois[i].mov}</td>
-                <td className="font-bold">
-                  {fmtMin(a.tempo)} →{' '}
-                  <span className={acimaDoLimite(previa.depois[i].tempo, meso.tempoLimiteMin) ? 'text-red-400' : ''}>{fmtMin(previa.depois[i].tempo)}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {previa && (
-        <div className="mt-3 space-y-2 text-sm">
-          <label className={rot}>
-            Ver semana
-            <select value={semVer} onChange={(e) => setVerSem(+e.target.value)} className={sel}>
-              {Array.from({ length: meso.semanas }, (_, i) => (
-                <option key={i} value={i + 1}>S{i + 1}</option>
-              ))}
-            </select>
-          </label>
-          {Array.from({ length: meso.frequencia }, (_, t) => {
-            const antes = prescreverSessao(meso, semVer, t + 1)?.exercicios ?? []
-            const depois = prescreverSessao(previa.novo, semVer, t + 1)?.exercicios ?? []
+      <table className="mt-3 w-full text-sm">
+        <thead>
+          <tr className="text-left text-slate-400">
+            <th className="font-normal">Sem</th>
+            <th className="font-normal">Movimentos</th>
+            <th className="font-normal">Variação</th>
+            <th className="text-right font-normal">Tempo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {previa.depois.map((d, i) => {
+            const a = previa.antes[i]
+            const var_ = i === 0 || !previa.depois[i - 1].mov ? null : (d.mov / previa.depois[i - 1].mov - 1) * 100
             return (
-              <div key={t}>
-                <h4 className="font-semibold">Treino {t + 1}</h4>
-                {depois.map((d, i) => {
-                  const a = antes[i] ?? d
-                  const fa = fmtReps(a.reps, a.n)
-                  const fd = fmtReps(d.reps, d.n)
-                  return (
-                    <p key={d.slot.slotId} className={`break-words ${fa === fd ? 'text-slate-500' : 'text-amber-300'}`}>
-                      {d.slot.nome} — {fa === fd ? fa : `${fa} → ${fd}`}
-                    </p>
-                  )
-                })}
-              </div>
+              <tr key={i} className={d.mov !== a.mov || d.tempo !== a.tempo ? 'text-amber-300' : ''}>
+                <td className="text-slate-400">S{i + 1}</td>
+                <td>{d.mov}</td>
+                <td>{var_ === null ? '—' : `${var_ > 0 ? '+' : ''}${fmt(var_)}%`}</td>
+                <td className={`text-right font-bold ${acimaDoLimite(d.tempo, meso.tempoLimiteMin) ? 'text-red-400' : ''}`}>{fmtMin(d.tempo)}</td>
+              </tr>
             )
           })}
-        </div>
-      )}
-      </Painel>
+          <tr className={`border-t border-slate-800 font-semibold ${totalMov !== totalAntes ? 'text-amber-300' : ''}`}>
+            <td>Total</td>
+            <td>{totalMov}</td>
+            <td />
+            <td />
+          </tr>
+        </tbody>
+      </table>
+      <Botao tipo="primario" className="mt-3" disabled={previa.igual} onClick={aplicar}>
+        Aplicar alterações
+      </Botao>
     </Cartao>
   )
 }

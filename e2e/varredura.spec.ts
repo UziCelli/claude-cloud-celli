@@ -116,7 +116,7 @@ for (const largura of [1280, 390]) {
     await expect(page.getByRole('button', { name: 'Divisão', exact: true })).toBeVisible()
     for (const aba of ['Config', 'Divisão', 'Progressão', 'Métodos']) {
       await page.getByRole('button', { name: aba, exact: true }).click()
-      if (aba === 'Progressão') await page.getByRole('button', { name: 'Calcular prévia' }).click()
+      if (aba === 'Progressão') await expect(page.getByRole('cell', { name: 'Total' })).toBeVisible()
       await confere(`coach-meso-${aba.toLowerCase().replace('ç', 'c').replace('ã', 'a').replace('é', 'e')}`)
     }
 

@@ -537,7 +537,12 @@ describe('registros', () => {
       await assertSucceeds(updateDoc(r, { inicioEm: serverTimestamp(), ...agora() }));
       await assertSucceeds(updateDoc(r, { 'cargas.sup.s2': 50, ...agora() }));
       await assertFails(updateDoc(r, { inicioEm: passado, ...agora() }));
-      await assertFails(updateDoc(r, { inicioEm: null, ...agora() }));
+    });
+    it('o aluno remove inicioEm (e cargas) do próprio registro; hora escolhida continua negada', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      await assertSucceeds(updateDoc(r, { inicioEm: serverTimestamp(), 'cargas.sup.s1': 40, ...agora() }));
+      await assertSucceeds(updateDoc(r, { inicioEm: deleteField(), 'cargas.sup.s1': deleteField(), ...agora() }));
+      await assertFails(updateDoc(r, { inicioEm: passado, ...agora() }));
     });
     it('outro aluno não grava inicioEm no registro alheio', () =>
       assertFails(updateDoc(reg('bia', 'm_ana_s01_t1'), { inicioEm: serverTimestamp(), ...agora() })));

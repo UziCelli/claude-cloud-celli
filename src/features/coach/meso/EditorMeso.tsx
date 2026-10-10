@@ -248,25 +248,23 @@ export default function EditorMeso({ id }: { id: string }) {
           />
           <Campo rotulo="Início" type="date" value={meso.inicio} onChange={(e) => atualizar({ inicio: e.target.value })} />
           <Campo
-            rotulo="Pausa entre séries (s)"
+            rotulo="Pausa dos principais (exercícios 1 e 2), s"
+            type="number"
+            min={0}
+            value={meso.pausaPrincipaisS ?? meso.pausaS}
+            onChange={(e) => atualizar({ pausaPrincipaisS: Math.max(0, Number(e.target.value) || 0) })}
+          />
+          <Campo
+            rotulo="Pausa dos auxiliares (exercício 3 em diante), s"
             type="number"
             min={0}
             value={meso.pausaS}
-            onChange={(e) => atualizar({ pausaS: Number(e.target.value) || 0 })}
-          />
-          <Campo
-            rotulo="Progressão por semana (%)"
-            type="number"
-            min={0}
-            value={meso.progressaoPct ?? 5}
-            onChange={(e) => atualizar({ progressaoPct: Math.max(0, Number(e.target.value) || 0) })}
-          />
-          <Campo
-            rotulo="Limite de reps por série"
-            type="number"
-            min={1}
-            value={meso.limiteReps ?? 15}
-            onChange={(e) => atualizar({ limiteReps: Math.max(1, Number(e.target.value) || 1) })}
+            onChange={(e) =>
+              atualizar({
+                pausaS: Math.max(0, Number(e.target.value) || 0),
+                ...(meso.pausaPrincipaisS === undefined && { pausaPrincipaisS: meso.pausaS }),
+              })
+            }
           />
           <Campo
             rotulo="Tempo limite do aluno (min) — vazio = sem aviso"

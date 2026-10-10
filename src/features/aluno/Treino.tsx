@@ -11,7 +11,7 @@ import { seriesDoRotulo } from '../../lib/metodoSeries'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
-import { marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
+import { cancelarTreino, marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
@@ -270,7 +270,7 @@ const hms = (ms: number) => {
 }
 
 // Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
-function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void }) {
+function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
   const [agora, setAgora] = useState(Date.now)
   const rodando = inicio != null && !realizado
   // A marca de treino em andamento só sai no "Concluir treino" (abrir um treino antigo já concluído não pode
@@ -282,13 +282,16 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar }: 
     return () => clearInterval(id)
   }, [rodando])
   if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span> · previsto {previsto}</p> : null
-  if (inicio == null) return <Botao tipo="primario" className="mb-3 w-full" onClick={onIniciar}>▶ Iniciar treino</Botao>
+  if (inicio == null) return <Botao tipo="primario" className="borda-brilho mb-3 w-full shadow-lg shadow-marca-500/40 ring-1 ring-inset ring-marca-400/50" onClick={onIniciar}>▶ Iniciar treino</Botao>
   return (
-    <p role="timer" className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-      <span aria-hidden className={`h-2 w-2 rounded-full bg-emerald-400 ${quieto ? '' : 'animate-pulse'}`} />
-      Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{hms(agora - inicio)}</span>
-      <span className="text-slate-500">· previsto {previsto}</span>
-    </p>
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
+        <span aria-hidden className={`h-2 w-2 rounded-full bg-emerald-400 ${quieto ? '' : 'animate-pulse'}`} />
+        Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{hms(agora - inicio)}</span>
+        <span className="text-slate-500">· previsto {previsto}</span>
+      </p>
+      <Botao className="whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
+    </div>
   )
 }
 
@@ -379,7 +382,6 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const sessao = prescreverSessao(meso, semana, treino)
   if (!sessao) return <Centro>Treino não encontrado.</Centro>
 
-  const pausaEx = (p?: number) => p ?? meso.pausaS
   const cargas = docsParaRegistros(docsRegistros, meso) // totais normalizados (ver normalizarCargas)
   const repsFeitas = docsParaRegistrosReps(docsRegistros)
   const chave = `${semana}-${treino}`
@@ -398,11 +400,21 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
     marcarTreino(t) // treino em andamento neste aparelho conta como uso (inatividade)
     marcarInicio(mesoId, uid, semana, treino)
   }
+  const cancelar = () => {
+    if (!window.confirm('Cancelar este treino? O tempo zera e as cargas e reps anotadas nele são apagadas.')) return
+    cancelarTreino(mesoId, semana, treino, docAtual)
+    limparTreino()
+    setInicioLocal(null)
+    setPcLocal({})
+    jaIniciou.current = false
+    descanso.parar()
+  }
   const vermelho = acimaDoLimite(sessao.tempoMin, meso.tempoLimiteMin)
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
   const ms = (t: unknown) => (t as { toMillis?: () => number } | null | undefined)?.toMillis?.() ?? null
   const inicioMs = ms(docAtual?.inicioEm) ?? inicioLocal
   const fimMs = ms((docAtual as { realizadoEm?: unknown } | undefined)?.realizadoEm) ?? fimLocal
+  const travado = inicioMs == null && !realizado // só anota depois de "Iniciar treino" (treino concluído continua editável)
   const abrirResumo = () => {
     setVerResumo(true)
     window.scrollTo(0, 0)
@@ -473,14 +485,15 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
         <div className="min-w-0">
           <h1 className="text-lg font-bold">Treino {treino}</h1>
           <p className="text-xs text-slate-400">
-            Semana {semana} · pausa {sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
+            Semana {semana} · pausa {meso.pausaPrincipaisS != null && meso.pausaPrincipaisS !== meso.pausaS ? `${meso.pausaPrincipaisS}s/${meso.pausaS}` : sessao.pausaS}s · início {fmtData(sessao.inicioSemana)}
           </p>
         </div>
         <span className={`shrink-0 rounded-full px-3 py-1 font-display text-lg font-bold ${vermelho ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</span>
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
-      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} />
+      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} />
+      {inicioMs == null && !realizado && <p className="mb-3 text-sm text-amber-300">Toque em Iniciar treino para anotar as cargas.</p>}
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
@@ -560,15 +573,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                   </Botao>
                   <Botao
                     tipo={descanso.slot === slot ? 'primario' : undefined}
-                    onClick={() => {
-                      iniciou()
-                      descanso.alternar(pausaEx(e.slot.pausaS), slot)
-                    }}
+                    onClick={() => descanso.alternar(e.pausaS, slot)}
                   >
-                    {descanso.slot === slot ? `${descanso.rodando ? '⏸' : '▶'} ${mmss(descanso.restante)}` : `▶ ${pausaEx(e.slot.pausaS)} s`}
+                    {descanso.slot === slot ? `${descanso.rodando ? '⏸' : '▶'} ${mmss(descanso.restante)}` : `▶ ${e.pausaS} s`}
                   </Botao>
                   {descanso.slot === slot && (
-                    <Botao aria-label="Reiniciar" onClick={() => descanso.iniciar(pausaEx(e.slot.pausaS), slot)}>
+                    <Botao aria-label="Reiniciar" onClick={() => descanso.iniciar(e.pausaS, slot)}>
                       ↻
                     </Botao>
                   )}
@@ -599,10 +609,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                       <span className="truncate text-xs text-slate-400">{repAlvo} reps</span>
                       <LoadInput
                         className="w-full min-w-0"
+                        disabled={travado}
                         valor={colunasCargas[k] != null ? Math.max(0, Math.round((colunasCargas[k]! - corpo) * 100) / 100) : null}
                         placeholder={placeholderKg}
                         onSalvar={(v) => {
-                          iniciou()
                           if (auto && v != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
                           const total = v == null ? null : Math.round((v + corpo) * 100) / 100
                           registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, total)
@@ -616,9 +626,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                       <span className="text-xs text-slate-600">kg</span>
                       <LoadInput
                         className="w-full min-w-0"
+                        disabled={travado}
                         valor={colunasReps[k] ?? null}
                         placeholder={repAlvo}
-                        onSalvar={(v) => { iniciou(); registrarReps(mesoId, uid, semana, treino, e.slot.slotId, k, v) }}
+                        onSalvar={(v) => { registrarReps(mesoId, uid, semana, treino, e.slot.slotId, k, v) }}
                       />
                       <span className="text-xs text-slate-600">feitas</span>
                     </div>
@@ -627,7 +638,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
               </div>
               {/* Logo abaixo das séries: o app soma o peso do corpo ao extra digitado. */}
               <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
-                <input type="checkbox" checked={!!corpo} disabled={trocandoPc} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
+                <input type="checkbox" checked={!!corpo} disabled={trocandoPc || travado} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
                 <span>
                   <b>Feito com o peso do corpo</b>
                   <span className="block text-xs text-slate-400">
@@ -670,13 +681,11 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
             </div>
           </div>
         ) : (
-          <Botao
-            tipo="primario"
-            className="w-full py-4 text-base"
-            onClick={concluir}
-          >
-            Concluir treino
-          </Botao>
+          inicioMs != null && (
+            <Botao tipo="primario" className="w-full py-4 text-base" onClick={concluir}>
+              Concluir treino
+            </Botao>
+          )
         )}
       </div>
 
