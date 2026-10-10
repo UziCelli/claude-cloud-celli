@@ -1,5 +1,6 @@
 import { collection, query, where, type Timestamp } from 'firebase/firestore'
 import { useMemo } from 'react'
+import { primeiroNome } from '../../lib/contato'
 import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
@@ -27,7 +28,7 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
         <p className="py-6 text-center text-slate-400">Este relatório ainda não está disponível.</p>
       ) : (
         <div className="space-y-3">
-          <Relatorio r={r} aluno={nome.split(' ')[0]} comentario={doc.comentario} compartilhar />
+          <Relatorio r={r} aluno={primeiroNome(nome)} comentario={doc.comentario} compartilhar />
           <BotaoPdf />
         </div>
       )}

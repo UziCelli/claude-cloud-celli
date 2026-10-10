@@ -17,6 +17,7 @@ interface Estado<T> {
   carregando: boolean
   erro: FirestoreError | null
   pendente: boolean // há gravação local ainda não confirmada pelo servidor
+  cache: boolean // dados só do aparelho (o servidor ainda não confirmou)
 }
 
 // Mantém a mesma referência enquanto o alvo for igual: evita reinscrever a cada render
@@ -29,15 +30,15 @@ function useEstavel<T>(v: T | null, igual: (a: T, b: T) => boolean) {
 
 export function useDoc<T>(ref: DocumentReference | null): Estado<T | null> {
   const alvo = useEstavel(ref, refEqual)
-  const [e, setE] = useState<Estado<T | null>>({ dados: null, carregando: !!alvo, erro: null, pendente: false })
+  const [e, setE] = useState<Estado<T | null>>({ dados: null, carregando: !!alvo, erro: null, pendente: false, cache: false })
   useEffect(() => {
-    if (!alvo) return setE({ dados: null, carregando: false, erro: null, pendente: false })
+    if (!alvo) return setE({ dados: null, carregando: false, erro: null, pendente: false, cache: false })
     setE((x) => ({ ...x, carregando: true }))
     return onSnapshot(
       alvo,
       { includeMetadataChanges: true },
-      (s) => setE({ dados: s.exists() ? (s.data() as T) : null, carregando: false, erro: null, pendente: s.metadata.hasPendingWrites }),
-      (erro) => setE({ dados: null, carregando: false, erro, pendente: false }),
+      (s) => setE({ dados: s.exists() ? (s.data() as T) : null, carregando: false, erro: null, pendente: s.metadata.hasPendingWrites, cache: s.metadata.fromCache }),
+      (erro) => setE({ dados: null, carregando: false, erro, pendente: false, cache: false }),
     )
   }, [alvo])
   return e
@@ -45,9 +46,9 @@ export function useDoc<T>(ref: DocumentReference | null): Estado<T | null> {
 
 export function useLista<T>(q: Query | null): Estado<(T & { id: string })[]> {
   const alvo = useEstavel<Query>(q, (a, b) => queryEqual(a, b))
-  const [e, setE] = useState<Estado<(T & { id: string })[]>>({ dados: [], carregando: !!alvo, erro: null, pendente: false })
+  const [e, setE] = useState<Estado<(T & { id: string })[]>>({ dados: [], carregando: !!alvo, erro: null, pendente: false, cache: false })
   useEffect(() => {
-    if (!alvo) return setE({ dados: [], carregando: false, erro: null, pendente: false })
+    if (!alvo) return setE({ dados: [], carregando: false, erro: null, pendente: false, cache: false })
     setE((x) => ({ ...x, carregando: true }))
     return onSnapshot(
       alvo,
@@ -58,8 +59,9 @@ export function useLista<T>(q: Query | null): Estado<(T & { id: string })[]> {
           carregando: false,
           erro: null,
           pendente: s.metadata.hasPendingWrites,
+          cache: s.metadata.fromCache,
         }),
-      (erro) => setE({ dados: [], carregando: false, erro, pendente: false }),
+      (erro) => setE({ dados: [], carregando: false, erro, pendente: false, cache: false }),
     )
   }, [alvo])
   return e

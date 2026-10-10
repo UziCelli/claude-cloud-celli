@@ -69,7 +69,7 @@ test('coach arquiva, desarquiva e envia por WhatsApp', async ({ page }) => {
   const wa = page.getByRole('link', { name: 'WhatsApp' })
   await expect(wa).toHaveAttribute('href', /^https:\/\/wa\.me\/\?text=.*Oi%2C%20Lia!/)
   await expect(wa).toHaveAttribute('rel', 'noopener')
-  await expect(page.getByRole('link', { name: 'E-mail' })).toHaveAttribute('href', /^mailto:lia\.alr-e2e%40teste\.com/)
+  await expect(page.getByRole('link', { name: 'E-mail' })).toHaveAttribute('href', /^mailto:lia\.alr-e2e@teste\.com\?subject=/)
   await page.getByRole('button', { name: 'Arquivar' }).click()
   await expect(cartao).toHaveCount(0)
   await expect(page.getByText(/Nenhum alerta/)).toBeVisible()

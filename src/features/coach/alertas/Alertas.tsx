@@ -20,7 +20,7 @@ export { calcularAlertas, type Reg }
 export function useArquivados() {
   const l = useLista<{ em: Timestamp | null }>(useMemo(() => collection(db, 'arquivados'), []))
   const chaves = useMemo(() => new Set(l.dados.map((d) => d.id)), [l.dados])
-  return { docs: l.dados, chaves, carregando: l.carregando }
+  return { docs: l.dados, chaves, carregando: l.carregando, cache: l.cache }
 }
 
 // Carrega tudo o que os alertas precisam (alunos, mesos, registros de 14 dias). O Início já tem esses dados
@@ -35,10 +35,12 @@ export function useAlertasCoach() {
   const arquivados = useArquivados()
   const r = calcularAlertas(alunos.dados, mesos.dados, registros.dados, agora, arquivados.chaves)
   const carregando = alunos.carregando || mesos.carregando || registros.carregando || arquivados.carregando
-  // Uma vez por abertura da tela, com tudo carregado (senão um alerta ainda não lido pareceria antigo).
+  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache)
+  // Uma vez por abertura da tela, com tudo carregado do servidor (o cache do aparelho pode estar incompleto,
+  // e um alerta ainda não lido pareceria antigo).
   const limpou = useRef(false)
   useEffect(() => {
-    if (carregando || limpou.current) return
+    if (carregando || !doServidor || limpou.current) return
     limpou.current = true
     limparArquivadosAntigos(arquivados.docs, chavesAtuais(r), agora)
   })
