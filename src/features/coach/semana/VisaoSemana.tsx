@@ -4,6 +4,7 @@ import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
 import { diaSP } from '../../../lib/acesso'
+import { treinoValido } from '../../../lib/resumo'
 import { comVolta } from '../../../lib/agenda'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
@@ -26,7 +27,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   const hoje = diaSP(Date.now())
   const deHoje: Record<number, 'feito' | 'andamento'> = {}
   for (const d of docsRegistros)
-    if (d.semana === semana && [d.realizadoEm, d.atualizadoEm].some((t) => t && diaSP(t.toMillis()) === hoje))
+    if (d.semana === semana && treinoValido(d) && [d.realizadoEm, d.atualizadoEm].some((t) => t && diaSP(t.toMillis()) === hoje))
       deHoje[d.treino] = d.realizado ? 'feito' : 'andamento'
   const primeiro = Math.min(...Object.keys(deHoje).map(Number))
   // Rola uma vez por semana até o primeiro cartão destacado (os registros chegam depois da montagem).

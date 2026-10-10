@@ -69,14 +69,15 @@ describe('resumoCoach', () => {
   })
 
   it('treinaramHoje: realizadoEm ou atualizadoEm no dia de hoje em São Paulo (inclui presencial)', () => {
+    const inicioEm = ts('2026-10-10T06:30')
     const r = resumoCoach(
       [aluno('a'), aluno('b'), aluno('c'), aluno('pres', { presencial: true, pagoAte: undefined }), aluno('d')],
       [
         { alunoId: 'a', realizado: true, realizadoEm: ts('2026-10-10T00:10') },
-        { alunoId: 'b', atualizadoEm: ts('2026-10-10T07:00'), realizadoEm: null },
+        { alunoId: 'b', atualizadoEm: ts('2026-10-10T07:00'), inicioEm, realizadoEm: null },
         { alunoId: 'c', atualizadoEm: ts('2026-10-09T23:59') }, // ontem em SP (já dia 10 em UTC)
-        { alunoId: 'pres', atualizadoEm: ts('2026-10-10T06:00') },
-        { alunoId: 'd', atualizadoEm: null }, // gravação pendente
+        { alunoId: 'pres', atualizadoEm: ts('2026-10-10T06:00'), cargas: { A: { s1: 20 } } }, // carga lançada pelo coach
+        { alunoId: 'd', atualizadoEm: null, inicioEm }, // gravação pendente
       ],
       agora,
     )
@@ -88,7 +89,7 @@ describe('resumoCoach', () => {
     const r = resumoCoach(
       [aluno('a'), aluno('b')],
       [
-        { ...base, alunoId: 'a', semana: 2, treino: 2, atualizadoEm: ts('2026-10-10T07:00') },
+        { ...base, alunoId: 'a', semana: 2, treino: 2, atualizadoEm: ts('2026-10-10T07:00'), inicioEm: null }, // início pendente
         { ...base, alunoId: 'a', semana: 2, treino: 1, realizado: true, realizadoEm: ts('2026-10-10T01:00') },
         { ...base, alunoId: 'a', semana: 2, treino: 2, realizado: true, atualizadoEm: ts('2026-10-10T07:30') }, // repetido
         { ...base, alunoId: 'a', semana: 1, treino: 3, atualizadoEm: ts('2026-10-09T23:59') }, // ontem
@@ -102,6 +103,20 @@ describe('resumoCoach', () => {
         { mesoId: 'm1', semana: 2, treino: 2, feito: true }, // um dos registros repetidos está feito
       ],
     })
+  })
+
+  it('treino cancelado hoje (sem inicioEm, cargas apagadas) não conta como treinou nem em andamento', () => {
+    const cancelado = { mesoId: 'm1', semana: 1, treino: 1, realizado: false, atualizadoEm: ts('2026-10-10T07:00') }
+    const r = resumoCoach(
+      [aluno('a'), aluno('b')],
+      [
+        { ...cancelado, alunoId: 'a', cargas: { A: {} } },
+        { ...cancelado, alunoId: 'b' },
+      ],
+      agora,
+    )
+    expect(ids(r.treinaramHoje)).toEqual([])
+    expect(r.treinosHoje).toEqual({})
   })
 
   it('sumidos: liberado, de app, sem registro atualizado nos últimos 7 dias', () => {
