@@ -217,3 +217,49 @@ test('print da tela de login (390px)', async ({ page }) => {
   await page.waitForTimeout(900)
   await page.screenshot({ path: 'test-results/prints/60-login.png' })
 })
+
+// Aba Métodos com nomes de exercício longos: nem a página nem nenhum select passa da largura da tela.
+// Manter por último: semeia um meso a mais para o mesmo aluno (o arquivo só limpa no beforeAll).
+for (const vp of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+]) {
+  test(`aba Métodos com nomes longos ${vp.width}x${vp.height}: sem rolagem horizontal`, async ({ browser }) => {
+    const longos = ['Crucifixo Inverso com Halter (sentado(a))', 'Remada Tradicional Máquina (Pegada Neutra)']
+    const id = await criarMeso({
+      alunoId,
+      nome: 'Meso nomes longos',
+      frequencia: 1,
+      semanas: 4,
+      inicio: hojeSaoPaulo(),
+      pausaS: 60,
+      divisao: { t1: longos.map((nome, i) => ({ slotId: `s${i}`, nome })) },
+      metodos: [
+        { ativo: true, semana: 1, treino: 1, exercicio: 1, metodo: 'Dropset', escopo: 'Série específica', serie: 3, pausaInternaS: 10, blocos: 1, etapas: 3, reducaoCarga: 20 },
+        { ativo: true, semana: 2, treino: 1, exercicio: 2, metodo: 'Superset', escopo: 'Últimas 3 séries', pausaInternaS: 15, blocos: 1, grupo: 1 },
+        { ativo: true, semana: 3, treino: 1, exercicio: 2, metodo: 'Rest-pause', escopo: 'Série específica', serie: 2, pausaInternaS: 20, blocos: 2 },
+      ],
+      progressao: { principais: {}, auxiliares: {} },
+    })
+    const ctx = await browser.newContext(vp.width <= 430 ? { viewport: vp, userAgent: UA_IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : { viewport: vp })
+    const page = await ctx.newPage()
+    await page.goto('/')
+    await page.getByLabel('E-mail').fill(COACH.email)
+    await page.getByLabel('Senha').fill(COACH.senha)
+    await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+    await page.goto(`/#/meso/${id}`)
+    await page.getByRole('button', { name: 'Métodos', exact: true }).click()
+    await expect(page.getByText('Mostrando 3 de 3 métodos')).toBeVisible()
+    if (process.env.PRINT_PREFIX) await page.screenshot({ path: `${process.env.PRINT_PREFIX}-${vp.width}.png`, fullPage: true })
+    const r = await page.evaluate(() => ({
+      sw: document.documentElement.scrollWidth,
+      iw: window.innerWidth,
+      fora: [...document.querySelectorAll('main select')].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 0.5).length,
+    }))
+    expect(r.sw).toBeLessThanOrEqual(r.iw)
+    expect(r.fora).toBe(0)
+    await confere(page)
+    await ctx.close()
+  })
+}
