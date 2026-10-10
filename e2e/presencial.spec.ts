@@ -74,6 +74,8 @@ for (const presencial of [false, true]) {
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
     await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible() // voltou ao Hoje presencial
     await expect(page.getByText(`Presencial: ${ALUNO.nome}`)).toBeVisible()
+    await expect(page.getByRole('button', { name: /Treino 2.*Próximo ·/ })).toBeVisible() // não é "Hoje" no presencial
+    await expect(page.getByText('Hoje', { exact: true })).toHaveCount(0)
 
     await expect.poll(async () => {
       const c = await campos()

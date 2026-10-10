@@ -99,7 +99,7 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
   const semanaData = semanaAtual(meso, hoje).semana
   const hojeISO = dataSP(hoje)
   const proximo = agora && 'treino' in agora && agora.semana === semana ? agora : null
-  const hojeTreino = proximo && (base || proximo.dataTreino <= hojeISO) ? proximo.treino : null
+  const hojeTreino = proximo && proximo.dataTreino <= hojeISO ? proximo.treino : null
   const datas = Object.fromEntries(meso.dias?.length ? diasDaSemana(meso, semana).filter((d) => d.treino).map((d) => [d.treino, d.data]) : [])
   const travada = (w: number, t?: number) => !base && travado(meso, registros, hoje, w, t)
 
