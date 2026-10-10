@@ -149,6 +149,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - "Ver semanas": borda do card "Treinando hoje" cabe no painel.
 - Próximo combinado (sem mudança): foto do treino com a marca; notificações; lojas.
 
+## 10/10/2026 (noite) — Alertas com ações e relatório do ciclo
+- Alertas: Arquivar (some do Início e do selo; volta sozinho com dado novo), "Arquivados" com Desarquivar, WhatsApp (`wa.me/?text=`, sem telefone) e E-mail (o do login).
+- Relatório do fim do ciclo: Victor revisa, escreve o recado e toca "Liberar"; o aluno vê no Início, baixa PDF ou imagem story. Números calculados na hora (só o comentário é gravado).
+- Escolhas do Victor: não "excluir de vez" alertas; aluno só vê depois da revisão.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Notificações (tema importante, a planejar depois):**
   - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";

@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { collection, query, where } from 'firebase/firestore'
+import { docParaMeso } from '../../../lib/conversores'
+import { relatoriosParaRevisar } from '../../../lib/relatorio'
 import type { Usuario } from '../../../lib/acesso'
 import { consultaRegistrosRecentes } from '../../../lib/acoes'
 import type { MesoSalvo } from '../../../lib/conversores'
@@ -8,7 +10,7 @@ import { useLista } from '../../../lib/hooks'
 import { inicioJanela, resumoCoach, type AlunoComId } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
-import { calcularAlertas, type Reg } from '../alertas/Alertas'
+import { calcularAlertas, useArquivados, type Reg } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 import { PIX } from '../../aluno/PagarPix'
 import { IcMais } from '../../../icones'
@@ -27,7 +29,9 @@ export default function Inicio({ nome }: { nome: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
-  const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora)
+  const arquivados = useArquivados()
+  const liberados = useLista<{ id: string }>(useMemo(() => query(collection(db, 'relatorios'), where('liberado', '==', true)), []))
+  const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves)
   if (!alunos.carregando && alunos.dados.length === 0)
     return (
       <Pagina titulo="Início">
@@ -40,6 +44,12 @@ export default function Inicio({ nome }: { nome: string }) {
       </Pagina>
     )
 
+  const nomeDe = new Map(alunos.dados.filter((a) => a.status !== 'arquivado').map((a) => [a.id, a.nome]))
+  const paraRevisar = relatoriosParaRevisar(
+    mesos.dados.filter((d) => nomeDe.has(d.alunoId)).map((d) => ({ id: d.id, meso: docParaMeso(d), nome: d.nome })),
+    new Set(liberados.dados.map((x) => x.id)),
+    agora,
+  )
   const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm).length
   const blocos: [string, AlunoComId[], string][] = [
     ['Aguardando aprovação', r.aguardando, 'Ninguém aguardando.'],
@@ -80,6 +90,25 @@ export default function Inicio({ nome }: { nome: string }) {
           </span>
           <span className="font-semibold underline">Ver lista</span>
         </a>
+      )}
+      {paraRevisar.length > 0 && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-marca-500/60 bg-marca-900/40 p-4">
+          <h2 className="font-semibold">
+            Relatórios para revisar <span className="font-display text-lg font-bold text-marca-300">{paraRevisar.length}</span>
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {paraRevisar.map((x) => {
+              const d = mesos.dados.find((y) => y.id === x.id)!
+              return (
+                <li key={x.id}>
+                  <a href={`#/meso/${x.id}/relatorio`} className="block min-h-11 rounded-full bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                    {nomeDe.get(d.alunoId)} · {x.nome}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
       )}
       {alertas.total > 0 && (
         <a href="#/alertas" className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-rose-500/60 bg-rose-950/70 p-4 text-rose-100">

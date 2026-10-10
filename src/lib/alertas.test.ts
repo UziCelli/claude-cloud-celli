@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { prescreverSessao, type Meso } from '../engine'
 import { comVolta } from './agenda'
-import { MIN_ABAIXO, PROPORCAO_ABAIXO, repsAbaixo, treinosDemorados, type RegistroAlerta } from './alertas'
+import { arquivadosVencidos, chaveAlerta, MIN_ABAIXO, PROPORCAO_ABAIXO, repsAbaixo, treinosDemorados, type RegistroAlerta } from './alertas'
 
 const agora = new Date('2026-10-07T15:00:00Z')
 const DIA = 86400_000
@@ -143,5 +143,39 @@ describe('treinosDemorados', () => {
     expect(treinosDemorados(meso, [velho], agora)).toHaveLength(0)
     expect(treinosDemorados(meso, [reg({ realizado: true })], agora)).toHaveLength(0)
     expect(treinosDemorados(meso, [{ ...dur(Math.ceil(lim)), realizado: false }], agora)).toHaveLength(0)
+  })
+})
+
+describe('chaveAlerta', () => {
+  it('abaixo: muda com o último dia com reps abaixo', () => {
+    expect(chaveAlerta.abaixo('m1', 20000)).toBe('abaixo_m1_20000')
+    expect(chaveAlerta.abaixo('m1', 20001)).not.toBe(chaveAlerta.abaixo('m1', 20000))
+  })
+  it('demorado: um por semana e treino', () => {
+    expect(chaveAlerta.demorado('m1', 2, 3)).toBe('demorado_m1_2_3')
+  })
+  it('acima: muda quando a prescrição (tempo arredondado, pior semana) ou o limite mudam', () => {
+    const a = { treino: 2, semana: 3, tempo: 71.4 }
+    expect(chaveAlerta.acima('m1', a, 60)).toBe('acima_m1_t2_s3_71_60')
+    expect(chaveAlerta.acima('m1', { ...a, tempo: 71.2 }, 60)).toBe(chaveAlerta.acima('m1', a, 60))
+    expect(chaveAlerta.acima('m1', { ...a, tempo: 75 }, 60)).not.toBe(chaveAlerta.acima('m1', a, 60))
+    expect(chaveAlerta.acima('m1', { ...a, semana: 4 }, 60)).not.toBe(chaveAlerta.acima('m1', a, 60))
+    expect(chaveAlerta.acima('m1', a, 65)).not.toBe(chaveAlerta.acima('m1', a, 60))
+  })
+})
+
+describe('arquivadosVencidos', () => {
+  const docs = [
+    { id: 'velho', em: ha(15) },
+    { id: 'velhoAtual', em: ha(30) },
+    { id: 'novo', em: ha(13) },
+    { id: 'pendente', em: null }, // hora do servidor ainda não chegou (offline)
+    { id: 'semEm' },
+  ]
+  it('só os com mais de 14 dias que não batem com nenhum alerta atual', () => {
+    expect(arquivadosVencidos(docs, new Set(['velhoAtual']), agora)).toEqual(['velho'])
+  })
+  it('exatamente 14 dias ainda fica', () => {
+    expect(arquivadosVencidos([{ id: 'x', em: ha(14) }], new Set(), agora)).toEqual([])
   })
 })

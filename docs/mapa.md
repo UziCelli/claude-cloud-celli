@@ -22,6 +22,7 @@ Comece por aqui para achar onde mexer.
 | Roteamento (hash, /aluno/123, etc.) | `src/rota.ts` + `src/App.tsx` |
 | Notificação "Descanso acabou" (push, app fechado) | `src/lib/push.ts` + `public/sw-push.js` + `push/` (Worker Cloudflare) — veja `docs/push.md` |
 | Painel de evolução, conquistas, ranking | `src/lib/evolucao.ts` + `src/features/evolucao/` + `src/features/coach/RankingAlunos.tsx` |
+| Relatório do fim do ciclo (tela, PDF, story) | `src/lib/relatorio.ts` + `src/features/relatorio/` |
 
 ## Árvore por pasta
 
@@ -37,7 +38,8 @@ Comece por aqui para achar onde mexer.
 - `firebase.ts` — inicializa Firebase, emulador, offline
 - `acesso.ts` — `liberado()`, `bloqueado()`: verifica status/pagamento
 - `acoes.ts` — `salvarRegistro()`, `atualizarRegistro()`: grava no Firestore campo a campo
-- `alertas.ts` (+ `alertas.test.ts`) — `repsAbaixo()` e `treinosDemorados()` (7 dias; limites em constantes no topo)
+- `alertas.ts` (+ `alertas.test.ts`) — `repsAbaixo()` e `treinosDemorados()` (7 dias; limites em constantes no topo); `chaveAlerta` (id de `arquivados/{chave}`) e `arquivadosVencidos()`
+- `relatorio.ts` (+ `relatorio.test.ts`) — relatório do fim do ciclo: `relatorioCiclo()` (números calculados na hora), `cicloTerminou()`, `relatoriosParaRevisar()` (Início do coach)
 - `agenda.ts` (+ `agenda.test.ts`) — agenda da semana do aluno, pura: `diasDaSemana()`, `treinoDeHoje()`, `travado()`, `semanaDeVolta()`, `comVolta()` (prescrição com −5% na semana de volta), `cargaVolta()`
 - `conversores.ts` — `mesoParaDoc()`, `docParaMeso()`, `registroId()`: serialização; `normalizarCargas()`/`docsParaRegistros()`: leitura única das cargas (peso do corpo)
 - `hooks.ts` — `useUsuarioAtual()`, `useMeso()`, etc.: React hooks
@@ -45,7 +47,7 @@ Comece por aqui para achar onde mexer.
 - `foto.ts` — `reduzirFoto()`: recorte quadrado 192×192, JPEG ≤ 60000 caracteres (lê por data URL por causa da CSP)
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
-- `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `comparacaoToneladas()`, `recordeAnterior()`, `resumoTreino()` (tela de fim de treino), `rankingAlunos()`: cálculos do painel de evolução
+- `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `recordesDe()`, `comparacaoToneladas()`, `recordeAnterior()`, `resumoTreino()` (tela de fim de treino), `rankingAlunos()`: cálculos do painel de evolução
 - `recorde.ts` — `ehRecorde()`: verifica se uma carga é recorde
 - `evolucao.test.ts`, `recorde.test.ts` — testes desses cálculos
 - `*.test.ts` — testes
@@ -81,6 +83,12 @@ Comece por aqui para achar onde mexer.
 - `cartaoStory.ts` — imagem Canvas 1080×1920 com logo, primeiro nome e números para compartilhar no Instagram (`gerarCartao` da evolução, `gerarCartaoTreino` do fim do treino)
 - `BotaoCompartilhar.tsx` — botão "Compartilhar no story" (usa `navigator.share` ou download PNG)
 
+### `src/features/relatorio/` — Relatório do fim do ciclo
+- `Relatorio.tsx` — tela comum (aderência, semana a semana, evoluções, recordes, recado do coach) + "Baixar PDF" (`window.print()`)
+- `RelatorioCoach.tsx` (`#/meso/:id/relatorio`: comentário, Salvar rascunho/Liberar/Recolher, avisar por WhatsApp/e-mail) · `RelatorioAluno.tsx` (`#/relatorio/:mesoId`, só liberados)
+- `useDadosAluno.ts` — todos os mesos/registros do aluno (recordes comparam com o histórico)
+- `cartaoRelatorio.ts` (+ teste) — imagem story 1080×1920 (usa os helpers de `cartaoStory.ts`)
+
 ### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
 - `IconeMetodo.tsx` — ícone SVG animado por método
 - `GuiaMetodos.tsx` — página "Guia de métodos" + botão "Mostrar as notas de novo"
@@ -89,7 +97,8 @@ Comece por aqui para achar onde mexer.
 ### `src/features/coach/` — App do coach
 - `presencial/Presencial.tsx` — `PresencialHoje`/`PresencialTreino`: faixa "Presencial: aluno" + as telas Hoje/Treino do aluno com `base`
 - `inicio/Inicio.tsx` — dashboard do coach: saudação, 4 números, aguardando aprovação, Novo aluno/Ranking, treinaram hoje, sumidos e vencimentos (faixa "⚠️ N alertas")
-- `alertas/Alertas.tsx` — aba Alertas (`#/alertas`): reps abaixo da meta, treinos acima do tempo, treinos que demoraram; hook `useAlertasCoach()` (também usado no Início)
+- `alertas/Alertas.tsx` — aba Alertas (`#/alertas`): reps abaixo da meta, treinos acima do tempo, treinos que demoraram; hooks `useAlertasCoach()` e `useArquivados()` (também usado no Início e no selo)
+- `alertas/calcularAlertas.ts` (+ teste) — `calcularAlertas()` puro (visíveis, `arquivados`, `chave` em cada item) e `chavesAtuais()`
 - `alunos/Alunos.tsx`, `NovoAluno.tsx` — lista, cadastro
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão (Config: pausa dos principais e dos auxiliares)
 - `meso/MesosDoAluno.tsx` — lista de mesos de um aluno
@@ -193,11 +202,13 @@ Comece por aqui para achar onde mexer.
 | `/aluno/:uid/presencial/treino/:mesoId/:semana/:treino` | PresencialTreino | Coach |
 | `/meso/:id` | EditorMeso | Coach |
 | `/meso/:id/semana/:n` | VisaoSemana | Coach |
+| `/meso/:id/relatorio` | RelatorioCoach | Coach |
 | `/ranking` | RankingAlunos | Coach |
 | `/conta` | MinhaConta (coach) · ContaAluno (aluno) | Ambos |
 | `/evolucao` | EvolucaoAluno (`PainelEvolucao.tsx`) | Aluno |
 | `/treino` | Hoje (aba Treino) | Aluno |
 | `/treino/:mesoId/:semana/:treino` | Treino | Aluno |
+| `/relatorio/:mesoId` | RelatorioAluno (só liberado) | Aluno |
 | (padrão) | AlunoApp → InicioAluno | Aluno |
 
 ---
@@ -229,6 +240,12 @@ Comece por aqui para achar onde mexer.
 - `alunoId`, `exercicios`: `{ [nome do exercício]: texto (até 300) }`, `atualizadoEm`
 - Vale em todas as semanas/mesos (chave = nome). `''` = sem nota.
 - Gravação: `salvarNota()` em `src/lib/acoes.ts`. UI: aluno edita em `Treino.tsx` (`Nota`); coach lê em `semana/SessaoCard.tsx`.
+
+### `arquivados/{chave}`
+- `em` (hora do servidor). Alerta arquivado pelo coach; a chave muda quando a situação muda (`chaveAlerta` em `src/lib/alertas.ts`). Só o coach.
+
+### `relatorios/{mesoId}`
+- `alunoId`, `mesoId`, `comentario` (≤ 3000), `liberado`, `liberadoEm`, `atualizadoEm`. Os números não são gravados (`relatorioCiclo`). Aluno lê só o próprio liberado, pela consulta.
 
 ### `exclusoes/{uid}`
 - `uid`, `solicitadoEm`, `status` (pending/processado)
@@ -302,6 +319,9 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Aviso no topo da tela (iPhone) | `index.html`, `Treino.tsx` (`FestaRecorde`), `App.tsx` (`Vigia`) | Com `viewport-fit=cover` + barra de status `black-translucent`, o app passa **por baixo** da barra de status: `fixed top-4` fica escondido no iPhone; com o teclado aberto, `fixed top` ainda sai da parte visível. O aviso de recorde usa `window.visualViewport` (30% da área visível) e, sem ele, `env(safe-area-inset-top)`; o aviso "Conecte-se à internet…" do `Vigia` soma o safe-area no padding. Corrigido em 07/10/2026 (o Victor não via o recorde). Novo aviso flutuante: faça igual. | e2e `recorde.spec.ts` |
 | Cores dos métodos | `src/data/metodos.ts` (`COR_METODO`), `Treino.tsx`, `GuiaMetodos.tsx`, `Tutorial.tsx` | Uma cor fixa por método (selo, faixa, texto, borda), em classes Tailwind escritas por extenso (nunca montar o nome da classe). Série marcada por **faixa fina à esquerda**, uma por método (`seriesDoRotulo`; etapa do drop = Dropset); nunca voltar ao retângulo nem ao rosa único (o Victor se confundiu com biset + dropset no mesmo exercício). | e2e `aluno.spec.ts`, `metodos.spec.ts` |
 | Alertas de reps e tempo | `src/lib/alertas.ts`, `Alertas.tsx`, `Inicio.tsx` (faixa), `Hoje.tsx` (aviso do aluno) | Tudo calculado no aparelho com os registros de 7 dias, sem dado novo nem regra nova (sem telefone ou dado sensível: pedido do Victor). Série feita = carga > 0 (via `normalizarCargas`, peso do corpo conta) ou reps anotadas; abaixo = reps anotadas < meta. Alerta com ≥ 3 séries abaixo **e** ≥ 25% das feitas. Demora: ≥ 1,3× o previsto **e** +15 min (acima de 180 min = esqueceu de concluir, ignora). O "Entendi" do aluno guarda `alerta-reps-<mesoId>-<dia>` no `localStorage` (try/catch). | `alertas.test.ts`, e2e `alertas.spec.ts`, `coach.spec.ts` |
+| Alertas arquivados | `firestore.rules` (`arquivados`), `alertas.ts` (`chaveAlerta`, `arquivadosVencidos`), `calcularAlertas.ts`, `Alertas.tsx` (`useArquivados`, limpeza), `acoes.ts` | `arquivados/{chave}` = `{ em }` (hora do servidor), só o coach. A chave muda quando a situação muda (abaixo: último dia; demorado: semana+treino; acima: pior semana + tempo arredondado + limite), então o alerta volta sozinho; nada de flag "arquivado" no meso. Selo (`App.tsx`) e faixa do Início também passam os arquivados. A limpeza (> 14 dias e sem alerta atual) roda 1x por abertura da aba, **só com tudo carregado e vindo do servidor** (`cache` do `useLista`; o cache do aparelho pode estar incompleto): rodar antes apagaria arquivados de alertas ainda não lidos (eles voltariam). Sem telefone nem dado do aluno (LGPD): o botão WhatsApp usa `wa.me/?text=` sem número (`src/lib/contato.ts`) e o E-mail usa o do login (aluno presencial não tem, o botão some). | `tests/rules.test.ts` (arquivados), `alertas.test.ts`, `calcularAlertas.test.ts`, e2e `alertas.spec.ts` |
+| Relatório do ciclo | `firestore.rules` (`relatorios`), `src/lib/relatorio.ts`, `acoes.ts` (`salvarRelatorio`, `liberarRelatorio`, `recolherRelatorio`), `limpeza-lgpd.mjs` | `relatorios/{mesoId}` guarda só `comentario` (≤ 3000), `liberado`, `liberadoEm` (não nulo ⇔ liberado), `alunoId` (= dono do meso, conferido na regra), `mesoId` (= id) e `atualizadoEm` (hora do servidor); os números nunca são gravados. Aluno só lê o próprio **liberado**, ativo e em dia, pela consulta `alunoId == uid` + `liberado == true` (rascunho ou `getDoc` de relatório inexistente = permissão negada); nunca escreve. `salvarRelatorio` volta a rascunho (aluno deixa de ver até liberar de novo). Quem mexe em dono ou apaga meso precisa levar o relatório junto: `darAcessoAoApp` (troca `alunoId` + `atualizadoEm`, depois dos mesos), `excluirMeso`, `apagarAluno`, Limpeza LGPD; `duplicarMeso` não copia. Recordes comparam com todo o histórico do aluno (passe todos os mesos/registros dele). | `tests/rules.test.ts` (relatorios), `relatorio.test.ts`, `limpeza-lgpd.test.ts`, e2e `relatorio.spec.ts` |
+| Relatório: telas e PDF | `src/features/relatorio/`, `src/index.css` (`@media print`) | Já liberado, o coach vê "Atualizar comentário" (relibera) e "Recolher", nunca "Salvar rascunho" (esconderia do aluno sem querer). O PDF é `window.print()`: o CSS de impressão esconde `header`, `nav` e `.nao-imprimir` e redesenha `.relatorio` em fundo branco; elemento novo de tela que não deve sair no PDF leva `.nao-imprimir`. Story: só primeiro nome e números (LGPD). | e2e `relatorio.spec.ts`, `cartaoRelatorio.test.ts` |
 | Tutorial do aluno | `src/features/aluno/Tutorial.tsx`, `AlunoApp.tsx` | Abre 1x (`forca-tutorial-visto`), nunca com `navigator.webdriver` (não atrapalha os e2e); sem `localStorage` não abre em laço. Boas-vindas vêm de `marcas/<id>/marca.json` (`boasVindas`: "à VFITCOACH", "ao app da Gislane"), nunca texto fixo. As telas são desenhos fixos: se `Treino.tsx` mudar rótulos ("Iniciar treino", "Feito com o peso do corpo", "Anotação"…), atualize os textos. | e2e `tutorial.spec.ts` |
 | Story do fim do treino | `FimTreino.tsx`, `cartaoStory.ts` (`gerarCartaoTreino`) | Heading "Treino concluído", "Semana X: a de b treinos", "Volume" e os botões são âncoras do e2e. O PNG usa só primeiro nome, números e nomes de exercícios (LGPD) e é gerado ao abrir a tela (o Safari exige o compartilhar direto no toque). | e2e `aluno.spec.ts`, `cartaoStory.test.ts` |
 | Importar planilha | `tools/planilha_para_meso.py`, `importar-meso.yml` | O bloco de cada semana tem `1 + 13·n` linhas, `n` = treinos do **modelo** da aba (79 no "6x", 53 no "4x"); o conversor acha pela 2ª linha "Semana" em B (antes era fixo em 79 e a aba M7 do Thiago, modelo 4x, dava "Layout inesperado"; corrigido em 07/10/2026). Config e métodos: o conversor acha o rótulo "Semana [n]" (AY3 nas abas antigas, BN5 nas novas com monitoramento em AY; valores na coluna ao lado, métodos 7 linhas abaixo); antes era fixo em AZ3 e a M3 do Vinicius dava `int(None)` (corrigido em 09/10/2026). Antes de importar, confira treinos "Não realizado" com cargas copiadas de outro treino (ex.: Rosca Martelo 65 kg): ficam de fora para não virar recorde falso. O import grava em **produção**; aluno por e-mail ou nome exato (parecido = erro; sem nenhum = vira presencial). | conferência manual do JSON |

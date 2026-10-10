@@ -201,6 +201,37 @@ service cloud.firestore {
         && request.resource.data.em == request.time;
     }
 
+    // Alerta arquivado pelo coach: arquivados/{chave} = { em }. A chave muda quando a situação muda
+    // (chaveAlerta em src/lib/alertas.ts), então o alerta volta sozinho com dado novo. Só o coach toca.
+    match /arquivados/{chave} {
+      allow read, delete: if isCoach();
+      allow create, update: if isCoach()
+        && request.resource.data.keys().hasOnly(['em'])
+        && request.resource.data.keys().hasAll(['em'])
+        && request.resource.data.em == request.time;
+    }
+
+    // Relatório do fim do ciclo: relatorios/{mesoId}. Os números são calculados na hora (src/lib/relatorio.ts);
+    // aqui fica só o comentário do coach e se já foi liberado. liberadoEm != null exatamente quando liberado.
+    // O aluno só lê o próprio, liberado, estando ativo e em dia (consulta: alunoId == uid e liberado == true).
+    match /relatorios/{mesoId} {
+      allow read: if isCoach()
+        || (own(resource.data) && resource.data.liberado == true && liberado());
+      allow delete: if isCoach();
+      allow create, update: if isCoach()
+        && request.resource.data.keys().hasOnly(['alunoId', 'mesoId', 'comentario', 'liberado', 'liberadoEm', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['alunoId', 'mesoId', 'comentario', 'liberado', 'liberadoEm', 'atualizadoEm'])
+        && request.resource.data.mesoId == mesoId
+        && request.resource.data.alunoId == get(/databases/$(database)/documents/mesos/$(mesoId)).data.alunoId
+        && request.resource.data.comentario is string
+        && request.resource.data.comentario.size() <= 3000
+        && request.resource.data.liberado is bool
+        && (request.resource.data.liberado
+              ? request.resource.data.liberadoEm is timestamp
+              : request.resource.data.liberadoEm == null)
+        && request.resource.data.atualizadoEm == request.time;
+    }
+
     // Registro de erros do app (src/lib/log.ts): qualquer usuário logado cria, com campos e
     // tamanhos fixos (exige login para ninguém de fora esgotar a cota grátis). Só o coach lê e apaga.
     match /logs/{id} {

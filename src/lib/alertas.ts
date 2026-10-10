@@ -67,3 +67,22 @@ export function treinosDemorados(meso: Meso, registros: RegistroAlerta[], agora:
   }
   return lista
 }
+
+// Id do documento arquivados/{chave}. A chave muda quando a situação muda, então o alerta arquivado
+// volta sozinho com dado novo: abaixo = último dia com reps abaixo; acima = pior semana, tempo
+// arredondado e limite (mudam quando a prescrição ou o limite mudam).
+export const chaveAlerta = {
+  abaixo: (mesoId: string, ultimoDia: number) => `abaixo_${mesoId}_${ultimoDia}`,
+  demorado: (mesoId: string, semana: number, treino: number) => `demorado_${mesoId}_${semana}_${treino}`,
+  acima: (mesoId: string, a: { treino: number; semana: number; tempo: number }, limiteMin: number) =>
+    `acima_${mesoId}_t${a.treino}_s${a.semana}_${Math.round(a.tempo)}_${limiteMin}`,
+}
+
+export const ARQUIVADO_DIAS = 14
+
+// Arquivados com mais de 14 dias que não batem com nenhum alerta atual (podem ser apagados).
+// `em` null = hora do servidor ainda pendente: fica.
+export const arquivadosVencidos = (docs: { id: string; em?: Ts }[], chavesAtuais: Set<string>, agora: Date) =>
+  docs
+    .filter((d) => d.em != null && agora.getTime() - d.em.toMillis() > ARQUIVADO_DIAS * 86400_000 && !chavesAtuais.has(d.id))
+    .map((d) => d.id)

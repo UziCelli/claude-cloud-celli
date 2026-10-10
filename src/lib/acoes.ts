@@ -36,6 +36,7 @@ import {
 } from 'firebase/firestore'
 import type { Meso } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
+import { arquivadosVencidos } from './alertas'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
 import { auth, authCadastro, db } from './firebase'
 import { inicioJanela } from './resumo'
@@ -113,8 +114,9 @@ export function criarAlunoPresencial(a: { nome: string }) {
 // Presencial -> aluno com app, mantendo o histórico. Ordem pensada para nunca perder dados;
 // se falhar no meio, chamar de novo continua de onde parou:
 // 1. cria a conta (ou reaproveita a anotada em migradoPara) e anota migradoPara no perfil antigo;
-// 2. cria o perfil novo; 3. troca alunoId de mesos e registros (lotes de 400; os ids dos
-// registros só têm o mesoId, continuam válidos); 4. apaga o perfil antigo; 5. e-mail de senha.
+// 2. cria o perfil novo; 3. troca alunoId de mesos, registros e relatórios (lotes de 400; os ids dos
+// registros só têm o mesoId, continuam válidos; relatórios depois dos mesos, que a regra confere o dono
+// do meso); 4. apaga o perfil antigo; 5. e-mail de senha.
 export async function darAcessoAoApp(idPresencial: string, a: { email: string; pagoAte: string /* YYYY-MM-DD */ }) {
   const antigo = doc(db, 'usuarios', idPresencial)
   const s = await getDoc(antigo)
@@ -127,12 +129,14 @@ export async function darAcessoAoApp(idPresencial: string, a: { email: string; p
     await updateDoc(antigo, { migradoPara: uid })
   }
   await setDoc(doc(db, 'usuarios', uid), { ...perfilApp(p.nome, a.email, a.pagoAte), criadoEm: p.criadoEm ?? serverTimestamp() })
-  for (const col of ['mesos', 'registros']) {
+  for (const col of ['mesos', 'registros', 'relatorios']) {
     // Do servidor (nunca do cache): offline dá erro antes de apagar o perfil antigo.
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', idPresencial)))).docs
+    // A regra do relatório exige atualizadoEm da hora do servidor; registros não (atualizadoEm deles é a janela de 14 dias).
+    const campos = col === 'relatorios' ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
-      for (const d of docs.slice(i, i + 400)) b.update(d.ref, { alunoId: uid })
+      for (const d of docs.slice(i, i + 400)) b.update(d.ref, campos)
       await b.commit()
     }
   }
@@ -161,7 +165,7 @@ export function salvarMeso(mesoId: string | null, alunoId: string, nome: string,
 // Marca que o coach adaptou o treino (o aluno vê o aviso uma vez).
 export const marcarAdaptado = (mesoId: string) => updateDoc(doc(db, 'mesos', mesoId), { adaptadoEm: serverTimestamp() })
 
-// Apaga o meso e os registros (cargas) dele. Registros primeiro: se cair no meio, o meso continua
+// Apaga o meso, os registros (cargas) e o relatório dele. Meso por último: se cair no meio, ele continua
 // na lista e é só excluir de novo. Lê do servidor (nunca do cache): offline dá erro sem apagar nada.
 export async function excluirMeso(mesoId: string) {
   const regs = (await getDocsFromServer(query(collection(db, 'registros'), where('mesoId', '==', mesoId)))).docs
@@ -170,10 +174,11 @@ export async function excluirMeso(mesoId: string) {
     for (const d of regs.slice(i, i + 400)) b.delete(d.ref)
     await b.commit()
   }
+  await deleteDoc(doc(db, 'relatorios', mesoId))
   await deleteDoc(doc(db, 'mesos', mesoId))
 }
 
-// Apaga o aluno de vez: registros, mesos, notas e, por último, o perfil (se cair no meio, o
+// Apaga o aluno de vez: registros, relatórios, mesos, notas e, por último, o perfil (se cair no meio, o
 // perfil arquivado continua na lista e é só apagar de novo). Do servidor: offline dá erro sem apagar.
 // Antes de tudo grava o pedido exclusoes/{uid}: se cair no meio, o workflow diário "Limpeza LGPD"
 // (tools/limpeza-lgpd.mjs) termina o serviço. É ele que apaga o login (Auth), os erros (logs) e os
@@ -181,7 +186,7 @@ export async function excluirMeso(mesoId: string) {
 export async function apagarAluno(uid: string) {
   await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
   await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
-  for (const col of ['registros', 'mesos']) {
+  for (const col of ['registros', 'relatorios', 'mesos']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
@@ -194,12 +199,48 @@ export async function apagarAluno(uid: string) {
   await deleteDoc(doc(db, 'usuarios', uid))
 }
 
-// Copia só a prescrição; registros (cargas) nunca são copiados.
+// Copia só a prescrição; registros (cargas) e relatório nunca são copiados.
 export async function duplicarMeso(mesoId: string, novoAlunoId: string, novoNome: string) {
   const s = await getDoc(doc(db, 'mesos', mesoId))
   if (!s.exists()) throw new Error('Meso não encontrado')
   return salvarMeso(null, novoAlunoId, novoNome, docParaMeso(s.data() as MesoDoc))
 }
+
+// Alertas arquivados (arquivados/{chave} = { em }; chave = chaveAlerta em alertas.ts). Sem await (offline).
+export const arquivarAlerta = (chave: string) => setDoc(doc(db, 'arquivados', chave), { em: serverTimestamp() })
+export const desarquivarAlerta = (chave: string) => deleteDoc(doc(db, 'arquivados', chave))
+
+// Apaga os arquivados com mais de 14 dias que não batem com nenhum alerta atual (chavesAtuais em
+// calcularAlertas.ts). Chamar só com tudo carregado. Erro vai para o log; ninguém espera a promessa.
+export function limparArquivadosAntigos(docs: { id: string; em?: Timestamp | null }[], chavesAtuais: Set<string>, agora: Date) {
+  const ids = arquivadosVencidos(docs, chavesAtuais, agora)
+  if (ids.length === 0) return Promise.resolve()
+  const b = writeBatch(db)
+  for (const id of ids.slice(0, 400)) b.delete(doc(db, 'arquivados', id))
+  return b.commit().catch((e) => registrarErro('gravacao', `arquivados: ${e?.code ?? e}`, e))
+}
+
+// Relatório do fim do ciclo: relatorios/{mesoId}. Só o comentário e se está liberado; os números são
+// calculados na hora (relatorio.ts). Sempre setDoc com merge e todos os campos (a regra exige todos).
+// Rascunho: o aluno não vê. Liberar: o aluno vê (liberar de novo atualiza o texto e liberadoEm).
+const relatorio = (mesoId: string, alunoId: string, comentario: string, liberado: boolean) =>
+  setDoc(
+    doc(db, 'relatorios', mesoId),
+    {
+      alunoId,
+      mesoId,
+      comentario: comentario.trim().slice(0, 3000),
+      liberado,
+      liberadoEm: liberado ? serverTimestamp() : null,
+      atualizadoEm: serverTimestamp(),
+    },
+    { merge: true },
+  )
+export const salvarRelatorio = (mesoId: string, alunoId: string, comentario: string) => relatorio(mesoId, alunoId, comentario, false)
+export const liberarRelatorio = (mesoId: string, alunoId: string, comentario: string) => relatorio(mesoId, alunoId, comentario, true)
+// Volta a rascunho sem mexer no comentário.
+export const recolherRelatorio = (mesoId: string) =>
+  setDoc(doc(db, 'relatorios', mesoId), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() }, { merge: true })
 
 // ---------- aluno ----------
 

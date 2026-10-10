@@ -163,7 +163,7 @@ describe('historicoExercicios', () => {
 
   it('guarda o dia e a posição na ocorrência', () => {
     const h = historicoExercicios([m1], [feito('m1', 3, 2, '2026-09-01T10:00', carga('C', 20))])
-    expect(h.Remada).toEqual([{ mesoId: 'm1', semana: 3, treino: 2, dia: dia('2026-09-01'), cargaMax: 20, volume: 400 }])
+    expect(h.Remada).toEqual([{ mesoId: 'm1', semana: 3, treino: 2, dia: dia('2026-09-01'), cargaMax: 20, volume: 400, movimentos: 20 }])
   })
 })
 
@@ -376,7 +376,7 @@ describe('comparacaoToneladas', () => {
 })
 
 describe('recordeAnterior', () => {
-  const o = (semana: number, treino: number, cargaMax: number | null, mesoId = 'm1') => ({ mesoId, semana, treino, dia: null, cargaMax, volume: null })
+  const o = (semana: number, treino: number, cargaMax: number | null, mesoId = 'm1') => ({ mesoId, semana, treino, dia: null, cargaMax, volume: null, movimentos: 0 })
   const h = { Supino: [o(1, 1, 40), o(2, 1, 60), o(3, 1, 50), o(4, 1, null)], Remada: [o(1, 2, null), o(2, 2, 0)] }
 
   it('maior carga máx do exercício; null se nunca teve carga > 0 ou não existe', () => {
@@ -393,7 +393,7 @@ describe('recordeAnterior', () => {
 })
 
 describe('resumoTreino', () => {
-  const o = (semana: number, cargaMax: number | null, volume: number | null = null) => ({ mesoId: 'm1', semana, treino: 1, dia: null, cargaMax, volume })
+  const o = (semana: number, cargaMax: number | null, volume: number | null = null) => ({ mesoId: 'm1', semana, treino: 1, dia: null, cargaMax, volume, movimentos: 0 })
   const h = {
     Supino: [o(1, 40, 800), o(2, 60, 1200), o(3, 70, 1400)], // recorde (antes 60)
     Agachamento: [o(1, 80, 1600), o(2, 100, 2000), o(3, 90, 1800)], // caiu: nada

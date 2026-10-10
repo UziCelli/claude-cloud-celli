@@ -12,6 +12,7 @@ import ContaAluno from './ContaAluno'
 import Hoje from './Hoje'
 import InicioAluno from './InicioAluno'
 import Treino from './Treino'
+import RelatorioAluno from '../relatorio/RelatorioAluno'
 import Tutorial, { tutorialNaoVisto } from './Tutorial'
 
 export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario }) {
@@ -22,6 +23,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   let tela = <InicioAluno uid={uid} nome={nome} />
   if ((p = casar('/treino/:mesoId/:semana/:treino', rota)))
     tela = <Treino uid={uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
+  else if ((p = casar('/relatorio/:mesoId', rota))) tela = <RelatorioAluno uid={uid} nome={nome} mesoId={p.mesoId} />
   else if (rota === '/treino') tela = <Hoje uid={uid} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />

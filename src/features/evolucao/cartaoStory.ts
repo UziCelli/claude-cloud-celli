@@ -35,23 +35,23 @@ export function textosCartao(d: DadosCartao) {
 }
 
 // Cores da marca (marcas/<id>/marca.json, iguais às do tema.css).
-const C = marca.cores
-const rgba = (hex: string, a: number) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',')},${a})`
-const W = 1080
-const H = 1920
+export const C = marca.cores
+export const rgba = (hex: string, a: number) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',')},${a})`
+export const W = 1080
+export const H = 1920
 
-function ajustar(ctx: CanvasRenderingContext2D, texto: string, fonte: (px: number) => string, px: number, max: number) {
+export function ajustar(ctx: CanvasRenderingContext2D, texto: string, fonte: (px: number) => string, px: number, max: number) {
   ctx.font = fonte(px)
   const w = ctx.measureText(texto).width
   ctx.font = fonte(w > max ? Math.floor((px * max) / w) : px)
 }
 
-function caixa(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+export function caixa(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.roundRect(x, y, w, h, r)
 }
 
-function fundoELogo(ctx: CanvasRenderingContext2D, y: number, lw: number) {
+export function fundoELogo(ctx: CanvasRenderingContext2D, y: number, lw: number) {
   // Fundo
   const g = ctx.createLinearGradient(0, 0, W * 0.6, H)
   g.addColorStop(0, C.m700)
@@ -264,5 +264,18 @@ export async function gerarCartaoTreino(d: DadosTreino): Promise<Blob> {
   const ctx = c.getContext('2d')
   if (!ctx) throw new Error('Canvas indisponível')
   desenharTreino(ctx, d)
+  return new Promise((ok, erro) => c.toBlob((b) => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'))
+}
+
+// Gera o PNG 1080×1920 a partir de uma função que desenha no canvas (usada pelo cartão do relatório).
+export async function pngDe(desenho: (ctx: CanvasRenderingContext2D) => void): Promise<Blob> {
+  await document.fonts.ready
+  await Promise.all([document.fonts.load("800 40px Montserrat"), document.fonts.load("600 40px Inter")]).catch(() => {})
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')
+  if (!ctx) throw new Error('Canvas indisponível')
+  desenho(ctx)
   return new Promise((ok, erro) => c.toBlob((b) => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'))
 }
