@@ -7,7 +7,7 @@ import { consultaRegistrosRecentes, sair } from './lib/acoes'
 import { useLista, useUsuarioAtual } from './lib/hooks'
 import { inicioJanela, type AlunoComId } from './lib/resumo'
 import type { MesoSalvo } from './lib/conversores'
-import { calcularAlertas, type Reg } from './features/coach/alertas/Alertas'
+import { calcularAlertas, useArquivados, type Reg } from './features/coach/alertas/Alertas'
 import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
@@ -23,6 +23,7 @@ import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
 import RankingAlunos from './features/coach/RankingAlunos'
 import { PresencialHoje, PresencialTreino } from './features/coach/presencial/Presencial'
+import RelatorioCoach from './features/relatorio/RelatorioCoach'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
 import Instalar from './features/instalar/Instalar'
@@ -82,14 +83,15 @@ const ativaAba = (rota: string) =>
 // Menu do coach: abas embaixo no celular, menu lateral fixo no computador (≥ lg).
 function Menu({ rota }: { rota: string }) {
   const at = ativaAba(rota)
-  // Mesmas 3 consultas do Início: o Firestore junta as iguais (sem leitura extra). Menu não existe no presencial.
+  // Mesmas 4 consultas do Início (com os arquivados): o Firestore junta as iguais (sem leitura extra). Menu não existe no presencial.
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
   const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
   const agora = new Date()
   const chave = inicioJanela(agora, 14)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
-  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora).total
+  const arquivados = useArquivados()
+  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves).total
   const itens = [
     { id: 'inicio', rotulo: 'Início', href: '#/', Icone: IcCasa },
     { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },
@@ -151,6 +153,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
     tela = <PresencialTreino key={`${p.uid}${p.mesoId}${p.semana}${p.treino}`} uid={p.uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
+  else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />

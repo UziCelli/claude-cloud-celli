@@ -134,3 +134,15 @@ button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer
 
 /* Selo do reCAPTCHA tapa botões no celular; o aviso legal fica na tela de login. */
 .grecaptcha-badge { visibility: hidden; }
+
+/* "Baixar PDF" do relatório do ciclo: window.print() em A4, fundo branco, sem menu, abas nem botões. */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff !important; }
+  nav, aside, header, .nao-imprimir, .grecaptcha-badge, [aria-hidden='true'].fixed { display: none !important; }
+  .relatorio, .relatorio * { color: #111 !important; }
+  .relatorio .rel-bloco { background: #fff !important; border: 1px solid #ccc !important; break-inside: avoid; }
+  .relatorio .rel-destaque { background: #f3f4f6 !important; }
+  .relatorio .rel-faixa { background: #555 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .relatorio [class*='bg-slate-800'] { background: #e5e7eb !important; }
+}

@@ -4,12 +4,13 @@ import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
 import { darAcessoAoApp, duplicarMeso, excluirMeso, salvarMeso } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
-import { type MesoSalvo } from '../../../lib/conversores'
+import { docParaMeso, type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagina, Painel } from '../../../ui'
 import { hojeMaisDias } from '../../../lib/acesso'
+import { cicloTerminou } from '../../../lib/relatorio'
 import { mesoPadrao } from './mesoPadrao'
 
 const dataBr = (iso: string) => {
@@ -77,6 +78,7 @@ function CartaoMeso({ meso }: { meso: MesoSalvo & { id: string } }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Botao onClick={() => ir(`/meso/${meso.id}`)}>Editar</Botao>
         <Botao onClick={() => ir(`/meso/${meso.id}/semana/1`)}>Ver semanas</Botao>
+        {cicloTerminou(docParaMeso(meso), new Date()) && <Botao onClick={() => ir(`/meso/${meso.id}/relatorio`)}>Relatório</Botao>}
         <Botao onClick={() => alternar('duplicar')}>Duplicar</Botao>
         <Botao tipo="perigo" onClick={() => alternar('excluir')}>Excluir</Botao>
       </div>

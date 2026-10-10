@@ -15,6 +15,7 @@ import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
 import { Centro } from '../../ui'
 import { PIX } from './PagarPix'
+import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
 
@@ -28,6 +29,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
   )
   const hoje = useHoje()
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
+  const relatorios = useRelatoriosLiberados(uid)
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
@@ -47,6 +49,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
+      <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
       <Quadros pagoAte={perfil?.pagoAte?.toMillis()} />
     </main>
   )
@@ -138,6 +141,25 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
         </div>
       </Quadro>
     </>
+  )
+}
+
+// Último relatório liberado pelo coach.
+function RelatorioPronto({ relatorios, mesos }: { relatorios: { mesoId: string; liberadoEm: { toMillis(): number } | null }[]; mesos: (MesoSalvo & { id: string })[] }) {
+  const ultimo = [...relatorios].sort((a, b) => (b.liberadoEm?.toMillis() ?? 0) - (a.liberadoEm?.toMillis() ?? 0))[0]
+  if (!ultimo) return null
+  const nome = mesos.find((x) => x.id === ultimo.mesoId)?.nome
+  return (
+    <a href={`#/relatorio/${ultimo.mesoId}`} className="toque block">
+      <Quadro className="flex items-center gap-3">
+        <IconeQuadrado><IcGrafico className="size-5" /></IconeQuadrado>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Seu relatório{nome ? ` do ciclo ${nome}` : ''} está pronto</p>
+          <p className="text-xs text-slate-400">Veja sua evolução e o recado do coach</p>
+        </div>
+        <IcSeta className="size-5 text-slate-400" />
+      </Quadro>
+    </a>
   )
 }
 
