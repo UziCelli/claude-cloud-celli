@@ -430,3 +430,32 @@ describe('prescreverSessao — pausa por exercício (Slot.pausaS)', () => {
     expect(tempo(m)).toBeLessThan(sem)
   })
 })
+
+describe('prescreverSessao — pausa dos principais (Meso.pausaPrincipaisS)', () => {
+  // 3 exercícios de 3×10, pausa do meso 60 (auxiliares); principais = posições 1 e 2.
+  const tres: Meso = {
+    ...base,
+    frequencia: 1,
+    divisao: [[slot('A'), slot('B'), slot('C')]],
+    progressao: { principais: [[10, 10, 10]], auxiliares: [[10, 10, 10]] },
+  }
+  const sessao = (m: Meso) => prescreverSessao(m, 1, 1)!
+
+  it('sem pausaPrincipaisS: todos com a pausa do meso', () => {
+    expect(sessao(tres).exercicios.map((e) => e.pausaS)).toEqual([60, 60, 60])
+  })
+  it('posições 1–2 usam pausaPrincipaisS; 3+ a do meso; tempo soma cada uma', () => {
+    const s = sessao({ ...tres, pausaPrincipaisS: 120 })
+    expect(s.exercicios.map((e) => e.pausaS)).toEqual([120, 120, 60])
+    // 10 + (90 + 3·(120+120+60))/60 = 10 + 990/60 = 26,5
+    expect(s.tempoMin).toBeCloseTo(26.5, 6)
+  })
+  it('pausa do slot vence a dos principais (inclusive 0)', () => {
+    const s = sessao({ ...tres, pausaPrincipaisS: 120, divisao: [[{ ...slot('A'), pausaS: 0 }, slot('B'), { ...slot('C'), pausaS: 30 }]] })
+    expect(s.exercicios.map((e) => e.pausaS)).toEqual([0, 120, 30])
+  })
+  it('troca na posição 2 continua principal', () => {
+    const s = sessao({ ...tres, pausaPrincipaisS: 90, trocas: { '1-1-2': slot('B2') } })
+    expect(s.exercicios[1].pausaS).toBe(90)
+  })
+})
