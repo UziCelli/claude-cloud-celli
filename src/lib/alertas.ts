@@ -3,6 +3,7 @@ import { prescreverSessao, type Meso } from '../engine'
 import { diaSP } from './acesso'
 import { comVolta } from './agenda'
 import { docParaReps, normalizarCargas, type RegistroDoc } from './conversores'
+import { msSessao } from './resumo'
 
 // Meta do aluno = prescrição com a semana de volta (−5%). Só a semana atual: o coach carrega ~14 dias de
 // registros, e para uma semana passada faltaria a semana anterior a ela (daria "volta" falsa).
@@ -18,7 +19,7 @@ export const DEMORA_MAX = 180 // acima disso o aluno esqueceu de concluir
 type Ts = { toMillis(): number } | null
 export type RegistroAlerta = RegistroDoc & { realizadoEm?: Ts; atualizadoEm?: Ts; inicioEm?: Ts }
 
-const dentro = (ms: number | undefined, agora: Date): ms is number =>
+const dentro = (ms: number | null | undefined, agora: Date): ms is number =>
   ms != null && diaSP(agora.getTime()) - diaSP(ms) < JANELA_DIAS
 
 export function repsAbaixo(meso: Meso, registros: RegistroAlerta[], agora: Date) {
@@ -26,7 +27,7 @@ export function repsAbaixo(meso: Meso, registros: RegistroAlerta[], agora: Date)
   let feitas = 0, abaixo = 0, faltaram = 0, ultimo = { ms: -1, dia: 0, semana: 0 }
   const porNome = new Map<string, { abaixo: number; faltaram: number }>()
   for (const r of registros) {
-    const ms = (r.realizadoEm ?? r.atualizadoEm)?.toMillis()
+    const ms = msSessao(r, agora) // correção (sem Iniciar nem Concluir) = null: não entra
     const sessao = dentro(ms, agora) ? prescreverSessao(prescricao, r.semana, r.treino) : null
     if (!sessao) continue
     const cargas = normalizarCargas(r, Object.fromEntries(sessao.exercicios.map((e) => [e.slot.slotId, e.n])))

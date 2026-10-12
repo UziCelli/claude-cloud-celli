@@ -23,7 +23,7 @@ export default function RelatorioCoach({ mesoId }: { mesoId: string }) {
   const r = dados.carregando ? null : relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date())
   return (
     <main className="mx-auto max-w-md px-4 py-4 lg:max-w-3xl">
-      <a href={voltar} className="nao-imprimir mb-3 inline-block text-sm text-slate-400">← Mesociclos do aluno</a>
+      <a href={voltar} className="mb-3 inline-block text-sm text-slate-400">← Mesociclos do aluno</a>
       {meso.carregando || aluno.carregando || rel.carregando || dados.carregando ? (
         <Centro>Carregando…</Centro>
       ) : !r || !meso.dados || !aluno.dados ? (
@@ -48,7 +48,7 @@ function Editor({ r, mesoId, alunoId, aluno, rel }: { r: RelatorioCiclo; mesoId:
   return (
     <div className="space-y-4">
       <Relatorio r={r} aluno={aluno.nome} comentario={texto} />
-      <section className="nao-imprimir space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+      <section className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
         <label className="block text-sm font-semibold" htmlFor="comentario-relatorio">Seu comentário para o aluno</label>
         <textarea
           id="comentario-relatorio"
@@ -80,7 +80,7 @@ function Editor({ r, mesoId, alunoId, aluno, rel }: { r: RelatorioCiclo; mesoId:
             {aluno.email && <a href={linkEmail(aluno.email, `Seu relatório do ciclo ${r.nome}`, aviso)} className={botaoLink}>Avisar por e-mail</a>}
           </div>
         )}
-        <BotaoPdf />
+        <BotaoPdf r={r} aluno={aluno.nome} comentario={rel?.comentario} />
       </section>
     </div>
   )

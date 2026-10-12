@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Botao } from '../../ui'
 import marca from '@marca/marca.json'
+import { IcSino } from '../../icones'
 
 export const permissao = (): NotificationPermission | null => {
   try {
@@ -24,7 +25,7 @@ export default function AvisoNotificacoes() {
   }
   return (
     <div className="mb-4 rounded-xl border border-amber-500/60 bg-slate-900 p-3 text-sm">
-      <p className="font-semibold">🔔 Permita as notificações para o cronômetro te chamar de volta ao treino.</p>
+      <p className="font-semibold"><IcSino className="inline size-4 align-[-2px]" /> Permita as notificações para o cronômetro te chamar de volta ao treino.</p>
       {p === 'denied' ? (
         <p className="mt-1 text-slate-300">
           Para liberar: {ios ? `Ajustes → Notificações → ${marca.nome}.` : 'segure o ícone do app → Informações do app → Notificações.'}

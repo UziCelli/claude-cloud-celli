@@ -18,7 +18,7 @@ const meso: Meso = {
   progressao: { principais: [linha, linha, linha, linha], auxiliares: [linha, linha, linha, linha] },
   metodos: [],
 }
-const reg = (campos: Partial<RegistroAlerta>): RegistroAlerta => ({ semana: 1, treino: 1, realizadoEm: ha(1), ...campos })
+const reg = (campos: Partial<RegistroAlerta>): RegistroAlerta => ({ semana: 1, treino: 1, realizado: true, realizadoEm: ha(1), ...campos })
 // 6 séries: 3 em a, 3 em b
 const abaixoDe3 = reg({ cargas: { a: { s1: 50, s2: 50, s3: 50 }, b: { s1: 40, s2: 40, s3: 40 } }, reps: { a: { s1: 6, s2: 6, s3: 8 }, b: { s1: 8, s2: 8, s3: 8 } } })
 
@@ -75,6 +75,13 @@ describe('repsAbaixo', () => {
     const r = reg({ cargas: { a: { s1: 1, s2: 1, s3: 1 } }, reps: { a: { s1: 1, s2: 1, s3: 1 } }, realizadoEm: undefined, atualizadoEm: ha(2) })
     expect(repsAbaixo(meso, [r], agora)).not.toBeNull()
     expect(repsAbaixo(meso, [{ ...r, atualizadoEm: ha(9) }], agora)).toBeNull()
+  })
+
+  it('correção (carga sem Iniciar nem Concluir) não alerta; treino em andamento conta pelo início', () => {
+    const baixo = { cargas: { a: { s1: 1, s2: 1, s3: 1 } }, reps: { a: { s1: 1, s2: 1, s3: 1 } } }
+    const correcao = reg({ ...baixo, realizado: false, realizadoEm: undefined, atualizadoEm: ha(1) })
+    expect(repsAbaixo(meso, [correcao], agora)).toBeNull()
+    expect(repsAbaixo(meso, [{ ...correcao, inicioEm: ha(1) }], agora)).not.toBeNull()
   })
 
   it('drop: etapa de drop abaixo da meta conta como série', () => {

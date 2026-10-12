@@ -20,7 +20,7 @@ test.beforeAll(async () => {
     progressao: { principais: w, auxiliares: w },
   })
   await criarRegistro(mesoId, alunoId, 1, 1, {
-    cargas: { a: { s1: 40, s2: 40, s3: 40 } }, reps: { a: { s1: 5, s2: 6, s3: 5 } }, realizadoEm: new Date(),
+    cargas: { a: { s1: 40, s2: 40, s3: 40 } }, reps: { a: { s1: 5, s2: 6, s3: 5 } }, realizado: true, realizadoEm: new Date(),
   })
 })
 
@@ -54,7 +54,7 @@ test('aluno vê o aviso e "Entendi" esconde', async ({ page }) => {
   await page.getByRole('button', { name: 'Entendi' }).click()
   await expect(aviso).toHaveCount(0)
   await page.reload()
-  await expect(page.getByText('Semana 1 de 2')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Semana \d de 2$/ })).toBeVisible()
   await expect(aviso).toHaveCount(0)
 })
 

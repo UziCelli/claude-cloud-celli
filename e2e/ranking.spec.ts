@@ -24,8 +24,9 @@ test.beforeAll(async () => {
     },
     progressao: { principais: { w1: w, w2: w, w3: w, w4: w }, auxiliares: { w1: w, w2: w, w3: w, w4: w } },
   })
-  // Mexeu hoje (não é "sumido"), mas nenhum treino concluído em 14 dias.
-  await criarRegistro(mesoId, id, 3, 1, { realizado: false })
+  // Começou um treino hoje (não é "sumido"), mas nenhum treino concluído em 14 dias.
+  // Só carga sem "Iniciar" é correção e não conta como presença.
+  await criarRegistro(mesoId, id, 3, 1, { realizado: false, inicioEm: new Date() })
 })
 
 async function entrar(page: import('@playwright/test').Page) {

@@ -6,6 +6,7 @@ import { rankingAlunos, type LinhaRanking, type RegistroEvolucao } from '../../l
 import { db } from '../../lib/firebase'
 import { useLista } from '../../lib/hooks'
 import { Cartao, Pagina } from '../../ui'
+import { IcMedalha } from '../../icones'
 
 type Aba = 'evoluiu' | 'frequentes' | 'risco'
 const ABAS: [Aba, string][] = [
@@ -14,7 +15,7 @@ const ABAS: [Aba, string][] = [
   ['risco', 'Em risco'],
 ]
 const freq = (l: LinhaRanking) => (l.previstos4s ? l.feitos4s / l.previstos4s : 0)
-const MEDALHA = ['🥇', '🥈', '🥉']
+const MEDALHA = ['text-amber-400', 'text-slate-300', 'text-orange-400']
 
 export default function RankingAlunos() {
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
@@ -90,7 +91,7 @@ export default function RankingAlunos() {
           <ol className="divide-y divide-slate-800">
             {lista.map((l, i) => (
               <li key={l.id} className="flex min-w-0 gap-3 py-3">
-                <span className="w-8 shrink-0 text-center text-lg">{aba !== 'risco' && i < 3 ? MEDALHA[i] : `${i + 1}º`}</span>
+                <span className="w-8 shrink-0 text-center text-lg">{aba !== 'risco' && i < 3 ? <IcMedalha className={`inline size-5 align-[-3px] ${MEDALHA[i]}`} /> : `${i + 1}º`}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
                     <a href={`#/aluno/${l.id}/evolucao`} className="truncate font-semibold hover:underline">

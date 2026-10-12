@@ -43,8 +43,8 @@ const seg = async (page: Page) => {
 async function iniciarEConcluir(page: Page, print = false, aluno = false) {
   await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
   await expect(page.getByRole('timer')).toHaveCount(0)
-  await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
-  await expect(page.getByRole('button', { name: '▶ Iniciar treino' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Iniciar treino' }).click()
+  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toHaveCount(0)
   await expect(page.getByText('Treino em andamento')).toBeVisible()
   const a = await seg(page)
   await expect.poll(() => seg(page), { timeout: 8000 }).toBeGreaterThan(a)
@@ -65,7 +65,7 @@ test('aluno: iniciar, relógio andando, concluir mostra duração parada', async
   await iniciarEConcluir(page, true, true)
   await page.getByRole('button', { name: /Treino 1/ }).click()
   await expect(page.getByText('Duração do treino')).toBeVisible()
-  await expect(page.getByRole('button', { name: '▶ Iniciar treino' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toHaveCount(0)
   await expect(page.getByRole('timer')).toHaveCount(0)
 })
 
@@ -90,7 +90,7 @@ for (const comTreino of [true, false]) {
     await page.getByRole('button', { name: 'Treino presencial' }).click()
     await page.getByRole('button', { name: /Treino 1/ }).click()
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
-    if (comTreino) await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
+    if (comTreino) await page.getByRole('button', { name: 'Iniciar treino' }).click()
     else await page.getByRole('button', { name: '‹ Voltar' }).or(page.getByRole('button', { name: '← Hoje' })).first().click()
     await page.clock.fastForward('25:00')
     if (comTreino) {

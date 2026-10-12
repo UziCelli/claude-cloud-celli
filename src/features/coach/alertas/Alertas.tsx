@@ -13,6 +13,7 @@ import { Botao, Painel, Pagina } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
+import { IcCheck, IcVoltar } from '../../../icones'
 
 export { calcularAlertas, type Reg }
 
@@ -134,7 +135,7 @@ export default function Alertas() {
         <p className="text-slate-400">Carregando…</p>
       ) : (
         <div className="space-y-6">
-          {a.total === 0 && <p className="text-slate-400">Nenhum alerta. Tudo em dia ✓</p>}
+          {a.total === 0 && <p className="text-slate-400">Nenhum alerta. Tudo em dia <IcCheck className="inline size-4 align-[-2px]" /></p>}
           <Grupo titulo="Reps abaixo da meta (7 dias)" n={a.abaixo.length} cor="text-rose-300">
             {a.abaixo.map((x) => <Saindo key={x.chave}><CartaoAbaixo x={x} /></Saindo>)}
           </Grupo>
@@ -173,7 +174,7 @@ export default function Alertas() {
           {nArq > 0 && (
             <section className="space-y-2">
               <button type="button" aria-expanded={verArq} onClick={() => setVerArq((v) => !v)} className="font-semibold text-slate-300">
-                Arquivados ({nArq}) {verArq ? '▾' : '▸'}
+                Arquivados ({nArq}) <IcVoltar className={`inline size-4 align-[-2px] ${verArq ? '-rotate-90' : 'rotate-180'}`} />
               </button>
               <Painel aberto={verArq}>
                 <ul className="space-y-2 pt-1">

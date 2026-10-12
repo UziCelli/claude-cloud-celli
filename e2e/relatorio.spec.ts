@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
 import { criarAluno, criarCoach, criarMeso, criarRegistro, limparEmuladores } from './seed'
 
@@ -41,7 +42,12 @@ async function entrar(page: Page, email: string, senha: string) {
 
 test('coach revisa e libera; o aluno só vê depois', async ({ browser }) => {
   await semear()
-  const aluno = await (await browser.newContext()).newPage()
+  const ctxAluno = await browser.newContext()
+  await ctxAluno.addInitScript(() => {
+    delete (navigator as { share?: unknown }).share
+    delete (navigator as { canShare?: unknown }).canShare
+  })
+  const aluno = await ctxAluno.newPage()
   const coach = await (await browser.newContext()).newPage()
 
   // Antes de liberar: o aluno não vê nada.
@@ -72,6 +78,9 @@ test('coach revisa e libera; o aluno só vê depois', async ({ browser }) => {
   await expect(aluno.getByText(COMENTARIO)).toBeVisible()
   await expect(aluno.getByText('Aderência')).toBeVisible()
   await expect(aluno.getByRole('button', { name: 'Baixar PDF' })).toBeVisible()
+  const [download] = await Promise.all([aluno.waitForEvent('download'), aluno.getByRole('button', { name: 'Baixar PDF' }).click()])
+  expect(download.suggestedFilename()).toMatch(/\.pdf$/)
+  expect((await readFile((await download.path())!)).subarray(0, 5).toString()).toBe('%PDF-')
   expect(await aluno.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await aluno.waitForTimeout(800)
   await aluno.screenshot({ path: `${PRINTS}/relatorio-aluno-390.png`, fullPage: true })

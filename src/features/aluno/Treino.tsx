@@ -20,7 +20,8 @@ import { useDoc, useLista } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
-import { cargaVolta, comVolta, semanaDeVolta } from '../../lib/agenda'
+import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
+import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo } from '../../icones'
 import { ir } from '../../rota'
 import { Botao, cascata, Centro, item, Painel } from '../../ui'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
@@ -55,10 +56,10 @@ function Novidades() {
     <div className="mb-4 rounded-xl border border-marca-500 bg-slate-900 p-4 text-sm">
       <div className="mb-1 font-semibold">Novidades</div>
       <ul className="mb-3 space-y-1 text-slate-300">
-        <li>📝 Anotação em cada exercício</li>
+        <li>Anotação em cada exercício</li>
         <li>Feito com o peso do corpo: já vem marcado na barra fixa e na flexão; nos campos, anote só o peso extra</li>
         <li>Número cinza = carga da semana passada</li>
-        <li>▶ Treino do dia em destaque na tela Hoje</li>
+        <li>Treino do dia em destaque na tela Hoje</li>
       </ul>
       <Botao onClick={fechar}>Entendi</Botao>
     </div>
@@ -235,15 +236,13 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     setEditando(true)
   }
   const fechado = texto ? (
-    <div className="mb-3 flex items-start justify-between gap-3 rounded-lg border border-amber-500/60 bg-amber-500/10 px-3 py-2">
-      <p className="min-w-0 break-words text-sm text-amber-100">{texto}</p>
-      <button onClick={abrir} className="shrink-0 py-1 text-sm font-semibold text-amber-300 underline">
-        ✏️ editar
-      </button>
-    </div>
+    <button onClick={abrir} aria-label={`Editar anotação de ${nome}`} className="mb-3 flex w-full items-start justify-between gap-3 border-l-2 border-marca-500/50 py-1 pl-3 text-left text-sm text-slate-300">
+      <span className="min-w-0 break-words">{texto}</span>
+      <IcLapis className="size-4 shrink-0 text-slate-500" />
+    </button>
   ) : (
-    <button onClick={abrir} className="mb-3 w-full rounded-lg border border-dashed border-slate-500 px-3 py-2.5 text-left text-sm text-slate-300">
-      📝 Anotação — toque para escrever
+    <button onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 py-1 text-sm text-slate-400">
+      <IcMais className="size-4" /> Anotação
     </button>
   )
   return (
@@ -282,7 +281,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     return () => clearInterval(id)
   }, [rodando])
   if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span> · previsto {previsto}</p> : null
-  if (inicio == null) return <Botao tipo="primario" className="borda-brilho mb-3 w-full shadow-lg shadow-marca-500/40 ring-1 ring-inset ring-marca-400/50" onClick={onIniciar}>▶ Iniciar treino</Botao>
+  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40 ring-1 ring-inset ring-marca-400/50" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
@@ -345,7 +344,7 @@ function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolea
   )
 }
 
-export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid: string; mesoId: string; semana: number; treino: number; base?: string }) {
+export default function Treino({ uid, mesoId, semana, treino, base = '', coach }: { uid: string; mesoId: string; semana: number; treino: number; base?: string; coach?: boolean }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', mesoId))
   const { dados: docsRegistros, pendente } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
@@ -391,7 +390,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const pcs = docAtual?.pc ?? {}
   const cargasCruas = docParaCargas(docAtual?.cargas) // o que está gravado de fato (para decidir o que gravar)
   const pcsPorRegistro = Object.fromEntries(docsRegistros.map((r) => [`${r.semana}-${r.treino}`, r.pc]))
-  const iniciado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.inicioEm)
+  const iniciado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.inicioEm !== undefined) // pendente offline chega como null
   const iniciou = () => {
     if (iniciado || jaIniciou.current) return
     jaIniciou.current = true
@@ -414,7 +413,19 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
   const ms = (t: unknown) => (t as { toMillis?: () => number } | null | undefined)?.toMillis?.() ?? null
   const inicioMs = ms(docAtual?.inicioEm) ?? inicioLocal
   const fimMs = ms((docAtual as { realizadoEm?: unknown } | undefined)?.realizadoEm) ?? fimLocal
-  const travado = inicioMs == null && !realizado // só anota depois de "Iniciar treino" (treino concluído continua editável)
+  const comecou = inicioMs != null || docAtual?.inicioEm !== undefined // início pendente offline (null) também conta
+  const travado = !coach && !comecou && !realizado // aluno só anota depois de "Iniciar treino" (treino concluído continua editável)
+  if (!coach && !comecou && !realizado && travadoAgenda(meso, docsRegistros, hoje, semana, treino)) {
+    return (
+      <Centro>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <IcCadeado className="size-10 text-slate-400" />
+          <p className="text-lg font-semibold">Semana {semana} já passou.</p>
+          <button onClick={() => ir(base || '/')} className="text-sm text-marca-400 underline">← Hoje</button>
+        </div>
+      </Centro>
+    )
+  }
   const abrirResumo = () => {
     setVerResumo(true)
     window.scrollTo(0, 0)
@@ -493,7 +504,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
       </div>
 
       <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} />
-      {inicioMs == null && !realizado && <p className="mb-3 text-sm text-amber-300">Toque em Iniciar treino para anotar as cargas.</p>}
+      {!comecou && !realizado && (coach
+        ? <p className="mb-3 text-sm text-slate-400">Sem iniciar: as cargas ficam salvas, mas o treino não conta como feito.</p>
+        : <p className="mb-3 text-sm text-amber-300">Toque em Iniciar treino para anotar as cargas.</p>)}
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
@@ -560,7 +573,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${mt ? COR_METODO[mt].selo : 'bg-slate-700 text-slate-100 ring-slate-500'}`}
                           >
                             {mt && <IconeMetodo metodo={mt} tamanho={20} />}
-                            {parte} <span aria-hidden>ⓘ</span>
+                            {parte} <IcInfo className="size-4" />
                           </button>
                         )
                       })}
@@ -569,17 +582,19 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <Botao aria-label="Som do cronômetro" onClick={descanso.alternarSom}>
-                    {descanso.som ? '🔔' : '🔕'}
+                    {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
                   </Botao>
                   <Botao
                     tipo={descanso.slot === slot ? 'primario' : undefined}
+                    aria-label={descanso.slot === slot ? `${descanso.rodando ? 'Pausar' : 'Continuar'} ${mmss(descanso.restante)}` : `Descansar ${e.pausaS} s`}
+                    className="inline-flex items-center gap-1"
                     onClick={() => descanso.alternar(e.pausaS, slot)}
                   >
-                    {descanso.slot === slot ? `${descanso.rodando ? '⏸' : '▶'} ${mmss(descanso.restante)}` : `▶ ${e.pausaS} s`}
+                    {descanso.slot === slot ? <>{descanso.rodando ? <IcPausa className="size-4" /> : <IcPlay className="size-4" />} {mmss(descanso.restante)}</> : <><IcPlay className="size-4" /> {e.pausaS} s</>}
                   </Botao>
                   {descanso.slot === slot && (
                     <Botao aria-label="Reiniciar" onClick={() => descanso.iniciar(e.pausaS, slot)}>
-                      ↻
+                      <IcReiniciar className="size-4" />
                     </Botao>
                   )}
                 </div>
@@ -616,10 +631,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                           if (auto && v != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
                           const total = v == null ? null : Math.round((v + corpo) * 100) / 100
                           registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, total)
-                          if (!festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
+                          if (comecou && !festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
                             festejados.current.add(e.slot.nome)
                             navigator.vibrate?.([80, 40, 120])
-                            setFesta({ n: festejados.current.size, texto: `Novo recorde! 🎉 ${e.slot.nome}: ${fmt(total!)} kg` })
+                            setFesta({ n: festejados.current.size, texto: `Novo recorde! ${e.slot.nome}: ${fmt(total!)} kg` })
                           }
                         }}
                       />
@@ -670,7 +685,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
                 animate={{ scale: 1 }}
                 transition={elastico}
               >
-                ✓
+                <IcCheck className="size-5" />
               </m.span>
             </p>
             <div className="flex justify-center gap-2">
@@ -681,7 +696,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '' }: { uid
             </div>
           </div>
         ) : (
-          inicioMs != null && (
+          comecou && (
             <Botao tipo="primario" className="w-full py-4 text-base" onClick={concluir}>
               Concluir treino
             </Botao>

@@ -462,6 +462,17 @@ describe('registros', () => {
     }
   });
 
+  it('aluno grava registro de semana passada (sync atrasado) → permitido', async () => {
+    // Guarda: as regras não travam por semana. Carga anotada offline numa semana que já passou
+    // sincroniza depois; se fosse negada, a carga se perderia. (Correção sem Iniciar não conta como
+    // treino, mas isso é calculado no aparelho, não aqui.)
+    await env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'mesos', 'm_ana'), { inicio: new Date(Date.now() - 21 * DIA).toISOString().slice(0, 10) }, { merge: true }),
+    );
+    await assertSucceeds(updateDoc(reg('ana', 'm_ana_s01_t1'), { 'cargas.sup.s2': 45, atualizadoEm: serverTimestamp() }));
+    await assertSucceeds(setDoc(reg('ana', 'm_ana_s01_t2'), { ...registro('ana', 1, 2), atualizadoEm: serverTimestamp() }, { merge: true }));
+  });
+
   describe('criação', () => {
     // Como o app (registro em src/lib/acoes.ts): sempre com atualizadoEm = serverTimestamp().
     const criar = (dados: object, id = 'm_ana_s02_t1') =>

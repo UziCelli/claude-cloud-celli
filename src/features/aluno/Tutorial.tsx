@@ -3,6 +3,7 @@ import { m, useReducedMotion } from 'motion/react'
 import { saida, suave } from '../../movimento'
 import marca from '@marca/marca.json'
 import { COR_METODO } from '../../data/metodos'
+import { IcCheck, IcHaltere, IcInfo, IcNota, IcPausa, IcPlay, IcSino, IcSinoMudo } from '../../icones'
 
 const CHAVE = 'forca-tutorial-visto'
 
@@ -36,21 +37,21 @@ const Botaozinho = ({ children, className = '' }: { children: ReactNode; classNa
   <span className={`inline-flex items-center rounded-lg px-3 py-2 text-sm font-semibold ${className}`}>{children}</span>
 )
 const Selo = ({ nome, cor }: { nome: string; cor: keyof typeof COR_METODO }) => (
-  <span className={`rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${COR_METODO[cor].selo}`}>{nome} ⓘ</span>
+  <span className={`rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${COR_METODO[cor].selo}`}>{nome} <IcInfo className="inline size-3 align-[-1px]" /></span>
 )
 
 const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   {
     titulo: marca.boasVindas,
     texto: 'Embaixo ficam Início, Treino, Evolução e Conta. Em poucos passos você aprende a usar o app no treino. Dá menos de 1 minuto.',
-    ilustracao: <div className="text-center text-5xl">💪</div>,
+    ilustracao: <div className="grid place-items-center"><span className="grid size-20 animate-pulse place-items-center rounded-full text-marca-400 ring-4 ring-marca-500/40"><IcHaltere className="size-12" /></span></div>,
   },
   {
     titulo: 'Comece o treino',
     texto: 'Na aba Treino (ou em "Ver treino de hoje", no Início), abra o treino e toque em "Iniciar treino". O tempo começa a correr, ao lado do tempo previsto do treino, para você comparar.',
     ilustracao: (
       <div className="space-y-2">
-        <Botaozinho className="w-full justify-center bg-marca-500 text-white">▶ Iniciar treino</Botaozinho>
+        <Botaozinho className="w-full justify-center bg-marca-500 text-white"><IcPlay className="mr-1.5 size-4" /> Iniciar treino</Botaozinho>
         <p className="text-sm text-slate-400">Treino em andamento · <b className="text-slate-100">00:12:30</b></p>
       </div>
     ),
@@ -88,29 +89,29 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
     ilustracao: (
       <div className="flex items-center gap-3">
         <Selo nome="Biset" cor="Biset" />
-        <span className="text-2xl">👆</span>
+        <span aria-hidden className="size-8 animate-ping rounded-full ring-4 ring-marca-400/60" />
       </div>
     ),
   },
   {
     titulo: 'Cronômetro de descanso',
-    texto: 'Depois da série, toque em ▶ para contar o descanso. O app avisa quando acabar.',
+    texto: 'Depois da série, toque em Play para contar o descanso. O app avisa quando acabar.',
     ilustracao: (
       <div className="flex items-center gap-2">
-        <Botaozinho className="bg-slate-700">▶ 60 s</Botaozinho>
+        <Botaozinho className="bg-slate-700"><IcPlay className="mr-1.5 size-4" /> 60 s</Botaozinho>
         <span className="text-slate-500">→</span>
-        <Botaozinho className="bg-marca-500 text-white">⏸ 0:42</Botaozinho>
+        <Botaozinho className="bg-marca-500 text-white"><IcPausa className="mr-1.5 size-4" /> 0:42</Botaozinho>
       </div>
     ),
   },
   {
     titulo: 'Sininho',
-    texto: 'O sininho liga e desliga o aviso quando o descanso termina. 🔔 avisa, 🔕 fica em silêncio.',
+    texto: 'O sininho liga e desliga o aviso quando o descanso termina. O sino avisa; o sino riscado fica em silêncio.',
     ilustracao: (
       <div className="flex items-center gap-3 text-2xl">
-        <Botaozinho className="bg-slate-700">🔔</Botaozinho>
+        <Botaozinho className="bg-slate-700"><IcSino className="size-5" /></Botaozinho>
         <span className="text-slate-500">ou</span>
-        <Botaozinho className="bg-slate-700">🔕</Botaozinho>
+        <Botaozinho className="bg-slate-700"><IcSinoMudo className="size-5" /></Botaozinho>
       </div>
     ),
   },
@@ -119,15 +120,15 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
     texto: 'Barra fixa, flexão… Marque "Feito com o peso do corpo" e anote só o peso extra (sem carga, deixe vazio).',
     ilustracao: (
       <div className="flex items-center gap-2 text-sm">
-        <span className="flex h-6 w-6 items-center justify-center rounded bg-marca-500 font-bold text-white">✓</span>
+        <span className="flex h-6 w-6 items-center justify-center rounded bg-marca-500 font-bold text-white"><IcCheck className="size-4" /></span>
         Feito com o peso do corpo
       </div>
     ),
   },
   {
     titulo: 'Anotações',
-    texto: 'Toque em "📝 Anotação" para escrever lembretes: altura do banco, pegada, o que sentiu…',
-    ilustracao: <Botaozinho className="w-full justify-center bg-slate-800 ring-1 ring-slate-600">📝 Anotação — toque para escrever</Botaozinho>,
+    texto: 'Toque em "Anotação" para escrever lembretes: altura do banco, pegada, o que sentiu…',
+    ilustracao: <Botaozinho className="w-full justify-center bg-slate-800 ring-1 ring-slate-600"><IcNota className="mr-1.5 size-4" /> Anotação — toque para escrever</Botaozinho>,
   },
   {
     titulo: 'Concluir treino',

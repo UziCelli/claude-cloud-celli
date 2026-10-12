@@ -14,7 +14,8 @@ export type RegistroEvolucao = RegistroDoc & {
 }
 export type MesoEvolucao = { id: string; meso: Meso; nome?: string }
 export type TreinoFeito = { mesoId: string; semana: number; treino: number; dia: number | null }
-export type Ocorrencia = TreinoFeito & { cargaMax: number | null; volume: number | null; movimentos: number }
+// conta = false: correção (carga sem Concluir); entra no histórico de cargas, mas não conta como treino.
+export type Ocorrencia = TreinoFeito & { conta: boolean; cargaMax: number | null; volume: number | null; movimentos: number }
 export type Evolucao = { nome: string; de: number; ate: number; kg: number; pct: number }
 export type Conquista = {
   id: string
@@ -61,30 +62,34 @@ const cargasPositivas = (os: Ocorrencia[]) => os.map((o) => o.cargaMax).filter(p
 
 const temDado = (c: RegistroDoc['cargas']) => Object.values(c ?? {}).some((cols) => Object.values(cols).some((v) => (v ?? 0) > 0))
 
-type Feito = TreinoFeito & { doc: RegistroDoc }
+type Feito = TreinoFeito & { conta: boolean; doc: RegistroDoc }
 
-// Treinos feitos (realizado, ou alguma carga/rep > 0), um por meso/semana/treino, em ordem cronológica.
+// Registros com dado (realizado, ou alguma carga/rep > 0), um por meso/semana/treino, em ordem cronológica.
+// Só o realizado conta como treino; os outros são correção (dia = início da semana planejada).
 function coletar(mesos: MesoEvolucao[], registros: RegistroEvolucao[]): Feito[] {
   const ordem = new Map([...mesos].sort(porInicio).map((m, i) => [m.id, i]))
+  const inicio = new Map(mesos.map((m) => [m.id, diaInicio(m.meso)]))
   const vistos = new Set<string>()
   const feitos: Feito[] = []
   for (const r of registros) {
     const chave = `${r.mesoId}|${r.semana}|${r.treino}`
     if (!ordem.has(r.mesoId) || vistos.has(chave) || !(r.realizado || temDado(r.cargas) || temDado(r.reps))) continue
     vistos.add(chave)
+    const conta = !!r.realizado
     const t = r.realizadoEm ?? r.inicioEm ?? r.atualizadoEm
-    feitos.push({ mesoId: r.mesoId, semana: r.semana, treino: r.treino, dia: t ? diaSP(t.toMillis()) : null, doc: r })
+    const dia = !conta ? inicio.get(r.mesoId)! + 7 * (r.semana - 1) : t ? diaSP(t.toMillis()) : null
+    feitos.push({ mesoId: r.mesoId, semana: r.semana, treino: r.treino, dia, conta, doc: r })
   }
   return feitos.sort((a, b) => ordem.get(a.mesoId)! - ordem.get(b.mesoId)! || a.semana - b.semana || a.treino - b.treino)
 }
 
 export const treinosFeitos = (mesos: MesoEvolucao[], registros: RegistroEvolucao[]): TreinoFeito[] =>
-  coletar(mesos, registros).map(({ mesoId, semana, treino, dia }) => ({ mesoId, semana, treino, dia }))
+  coletar(mesos, registros).flatMap(({ mesoId, semana, treino, dia, conta }) => (conta ? [{ mesoId, semana, treino, dia }] : []))
 
 function ocorrencias(mesos: MesoEvolucao[], feitos: Feito[]): Record<string, Ocorrencia[]> {
   const lidos = new Map<string, { cargas: Registros; reps: Registros; meso: Meso }>()
   const out: Record<string, Ocorrencia[]> = {}
-  for (const { mesoId, semana, treino, dia } of feitos) {
+  for (const { mesoId, semana, treino, dia, conta } of feitos) {
     let l = lidos.get(mesoId)
     if (!l) {
       const meso = mesos.find((m) => m.id === mesoId)!.meso
@@ -95,7 +100,7 @@ function ocorrencias(mesos: MesoEvolucao[], feitos: Feito[]): Record<string, Oco
     const k = `${semana}-${treino}`
     for (const e of prescreverSessao(l.meso, semana, treino)?.exercicios ?? []) {
       const { cargaMax, volume, movimentos } = metricasExercicio(repsEfetivas(e.reps, l.reps[k]?.[e.slot.slotId]), l.cargas[k]?.[e.slot.slotId] ?? [])
-      ;(out[e.slot.nome] ??= []).push({ mesoId, semana, treino, dia, cargaMax, volume, movimentos })
+      ;(out[e.slot.nome] ??= []).push({ mesoId, semana, treino, dia, conta, cargaMax, volume, movimentos })
     }
   }
   return out
@@ -120,8 +125,9 @@ export function recordesDe(hist: Record<string, Ocorrencia[]>) {
 }
 
 function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: number): Omit<Painel, 'conquistas'> {
-  const feitos = coletar(mesos, registros)
-  const hist = ocorrencias(mesos, feitos)
+  const todos = coletar(mesos, registros)
+  const hist = ocorrencias(mesos, todos) // cargas: inclui as correções
+  const feitos = todos.filter((f) => f.conta) // contagens: só treino concluído
   const lista = Object.entries(hist)
 
   const semanas = new Set(feitos.flatMap((f) => (f.dia == null ? [] : [segunda(f.dia)])))
@@ -182,7 +188,7 @@ function calcular(mesos: MesoEvolucao[], registros: RegistroEvolucao[], hoje: nu
     dias: [...new Set(feitos.flatMap((f) => (f.dia != null && hoje - f.dia < 84 ? [f.dia] : [])))].sort((a, b) => a - b),
     topEvolucao,
     maisConstante,
-    recordes: { total: recordes.length, ultimos30: recordes.filter((o) => o.dia != null && hoje - o.dia < 30).length },
+    recordes: { total: recordes.length, ultimos30: recordes.filter((o) => o.conta && o.dia != null && hoje - o.dia < 30).length },
     volumeKg: arred(soma(lista.flatMap(([, os]) => os.map((o) => o.volume ?? 0)))),
     semanasCompletas,
   }

@@ -21,7 +21,7 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
   const r = doc ? relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date()) : null
   return (
     <main className="mx-auto max-w-md px-4 py-4">
-      <a href="#/" className="nao-imprimir mb-3 inline-block text-sm text-slate-400">← Início</a>
+      <a href="#/" className="mb-3 inline-block text-sm text-slate-400">← Início</a>
       {rels.carregando || dados.carregando ? (
         <Centro>Carregando…</Centro>
       ) : !doc || !r ? (
@@ -29,7 +29,7 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
       ) : (
         <div className="space-y-3">
           <Relatorio r={r} aluno={primeiroNome(nome)} comentario={doc.comentario} compartilhar />
-          <BotaoPdf />
+          <BotaoPdf r={r} aluno={nome} comentario={doc.comentario} />
         </div>
       )}
     </main>

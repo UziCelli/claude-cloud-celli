@@ -14,6 +14,7 @@ import { campoBase, Cartao, cascata, Centro, Contar, item } from '../../ui'
 import { mesoAtual } from '../aluno/mesoAtual'
 import { fmt } from '../coach/semana/format'
 import BotaoCompartilhar from './BotaoCompartilhar'
+import { IcMedalha } from '../../icones'
 
 type Voltar = { href: string; texto: string }
 
@@ -72,7 +73,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
       <main className={base}>
         {cabeca}
         <Cartao className="py-8 text-center">
-          <p className="text-lg font-semibold">Seu primeiro treino vai aparecer aqui 💪</p>
+          <p className="text-lg font-semibold">Seu primeiro treino vai aparecer aqui</p>
           <p className="mt-1 text-sm text-slate-400">Cada treino feito entra na sua evolução.</p>
         </Cartao>
       </main>
@@ -208,7 +209,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
             <div className="mb-4 flex flex-wrap gap-2">
               {grupos.flatMap((g) => g.ganhas).map((q) => (
                 <span key={q.id} className="rounded-full bg-amber-400/20 px-3 py-1 text-sm font-medium text-amber-300">
-                  🏅 {q.titulo}
+                  <IcMedalha className="inline size-4 align-[-2px]" /> {q.titulo}
                 </span>
               ))}
             </div>

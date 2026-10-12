@@ -1,5 +1,6 @@
 import marca from '@marca/marca.json'
 import { LOGO_PARTES, LOGO_VIEWBOX } from '@marca/logoPaths'
+import { D_SUBIR, D_TROFEU } from '../../icones'
 
 // Cartão 1080×1920 para o story do Instagram. Só estes dados entram na imagem (LGPD: sem e-mail, sem sobrenome).
 export type DadosCartao = {
@@ -39,6 +40,24 @@ export const C = marca.cores
 export const rgba = (hex: string, a: number) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',')},${a})`
 export const W = 1080
 export const H = 1920
+
+export async function prepararFontes() {
+  await document.fonts.ready
+  await Promise.all([document.fonts.load("800 40px Montserrat"), document.fonts.load("600 40px Inter")]).catch(() => {})
+}
+
+// Ícone de traço (viewBox 24) desenhado à esquerda do ponto (x, base), com altura `px`.
+export function icone(ctx: CanvasRenderingContext2D, d: string, x: number, base: number, px: number, cor: string) {
+  ctx.save()
+  ctx.translate(x, base - px * 0.85)
+  ctx.scale(px / 24, px / 24)
+  ctx.strokeStyle = cor
+  ctx.lineWidth = 2.2
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.stroke(new Path2D(d))
+  ctx.restore()
+}
 
 export function ajustar(ctx: CanvasRenderingContext2D, texto: string, fonte: (px: number) => string, px: number, max: number) {
   ctx.font = fonte(px)
@@ -147,8 +166,7 @@ function desenhar(ctx: CanvasRenderingContext2D, d: DadosCartao) {
 }
 
 export async function gerarCartao(d: DadosCartao): Promise<Blob> {
-  await document.fonts.ready
-  await Promise.all([document.fonts.load("800 40px Montserrat"), document.fonts.load("600 40px Inter")]).catch(() => {})
+  await prepararFontes()
   const c = document.createElement('canvas')
   c.width = W
   c.height = H
@@ -159,11 +177,11 @@ export async function gerarCartao(d: DadosCartao): Promise<Blob> {
 }
 
 // O share precisa do toque recente (o Safari recusa se demorar): a imagem já deve vir pronta.
-export async function compartilharCartao(blob: Blob): Promise<'compartilhado' | 'baixado' | 'cancelado'> {
-  const file = new File([blob], 'minha-evolucao.png', { type: 'image/png' })
+export async function compartilharArquivo(blob: Blob, nome: string, titulo: string): Promise<'compartilhado' | 'baixado' | 'cancelado'> {
+  const file = new File([blob], nome, { type: blob.type })
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'Minha evolução' })
+      await navigator.share({ files: [file], title: titulo })
       return 'compartilhado'
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return 'cancelado'
@@ -227,11 +245,12 @@ function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
   const LH = 54
   const yb = H - 240
   let linhas = Math.floor((yb - 40 - y) / LH)
-  for (const [titulo, lista, cor] of [['🏆 RECORDES', d.recordes, '#fcd34d'], ['↑ SUBIU A CARGA', d.subiram, '#6ee7b7']] as const) {
+  for (const [titulo, lista, cor, ic] of [['RECORDES', d.recordes, '#fcd34d', D_TROFEU], ['SUBIU A CARGA', d.subiram, '#6ee7b7', D_SUBIR]] as const) {
     const max = Math.min(MAX_LISTA, linhas - 3)
     const l = lista.length <= Math.min(MAX_LISTA, linhas - 2) ? lista : max >= 1 ? limitar(lista, max) : []
     if (!l.length) continue
     texto(titulo, y + 46, cor, 40, 800)
+    icone(ctx, ic, W / 2 - ctx.measureText(titulo).width / 2 - 56, y + 46, 44, cor)
     l.forEach((t, i) => texto(t, y + 100 + i * LH, '#fff', 40, 600, sans))
     y += (l.length + 2) * LH
     linhas -= l.length + 2
@@ -256,8 +275,7 @@ function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
 }
 
 export async function gerarCartaoTreino(d: DadosTreino): Promise<Blob> {
-  await document.fonts.ready
-  await Promise.all([document.fonts.load("800 40px Montserrat"), document.fonts.load("600 40px Inter")]).catch(() => {})
+  await prepararFontes()
   const c = document.createElement('canvas')
   c.width = W
   c.height = H
@@ -269,8 +287,7 @@ export async function gerarCartaoTreino(d: DadosTreino): Promise<Blob> {
 
 // Gera o PNG 1080×1920 a partir de uma função que desenha no canvas (usada pelo cartão do relatório).
 export async function pngDe(desenho: (ctx: CanvasRenderingContext2D) => void): Promise<Blob> {
-  await document.fonts.ready
-  await Promise.all([document.fonts.load("800 40px Montserrat"), document.fonts.load("600 40px Inter")]).catch(() => {})
+  await prepararFontes()
   const c = document.createElement('canvas')
   c.width = W
   c.height = H

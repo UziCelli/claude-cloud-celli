@@ -45,7 +45,7 @@ test('aluno vê o painel de evolução', async ({ page }) => {
 
   await expect(page.getByText('treinos feitos')).toBeVisible()
   await expect(page.getByText(/Desenvolvimento Militar Barra: 20 → 30 kg/)).toBeVisible()
-  await expect(page.getByText('🏅 Primeiro treino')).toBeVisible()
+  await expect(page.getByText('Primeiro treino', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Compartilhar no story' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.waitForTimeout(800)

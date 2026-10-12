@@ -68,20 +68,33 @@ describe('resumoCoach', () => {
     expect(ids(r.vencidos)).toEqual(['ontem', 'sem'])
   })
 
-  it('treinaramHoje: realizadoEm ou atualizadoEm no dia de hoje em São Paulo (inclui presencial)', () => {
+  it('treinaramHoje: sessão de hoje em São Paulo (concluída em realizadoEm ou iniciada em inicioEm; inclui presencial)', () => {
     const inicioEm = ts('2026-10-10T06:30')
     const r = resumoCoach(
       [aluno('a'), aluno('b'), aluno('c'), aluno('pres', { presencial: true, pagoAte: undefined }), aluno('d')],
       [
         { alunoId: 'a', realizado: true, realizadoEm: ts('2026-10-10T00:10') },
         { alunoId: 'b', atualizadoEm: ts('2026-10-10T07:00'), inicioEm, realizadoEm: null },
-        { alunoId: 'c', atualizadoEm: ts('2026-10-09T23:59') }, // ontem em SP (já dia 10 em UTC)
-        { alunoId: 'pres', atualizadoEm: ts('2026-10-10T06:00'), cargas: { A: { s1: 20 } } }, // carga lançada pelo coach
-        { alunoId: 'd', atualizadoEm: null, inicioEm }, // gravação pendente
+        { alunoId: 'c', inicioEm: ts('2026-10-09T23:59') }, // ontem em SP (já dia 10 em UTC)
+        { alunoId: 'pres', atualizadoEm: ts('2026-10-10T06:00'), cargas: { A: { s1: 20 } } }, // carga lançada sem Iniciar: correção
+        { alunoId: 'd', atualizadoEm: null, inicioEm: null }, // início com gravação pendente = agora
       ],
       agora,
     )
-    expect(ids(r.treinaramHoje)).toEqual(['a', 'b', 'pres'])
+    expect(ids(r.treinaramHoje)).toEqual(['a', 'b', 'd'])
+  })
+
+  it('treino concluído ontem e corrigido hoje não é de hoje; registro antigo sem realizadoEm usa atualizadoEm', () => {
+    const r = resumoCoach(
+      [aluno('a'), aluno('b')],
+      [
+        { alunoId: 'a', mesoId: 'm', semana: 1, treino: 1, realizado: true, realizadoEm: ts('2026-10-09T10:00'), atualizadoEm: ts('2026-10-10T07:00'), inicioEm: ts('2026-10-09T09:00'), cargas: { A: { s1: 30 } } },
+        { alunoId: 'b', mesoId: 'm', semana: 1, treino: 1, realizado: true, atualizadoEm: ts('2026-10-10T07:00') }, // dado antigo
+      ],
+      agora,
+    )
+    expect(ids(r.treinaramHoje)).toEqual(['b'])
+    expect(Object.keys(r.treinosHoje)).toEqual(['b'])
   })
 
   it('treinosHoje: por aluno, sem repetir, ordenado, feito x em andamento', () => {
@@ -119,27 +132,29 @@ describe('resumoCoach', () => {
     expect(r.treinosHoje).toEqual({})
   })
 
-  it('sumidos: liberado, de app, sem registro atualizado nos últimos 7 dias', () => {
+  it('sumidos: liberado, de app, sem sessão (concluída ou iniciada) nos últimos 7 dias', () => {
     const r = resumoCoach(
       [
         aluno('recente'),
         aluno('seis'),
         aluno('sete'),
         aluno('nada'),
+        aluno('correcao'),
         aluno('novo', { criadoEm: ts('2026-10-05T10:00') }), // cadastrado há menos de 7 dias
         aluno('vencido', { pagoAte: paga('2026-10-01') }), // já aparece em vencidos
         aluno('pres', { presencial: true, pagoAte: undefined }),
         aluno('agu', { status: 'aguardando', pagoAte: undefined }),
       ],
       [
-        { alunoId: 'recente', atualizadoEm: ts('2026-10-10T07:00') },
-        { alunoId: 'seis', atualizadoEm: ts('2026-10-04T00:01') }, // 6 dias atrás
-        { alunoId: 'sete', atualizadoEm: ts('2026-10-03T23:00') }, // 7 dias atrás
-        { alunoId: 'sete', realizadoEm: ts('2026-10-09T10:00') }, // só atualizadoEm conta
+        { alunoId: 'recente', inicioEm: ts('2026-10-10T07:00') },
+        { alunoId: 'seis', realizado: true, realizadoEm: ts('2026-10-04T00:01') }, // 6 dias atrás
+        { alunoId: 'sete', realizado: true, realizadoEm: ts('2026-10-03T23:00') }, // 7 dias atrás
+        { alunoId: 'sete', realizadoEm: ts('2026-10-09T10:00') }, // sem realizado não é sessão
+        { alunoId: 'correcao', atualizadoEm: ts('2026-10-10T07:00'), cargas: { A: { s1: 20 } } }, // carga sem Iniciar
       ],
       agora,
     )
-    expect(ids(r.sumidos)).toEqual(['sete', 'nada'])
+    expect(ids(r.sumidos)).toEqual(['sete', 'nada', 'correcao'])
   })
 })
 
@@ -166,8 +181,8 @@ describe('frequenciaCaindo', () => {
     atualizadoEm: ts(iso),
     ...extra,
   })
-  // Atividade recente que tira o aluno de "sumidos" sem contar como treino feito.
-  const vivo = (alunoId: string) => ({ alunoId, atualizadoEm: ts('2026-10-09T10:00') })
+  // Treino iniciado ontem (tira o aluno de "sumidos" sem contar como treino feito).
+  const vivo = (alunoId: string) => ({ alunoId, inicioEm: ts('2026-10-09T10:00') })
   const caindo = (alunos: AlunoComId[], registros: Parameters<typeof resumoCoach>[1], mesos = alunos.map((a) => mesoDe(a.id))) =>
     ids(resumoCoach(alunos, registros, agora, mesos).frequenciaCaindo)
 

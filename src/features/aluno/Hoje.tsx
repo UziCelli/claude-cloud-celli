@@ -21,7 +21,7 @@ import type { MesoSalvo } from '../../lib/conversores'
 
 const Msg = ({ children }: { children: ReactNode }) => <p className="mt-10 text-center text-slate-400">{children}</p>
 
-export default function Hoje({ uid, base = '' }: { uid: string; base?: string }) {
+export default function Hoje({ uid, base = '', coach }: { uid: string; base?: string; coach?: boolean }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
   const hoje = useHoje()
   if (carregando) return <Centro>Carregando…</Centro>
@@ -35,19 +35,19 @@ export default function Hoje({ uid, base = '' }: { uid: string; base?: string })
       <AvisoNotificacoes />
       {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
-      {estado.estado === 'durante' && <Semana uid={uid} base={base} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={hoje} />}
+      {estado.estado === 'durante' && <Semana uid={uid} base={base} coach={coach} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={hoje} />}
     </main>
   )
 }
 
 type RegistroFlag = RegistroAlerta
 
-function Semana({ uid, base, mesoId, nome, meso, hoje }: { uid: string; base: string; mesoId: string; nome: string; meso: Meso; hoje: Date }) {
+function Semana({ uid, base, coach, mesoId, nome, meso, hoje }: { uid: string; base: string; coach?: boolean; mesoId: string; nome: string; meso: Meso; hoje: Date }) {
   const { dados: registros, carregando } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   if (carregando) return <Centro>Carregando…</Centro>
-  return <SemanaCarregada base={base} mesoId={mesoId} nome={nome} meso={meso} registros={registros} hoje={hoje} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
+  return <SemanaCarregada base={base} coach={coach} mesoId={mesoId} nome={nome} meso={meso} registros={registros} hoje={hoje} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
 }
 
 // Aviso de reps abaixo da meta nos últimos 7 dias; "Entendi" guarda no aparelho (sem armazenamento, volta no próximo acesso).
@@ -73,7 +73,7 @@ function AvisoReps({ meso, mesoId, registros }: { meso: Meso; mesoId: string; re
   )
 }
 
-function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInicial }: { base: string; mesoId: string; nome: string; meso: Meso; registros: RegistroFlag[]; hoje: Date; semanaInicial: number }) {
+function SemanaCarregada({ base, coach, meso, mesoId, nome, registros, hoje, semanaInicial }: { base: string; coach?: boolean; mesoId: string; nome: string; meso: Meso; registros: RegistroFlag[]; hoje: Date; semanaInicial: number }) {
   const [semana, setSemana] = useState(semanaInicial)
   const [aviso, setAviso] = useState<number | null>(null) // semana travada tocada
   const tremer = useAnimationControls()
@@ -101,14 +101,14 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
   const proximo = agora && 'treino' in agora && agora.semana === semana ? agora : null
   const hojeTreino = proximo && proximo.dataTreino <= hojeISO ? proximo.treino : null
   const datas = Object.fromEntries(meso.dias?.length ? diasDaSemana(meso, semana).filter((d) => d.treino).map((d) => [d.treino, d.data]) : [])
-  const travada = (w: number, t?: number) => !base && travado(meso, registros, hoje, w, t)
+  const travada = (w: number, t?: number) => !coach && travado(meso, registros, hoje, w, t)
 
   return (
     <m.div animate={tremer}>
       {aviso != null && (
         <m.div role="alert" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-rose-500/20 text-rose-400"><IcCadeado className="size-6" /></span>
-          <p className="text-[15px] leading-snug text-slate-100">Semana {aviso} já passou. Faça o treino desta semana 💪</p>
+          <p className="text-[15px] leading-snug text-slate-100">Semana {aviso} já passou. Faça o treino desta semana.</p>
         </m.div>
       )}
       <header className="pt-2">
@@ -198,7 +198,7 @@ function SemanaCarregada({ base, meso, mesoId, nome, registros, hoje, semanaInic
           })}
         </m.div>
       </Deslizar>
-      {!base && <div className="mt-4"><AvisoReps meso={meso} mesoId={mesoId} registros={registros} /></div>}
+      {!coach && <div className="mt-4"><AvisoReps meso={meso} mesoId={mesoId} registros={registros} /></div>}
     </m.div>
   )
 }

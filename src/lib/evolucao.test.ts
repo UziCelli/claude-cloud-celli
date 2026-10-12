@@ -64,18 +64,15 @@ describe('treinosFeitos', () => {
     expect(r).toEqual([{ mesoId: 'm1', semana: 1, treino: 1, dia: dia('2026-09-01') }])
   })
 
-  it('só com carga (sem realizado) conta; só com reps feitas também', () => {
+  it('só com carga ou reps (sem Concluir) é correção: não conta', () => {
     const r = treinosFeitos(
       [m1],
       [
         { mesoId: 'm1', semana: 1, treino: 1, cargas: { A: { s1: 50 } }, atualizadoEm: ts('2026-09-01T10:00') },
-        { mesoId: 'm1', semana: 1, treino: 2, reps: { C: { s1: 8 } } },
+        { mesoId: 'm1', semana: 1, treino: 2, reps: { C: { s1: 8 } }, inicioEm: ts('2026-09-01T10:00') }, // em andamento
       ],
     )
-    expect(r.map((t) => [t.semana, t.treino])).toEqual([
-      [1, 1],
-      [1, 2],
-    ])
+    expect(r).toEqual([])
   })
 
   it('dia = realizadoEm ?? inicioEm ?? atualizadoEm; sem data fica null mas conta', () => {
@@ -163,7 +160,14 @@ describe('historicoExercicios', () => {
 
   it('guarda o dia e a posição na ocorrência', () => {
     const h = historicoExercicios([m1], [feito('m1', 3, 2, '2026-09-01T10:00', carga('C', 20))])
-    expect(h.Remada).toEqual([{ mesoId: 'm1', semana: 3, treino: 2, dia: dia('2026-09-01'), cargaMax: 20, volume: 400, movimentos: 20 }])
+    expect(h.Remada).toEqual([{ mesoId: 'm1', semana: 3, treino: 2, dia: dia('2026-09-01'), conta: true, cargaMax: 20, volume: 400, movimentos: 20 }])
+  })
+
+  it('correção (carga sem Concluir) entra no histórico, no dia de início da semana planejada', () => {
+    // m1 começa 20/07: semana 3 começa 03/08.
+    const correcao: RegistroEvolucao = { mesoId: 'm1', semana: 3, treino: 2, cargas: carga('C', 20), atualizadoEm: ts('2026-10-10T07:00') }
+    const h = historicoExercicios([m1], [correcao])
+    expect(h.Remada).toEqual([{ mesoId: 'm1', semana: 3, treino: 2, dia: dia('2026-08-03'), conta: false, cargaMax: 20, volume: 400, movimentos: 20 }])
   })
 })
 
@@ -234,6 +238,18 @@ describe('painelEvolucao: frequência', () => {
     expect(painel([], undefined, []).meta).toBeNull()
   })
 
+  it('correção (carga sem Concluir) fica fora de total, semanas, dias, sequência e semanas completas', () => {
+    const correcao = (k: number, semana: number, treino: number): RegistroEvolucao => ({
+      mesoId: 'm1', semana, treino, cargas: carga('A', 50), atualizadoEm: ts(quarta(k)),
+    })
+    const p = painel([...emSemana(1, 1, [1]), correcao(1, 1, 2), correcao(0, 2, 1), correcao(0, 2, 2)])
+    expect(p.totalTreinos).toBe(1)
+    expect(p.porSemana.slice(-2).map((s) => s.feitos)).toEqual([1, 0])
+    expect(p.dias).toEqual([dia(quarta(1).slice(0, 10))])
+    expect(p.semanasSeguidas).toBe(1)
+    expect(p.semanasCompletas).toBe(0)
+  })
+
   it('semanas completas: todos os treinos 1..frequência feitos', () => {
     const p = painel([...emSemana(3, 1, [1, 2]), ...emSemana(2, 2, [1]), ...emSemana(1, 3, [1, 2])])
     expect(p.semanasCompletas).toBe(2)
@@ -283,6 +299,14 @@ describe('painelEvolucao: exercícios', () => {
       feito('m1', 4, 1, '2026-10-08T10:00', carga('B', 60)), // recorde (2 dias atrás)
     ])
     expect(p.recordes).toEqual({ total: 2, ultimos30: 1 })
+  })
+
+  it('recordes: correção conta no total, mas não é recorde recente (últimos 30 dias)', () => {
+    const p = painel([
+      feito('m1', 1, 1, '2026-09-20T10:00', carga('B', 40)),
+      { mesoId: 'm1', semana: 12, treino: 1, cargas: carga('B', 60), atualizadoEm: ts('2026-10-09T10:00') }, // semana 12 começa 05/10
+    ])
+    expect(p.recordes).toEqual({ total: 1, ultimos30: 0 })
   })
 
   it('recordes: ocorrência sem carga não é "a 1ª"; a 1ª com carga também não conta', () => {
@@ -376,7 +400,7 @@ describe('comparacaoToneladas', () => {
 })
 
 describe('recordeAnterior', () => {
-  const o = (semana: number, treino: number, cargaMax: number | null, mesoId = 'm1') => ({ mesoId, semana, treino, dia: null, cargaMax, volume: null, movimentos: 0 })
+  const o = (semana: number, treino: number, cargaMax: number | null, mesoId = 'm1') => ({ mesoId, semana, treino, dia: null, conta: true, cargaMax, volume: null, movimentos: 0 })
   const h = { Supino: [o(1, 1, 40), o(2, 1, 60), o(3, 1, 50), o(4, 1, null)], Remada: [o(1, 2, null), o(2, 2, 0)] }
 
   it('maior carga máx do exercício; null se nunca teve carga > 0 ou não existe', () => {
@@ -393,7 +417,7 @@ describe('recordeAnterior', () => {
 })
 
 describe('resumoTreino', () => {
-  const o = (semana: number, cargaMax: number | null, volume: number | null = null) => ({ mesoId: 'm1', semana, treino: 1, dia: null, cargaMax, volume, movimentos: 0 })
+  const o = (semana: number, cargaMax: number | null, volume: number | null = null) => ({ mesoId: 'm1', semana, treino: 1, dia: null, conta: true, cargaMax, volume, movimentos: 0 })
   const h = {
     Supino: [o(1, 40, 800), o(2, 60, 1200), o(3, 70, 1400)], // recorde (antes 60)
     Agachamento: [o(1, 80, 1600), o(2, 100, 2000), o(3, 90, 1800)], // caiu: nada
@@ -462,6 +486,12 @@ describe('rankingAlunos', () => {
 
   it('aluno com 1 treino: sem evolução; previstos = frequência × semanas do meso nas 4 últimas', () => {
     expect(r[1]).toEqual({ id: 'b', nome: 'Bia', evolucaoPct: null, feitos4s: 1, previstos4s: 3 * 4, semanasSeguidas: 1, recordes30: 0 })
+  })
+
+  it('correção não conta em feitos4s nem em recordes30', () => {
+    const correcao: RegistroEvolucao = { mesoId: 'b-atual', semana: 5, treino: 1, cargas: carga('B', 80), atualizadoEm: ts('2026-10-07T10:00') }
+    const [, b] = rankingAlunos(alunos, [antigoA, futuroA, atualA, bAtual], [...regs, correcao], agora)
+    expect(b).toMatchObject({ feitos4s: 1, recordes30: 0, semanasSeguidas: 1 })
   })
 
   it('aluno sem meso: zerado', () => {

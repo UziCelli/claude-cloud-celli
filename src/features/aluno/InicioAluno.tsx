@@ -39,7 +39,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       <div className="flex items-center gap-3 pt-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm text-slate-400">{data[0].toUpperCase() + data.slice(1)}</p>
-          <h1 className="text-[28px] leading-tight">Olá, {nome.split(' ')[0]} 👋</h1>
+          <h1 className="text-[28px] leading-tight">Olá, {nome.split(' ')[0]}</h1>
         </div>
         <a href="#/conta" aria-label="Minha conta" className="toque rounded-full">
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
@@ -89,7 +89,7 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
               <Chip cor="bg-white/15 text-white">{ehHoje ? 'Hoje' : `Próximo · ${quando(dataTreino, hojeISO)}`}</Chip>
               <span className="text-xs font-semibold text-white/70">Semana {h.semana} de {meso.semanas}</span>
             </div>
-            <h2 className="mt-3 text-[34px] leading-none text-white">{'feito' in h && h.feito ? 'Treino de hoje concluído ✓' : `Treino ${treinoProx}`}</h2>
+            <h2 className="mt-3 text-[34px] leading-none text-white">{'feito' in h && h.feito ? <>Treino de hoje concluído <IcCheck className="inline size-6 align-[-3px]" /></> : `Treino ${treinoProx}`}</h2>
             <p className="mt-2 flex items-center gap-3 text-sm text-white/80">
               <span>{sessao.exercicios.length} exercícios</span>
               <span className="flex items-center gap-1"><IcRelogio className="size-4" /> ≈ {fmtMin(sessao.tempoMin)}</span>
@@ -106,7 +106,7 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
       ) : (
         <section className={cartaoGrande}>
           {/* Sem `dias`, "descanso" quer dizer que todos os treinos da semana foram feitos. */}
-          <h2 className="text-[28px] leading-tight text-white">{meso.dias?.length ? 'Hoje é descanso' : 'Semana concluída ✓'}</h2>
+          <h2 className="text-[28px] leading-tight text-white">{meso.dias?.length ? 'Hoje é descanso' : <>Semana concluída <IcCheck className="inline size-6 align-[-3px]" /></>}</h2>
           {'proximo' in h && h.proximo && (
             <p className="mt-2 text-[15px] text-white/85">Próximo: Treino {h.proximo.treino} · {diaCurto(h.proximo.dataTreino)}, {Number(h.proximo.dataTreino.slice(8))}</p>
           )}
