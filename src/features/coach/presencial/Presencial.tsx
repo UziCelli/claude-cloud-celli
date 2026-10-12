@@ -1,4 +1,5 @@
 import { collection, doc, query, where } from 'firebase/firestore'
+import { m } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Avatar } from '../../../avatar'
 import type { Usuario } from '../../../lib/acesso'
@@ -6,7 +7,7 @@ import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { IcMais, IcSair } from '../../../icones'
 import { casar, ir } from '../../../rota'
-import { Bolha } from '../../../vidro'
+import { agil } from '../../../movimento'
 import Hoje from '../../aluno/Hoje'
 import Treino from '../../aluno/Treino'
 
@@ -63,8 +64,20 @@ export default function Grupo({ rota }: { rota: string }) {
       {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} />)}
       {membros.length > 1 && (
         <nav aria-label="Alunos do grupo" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4">
-          <div className="vidro !bg-slate-900/85 mx-auto flex max-w-[400px] gap-1 rounded-full p-1">
-            {membros.map((u) => <Aluno key={u} uid={u} ativo={u === ativo} onClick={() => u !== ativo && trocar(u)} />)}
+          <div className="vidro !bg-slate-900/85 mx-auto max-w-[400px] rounded-full p-1">
+            <div className="relative flex">
+              {/* Pílula própria (x em %), não Bolha/layoutId: o layoutId mede pela página e, com alunos em
+                  rolagens diferentes, a pílula "caçava" a diferença de rolagem ao trocar. */}
+              <m.span
+                aria-hidden
+                className="lente absolute inset-y-0 left-0 rounded-full"
+                style={{ width: `${100 / membros.length}%` }}
+                initial={false}
+                animate={{ x: `${membros.indexOf(ativo) * 100}%` }}
+                transition={agil}
+              />
+              {membros.map((u) => <Aluno key={u} uid={u} ativo={u === ativo} onClick={() => u !== ativo && trocar(u)} />)}
+            </div>
           </div>
         </nav>
       )}
@@ -111,8 +124,6 @@ function Aluno({ uid, ativo, onClick }: { uid: string; ativo: boolean; onClick: 
   const nome = useNome(uid)
   return (
     <button onClick={onClick} aria-current={ativo ? 'true' : undefined} className={`relative h-11 min-w-0 flex-1 rounded-full px-4 text-sm font-semibold ${ativo ? 'text-white' : 'text-slate-300/85'}`}>
-      {ativo && <Bolha id="bolha-grupo" />}
-      {/* truncate fica no texto: no botão, o overflow cortaria a pílula enquanto ela desliza */}
       <span className="block truncate">{primeiro(nome)}</span>
     </button>
   )
