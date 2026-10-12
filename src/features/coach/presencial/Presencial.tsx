@@ -6,6 +6,7 @@ import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { IcMais, IcSair } from '../../../icones'
 import { casar, ir } from '../../../rota'
+import { Bolha } from '../../../vidro'
 import Hoje from '../../aluno/Hoje'
 import Treino from '../../aluno/Treino'
 
@@ -28,7 +29,6 @@ export default function Grupo({ rota }: { rota: string }) {
   const [grupo, setGrupo] = useState(lerGrupo)
   const [rotas, setRotas] = useState<Record<string, string>>({})
   const [folha, setFolha] = useState(false)
-  const [pilha, setPilha] = useState(false)
   const rolagem = useRef<Record<string, number>>({})
   const membros = grupo.includes(ativo) ? grupo : [ativo]
 
@@ -38,7 +38,7 @@ export default function Grupo({ rota }: { rota: string }) {
   }, [membros.join()]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { try { sessionStorage.removeItem(CHAVE) } catch { /* ok */ } }, []) // saiu do presencial: grupo acaba
   useEffect(() => { setRotas((r) => ({ ...r, [ativo]: rota })) }, [ativo, rota])
-  useEffect(() => { setPilha(false); window.scrollTo(0, rolagem.current[ativo] ?? 0) }, [ativo])
+  useEffect(() => { window.scrollTo(0, rolagem.current[ativo] ?? 0) }, [ativo])
 
   const rotaDe = (u: string) => (u === ativo ? rota : rotas[u] ?? padrao(u))
   const trocar = (b: string) => {
@@ -56,17 +56,17 @@ export default function Grupo({ rota }: { rota: string }) {
     setFolha(false)
     ir(padrao(b))
   }
-  const proximo = membros[(membros.indexOf(ativo) + 1) % membros.length]
 
   return (
     <>
       <Barra uid={ativo} onAdicionar={() => setFolha(true)} onSair={sair} />
       {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} />)}
       {membros.length > 1 && (
-        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 z-30 flex flex-col-reverse items-start gap-2">
-          <Flutuante uid={proximo} onClick={() => (membros.length === 2 ? trocar(proximo) : setPilha((v) => !v))} />
-          {pilha && membros.filter((u) => u !== ativo).map((u) => <Pilula key={u} uid={u} onClick={() => trocar(u)} />)}
-        </div>
+        <nav aria-label="Alunos do grupo" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+          <div className="vidro !bg-slate-900/85 mx-auto flex max-w-[400px] gap-1 overflow-x-auto rounded-full p-1">
+            {membros.map((u) => <Aluno key={u} uid={u} ativo={u === ativo} onClick={() => u !== ativo && trocar(u)} />)}
+          </div>
+        </nav>
       )}
       {folha && <Folha excluir={membros} onEscolher={adicionar} onFechar={() => setFolha(false)} />}
     </>
@@ -99,7 +99,7 @@ function Membro({ uid, ativo, rota }: { uid: string; ativo: boolean; rota: strin
   const base = padrao(uid)
   const p = casar('/aluno/:uid/presencial/treino/:mesoId/:semana/:treino', rota)
   return (
-    <section aria-label={`Treino de ${nome}`} hidden={!ativo} className="pb-24">
+    <section aria-label={`Treino de ${nome}`} hidden={!ativo} className="pb-36">
       {p
         ? <Treino uid={uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} base={base} coach />
         : <Hoje uid={uid} base={base} coach />}
@@ -107,19 +107,11 @@ function Membro({ uid, ativo, rota }: { uid: string; ativo: boolean; rota: strin
   )
 }
 
-function Flutuante({ uid, onClick }: { uid: string; onClick: () => void }) {
+function Aluno({ uid, ativo, onClick }: { uid: string; ativo: boolean; onClick: () => void }) {
   const nome = useNome(uid)
   return (
-    <button onClick={onClick} aria-label={`Ir para ${primeiro(nome)}`} className="size-14 rounded-full shadow-lg shadow-black/40">
-      <Avatar nome={nome || '?'} tamanho={56} />
-    </button>
-  )
-}
-
-function Pilula({ uid, onClick }: { uid: string; onClick: () => void }) {
-  const nome = useNome(uid)
-  return (
-    <button onClick={onClick} className="h-10 rounded-full bg-slate-900 px-4 text-sm font-semibold text-slate-100 shadow-lg ring-1 ring-white/15">
+    <button onClick={onClick} aria-current={ativo ? 'true' : undefined} className={`relative h-11 min-w-0 flex-1 truncate rounded-full px-4 text-sm font-semibold ${ativo ? 'text-white' : 'text-slate-300/85'}`}>
+      {ativo && <Bolha id="bolha-grupo" />}
       {primeiro(nome)}
     </button>
   )

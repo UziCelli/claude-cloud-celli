@@ -34,6 +34,7 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
 
   await test.step('coach põe a mensalidade 150', async () => {
     await coach.goto('/#/alunos')
+    await coach.getByRole('button', { name: `Configurações de ${ALUNO.nome}` }).filter({ visible: true }).click()
     await coach.getByRole('button', { name: 'Renovar' }).click()
     await coach.getByRole('spinbutton', { name: 'Mensalidade (R$)' }).fill('150')
     await coach.getByRole('button', { name: 'Salvar mensalidade' }).click()

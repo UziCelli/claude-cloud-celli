@@ -8,6 +8,7 @@ import { docParaMeso, type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { ir } from '../../../rota'
+import { IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagina, Painel } from '../../../ui'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { cicloTerminou } from '../../../lib/relatorio'
@@ -45,7 +46,10 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       acoes={
         <>
           <Botao onClick={() => ir(`/aluno/${uid}/evolucao`)}>Evolução</Botao>
-          <Botao onClick={() => ir(`/aluno/${uid}/presencial`)}>Treino presencial</Botao>
+          <Botao tipo="destaque" className="inline-flex items-center gap-1.5" onClick={() => ir(`/aluno/${uid}/presencial`)}>
+            <IcPlay className="size-4" />
+            Treino presencial
+          </Botao>
           <Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>
         </>
       }
