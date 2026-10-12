@@ -12,6 +12,7 @@ import { IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagina, Painel } from '../../../ui'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { cicloTerminou } from '../../../lib/relatorio'
+import ImportarPlanilha from './ImportarPlanilha'
 import { mesoPadrao } from './mesoPadrao'
 
 const dataBr = (iso: string) => {
@@ -24,6 +25,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
   const mesosQ = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
   const mesos = useLista<MesoSalvo>(mesosQ)
   const [erro, setErro] = useState<string | null>(null)
+  const [importando, setImportando] = useState(false)
   const [aviso] = useState(() => {
     const t = flash.texto
     flash.texto = ''
@@ -50,12 +52,16 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
             <IcPlay className="size-4" />
             Treino presencial
           </Botao>
+          <Botao onClick={() => setImportando((v) => !v)}>Importar da planilha</Botao>
           <Botao tipo="primario" onClick={novoMeso}>Novo mesociclo</Botao>
         </>
       }
     >
       <Msg>{aviso && <p className="mb-3 text-sm text-green-400">{aviso}</p>}</Msg>
       {aluno.dados?.presencial && <DarAcesso id={uid} />}
+      <Painel aberto={importando}>
+        {importando && <ImportarPlanilha uid={uid} qtdMesos={mesos.dados.length} onFechar={() => setImportando(false)} />}
+      </Painel>
       <Msg>{erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}</Msg>
       {mesos.carregando && <p className="text-slate-400">Carregando…</p>}
       {!mesos.carregando && mesos.dados.length === 0 && <p className="text-slate-400">Nenhum mesociclo ainda.</p>}

@@ -24,6 +24,7 @@ import {
   doc,
   getDoc,
   getDocFromServer,
+  getDocs,
   getDocsFromServer,
   query,
   serverTimestamp,
@@ -39,6 +40,7 @@ import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
 import { arquivadosVencidos } from './alertas'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
 import { auth, authCadastro, db } from './firebase'
+import type { Importado } from './planilha'
 import { inicioJanela } from './resumo'
 import { VERSAO_PRIVACIDADE } from './privacidade'
 import marca from '@marca/marca.json'
@@ -160,6 +162,26 @@ export function salvarMeso(mesoId: string | null, alunoId: string, nome: string,
   if (mesoId) return { id: mesoId, gravado: updateDoc(doc(db, 'mesos', mesoId), dados) }
   const ref = doc(collection(db, 'mesos'))
   return { id: ref.id, gravado: setDoc(ref, { ...dados, alunoId, criadoEm: serverTimestamp() }) }
+}
+
+// Importa um meso da planilha com as cargas já registradas, tudo num lote só (tudo ou nada).
+// Sem a data real do treino: meio-dia (SP) do dia estimado = início + semana + treino, nunca no futuro.
+// Offline: o id sai na hora e `gravado` resolve quando o servidor confirmar (como salvarMeso).
+export async function importarMeso(alunoId: string, nome: string, { meso, registros }: Importado) {
+  const iguais = await getDocs(query(collection(db, 'mesos'), where('alunoId', '==', alunoId), where('nome', '==', nome)))
+  if (!iguais.empty) throw new Error(`Este aluno já tem um mesociclo chamado "${nome}".`)
+  const b = writeBatch(db)
+  const ref = doc(collection(db, 'mesos'))
+  b.set(ref, { nome, ...mesoParaDoc(meso), atualizadoEm: serverTimestamp(), alunoId, criadoEm: serverTimestamp() })
+  for (const r of registros) {
+    const ms = Date.parse(`${meso.inicio}T15:00:00Z`) + ((r.semana - 1) * 7 + (r.treino - 1)) * 864e5
+    const quando = Timestamp.fromMillis(Math.min(ms, Date.now()))
+    b.set(doc(db, 'registros', registroId(ref.id, r.semana, r.treino)), {
+      alunoId, mesoId: ref.id, semana: r.semana, treino: r.treino,
+      realizado: r.realizado, realizadoEm: r.realizado ? quando : null, cargas: r.cargas, atualizadoEm: quando,
+    })
+  }
+  return { id: ref.id, gravado: b.commit() }
 }
 
 // Marca que o coach adaptou o treino (o aluno vê o aviso uma vez).

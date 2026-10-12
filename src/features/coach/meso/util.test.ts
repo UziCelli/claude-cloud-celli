@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Meso } from '../../../engine'
-import { copiarTreino, filtrarMetodos } from './util'
+import { copiarTreino, filtrarMetodos, nomeImportado } from './util'
 
 const meso = {
   frequencia: 3,
@@ -53,5 +53,14 @@ describe('filtrarMetodos', () => {
     expect(filtrarMetodos(lista, { semana: 2, treino: 2 }).map((x) => x.idx)).toEqual([2])
     expect(filtrarMetodos(lista, { exercicio: 3 }).map((x) => x.idx)).toEqual([1, 2])
     expect(filtrarMetodos(lista, { semana: 1, exercicio: 3 })).toEqual([])
+  })
+})
+
+describe('nomeImportado', () => {
+  it('usa o número da aba ou o próximo', () => {
+    expect(nomeImportado('M7', 2)).toBe('Mesociclo 7')
+    expect(nomeImportado('M (6)', 2)).toBe('Mesociclo 6')
+    expect(nomeImportado('M 3', 2)).toBe('Mesociclo 3')
+    expect(nomeImportado('Treino', 2)).toBe('Mesociclo 3')
   })
 })
