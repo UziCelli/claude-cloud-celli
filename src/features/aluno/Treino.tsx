@@ -53,15 +53,22 @@ function Novidades() {
   }
   return (
     <Painel aberto={ver}>
-    <div className="mb-4 rounded-xl border border-marca-500 bg-slate-900 p-4 text-sm">
-      <div className="mb-1 font-semibold">Novidades</div>
-      <ul className="mb-3 space-y-1 text-slate-300">
-        <li>Anotação em cada exercício</li>
-        <li>Feito com o peso do corpo: já vem marcado na barra fixa e na flexão; nos campos, anote só o peso extra</li>
-        <li>Número cinza = carga da semana passada</li>
-        <li>Treino do dia em destaque na tela Hoje</li>
+    <div className="mb-4 rounded-2xl border border-marca-400/60 bg-gradient-to-br from-marca-500/30 to-marca-700/10 p-4 text-sm shadow-lg shadow-marca-500/20">
+      <div className="mb-3 flex items-center gap-2 text-base font-bold text-white">
+        <span className="grid size-8 place-items-center rounded-full bg-marca-500"><IcInfo className="size-4" /></span>
+        Novidades
+      </div>
+      <ul className="mb-4 space-y-2 text-slate-100">
+        {[
+          'Anotação em cada exercício',
+          'Feito com o peso do corpo: já vem marcado na barra fixa e na flexão; nos campos, anote só o peso extra',
+          'Número cinza = carga da semana passada',
+          'Treino do dia em destaque na tela Hoje',
+        ].map((t) => (
+          <li key={t} className="flex gap-2"><IcCheck className="mt-0.5 size-4 shrink-0 text-marca-300" />{t}</li>
+        ))}
       </ul>
-      <Botao onClick={fechar}>Entendi</Botao>
+      <Botao tipo="primario" className="w-full" onClick={fechar}>Entendi</Botao>
     </div>
     </Painel>
   )
@@ -289,7 +296,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
         Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{hms(agora - inicio)}</span>
         <span className="text-slate-500">· previsto {previsto}</span>
       </p>
-      <Botao className="whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
+      <Botao tipo="alerta" className="whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
     </div>
   )
 }

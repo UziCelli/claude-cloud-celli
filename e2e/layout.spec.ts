@@ -215,6 +215,40 @@ for (const vp of [
   })
 }
 
+// Barra de abas do coach no mesmo lugar em todas as telas (inclusive as curtas, como Alertas): a tela ocupa pelo menos a altura da tela.
+test('coach iPhone 390x844: barra de abas na mesma altura em todas as telas', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: UA_IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 3 })
+  const page = await ctx.newPage()
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  const abas = page.locator('nav[aria-label="Menu"]')
+  const telas: [string, RegExp][] = [
+    ['Início', /^Início$/],
+    ['Alunos', /^Alunos/],
+    ['Alertas', /^Alertas/],
+    ['Métodos', /^Métodos/],
+    ['Conta', /^Conta/],
+  ]
+  const medidas: number[] = []
+  for (const [nome, re] of telas) {
+    await abas.getByRole('link', { name: re }).click()
+    await expect(abas.getByRole('link', { name: re })).toHaveAttribute('aria-current', 'page')
+    await page.waitForTimeout(400) // espera a troca de aba (fade) terminar
+    const r = await page.evaluate(() => ({
+      bottom: document.querySelector('nav[aria-label="Menu"]')?.getBoundingClientRect().bottom ?? -1,
+      altura: document.documentElement.scrollHeight,
+      tela: innerHeight,
+    }))
+    expect(r.altura, `${nome}: altura da página`).toBeGreaterThanOrEqual(r.tela)
+    medidas.push(r.bottom)
+  }
+  for (const b of medidas) expect(b).toBeCloseTo(medidas[0], 0)
+  await ctx.close()
+})
+
 test('print da tela de login (390px)', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')

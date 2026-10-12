@@ -30,6 +30,8 @@ const estilos = {
   primario: 'bg-marca-500 text-white hover:bg-marca-400',
   secundario: 'bg-slate-800 text-slate-100 hover:bg-slate-700',
   perigo: 'bg-red-600 text-white hover:bg-red-500',
+  destaque: 'bg-amber-400 text-slate-950 hover:bg-amber-300',
+  alerta: 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/50 hover:bg-red-500/25',
 }
 
 export const Botao = ({

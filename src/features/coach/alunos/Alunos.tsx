@@ -1,5 +1,5 @@
 import { AnimatePresence, m } from 'motion/react'
-import { saida, suave } from '../../../movimento'
+import { agil, saida, suave } from '../../../movimento'
 import { useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
@@ -11,7 +11,8 @@ import { ir } from '../../../rota'
 import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
 import { PIX, reais } from '../../aluno/PagarPix'
-import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
+import { IcEngrenagem, IcPlay } from '../../../icones'
+import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina, Painel } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
 
@@ -67,6 +68,7 @@ export default function Alunos() {
   const imgs = new Map(fotos.map((f) => [f.id, f.img]))
   const avatar = (a: Aluno) => <Avatar img={imgs.get(a.id)} nome={a.nome} selo={a.selo} tamanho={36} />
   const [busca, setBusca] = useState('')
+  const [aberto, setAberto] = useState<string | null>(null)
   const [editando, setEditando] = useState<string | null>(null)
   const [erro, setErro] = useState('')
   const [ok, setOk] = useState('')
@@ -86,6 +88,7 @@ export default function Alunos() {
       setErro('Não deu para gravar. Tente de novo.')
     })
     setEditando(null)
+    setAberto(null)
   }
 
   function confirmarPix(uid: string, pagoAte: Usuario['pagoAte']) {
@@ -110,44 +113,78 @@ export default function Alunos() {
 
   function reativar(uid: string) {
     setErro('')
+    setAberto(null)
     definirAcesso(uid, { status: 'ativo' }).catch((e) => {
       registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
       setErro('Não deu para gravar. Tente de novo.')
     })
   }
 
-  const acoes = (a: Aluno) =>
-    confirmando?.id === a.id ? (
-      <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => setConfirmando(null)} />
-    ) : a.status === 'arquivado' ? (
-      <div className="flex flex-wrap gap-2">
-        <Botao tipo="primario" onClick={() => reativar(a.id)}>Reativar</Botao>
-        <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'apagar' })}>Apagar de vez</Botao>
-      </div>
-    ) : a.presencial ? (
-      <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'arquivar' })}>Arquivar</Botao>
-    ) : editando === a.id ? (
-      <div className="w-full space-y-3">
-        <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
-        {PIX && <Mensalidade a={a} onSalvo={() => setEditando(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />}
-      </div>
+  function abrir(id: string | null) {
+    setAberto(id)
+    setEditando(null)
+    setConfirmando(null)
+  }
+
+  const linhaAcao = 'flex h-11 w-full items-center text-left text-sm font-semibold'
+  const acoes = (a: Aluno) => {
+    const arq = a.status === 'arquivado'
+    const lista = arq ? (
+      <>
+        <button className={linhaAcao} onClick={() => reativar(a.id)}>Reativar</button>
+        <button className={`${linhaAcao} text-red-400`} onClick={() => setConfirmando({ id: a.id, tipo: 'apagar' })}>Apagar de vez</button>
+      </>
     ) : (
-      <div className="flex flex-wrap gap-2">
-        {(a.status === 'aguardando' || a.status === 'bloqueado') && (
-          <Botao tipo="primario" onClick={() => setEditando(a.id)}>
-            Liberar
-          </Botao>
+      <>
+        {!a.presencial && a.status === 'bloqueado' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Liberar</button>}
+        {!a.presencial && a.status === 'ativo' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Renovar</button>}
+        {!a.presencial && a.status !== 'bloqueado' && (
+          <button className={`${linhaAcao} text-red-400`} onClick={() => { abrir(null); bloquear(a.id) }}>Bloquear</button>
         )}
-        {PIX && a.pagamentoInformadoEm && <Botao tipo="primario" onClick={() => confirmarPix(a.id, a.pagoAte)}>Confirmar pagamento</Botao>}
-        {a.status === 'ativo' && <Botao onClick={() => setEditando(a.id)}>Renovar</Botao>}
-        {a.status !== 'bloqueado' && (
-          <Botao tipo="perigo" onClick={() => bloquear(a.id)}>
-            Bloquear
-          </Botao>
-        )}
-        <Botao tipo="perigo" onClick={() => setConfirmando({ id: a.id, tipo: 'arquivar' })}>Arquivar</Botao>
+        <button className={`${linhaAcao} text-red-400`} onClick={() => setConfirmando({ id: a.id, tipo: 'arquivar' })}>Arquivar</button>
+      </>
+    )
+    return (
+      <div className="w-full">
+        <div className="flex flex-wrap items-center gap-2">
+          {!arq && (
+            <Botao tipo="destaque" className="inline-flex items-center gap-1.5" onClick={() => ir('/aluno/' + a.id + '/presencial')}>
+              <IcPlay className="size-4" />
+              Treino presencial
+            </Botao>
+          )}
+          {a.status === 'aguardando' && !a.presencial && (
+            <Botao tipo="primario" onClick={() => { setAberto(a.id); setConfirmando(null); setEditando(a.id) }}>Liberar</Botao>
+          )}
+          {PIX && a.pagamentoInformadoEm && <Botao tipo="primario" onClick={() => confirmarPix(a.id, a.pagoAte)}>Confirmar pagamento</Botao>}
+          <button
+            aria-label={`Configurações de ${a.nome}`}
+            aria-expanded={aberto === a.id}
+            className="ml-auto grid size-10 place-items-center rounded-full bg-slate-800 text-slate-200"
+            onClick={() => abrir(aberto === a.id ? null : a.id)}
+          >
+            <m.span className="grid" animate={{ rotate: aberto === a.id ? 90 : 0 }} transition={agil}>
+              <IcEngrenagem className="size-5" />
+            </m.span>
+          </button>
+        </div>
+        <Painel aberto={aberto === a.id}>
+          <div className="pt-2">
+            {confirmando?.id === a.id ? (
+              <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} />
+            ) : editando === a.id ? (
+              <div className="w-full space-y-3 pb-2">
+                <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
+                {PIX && <Mensalidade a={a} onSalvo={() => setEditando(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />}
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">{lista}</div>
+            )}
+          </div>
+        </Painel>
       </div>
     )
+  }
 
   return (
     <Pagina titulo="Alunos" acoes={<Botao tipo="primario" onClick={() => ir('/alunos/novo')}>Novo aluno</Botao>}>
