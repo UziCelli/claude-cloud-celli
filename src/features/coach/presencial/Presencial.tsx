@@ -63,7 +63,7 @@ export default function Grupo({ rota }: { rota: string }) {
       {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} />)}
       {membros.length > 1 && (
         <nav aria-label="Alunos do grupo" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4">
-          <div className="vidro !bg-slate-900/85 mx-auto flex max-w-[400px] gap-1 overflow-x-auto rounded-full p-1">
+          <div className="vidro !bg-slate-900/85 mx-auto flex max-w-[400px] gap-1 rounded-full p-1">
             {membros.map((u) => <Aluno key={u} uid={u} ativo={u === ativo} onClick={() => u !== ativo && trocar(u)} />)}
           </div>
         </nav>
@@ -110,9 +110,10 @@ function Membro({ uid, ativo, rota }: { uid: string; ativo: boolean; rota: strin
 function Aluno({ uid, ativo, onClick }: { uid: string; ativo: boolean; onClick: () => void }) {
   const nome = useNome(uid)
   return (
-    <button onClick={onClick} aria-current={ativo ? 'true' : undefined} className={`relative h-11 min-w-0 flex-1 truncate rounded-full px-4 text-sm font-semibold ${ativo ? 'text-white' : 'text-slate-300/85'}`}>
+    <button onClick={onClick} aria-current={ativo ? 'true' : undefined} className={`relative h-11 min-w-0 flex-1 rounded-full px-4 text-sm font-semibold ${ativo ? 'text-white' : 'text-slate-300/85'}`}>
       {ativo && <Bolha id="bolha-grupo" />}
-      {primeiro(nome)}
+      {/* truncate fica no texto: no botão, o overflow cortaria a pílula enquanto ela desliza */}
+      <span className="block truncate">{primeiro(nome)}</span>
     </button>
   )
 }
