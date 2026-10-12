@@ -12,7 +12,7 @@ import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
 import { PIX, reais } from '../../aluno/PagarPix'
 import { IcEngrenagem, IcPlay } from '../../../icones'
-import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina, Painel } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
 
@@ -45,9 +45,11 @@ function textoVencimento(a: Aluno) {
   return `${data} · vencido há ${-dias} dia${-dias === 1 ? '' : 's'}`
 }
 
-// Entrada em cascata (máx. 8 passos) e saída deslizando.
+// Entrada em cascata (máx. 8 passos) e saída deslizando. Quando um cartão cresce (engrenagem),
+// os de baixo deslizam por transform (layout) em vez de animar altura: sem trepidar no iPhone.
 const linha = (i: number) => ({
   layout: 'position' as const,
+  transition: suave,
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0, transition: { ...suave, delay: Math.min(i, 8) * 0.04 } },
   exit: { opacity: 0, x: 60, transition: saida },
@@ -168,8 +170,8 @@ export default function Alunos() {
             </m.span>
           </button>
         </div>
-        <Painel aberto={aberto === a.id}>
-          <div className="pt-2">
+        {aberto === a.id && (
+          <m.div className="pt-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
             {confirmando?.id === a.id ? (
               <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} />
             ) : editando === a.id ? (
@@ -180,8 +182,8 @@ export default function Alunos() {
             ) : (
               <div className="divide-y divide-white/5">{lista}</div>
             )}
-          </div>
-        </Painel>
+          </m.div>
+        )}
       </div>
     )
   }
@@ -298,12 +300,7 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
   }
 
   return (
-    <m.div
-      className="w-full space-y-2 overflow-hidden"
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      transition={suave}
-    >
+    <m.div className="w-full space-y-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
       <p className="text-sm">
         {apagar
           ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas, anotações e o login. A limpeza automática apaga também os registros de erro e as cópias de segurança em até 24 h. Não dá para desfazer.`
