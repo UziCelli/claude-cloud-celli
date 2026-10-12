@@ -64,3 +64,9 @@ export function filtrarMetodos(metodos: Meso['metodos'], f: FiltroMetodos) {
     .map((m, idx) => ({ m, idx }))
     .filter(({ m }) => (!f.semana || m.semana === f.semana) && (!f.treino || m.treino === f.treino) && (!f.exercicio || m.exercicio === f.exercicio))
 }
+
+// Nome sugerido ao importar: aba "M7" / "M (6)" / "M 3" vira "Mesociclo N"; outra aba, o próximo número.
+export function nomeImportado(aba: string, qtdMesos: number): string {
+  const n = /^M\s*\(?\s*(\d+)\s*\)?$/i.exec(aba.trim())?.[1]
+  return `Mesociclo ${n ?? qtdMesos + 1}`
+}
