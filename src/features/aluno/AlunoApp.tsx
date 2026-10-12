@@ -43,7 +43,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
       <Brilho />
       <AnimatePresence>{tutorial && <Tutorial fechar={() => setTutorial(false)} />}</AnimatePresence>
       <AvisoIOS />
-      <div className="pt-[env(safe-area-inset-top)]">
+      <div className="pt-topo">
         <Tela chave={rota} abrir={!!p}>{tela}</Tela>
       </div>
       {comBarra && <BarraAbas abas={abas} />}

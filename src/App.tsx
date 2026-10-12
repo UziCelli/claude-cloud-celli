@@ -162,8 +162,8 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
       <Brilho />
       {!presencial && <Menu rota={rota} />}
       <div className={`min-w-0 flex-1 ${presencial ? '' : 'pb-barra lg:pb-0'}`}>
-        <header hidden={presencial} className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] lg:hidden">
-          <div className="mx-auto max-w-6xl px-4 py-3">
+        <header hidden={presencial} className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-topo lg:hidden">
+          <div className="mx-auto max-w-6xl px-4 pb-3">
             <a href="#/" className="inline-block text-white" aria-label={marca.nome}>
               <Logo className="h-5" />
             </a>
