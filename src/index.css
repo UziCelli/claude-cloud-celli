@@ -132,5 +132,11 @@ button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer
   padding-bottom: calc(66px + 2rem + env(safe-area-inset-bottom));
 }
 
+/* Topo da tela: área segura + 12px. Toque colado na borda superior puxa a barra de notificações
+   (Android e iPhone); nada clicável encosta ali. Use em toda barra ou cabeçalho no topo. */
+@utility pt-topo {
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+}
+
 /* Selo do reCAPTCHA tapa botões no celular; o aviso legal fica na tela de login. */
 .grecaptcha-badge { visibility: hidden; }

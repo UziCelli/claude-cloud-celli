@@ -61,3 +61,4 @@ O Victor não revisa código: a revisão é nossa e o merge também, **sem pedir
 - Nenhuma carga registrada pode se perder: gravação campo a campo (`cargas.<slotId>.s<n>`), nunca sobrescrever o documento inteiro.
 - Aluno só lê o próprio treino e só escreve o próprio registro, e só com `status == 'ativo'` e `pagoAte` no futuro.
 - Textos da interface em português do Brasil.
+- Topo da tela: toda barra ou cabeçalho no topo usa `pt-topo` (área segura + 12px, em `src/index.css`). Nada clicável colado na borda superior: ali o dedo puxa a barra de notificações. Ações frequentes ficam embaixo, perto do polegar.

@@ -76,7 +76,7 @@ export default function Grupo({ rota }: { rota: string }) {
 function Barra({ uid, onAdicionar, onSair }: { uid: string; onAdicionar: () => void; onSair: () => void }) {
   const nome = useNome(uid)
   return (
-    <div role="region" aria-label="Presencial" className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+    <div role="region" aria-label="Presencial" className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/90 pt-topo backdrop-blur-md">
       <div className="mx-auto flex h-12 max-w-md items-center gap-3 px-4">
         <span className="size-2 shrink-0 rounded-full bg-amber-400" />
         <div className="min-w-0 flex-1 leading-tight">
