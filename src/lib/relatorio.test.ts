@@ -78,6 +78,13 @@ describe('relatorioCiclo', () => {
     expect([r.feitos, r.previstos, r.aderenciaPct]).toEqual([2, 4, 50])
   })
 
+  it('correção (carga sem Concluir) fica fora da aderência e dos feitos, mas o volume entra', () => {
+    const correcao: RegistroEvolucao = { mesoId: 'm1', semana: 4, treino: 2, cargas: carga('C', 30), atualizadoEm: ts('2026-10-09T10:00') }
+    const r = relatorioCiclo([m0, m1], [...registros, correcao], 'm1', agora)!
+    expect([r.feitos, r.aderenciaPct, r.semanasCompletas]).toEqual([4, 50, 1])
+    expect(r.porSemana[3]).toEqual({ semana: 4, feitos: 0, previstos: 2, volumeKg: 600, movimentos: 20 })
+  })
+
   it('sem treino: zeros e tempo médio null; meso desconhecido: null', () => {
     const r = relatorioCiclo([m1], [], 'm1', agora)!
     expect([r.feitos, r.aderenciaPct, r.volumeKg, r.movimentos, r.tempoMedioMin, r.recordes, r.evolucoes]).toEqual([0, 0, 0, 0, null, [], []])

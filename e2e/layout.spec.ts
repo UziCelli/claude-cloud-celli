@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { criarAluno, criarCoach, criarMeso, hojeSaoPaulo, limparEmuladores } from './seed'
+import { criarAluno, criarCoach, criarMeso, criarRegistro, hojeSaoPaulo, limparEmuladores } from './seed'
 
 const ALUNO = { nome: 'Bia Layout', email: 'bia.layout-e2e@teste.com', senha: 'senha123' }
 const COACH = { email: 'victor.layout-e2e@teste.com', senha: 'senha123' }
@@ -30,6 +30,8 @@ test.beforeAll(async () => {
     ],
     progressao: { principais: { w1: w, w2: w, w3: w, w4: w }, auxiliares: { w1: w, w2: w, w3: w, w4: w } },
   })
+  // Um treino concluído: o painel de Evolução precisa de dados (treino só iniciado não conta como feito).
+  await criarRegistro(mesoId, alunoId, 1, 3, { realizado: true, realizadoEm: new Date(), cargas: { a: { s1: 50 } } })
 })
 
 async function confere(page: Page) {
@@ -99,11 +101,11 @@ for (const vp of [
     await page.getByRole('dialog', { name: 'Métodos deste treino' }).getByRole('button', { name: 'Entendi', exact: true }).click()
     await expect(page.getByRole('dialog', { name: 'Métodos deste treino' })).toBeHidden()
     // Os viewports repetem o mesmo aluno: o treino pode já estar iniciado por um deles.
-    await page.getByRole('button', { name: '▶ Iniciar treino' }).click({ timeout: 3000 }).catch(() => {})
+    await page.getByRole('button', { name: 'Iniciar treino' }).click({ timeout: 3000 }).catch(() => {})
     const kg = page.locator('input[type="number"]').first()
     await kg.fill('100.5')
     await kg.blur()
-    await page.getByRole('button', { name: /^▶ \d+ s$/ }).first().click()
+    await page.getByRole('button', { name: /^Descansar \d+ s$/ }).first().click()
     await expect(page.getByText('Pular')).toBeVisible()
     await confere(page)
     if (prints) await page.screenshot({ path: 'test-results/prints/20-iphone14-treino.png' })

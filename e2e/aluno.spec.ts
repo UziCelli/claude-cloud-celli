@@ -64,7 +64,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
   await test.step('registra carga e vê o timer de descanso', async () => {
     await page.getByRole('button', { name: /Treino 1/ }).click()
     await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
-    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
+    await page.getByRole('button', { name: 'Iniciar treino' }).click()
 
     const cartaoExercicio1 = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' })
     const kgInputs = cartaoExercicio1.locator('input[type="number"]')
@@ -74,21 +74,21 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
 
     // Gravar carga não liga o cronômetro sozinho.
     await expect(page.getByText('Pular')).toBeHidden()
-    await expect(cartaoExercicio1.getByRole('button', { name: /▶ 60 s/ })).toBeVisible()
+    await expect(cartaoExercicio1.getByRole('button', { name: /Descansar 60 s/ })).toBeVisible()
 
-    // ▶ liga o descanso; pausa e reinicia.
-    await cartaoExercicio1.getByRole('button', { name: /▶ 60 s/ }).click()
+    // Play liga o descanso; pausa e reinicia.
+    await cartaoExercicio1.getByRole('button', { name: /Descansar 60 s/ }).click()
     await expect(page.getByText('Pular')).toBeVisible({ timeout: 5000 })
     await expect(page.getByText(/^\d:\d\d$/)).toBeVisible()
-    await expect(cartaoExercicio1.getByRole('button', { name: /⏸/ })).toBeVisible()
+    await expect(cartaoExercicio1.getByRole('button', { name: /Pausar/ })).toBeVisible()
     await page.screenshot({ path: 'test-results/prints/11-aluno-treino.png' })
     await page.screenshot({ path: 'test-results/prints/50-treino-animado.png' })
     await page.setViewportSize({ width: 390, height: 844 })
     await page.screenshot({ path: 'test-results/prints/70-treino.png' })
-    await cartaoExercicio1.getByRole('button', { name: /⏸/ }).click()
-    await expect(cartaoExercicio1.getByRole('button', { name: /▶ \d:\d\d/ })).toBeVisible()
+    await cartaoExercicio1.getByRole('button', { name: /Pausar/ }).click()
+    await expect(cartaoExercicio1.getByRole('button', { name: /Continuar \d:\d\d/ })).toBeVisible()
     await cartaoExercicio1.getByRole('button', { name: 'Reiniciar' }).click()
-    await expect(cartaoExercicio1.getByRole('button', { name: /⏸/ })).toBeVisible()
+    await expect(cartaoExercicio1.getByRole('button', { name: /Pausar/ })).toBeVisible()
     await page.getByRole('button', { name: 'Pular' }).click()
 
     // Reps feitas da série 1 (segundo input do par).
@@ -167,7 +167,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
 
   await test.step('PC: liga com peso, digita o extra e grava o total', async () => {
     await page.getByRole('button', { name: /Treino 2/ }).click()
-    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
+    await page.getByRole('button', { name: 'Iniciar treino' }).click()
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
     page.once('dialog', (d) => d.accept('80'))
     await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
@@ -296,7 +296,7 @@ test('selos de método, nota, guia e cronômetro que sobrevive ao reload', async
   await expect(selo).toBeVisible()
   await expect(nota).toBeHidden()
 
-  await page.getByRole('button', { name: /▶ 90 s/ }).first().click()
+  await page.getByRole('button', { name: /Descansar 90 s/ }).first().click()
   await page.reload()
   const tempo = page.locator('.font-display.tabular-nums')
   await expect(tempo).toBeVisible()
@@ -324,7 +324,7 @@ test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({
   const kg = cartao.locator('input[type="number"]').first()
 
   await test.step('(a) tocar no cronômetro não inicia o treino', async () => {
-    await cartao.getByRole('button', { name: /^▶ \d+ s$/ }).click()
+    await cartao.getByRole('button', { name: /^Descansar \d+ s$/ }).click()
     await expect(page.getByText('Treino em andamento')).toHaveCount(0)
     await expect(kg).toBeDisabled()
     await expect(cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ })).toBeDisabled()
@@ -334,7 +334,7 @@ test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({
   })
 
   await test.step('(b) iniciar, anotar, cancelar', async () => {
-    await page.getByRole('button', { name: '▶ Iniciar treino' }).click()
+    await page.getByRole('button', { name: 'Iniciar treino' }).click()
     await expect(kg).toBeEnabled()
     await kg.fill('25')
     await kg.blur()
@@ -344,7 +344,7 @@ test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({
 
     page.once('dialog', (d) => d.accept())
     await page.getByRole('button', { name: 'Cancelar treino' }).click()
-    await expect(page.getByRole('button', { name: '▶ Iniciar treino' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Iniciar treino' })).toBeVisible()
     await expect(kg).toHaveValue('')
     await expect
       .poll(async () => {
@@ -356,4 +356,25 @@ test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({
     expect(f.inicioEm).toBeUndefined()
     expect(f.realizado?.booleanValue).not.toBe(true)
   })
+})
+
+test('aluno não abre treino não feito de semana que já passou', async ({ page }) => {
+  const BIA = { nome: 'Bia Atrasada', email: 'bia.aluno-e2e@teste.com', senha: 'senha123' }
+  const biaId = await criarAluno(BIA.nome, BIA.email, BIA.senha)
+  const d = new Date(Date.now() - 3 * 3600_000 - 8 * 86_400_000).toISOString().slice(0, 10)
+  const prog = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null] }
+  const id = await criarMeso({
+    alunoId: biaId, nome: 'Meso Atrasado', frequencia: 2, semanas: 2, inicio: d, pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }], t2: [{ slotId: 'a', nome: 'Supino Reto Barra' }] },
+    progressao: { principais: prog, auxiliares: prog },
+  })
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(BIA.email)
+  await page.getByLabel('Senha').fill(BIA.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+  await expect(page.getByText('Semana 2 de 2')).toBeVisible()
+  await page.goto(`/#/treino/${id}/1/1`)
+  await expect(page.getByText('Semana 1 já passou.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toHaveCount(0)
 })

@@ -2,11 +2,13 @@ import marca from '@marca/marca.json'
 import type { ReactNode } from 'react'
 import type { RelatorioCiclo } from '../../lib/relatorio'
 import { fmt } from '../coach/semana/format'
+import { IcTrofeu } from '../../icones'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
+import { gerarPdfRelatorio } from './pdfRelatorio'
 import { dadosCartaoRelatorio, gerarCartaoRelatorio, periodoTexto, volumeTexto } from './cartaoRelatorio'
 
 const Bloco = ({ titulo, children }: { titulo: string; children: ReactNode }) => (
-  <section className="rel-bloco rounded-2xl border border-slate-800 bg-slate-900 p-4">
+  <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
     <h2 className="mb-3 font-semibold">{titulo}</h2>
     {children}
   </section>
@@ -14,18 +16,18 @@ const Bloco = ({ titulo, children }: { titulo: string; children: ReactNode }) =>
 
 const Faixa = ({ frac, className = 'bg-marca-500' }: { frac: number; className?: string }) => (
   <div className="h-2 overflow-hidden rounded bg-slate-800">
-    <div className={`rel-faixa h-full rounded ${className}`} style={{ width: `${Math.max(3, Math.round(Math.min(1, frac) * 100))}%` }} />
+    <div className={`h-full rounded ${className}`} style={{ width: `${Math.max(3, Math.round(Math.min(1, frac) * 100))}%` }} />
   </div>
 )
 
 const Numero = ({ valor, rotulo }: { valor: string; rotulo: string }) => (
-  <div className="rel-bloco rounded-2xl border border-slate-800 bg-slate-900 px-2 py-3 text-center">
+  <div className="rounded-2xl border border-slate-800 bg-slate-900 px-2 py-3 text-center">
     <p className="font-display text-2xl font-extrabold text-marca-400">{valor}</p>
     <p className="text-xs text-slate-400">{rotulo}</p>
   </div>
 )
 
-// Relatório do ciclo: a mesma tela para o coach, para o aluno e para o PDF (window.print + @media print).
+// Relatório do ciclo: a mesma tela para o coach, para o aluno e para o PDF (PDF montado no aparelho).
 export default function Relatorio({ r, aluno, comentario, compartilhar = false }: { r: RelatorioCiclo; aluno: string; comentario?: string; compartilhar?: boolean }) {
   return (
     <article className="relatorio space-y-3">
@@ -38,7 +40,7 @@ export default function Relatorio({ r, aluno, comentario, compartilhar = false }
       </div>
 
       {comentario?.trim() && (
-        <section className="rel-destaque rel-bloco rounded-2xl bg-gradient-to-br from-marca-600 to-marca-900 p-4 ring-1 ring-white/15">
+        <section className="rounded-2xl bg-gradient-to-br from-marca-600 to-marca-900 p-4 ring-1 ring-white/15">
           <h2 className="text-xs font-bold uppercase tracking-widest text-white/70">Recado do seu coach</h2>
           <p className="mt-2 whitespace-pre-wrap text-base leading-snug text-white">{comentario.trim()}</p>
         </section>
@@ -106,7 +108,7 @@ export default function Relatorio({ r, aluno, comentario, compartilhar = false }
           <ul className="space-y-1.5 text-sm">
             {r.recordes.map((x) => (
               <li key={x.nome} className="flex justify-between gap-2">
-                <span>🏆 {x.nome}</span>
+                <span><IcTrofeu className="inline size-3 align-[-1px]" /> {x.nome}</span>
                 <span className="text-slate-300">
                   {fmt(x.kg)} kg · sem. {x.semana}
                 </span>
@@ -117,16 +119,14 @@ export default function Relatorio({ r, aluno, comentario, compartilhar = false }
       )}
 
       {compartilhar && (
-        <div className="nao-imprimir">
-          <BotaoCompartilhar dados={dadosCartaoRelatorio(r, aluno)} gerar={gerarCartaoRelatorio} />
-        </div>
+        <BotaoCompartilhar dados={dadosCartaoRelatorio(r, aluno)} gerar={gerarCartaoRelatorio} />
       )}
     </article>
   )
 }
 
-export const BotaoPdf = () => (
-  <button type="button" onClick={() => window.print()} className="nao-imprimir min-h-11 w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-700">
-    Baixar PDF
-  </button>
+const gerarPdf = (d: { r: RelatorioCiclo; aluno: string; comentario?: string }) => gerarPdfRelatorio(d)
+
+export const BotaoPdf = ({ r, aluno, comentario }: { r: RelatorioCiclo; aluno: string; comentario?: string }) => (
+  <BotaoCompartilhar dados={{ r, aluno, comentario }} gerar={gerarPdf} rotulo="Baixar PDF" arquivo="relatorio-do-ciclo.pdf" titulo="Relatório do ciclo" />
 )

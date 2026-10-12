@@ -135,7 +135,7 @@ export default function Inicio({ nome }: { nome: string }) {
                     ? hoje.map((t) => ({
                         k: `${t.mesoId}-${t.semana}-${t.treino}`,
                         href: `#/meso/${t.mesoId}/semana/${t.semana}`,
-                        texto: `${a.nome} · Treino ${t.treino}${t.feito ? ' ✓' : ' (em andamento)'}`,
+                        texto: `${a.nome} · Treino ${t.treino}${t.feito ? ' (feito)' : ' (em andamento)'}`,
                       }))
                     : [{ k: a.id, href: `#/aluno/${a.id}`, texto: a.nome }]
                   return links.map((l) => (

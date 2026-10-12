@@ -9,6 +9,7 @@ import type { Usuario } from '../../lib/acesso'
 import { db } from '../../lib/firebase'
 import { useDoc } from '../../lib/hooks'
 import { Aviso, Botao, Campo, Cartao, Msg, Pagina } from '../../ui'
+import { IcCheck } from '../../icones'
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
 const erros: Record<string, string> = {
@@ -70,7 +71,7 @@ function DuasEtapas() {
     <Cartao className="space-y-3">
       <h2 className="font-semibold">Verificação em 2 etapas</h2>
       {ativa ? (
-        <p className="text-sm text-emerald-400">Ativada ✓</p>
+        <p className="text-sm text-emerald-400">Ativada <IcCheck className="inline size-4 align-[-2px]" /></p>
       ) : (
         <>
           <p className="text-sm text-slate-400">

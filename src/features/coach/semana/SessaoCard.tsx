@@ -8,6 +8,7 @@ import { Cartao } from '../../../ui'
 import type { NotasDoc } from '../../../lib/conversores'
 import { fmt } from './format'
 import LoadInput from './LoadInput'
+import { IcCheck } from '../../../icones'
 
 const CORES: Record<string, string> = {
   Dropset: 'bg-purple-900/50 text-purple-300',
@@ -85,7 +86,7 @@ export default function SessaoCard({
             Treino {sessao.treino}
             {hoje && (
               <span className={`ml-2 rounded px-1.5 py-0.5 text-[11px] font-semibold ${hoje === 'feito' ? 'bg-green-900/50 text-green-300' : 'bg-amber-900/50 text-amber-300'}`}>
-                {hoje === 'feito' ? 'Feito hoje ✓' : 'Treinando hoje'}
+                {hoje === 'feito' ? <>Feito hoje <IcCheck className="inline size-3 align-[-1px]" /></> : 'Treinando hoje'}
               </span>
             )}
           </h3>

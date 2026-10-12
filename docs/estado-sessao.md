@@ -154,6 +154,15 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Relatório do fim do ciclo: Victor revisa, escreve o recado e toca "Liberar"; o aluno vê no Início, baixa PDF ou imagem story. Números calculados na hora (só o comentário é gravado).
 - Escolhas do Victor: não "excluir de vez" alertas; aluno só vê depois da revisão.
 
+## 12/10/2026 — PDF real, correção não conta, modo coach, presencial em grupo, sem emoji
+- PDF do relatório: agora é gerado em canvas (`src/lib/pdf.ts`, `montarPdf`), não mais pelo `window.print()`.
+- Correção não conta como treino: editar sem "Iniciar" grava as cargas (histórico e recordes), mas não vira treino feito nem "em andamento"; a correção é datada na semana planejada.
+- Modo coach: o coach edita o treino sem "Iniciar"; o aluno não abre semana passada não feita (só na tela; as regras não mudam).
+- Presencial em grupo: as telas ficam montadas e escondidas; push, marca de inatividade e cronômetro de descanso são compartilhados (vale o último).
+- Sem emoji: ícones de traço em `src/icones.tsx`; `src/semEmoji.test.ts` barra emoji e símbolos de teclado em `src/**`.
+- e2e de texto ajustados (link "(feito)", "Feito hoje" com ícone, "Primeiro treino" com ícone).
+- Mapa e pontos sensíveis atualizados com as novas regras.
+
 ## Ideias e pendências futuras (não fazer sem pedido)
 - **Notificações (tema importante, a planejar depois):**
   - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";

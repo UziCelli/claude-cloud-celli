@@ -22,7 +22,7 @@ import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
 import RankingAlunos from './features/coach/RankingAlunos'
-import { PresencialHoje, PresencialTreino } from './features/coach/presencial/Presencial'
+import Grupo from './features/coach/presencial/Presencial'
 import RelatorioCoach from './features/relatorio/RelatorioCoach'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
@@ -141,30 +141,28 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
     // O token vale até o próximo login: quem acabou de ativar o 2º fator precisa sair e entrar de novo.
     auth.currentUser?.getIdTokenResult().then((t) => setSemFator(faltaSegundoFator(t.claims))).catch(() => {})
   }, [uid])
+  // Treino presencial: sem menu nem logo (a barra do presencial cobre a área segura); o Grupo fica montado entre as telas.
+  const presencial = rota.startsWith('/aluno/') && rota.includes('/presencial')
   let p: Record<string, string> | null
   let tela = <Inicio nome={nome} />
-  if (rota === '/alertas') tela = <Alertas />
+  if (presencial) tela = <Grupo rota={rota} />
+  else if (rota === '/alertas') tela = <Alertas />
   else if (rota === '/alunos') tela = <Alunos />
   else if (rota === '/alunos/novo') tela = <NovoAluno />
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />
-  else if ((p = casar('/aluno/:uid/presencial', rota))) tela = <PresencialHoje key={p.uid} uid={p.uid} />
-  else if ((p = casar('/aluno/:uid/presencial/treino/:mesoId/:semana/:treino', rota)))
-    tela = <PresencialTreino key={`${p.uid}${p.mesoId}${p.semana}${p.treino}`} uid={p.uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
-  // Treino presencial: sem barra, para não cobrir a tela do treino.
-  const presencial = rota.startsWith('/aluno/') && rota.includes('/presencial')
   return (
     <div className="lg:flex">
       <Brilho />
       {!presencial && <Menu rota={rota} />}
       <div className={`min-w-0 flex-1 ${presencial ? '' : 'pb-barra lg:pb-0'}`}>
-        <header className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] lg:hidden">
+        <header hidden={presencial} className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] lg:hidden">
           <div className="mx-auto max-w-6xl px-4 py-3">
             <a href="#/" className="inline-block text-white" aria-label={marca.nome}>
               <Logo className="h-5" />
@@ -179,7 +177,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
             </Aviso>
           </div>
         )}
-        <Tela chave={rota} abrir={/^\/(aluno|meso)\/|^\/alunos\/novo/.test(rota)}>{tela}</Tela>
+        <Tela chave={presencial ? 'presencial' : rota} abrir={/^\/(aluno|meso)\/|^\/alunos\/novo/.test(rota)}>{tela}</Tela>
       </div>
     </div>
   )

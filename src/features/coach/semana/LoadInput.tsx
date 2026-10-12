@@ -1,6 +1,7 @@
 import { AnimatePresence, m } from 'motion/react'
 import { agil, saida } from '../../../movimento'
 import { useEffect, useRef, useState } from 'react'
+import { IcCheck } from '../../../icones'
 
 // Input de carga (kg): grava no blur/Enter, sem esperar confirmação do servidor (offline-first).
 export default function LoadInput({
@@ -54,7 +55,7 @@ export default function LoadInput({
           exit={{ opacity: 0, transition: saida }}
           transition={agil}
         >
-          ✓
+          <IcCheck className="inline size-3 align-[-1px]" />
         </m.span>
       )}
     </AnimatePresence>

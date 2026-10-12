@@ -44,3 +44,17 @@ export const IcPontosV = ({ className = 'size-6' }: P) => (
     <circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" />
   </svg>
 )
+
+export const IcNota = svg(<><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></>)
+export const IcLapis = svg(<><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /><path d="m14.5 5.5 3 3" /></>)
+export const IcPlay = svg(<path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />)
+export const IcPausa = svg(<path d="M8 5v14M16 5v14" />)
+export const IcReiniciar = svg(<><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" /><path d="M3 3v5h5" /></>)
+export const IcSinoMudo = svg(<><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /><path d="M3 3l18 18" /></>)
+export const IcInfo = svg(<><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8v.01" /></>)
+export const IcMedalha = svg(<><path d="M8 3l-1 6M16 3l1 6" /><circle cx="12" cy="15" r="6" /></>)
+export const IcBussola = svg(<><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5z" /></>)
+export const IcSubir = svg(<path d="M12 20V5m0 0-6 6m6-6 6 6" />)
+
+export const D_TROFEU = 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9.5 17h5'
+export const D_SUBIR = 'M12 20V5m0 0-6 6m6-6 6 6'

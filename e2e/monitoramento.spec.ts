@@ -29,13 +29,26 @@ test('treino de hoje em destaque: Início com link certo e selo na semana', asyn
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
 
-  const link = page.getByRole('link', { name: 'Ana Aluna · Treino 2 ✓' })
+  const link = page.getByRole('link', { name: 'Ana Aluna · Treino 2 (feito)' })
   await expect(link).toBeVisible()
   await expect(link).toHaveAttribute('href', `#/meso/${mesoId}/semana/1`)
   await link.click()
 
   const cartao2 = page.locator('.rounded-xl.border').filter({ has: page.getByRole('heading', { name: /Treino 2/ }) })
-  await expect(cartao2.getByText('Feito hoje ✓')).toBeVisible()
-  await expect(page.getByText('Feito hoje ✓')).toHaveCount(1)
+  await expect(cartao2.getByText('Feito hoje', { exact: true })).toBeVisible()
+  await expect(page.getByText('Feito hoje', { exact: true })).toHaveCount(1)
   await expect(page.getByText('Treinando hoje')).toHaveCount(0)
+
+  // Carga digitada pelo coach num treino não iniciado é correção: grava, mas não vira "Treinando hoje".
+  const cartao1 = page.locator('.rounded-xl.border').filter({ has: page.getByRole('heading', { name: /Treino 1/ }) })
+  const linha = cartao1.locator('table tbody tr').first()
+  const serie1 = linha.locator('input[type="number"]').first()
+  await serie1.fill('30')
+  await serie1.press('Enter')
+  await expect(linha.locator('td:nth-last-child(2)')).toHaveText('30', { timeout: 10_000 })
+  await expect(page.getByText('Treinando hoje')).toHaveCount(0)
+
+  await page.goto('/#/')
+  await expect(page.getByRole('link', { name: 'Ana Aluna · Treino 2 (feito)' })).toBeVisible()
+  await expect(page.getByText(/Treino 1 \(em andamento\)/)).toHaveCount(0)
 })

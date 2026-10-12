@@ -4,7 +4,7 @@ import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
 import { diaSP } from '../../../lib/acesso'
-import { treinoValido } from '../../../lib/resumo'
+import { msSessao } from '../../../lib/resumo'
 import { comVolta } from '../../../lib/agenda'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
@@ -24,11 +24,14 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   )
 
   // Treinos de hoje (dia de São Paulo) desta semana: feito ou em andamento.
-  const hoje = diaSP(Date.now())
+  // Carga lançada sem Iniciar é correção: não aparece.
+  const agora = new Date()
+  const hoje = diaSP(agora.getTime())
   const deHoje: Record<number, 'feito' | 'andamento'> = {}
-  for (const d of docsRegistros)
-    if (d.semana === semana && treinoValido(d) && [d.realizadoEm, d.atualizadoEm].some((t) => t && diaSP(t.toMillis()) === hoje))
-      deHoje[d.treino] = d.realizado ? 'feito' : 'andamento'
+  for (const d of docsRegistros) {
+    const ms = d.semana === semana ? msSessao(d, agora) : null
+    if (ms != null && diaSP(ms) === hoje) deHoje[d.treino] = d.realizado ? 'feito' : 'andamento'
+  }
   const primeiro = Math.min(...Object.keys(deHoje).map(Number))
   // Rola uma vez por semana até o primeiro cartão destacado (os registros chegam depois da montagem).
   const rolou = useRef<number | null>(null)
@@ -43,7 +46,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   if (carregando) return <Centro>Carregando…</Centro>
   if (!dados) return <Centro>Meso não encontrado.</Centro>
 
-  const meso = comVolta(docParaMeso(dados), docsRegistros, new Date()) // prescrito = o que o aluno viu (semana de volta −5%)
+  const meso = comVolta(docParaMeso(dados), docsRegistros, agora) // prescrito = o que o aluno viu (semana de volta −5%)
   const registros = docsParaRegistros(docsRegistros, meso)
   const reps = docsParaRegistrosReps(docsRegistros)
   const realizados = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, !!d.realizado]))

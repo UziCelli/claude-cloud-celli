@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Logo from '@marca/Logo'
 import { Botao, Cartao, Centro } from '../../ui'
 import marca from '@marca/marca.json'
+import { IcBussola, IcCheck, IcCompartilhar, IcPontos } from '../../icones'
 
 export type EventoInstalar = Event & { prompt: () => Promise<void> }
 
@@ -49,7 +50,7 @@ export default function Instalar() {
   if (jaInstalado()) {
     return (
       <Centro>
-        <h1 className="text-2xl font-bold">O app já está instalado ✓</h1>
+        <h1 className="text-2xl font-bold">O app já está instalado <IcCheck className="inline size-6 align-[-3px]" /></h1>
         <Botao tipo="primario" className="w-full" onClick={() => (location.href = '/')}>
           Abrir o {marca.nome}
         </Botao>
@@ -116,17 +117,17 @@ function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => vo
     <>
       <Cartao className="space-y-3 border-l-4 border-marca-500 bg-marca-900/60">
         <p className="text-sm font-semibold text-marca-300">
-          Abriu pelo WhatsApp ou Instagram? Toque na bússola do Safari 🧭 (canto de baixo) para abrir no Safari — ou copie o link e cole no Safari.
+          Abriu pelo WhatsApp ou Instagram? Toque na bússola do Safari <IcBussola className="inline size-4 align-[-2px]" /> (canto de baixo) para abrir no Safari — ou copie o link e cole no Safari.
         </p>
         <Botao tipo="primario" className="w-full" onClick={onCopiar}>
-          {copiado ? 'Link copiado ✓' : 'Copiar link'}
+          {copiado ? <>Link copiado <IcCheck className="inline size-4 align-[-2px]" /></> : 'Copiar link'}
         </Botao>
       </Cartao>
 
       <Cartao>
         <ol className="space-y-3 text-sm">
           <Passo n={1}>
-            Toque em Compartilhar: o quadrado com a seta ⬆️ na barra de baixo — ou, nos iPhones mais novos, toque nos três pontinhos ⋯ ao lado do endereço e depois em Compartilhar. <IconeCompartilhar />
+            Toque em Compartilhar: o quadrado com a seta <IcCompartilhar className="inline size-4 align-[-2px]" /> na barra de baixo — ou, nos iPhones mais novos, toque nos três pontinhos <IcPontos className="inline size-4 align-[-2px]" /> ao lado do endereço e depois em Compartilhar. <IconeCompartilhar />
           </Passo>
           <Passo n={2}>
             Role a lista para baixo e toque em "Adicionar à Tela de Início". Não apareceu? Toque em "Ver mais" ou "Editar ações" e procure lá.
