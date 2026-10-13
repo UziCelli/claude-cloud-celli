@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { b64u } from './b64'
-import { validarFimEm, validarInscricao } from './validar'
+import { nomeDO, uidOk, validarAvisos, validarFimEm, validarInscricao } from './validar'
 
 const p256dh = b64u(new Uint8Array([4, ...new Array(64).fill(7)]))
 const auth = b64u(new Uint8Array(16).fill(9))
@@ -52,5 +52,40 @@ describe('validarFimEm', () => {
     expect(validarFimEm(agora + 15 * 60_000 + 1, agora)).toBe(false)
     expect(validarFimEm(agora - 5000, agora)).toBe(false)
     for (const v of ['1', null, undefined, NaN, Infinity]) expect(validarFimEm(v, agora)).toBe(false)
+  })
+})
+
+describe('uidOk e nomeDO', () => {
+  it('aceita uid do Firebase e recusa o que poderia colidir ou escapar', () => {
+    expect(uidOk('aB3xYz0123456789ABCDEFGH0123')).toBe(true)
+    for (const u of ['', '__vapid', 'a:b', 'a/b', 'a b', 'x'.repeat(129), 42, null, undefined]) expect(uidOk(u)).toBe(false)
+  })
+  it('VFIT = uid puro; Gislane = projeto:uid', () => {
+    expect(nomeDO('forca--app', 'u1')).toBe('u1')
+    expect(nomeDO('gislane-personal-trainer', 'u1')).toBe('gislane-personal-trainer:u1')
+  })
+})
+
+describe('validarAvisos', () => {
+  const ok = { projeto: 'forca--app', avisos: [{ uid: 'u1', tipo: 'vence-3d' }, { uid: 'u2', tipo: 'vence-hoje' }] }
+  it('aceita projeto da lista e os dois tipos', () => {
+    expect(validarAvisos(ok)).toEqual(ok)
+    expect(validarAvisos({ ...ok, projeto: 'gislane-personal-trainer' })?.projeto).toBe('gislane-personal-trainer')
+    expect(validarAvisos({ projeto: 'forca--app', avisos: [] })?.avisos).toEqual([])
+  })
+  it('aceita 20 e recusa 21', () => {
+    const mk = (n: number) => ({ projeto: 'forca--app', avisos: Array.from({ length: n }, (_, i) => ({ uid: `u${i}`, tipo: 'vence-hoje' })) })
+    expect(validarAvisos(mk(20))).not.toBeNull()
+    expect(validarAvisos(mk(21))).toBeNull()
+  })
+  it('recusa projeto desconhecido, tipo fora do contrato e uid inválido', () => {
+    expect(validarAvisos({ ...ok, projeto: 'outro' })).toBeNull()
+    expect(validarAvisos({ ...ok, projeto: undefined })).toBeNull()
+    expect(validarAvisos({ ...ok, avisos: [{ uid: 'u1', tipo: 'vencido' }] })).toBeNull()
+    expect(validarAvisos({ ...ok, avisos: [{ uid: 'a/b', tipo: 'vence-hoje' }] })).toBeNull()
+    expect(validarAvisos({ ...ok, avisos: [{ uid: '__vapid', tipo: 'vence-hoje' }] })).toBeNull()
+  })
+  it('recusa formatos errados', () => {
+    for (const c of [null, 'x', 1, [], {}, { projeto: 'forca--app' }, { projeto: 'forca--app', avisos: {} }, { projeto: 'forca--app', avisos: [null] }]) expect(validarAvisos(c)).toBeNull()
   })
 })

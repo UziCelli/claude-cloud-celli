@@ -6,6 +6,7 @@ import { migrarProgressao } from '../../../engine'
 import type { Meso } from '../../../engine'
 import { marcarAdaptado, salvarMeso } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
+import { avisarTreinoPronto } from '../../../lib/push'
 import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
@@ -46,6 +47,7 @@ export default function EditorMeso({ id }: { id: string }) {
   const [aba, setAba] = useState<Aba>('config')
   const [semana, setSemana] = useState(1)
   const [erro, setErro] = useState<string | null>(null)
+  const [aviso, setAviso] = useState('')
 
   // Acompanha o documento remoto: sem edições locais, recarrega; com edições, avisa do conflito
   // (evita que uma aba antiga sobrescreva mudanças feitas em outra aba/aparelho).
@@ -144,10 +146,21 @@ export default function EditorMeso({ id }: { id: string }) {
             Salvar
           </Botao>
           <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
+          <Botao
+            disabled={dirty || !alunoId}
+            onClick={async () => {
+              setAviso('Enviando…')
+              const r = await avisarTreinoPronto(alunoId)
+              setAviso(r === 'enviado' ? 'Aviso enviado' : r === 'sem-notificacoes' ? 'O aluno ainda não ativou as notificações' : 'Não foi possível enviar')
+            }}
+          >
+            Avisar aluno: treino pronto
+          </Botao>
         </>
       }
     >
       <Msg>{erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}</Msg>
+      <Msg>{aviso && <p className="mb-3 text-sm text-slate-300" role="status">{aviso}</p>}</Msg>
       <Msg>
       {conflito && (
         <div className="mb-3">

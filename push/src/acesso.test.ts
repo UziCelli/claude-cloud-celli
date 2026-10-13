@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { acessoComCache, lerPermissao, registrarAgendamento } from './acesso'
+import { acessoComCache, lerPermissao, podeAvisarTreino, registrarAgendamento } from './acesso'
 
 const AGORA = Date.parse('2026-10-01T12:00:00Z')
 const perfil = (campos: Record<string, string>) => ({
@@ -13,21 +13,26 @@ const buscaCom = (corpo: unknown, status = 200) => vi.fn(() => resp(corpo, statu
 describe('lerPermissao', () => {
   it('lê o perfil do aluno com o token dele', async () => {
     const buscar = buscaCom(perfil({ papel: 'aluno', status: 'ativo', pagoAte: '2026-10-10T00:00:00Z' }))
-    expect(await lerPermissao('u1', 'tok', AGORA, buscar)).toBe(true)
+    expect(await lerPermissao('u1', 'tok', AGORA, 'forca--app', buscar)).toBe(true)
     const [url, init] = (buscar as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0]
     expect(url).toBe('https://firestore.googleapis.com/v1/projects/forca--app/databases/(default)/documents/usuarios/u1')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok')
   })
+  it('lê o perfil no projeto do token (Gislane)', async () => {
+    const buscar = buscaCom(perfil({ papel: 'coach' }))
+    expect(await lerPermissao('u1', 'tok', AGORA, 'gislane-personal-trainer', buscar)).toBe(true)
+    expect((buscar as unknown as { mock: { calls: string[][] } }).mock.calls[0][0]).toMatch(/\/projects\/gislane-personal-trainer\//)
+  })
   it('aluno ativo e em dia: permitido', async () => {
     const b = buscaCom(perfil({ papel: 'aluno', status: 'ativo', pagoAte: '2026-10-02T00:00:00Z' }))
-    expect(await lerPermissao('u', 't', AGORA, b)).toBe(true)
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', b)).toBe(true)
   })
   it('coach: permitido, mesmo sem status nem pagoAte', async () => {
-    expect(await lerPermissao('u', 't', AGORA, buscaCom(perfil({ papel: 'coach' })))).toBe(true)
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom(perfil({ papel: 'coach' })))).toBe(true)
   })
   it('pagamento vencido: bloqueado', async () => {
     const b = buscaCom(perfil({ papel: 'aluno', status: 'ativo', pagoAte: '2026-09-30T00:00:00Z' }))
-    expect(await lerPermissao('u', 't', AGORA, b)).toBe(false)
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', b)).toBe(false)
   })
   it('aluno inativo, sem pagoAte ou aguardando: bloqueado', async () => {
     const casos: Record<string, string>[] = [
@@ -36,21 +41,21 @@ describe('lerPermissao', () => {
       { papel: 'aluno', status: 'ativo' },
       { papel: 'aluno', status: 'ativo', pagoAte: 'lixo' },
     ]
-    for (const c of casos) expect(await lerPermissao('u', 't', AGORA, buscaCom(perfil(c)))).toBe(false)
+    for (const c of casos) expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom(perfil(c)))).toBe(false)
   })
   it('perfil inexistente ou negado pelas regras: bloqueado', async () => {
-    expect(await lerPermissao('u', 't', AGORA, buscaCom({ error: {} }, 404))).toBe(false)
-    expect(await lerPermissao('u', 't', AGORA, buscaCom({ error: {} }, 403))).toBe(false)
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom({ error: {} }, 404))).toBe(false)
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom({ error: {} }, 403))).toBe(false)
   })
   it('falha de rede ou erro do Firestore: null (não agenda)', async () => {
     const cai = (() => Promise.reject(new TypeError('rede'))) as unknown as typeof fetch
-    expect(await lerPermissao('u', 't', AGORA, cai)).toBeNull()
-    expect(await lerPermissao('u', 't', AGORA, buscaCom({}, 503))).toBeNull()
-    expect(await lerPermissao('u', 't', AGORA, buscaCom({}, 429))).toBeNull()
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', cai)).toBeNull()
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom({}, 503))).toBeNull()
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom({}, 429))).toBeNull()
   })
   it('uid com caracteres estranhos não muda o caminho', async () => {
     const buscar = buscaCom(perfil({ papel: 'coach' }))
-    await lerPermissao('a/../b?x', 't', AGORA, buscar)
+    await lerPermissao('a/../b?x', 't', AGORA, 'forca--app', buscar)
     expect((buscar as unknown as { mock: { calls: string[][] } }).mock.calls[0][0]).toMatch(/usuarios\/a%2F\.\.%2Fb%3Fx$/)
   })
 })
@@ -96,5 +101,55 @@ describe('registrarAgendamento (limite)', () => {
     const marcas = Array.from({ length: 30 }, () => AGORA)
     expect(registrarAgendamento(marcas, AGORA + 59_999)).toBeNull()
     expect(registrarAgendamento(marcas, AGORA + 60_000)).toHaveLength(1)
+  })
+})
+
+describe('podeAvisarTreino', () => {
+  const chamadas = (b: typeof fetch) => (b as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls
+  it('coach lendo o perfil de um aluno: 200, com o token de quem chama', async () => {
+    const b = buscaCom(perfil({ papel: 'aluno', status: 'ativo' }))
+    expect(await podeAvisarTreino('forca--app', 'coach1', 'aluno1', 'tok-coach', b)).toBe(200)
+    expect(chamadas(b)[0][0]).toMatch(/projects\/forca--app\/.*usuarios\/aluno1$/)
+    expect((chamadas(b)[0][1].headers as Record<string, string>).Authorization).toBe('Bearer tok-coach')
+  })
+  it('usa o projeto do token (Gislane)', async () => {
+    const b = buscaCom(perfil({ papel: 'aluno' }))
+    expect(await podeAvisarTreino('gislane-personal-trainer', 'c', 'a1', 't', b)).toBe(200)
+    expect(chamadas(b)[0][0]).toMatch(/projects\/gislane-personal-trainer\//)
+  })
+  it('alunoId inválido: 400, sem ler nada', async () => {
+    for (const id of [undefined, null, 42, '', 'a/b', '../x', 'a?b', 'a b', 'a:b', '__vapid', 'x'.repeat(129), {}, ['a']]) {
+      const b = buscaCom(perfil({ papel: 'aluno' }))
+      expect(await podeAvisarTreino('forca--app', 'c', id, 't', b)).toBe(400)
+      expect(chamadas(b)).toHaveLength(0)
+    }
+  })
+  it('alunoId igual ao próprio uid: 403, sem ler nada', async () => {
+    const b = buscaCom(perfil({ papel: 'coach' }))
+    expect(await podeAvisarTreino('forca--app', 'c1', 'c1', 't', b)).toBe(403)
+    expect(chamadas(b)).toHaveLength(0)
+  })
+  it('alvo com papel coach: 403', async () => {
+    expect(await podeAvisarTreino('forca--app', 'c1', 'c2', 't', buscaCom(perfil({ papel: 'coach' })))).toBe(403)
+  })
+  it('quem chama não pode ler o perfil (não é coach) ou ele não existe: 403', async () => {
+    expect(await podeAvisarTreino('forca--app', 'a1', 'a2', 't', buscaCom({ error: {} }, 403))).toBe(403)
+    expect(await podeAvisarTreino('forca--app', 'a1', 'a2', 't', buscaCom({ error: {} }, 404))).toBe(403)
+    expect(await podeAvisarTreino('forca--app', 'a1', 'a2', 't', buscaCom({ error: {} }, 401))).toBe(403)
+  })
+  it('falha de rede ou erro do Firestore: 503', async () => {
+    const cai = (() => Promise.reject(new TypeError('rede'))) as unknown as typeof fetch
+    expect(await podeAvisarTreino('forca--app', 'c', 'a', 't', cai)).toBe(503)
+    expect(await podeAvisarTreino('forca--app', 'c', 'a', 't', buscaCom({}, 500))).toBe(503)
+    expect(await podeAvisarTreino('forca--app', 'c', 'a', 't', buscaCom({}, 429))).toBe(503)
+  })
+})
+
+describe('registrarAgendamento com limite próprio', () => {
+  it('3 por 10 min', () => {
+    let marcas: number[] = []
+    for (let i = 0; i < 3; i++) marcas = registrarAgendamento(marcas, AGORA + i, 3, 600_000)!
+    expect(registrarAgendamento(marcas, AGORA + 10, 3, 600_000)).toBeNull()
+    expect(registrarAgendamento(marcas, AGORA + 600_000 + 2, 3, 600_000)).toHaveLength(1)
   })
 })

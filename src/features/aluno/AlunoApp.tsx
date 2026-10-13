@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Usuario } from '../../lib/acesso'
+import { inscreverAvisos } from '../../lib/push'
 import { casar, useRota } from '../../rota'
 import { Tela } from '../../ui'
 import { IcCasa, IcGrafico, IcHaltere, IcPessoa } from '../../icones'
@@ -19,6 +20,9 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   const nome = perfil.nome
   const rota = useRota()
   const [tutorial, setTutorial] = useState(tutorialNaoVisto)
+  useEffect(() => {
+    void inscreverAvisos()
+  }, [uid])
   let p: Record<string, string> | null
   let tela = <InicioAluno uid={uid} nome={nome} />
   if ((p = casar('/treino/:mesoId/:semana/:treino', rota)))

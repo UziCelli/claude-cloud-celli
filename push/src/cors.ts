@@ -1,5 +1,10 @@
 // Só o app publicado pode chamar o Worker (sem localhost: o app local não usa o push de produção).
-export const ORIGENS = ['https://app.vfitcoachapp.com', 'https://forca--app.web.app']
+export const ORIGENS = [
+  'https://app.vfitcoachapp.com',
+  'https://forca--app.web.app',
+  'https://app.gislanepersonaltrainer.com',
+  'https://gislane-personal-trainer.web.app',
+]
 
 export const cors = (origem: string | null): Record<string, string> =>
   origem && ORIGENS.includes(origem)

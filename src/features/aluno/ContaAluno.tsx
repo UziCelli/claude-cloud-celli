@@ -10,7 +10,7 @@ import { apagarFoto, recuperarSenha, sair, salvarFoto, salvarNome, salvarPeso, s
 import { db } from '../../lib/firebase'
 import { reduzirFoto } from '../../lib/foto'
 import { useDoc } from '../../lib/hooks'
-import { avisosLigados, cancelarPush, CHAVE_AVISOS } from '../../lib/push'
+import { avisosCoachLigados, avisosLigados, cancelarPush, CHAVE_AVISOS, CHAVE_AVISOS_COACH, desinscreverAvisos, inscreverAvisos } from '../../lib/push'
 import { agil } from '../../movimento'
 import { Aviso, Botao, Campo, Msg, Painel } from '../../ui'
 import { IconeQuadrado, Quadro } from '../../vidro'
@@ -81,6 +81,7 @@ function Peso({ uid, atual }: { uid: string; atual?: number }) {
 function AvisoDescanso() {
   const [p, setP] = useState(permissao)
   const [ligado, setLigado] = useState(avisosLigados)
+  const [coach, setCoach] = useState(avisosCoachLigados)
   const pedir = async () => {
     try {
       await Notification.requestPermission()
@@ -88,15 +89,25 @@ function AvisoDescanso() {
       /* segue com o que o aparelho disser */
     }
     setP(permissao())
+    void inscreverAvisos()
+  }
+  const guardar = (chave: string, v: boolean) => {
+    try {
+      localStorage.setItem(chave, v ? '1' : '0')
+    } catch {
+      /* sem armazenamento: vale só até fechar o app */
+    }
   }
   const trocar = (v: boolean) => {
     setLigado(v)
     if (!v) cancelarPush() // descanso em andamento: o aviso já agendado não chega
-    try {
-      localStorage.setItem(CHAVE_AVISOS, v ? '1' : '0')
-    } catch {
-      /* sem armazenamento: vale só até fechar o app */
-    }
+    guardar(CHAVE_AVISOS, v)
+  }
+  const trocarCoach = (v: boolean) => {
+    setCoach(v)
+    guardar(CHAVE_AVISOS_COACH, v)
+    if (v) void inscreverAvisos()
+    else void desinscreverAvisos()
   }
   return (
     <Quadro className="space-y-2">
@@ -106,6 +117,12 @@ function AvisoDescanso() {
         {p === 'default' && <Botao tipo="primario" onClick={pedir}>Ativar</Botao>}
         {p === 'granted' && <Chave ligada={ligado} rotulo="Aviso do fim do descanso" onChange={trocar} />}
       </div>
+      {p === 'granted' && (
+        <div className="flex min-h-12 items-center gap-3">
+          <span className="flex-1 text-base font-semibold">Treino novo e mensalidade</span>
+          <Chave ligada={coach} rotulo="Treino novo e mensalidade" onChange={trocarCoach} />
+        </div>
+      )}
       {p == null && <p className="text-sm text-slate-400">Este aparelho não permite notificações.</p>}
       {p === 'denied' && <p className="text-sm text-slate-400">Bloqueado no celular — libere nas configurações do aparelho.</p>}
     </Quadro>

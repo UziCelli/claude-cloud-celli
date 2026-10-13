@@ -1,0 +1,62 @@
+name: Avisos de mensalidade
+
+# Roda para as duas marcas (cada uma só no PRÓPRIO projeto), todo dia às 8h47 de Brasília.
+# Lê as datas de vencimento e manda ao Worker (push/) o aviso de quem vence em 3 dias ou hoje.
+# O log só tem contagens: nunca nome, e-mail ou uid.
+on:
+  schedule:
+    - cron: '47 11 * * *'
+  workflow_dispatch:
+    inputs:
+      marca:
+        description: Marca (projeto Firebase); o agendado roda as duas
+        type: choice
+        default: vfit
+        options:
+          - vfit
+          - gislane
+
+permissions:
+  contents: read
+
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    outputs:
+      matriz: ${{ steps.m.outputs.matriz }}
+    steps:
+      # Agendado: as duas marcas. Manual: só a escolhida. Marca desconhecida = erro.
+      - id: m
+        env:
+          EVENTO: ${{ github.event_name }}
+          MARCA: ${{ inputs.marca }}
+        run: |
+          V='{"marca":"vfit","projeto":"forca--app"}'
+          G='{"marca":"gislane","projeto":"gislane-personal-trainer"}'
+          if [ "$EVENTO" != workflow_dispatch ]; then M="$V,$G"
+          elif [ "$MARCA" = vfit ]; then M="$V"
+          elif [ "$MARCA" = gislane ]; then M="$G"
+          else echo "Marca inválida: '$MARCA'"; exit 1; fi
+          echo "matriz={\"include\":[$M]}" >> "$GITHUB_OUTPUT"
+
+  avisar:
+    runs-on: ubuntu-latest
+    needs: preparar
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preparar.outputs.matriz) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Avisar mensalidade (${{ matrix.marca }})
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJETO: ${{ matrix.projeto }}
+        run: |
+          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p "$RUNNER_TEMP/adm" && cp tools/avisos-pagamento.mjs "$RUNNER_TEMP/adm/"
+          (cd "$RUNNER_TEMP/adm" && npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0 &&
+            GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" node avisos-pagamento.mjs)

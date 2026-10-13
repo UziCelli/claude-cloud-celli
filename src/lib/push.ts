@@ -60,7 +60,7 @@ async function chamar(base: string, caminho: string, corpo: object) {
   const { auth } = await import('./firebase') // só carrega o Firebase se for mesmo usar
   const token = await auth.currentUser?.getIdToken()
   if (!token) return
-  await fetch(juntarUrl(base, caminho), {
+  return fetch(juntarUrl(base, caminho), {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(corpo),
@@ -92,5 +92,79 @@ export function cancelarPush() {
   if (!disponivel()) return
   const base = BASE!
   ultimo++
-  enfileirar(() => chamar(base, '/cancelar', {}))
+  enfileirar(async () => void (await chamar(base, '/cancelar', {})))
+}
+
+// Avisos fixos (treino novo e mensalidade): inscrição guardada no Worker até a pessoa desligar.
+// Chave por aparelho: '0' = desligado na aba Conta.
+export const CHAVE_AVISOS_COACH = 'forca-avisos-coach'
+export const avisosCoachLigados = () => {
+  try {
+    return localStorage.getItem(CHAVE_AVISOS_COACH) !== '0'
+  } catch {
+    return true
+  }
+}
+
+const CHAVE_INSCRITO = 'forca-avisos-inscrito'
+const SETE_DIAS = 7 * 24 * 3600 * 1000
+// Reenvia se mudou o uid ou o endpoint, ou se passou 7 dias do último envio.
+export const precisaInscrever = (salvo: unknown, uid: string, endpoint: string, agora: number) => {
+  if (!Array.isArray(salvo)) return true
+  const [u, e, t] = salvo
+  return u !== uid || e !== endpoint || typeof t !== 'number' || agora - t >= SETE_DIAS
+}
+
+export async function inscreverAvisos() {
+  if (!disponivel() || !avisosCoachLigados()) return
+  const base = BASE!
+  try {
+    const { auth } = await import('./firebase')
+    const uid = auth.currentUser?.uid
+    if (!uid) return
+    const sub = await inscricao(base)
+    let salvo: unknown = null
+    try {
+      salvo = JSON.parse(localStorage.getItem(CHAVE_INSCRITO) ?? 'null')
+    } catch {
+      /* sem armazenamento: reenvia */
+    }
+    const agora = Date.now()
+    if (!precisaInscrever(salvo, uid, sub.endpoint, agora)) return
+    const r = await chamar(base, '/inscrever', { subscription: sub.toJSON() })
+    if (!r?.ok) return
+    try {
+      localStorage.setItem(CHAVE_INSCRITO, JSON.stringify([uid, sub.endpoint, agora]))
+    } catch {
+      /* sem armazenamento */
+    }
+  } catch {
+    /* sem push: o app segue normal */
+  }
+}
+
+export async function desinscreverAvisos() {
+  try {
+    localStorage.removeItem(CHAVE_INSCRITO)
+  } catch {
+    /* sem armazenamento */
+  }
+  if (!BASE) return
+  try {
+    await chamar(BASE, '/desinscrever', {})
+  } catch {
+    /* sem rede: o aviso só deixa de ser reenviado */
+  }
+}
+
+// Coach: avisa o aluno que o treino novo está pronto. Não grava nada no Firestore.
+export async function avisarTreinoPronto(alunoId: string): Promise<'enviado' | 'sem-notificacoes' | 'erro'> {
+  if (!BASE) return 'erro'
+  try {
+    const r = await chamar(BASE, '/treino-pronto', { alunoId })
+    if (!r?.ok) return 'erro'
+    return ((await r.json()) as { enviado?: boolean }).enviado ? 'enviado' : 'sem-notificacoes'
+  } catch {
+    return 'erro'
+  }
 }

@@ -59,7 +59,7 @@ export async function criptografar(
 // Envia a notificação e devolve o status HTTP do serviço de push (201 = aceito; 404/410 = inscrição morta).
 export async function enviarPush(
   inscricao: Inscricao,
-  payload: { title: string; body: string },
+  payload: { title: string; body: string; tag?: string; url?: string },
   vapid: ParVapid,
   agora: number,
   buscar: typeof fetch = fetch,
