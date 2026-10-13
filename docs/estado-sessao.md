@@ -1,6 +1,6 @@
-# Estado da sessão (retomada) — atualizado em 08/10/2026
+# Estado da sessão (retomada) — atualizado em 13/10/2026
 
-Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #19 estão juntados e publicados.
+Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #77 estão juntados e publicados.
 
 ## Regras combinadas com o Victor
 - **Linguagem:** respostas curtas, em tópicos, pt-BR (ele tem TDAH e não programa).
@@ -164,7 +164,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Mapa e pontos sensíveis atualizados com as novas regras.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
-- **Notificações (tema importante, a planejar depois):**
+- **Notificações** (1ª parte no ar em 13/10/2026: mensalidade e treino pronto, ver a seção do dia; o resto continua a planejar):
   - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";
   - para o aluno: avisos do coach, treino do dia.
   - Reaproveitar o Worker de push que já existe (`push/`, Cloudflare, grátis).
@@ -181,8 +181,13 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Senha provisória pelo WhatsApp em vez do e-mail do Firebase (o nome "forca--app" aparece nos e-mails).
 - Botão "ver vídeo" em cada exercício, quando o Victor gravar os vídeos.
 - App da Gislane: no ar (ver "04/10/2026 — Gislane no ar"). Plano e histórico em `docs/plano-app-gislane.md`.
-- Importar planilhas de outros alunos: `tools/planilha_para_meso.py` + workflow "Importar mesociclo".
 - A migração do projeto Firebase foi descartada pelo Victor.
+
+## 12–13/10/2026 — Importar da planilha no app
+- Botão "Importar da planilha" no perfil do aluno (PR #74): lê o .xlsx no aparelho e grava o meso com as cargas dos treinos realizados. Limites em `docs/mapa.md` (Pontos sensíveis, "Importar planilha").
+- PR #76: aceita também o rótulo "Número de semanas" na Configuração do Meso.
+- Validado pelo Victor com uma planilha real (aba M7) em 13/10/2026.
+- `tools/planilha_para_meso.py` + workflow "Importar mesociclo" ficam só de reserva.
 
 ## 13/10/2026 — Notificações: mensalidade e treino pronto
 - Plano e contrato: `docs/plano-notificacoes.md`.
