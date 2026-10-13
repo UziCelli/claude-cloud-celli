@@ -136,3 +136,20 @@ export async function criarAlunoArquivado(nome: string, email: string, senha: st
   await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'arquivado', nome, email })
   return uid
 }
+
+// Cadastro novo aguardando aprovação do coach (para a lista "Aguardando aprovação").
+export async function criarAlunoAguardando(nome: string, email: string, senha: string): Promise<string> {
+  const uid = await criarConta(email, senha)
+  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'aguardando', nome, email })
+  return uid
+}
+
+// Muda só o pagoAte de um usuário (updateMask: o resto do perfil fica como está).
+export async function definirPagoAte(uid: string, pagoAte: Date) {
+  const r = await fetch(`${FIRESTORE}/v1/projects/${PROJETO}/databases/(default)/documents/usuarios/${uid}?updateMask.fieldPaths=pagoAte`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ fields: { pagoAte: { timestampValue: pagoAte.toISOString() } } }),
+  })
+  if (!r.ok) throw new Error(`pagoAte falhou: ${r.status} ${await r.text()}`)
+}

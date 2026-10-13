@@ -12,6 +12,7 @@ Comece por aqui para achar onde mexer.
 | Fluxo do coach (início, alunos, meso, semana) | `src/features/coach/` |
 | Cálculo de reps, séries, dropset, tempo | `src/engine/sessao.ts` + `src/engine/metricas.ts` |
 | Gravação de cargas/reps no Firestore | `src/lib/acoes.ts` + `firestore.rules` |
+| Cardio do dia (marcar no Início, tipo e minutos) | `src/lib/cardio.ts` + `src/features/aluno/CardioHoje.tsx` + `firestore.rules` (`cardios`) + `src/lib/acoes.ts` (`registrarCardio`, `desfazerCardio`) |
 | Estrutura de dados (Meso, Registro, tipos) | `src/engine/tipos.ts` + `src/lib/conversores.ts` |
 | Cores, fontes, grid | `marcas/<id>/tema.css` (escalas slate/marca) + `src/index.css` (fontes; Tailwind 4, sem tailwind.config) |
 | Nome, logo, ícones, cores e dados do responsável de uma marca | `marcas/<id>/` (`marca.json` com `cores`, `tema.css`, `Logo.tsx`, `logoPaths.ts`, `public/`) |
@@ -52,6 +53,7 @@ Comece por aqui para achar onde mexer.
 - `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `recordesDe()`, `comparacaoToneladas()`, `recordeAnterior()`, `resumoTreino()` (tela de fim de treino), `rankingAlunos()`: cálculos do painel de evolução
 - `recorde.ts` — `ehRecorde()`: verifica se uma carga é recorde
 - `evolucao.test.ts`, `recorde.test.ts` — testes desses cálculos
+- `cardio.ts` (+ `cardio.test.ts`) — cardio do dia: `TIPOS` (lista de tipos), `idCardio()`, `rotuloCardio()`, `diaNumero()`; fora do motor de força
 - `*.test.ts` — testes
 
 ### `push/` — Worker Cloudflare (notificação do descanso)
@@ -73,6 +75,7 @@ Comece por aqui para achar onde mexer.
 - `ContaAluno.tsx` — aba Conta (recebe `uid` e o `Usuario`): cabeçalho (foto, nome com Editar, e-mail, "aluno desde"), selo da marca, `Peso` (movido da `MinhaConta`), aviso do fim do descanso (chave por aparelho), Trocar senha, Como usar, Guia de métodos, Política, Sair
 - `Treino.tsx` — detalhe do treino (Iniciar/Cancelar treino, cargas, reps, selos de método, nota ao abrir, cronômetro, festa no recorde)
 - `FimTreino.tsx` — tela de fim de treino estilo story (duração, volume, recordes, cargas que subiram, semana) + "Compartilhar no story"; abre no "Concluir treino" e no "Ver resumo"; vale também no presencial
+- `CardioHoje.tsx` — cartão "Cardio hoje" no Início: marca o cardio do dia (tipo e minutos opcionais), mesmo sem treino de força; desfazer
 - `Tutorial.tsx` — passo a passo do aluno (abre 1x no 1º acesso; "Como usar" na aba Conta; título de boas-vindas em `marca.json` → `boasVindas`)
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
@@ -162,6 +165,8 @@ Comece por aqui para achar onde mexer.
 - `e2e/conta.spec.ts` — aba Conta do aluno: nome, foto, selo, peso, trocar senha e foto na lista do coach
 - `e2e/pix.spec.ts` — Pix simples: mensalidade, QR/copia e cola, "Já paguei", coach confirma
 - `e2e/evolucao.spec.ts`, `e2e/recorde.spec.ts`, `e2e/ranking.spec.ts` — fluxos do painel de evolução, recorde e ranking
+- `e2e/cardio.spec.ts` — cardio do aluno (marcar, tipo/minutos, desfazer) e calendário do painel
+- `e2e/prints.spec.ts` — prints para divulgação; **opt-in**: só roda com `PRINTS=1` (`MARCA=gislane` para a outra marca; saída em `PRINTS_DIR`, fora do repositório). Só emulador, alunos `@exemplo.com`; pula a tela do Pix e `/privacidade`; guarda de dados proibidos. Comando: `PRINTS=1 PRINTS_DIR=<pasta> flock /tmp/claude-emulador.lock npx firebase emulators:exec --only auth,firestore --project demo-forca 'npx playwright test e2e/prints.spec.ts'`
 - `e2e/seed.ts` — fixture: usuários, mesos
 
 ### `tools/` — Scripts offline
@@ -252,8 +257,12 @@ Comece por aqui para achar onde mexer.
 - `alunoId`, `mesoId`, `comentario` (≤ 3000), `liberado`, `liberadoEm`, `atualizadoEm`. Os números não são gravados (`relatorioCiclo`). Aluno lê só o próprio liberado, pela consulta.
 
 ### `exclusoes/{uid}`
-- `uid`, `solicitadoEm`, `status` (pending/processado)
+- `em` (hora do servidor)
 - Pedido de exclusão total (LGPD). Workflow "Limpeza LGPD" processa uma vez por dia.
+
+### `cardios/{uid}_{AAAA-MM-DD}`
+- `alunoId`, `dia`, `em` (hora do servidor), `tipo?` (caminhada, corrida, esteira, bicicleta, eliptico, escada, outro), `min?` (1 a 600)
+- Um documento por aluno por dia. Aluno lê, grava e apaga só os próprios; coach só lê e apaga. `dia` entre 14 dias atrás e hoje (+1 dia de folga). Fora do treino: não entra em registros, nos números do painel, ranking, relatório nem agenda (só marca dias no calendário do painel).
 
 ---
 
@@ -348,3 +357,6 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Sem emoji | `src/icones.tsx`, `src/semEmoji.test.ts` | Nada de emoji ou símbolo de teclado no código (ⓘ ↻ ▾ ▸ também); use os ícones de `src/icones.tsx`. | `src/semEmoji.test.ts` |
 | Pausa e volume no editor | `EditorMeso.tsx`, `TabProgressao.tsx`, `sessao.ts` | Pausa resolvida por exercício: `slot.pausaS` > `pausaPrincipaisS` (posições 1–2; sem valor = `pausaS`) > `pausaS`. Ao editar a pausa dos auxiliares com principais sem valor, grava `pausaPrincipaisS` = valor antigo (os principais não mudam junto). `progressaoPct` e `limiteReps` só existem no Ajustar volume (antes havia um % na Config, usado só na volta da redução, e outro solto no Ajustar volume). A prévia recalcula sozinha (`useMemo`) a partir da semana `de−1`, então reaplicar não muda nada e "Aplicar alterações" fica desligado sem mudança. | `sessao.test.ts` (pausa dos principais), e2e `progressao.spec.ts`, `coach.spec.ts` |
 | Topo da tela | `src/index.css` (`pt-topo`), `Presencial.tsx` (`Barra`), `App.tsx` (cabeçalho do coach), `AlunoApp.tsx` | Toda barra ou cabeçalho no topo usa `pt-topo` (área segura + 12px). Toque colado na borda superior puxa a barra de notificações (Android e iPhone), e o botão não responde. Avisos sem toque (`role="alert"`/`status`) podem ficar mais perto. Ações frequentes ficam embaixo, perto do polegar (12/10/2026). | `e2e/layout.spec.ts`, `presencial.spec.ts` |
+| Cardio separado do treino | `src/lib/cardio.ts`, `CardioHoje.tsx`, `firestore.rules` (`cardios`), `acoes.ts` (`registrarCardio`, `desfazerCardio`, `apagarAluno`), `PainelEvolucao.tsx`, `tools/limpeza-lgpd.mjs` | Cardio **não** entra em registros, `evolucao.ts`/números do painel, ranking, relatório nem agenda; no painel só marca dias no calendário (teal) e uma linha "Cardio: N dias". Regras: `cardios/{uid}_{dia}`, aluno liberado (ativo e em dia) lê/grava/apaga só o próprio; `get` e `delete` conferem o dono pelo id; `dia` entre 14 dias atrás e hoje (UTC-3) + 1 dia de folga; `min` inteiro 1–600. A lista de tipos está **duplicada** em `cardio.ts` (`TIPOS`) e `firestore.rules`: o teste compara as duas. Toda coleção nova por aluno entra em `apagarAluno` e em `tools/limpeza-lgpd.mjs` (e no teste de LGPD). | `cardio.test.ts`, `tests/rules.test.ts` (cardios), `tests/limpeza-lgpd.test.ts`, e2e `cardio.spec.ts` |
+| Seletor com pílula (layoutId) | `src/features/coach/alunos/NovoAluno.tsx` | A pílula (`layoutId`) é filha do botão ativo. **Botões sem fundo próprio**: o fundo fica no contêiner e a pílula usa `z-0`, com o texto em `z-10`. Um botão posterior com fundo opaco cobria a pílula ao deslizar para a esquerda (13/10/2026). Mesma regra vale para novos seletores com pílula; o seletor do presencial segue a regra própria da linha "Presencial em grupo". | e2e `coach.spec.ts` (guarda de fundo nos botões) |
+| Prints para divulgação | `e2e/prints.spec.ts` | **Opt-in**: só roda com `PRINTS=1`; nunca em produção. Só emulador e alunos fictícios `@exemplo.com`. Pula a tela do Pix (chave real) e `/privacidade`. Tem guarda de dados proibidos (chave Pix, CREF, CNPJ, nome do responsável, e-mail, outra marca). Saída em `PRINTS_DIR`, fora do repositório: nunca salvar imagem dentro do repo. | guarda de dados proibidos dentro do próprio spec |

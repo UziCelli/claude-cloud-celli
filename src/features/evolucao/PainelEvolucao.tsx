@@ -7,6 +7,7 @@ import type { Usuario } from '../../lib/acesso'
 import { diaSP } from '../../lib/acesso'
 import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../lib/conversores'
 import { comparacaoToneladas, historicoExercicios, painelEvolucao, type Conquista, type RegistroEvolucao } from '../../lib/evolucao'
+import { diaNumero, type CardioDoc } from '../../lib/cardio'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
 import { ir } from '../../rota'
@@ -42,6 +43,7 @@ const Titulo = ({ children }: { children: string }) => <h2 className="mb-3 font-
 export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: string; nome: string; voltar: Voltar; compartilhar?: boolean }) {
   const mesosL = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid]))
   const regsL = useLista<RegistroEvolucao>(useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid]))
+  const cardiosL = useLista<CardioDoc>(useMemo(() => query(collection(db, 'cardios'), where('alunoId', '==', uid)), [uid]))
   const [soMeso, setSoMeso] = useState(false)
   const [exercicio, setExercicio] = useState('')
 
@@ -86,6 +88,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
   const hoje = diaSP(agora.getTime())
   const inicioGrade = segunda(hoje) - 77
   const treinou = new Set(p.dias)
+  const cardio = new Set(cardiosL.dados.map((c) => diaNumero(c.dia)).filter((d) => d >= inicioGrade && d <= hoje))
   const maxSemana = Math.max(1, p.meta ?? 0, ...p.porSemana.map((s) => s.feitos))
   const nomes = Object.keys(historico).sort((a, b) => a.localeCompare(b))
   const nomeSel = nomes.includes(exercicio) ? exercicio : (nomes[0] ?? '')
@@ -146,13 +149,23 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
         <m.div variants={item}>
           <Cartao>
             <Titulo>Seus últimos 3 meses</Titulo>
-            <div className="grid grid-flow-col grid-cols-12 grid-rows-7 gap-1" role="img" aria-label={`${p.dias.length} dias treinados nos últimos 84 dias`}>
+            <div className="grid grid-flow-col grid-cols-12 grid-rows-7 gap-1" role="img" aria-label={`${p.dias.length} dias treinados nos últimos 84 dias${cardio.size ? ` e ${cardio.size} ${plural(cardio.size, 'dia', 'dias')} de cardio` : ''}`}>
               {Array.from({ length: 84 }, (_, i) => {
                 const dia = inicioGrade + Math.floor(i / 7) * 7 + (i % 7)
-                const cor = dia > hoje ? 'bg-transparent' : treinou.has(dia) ? 'bg-marca-400' : 'bg-slate-800'
+                const cor =
+                  dia > hoje ? 'bg-transparent'
+                  : treinou.has(dia) ? `bg-marca-400${cardio.has(dia) ? ' ring-2 ring-inset ring-teal-300' : ''}`
+                  : cardio.has(dia) ? 'bg-teal-400/80'
+                  : 'bg-slate-800'
                 return <div key={dia} title={dataCurta(dia)} className={`aspect-square rounded-sm ${cor}`} />
               })}
             </div>
+            {cardio.size > 0 && (
+              <p className="mt-2 text-xs text-slate-400">
+                <span aria-hidden className="mr-1 inline-block size-2.5 rounded-sm bg-marca-400 align-middle" /> Treino ·{' '}
+                <span aria-hidden className="mr-1 inline-block size-2.5 rounded-sm bg-teal-400/80 align-middle" /> Cardio
+              </p>
+            )}
             <div className="relative mt-4 flex h-24 items-end gap-1">
               {p.porSemana.map((s) => (
                 <div key={s.inicio} className="flex h-full flex-1 flex-col justify-end" title={`Semana de ${dataCurta(s.inicio)}: ${s.feitos}`}>
@@ -163,6 +176,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
                 <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-amber-300" style={{ bottom: `${(p.meta / maxSemana) * 100}%` }} />
               )}
             </div>
+            {cardio.size > 0 && <p className="mt-2 text-sm text-slate-400">Cardio: {cardio.size} {plural(cardio.size, 'dia', 'dias')} nos últimos 3 meses</p>}
             <p className="mt-2 text-sm text-slate-400">
               Média de {fmt(p.mediaSemanal)} por semana{p.meta != null && ` · meta ${p.meta} por semana`}
             </p>

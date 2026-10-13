@@ -196,3 +196,16 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Treino pronto: botão "Avisar aluno: treino pronto" no editor do meso (não é automático).
 - Ícone: `badge-96.png` por marca (V/G branco); textos sem emoji. Aluno liga/desliga em Conta → "Treino novo e mensalidade".
 - A conferir com o Victor num celular real: chegada do aviso e ícone V/G no Android.
+
+## 13/10/2026 (noite) — Cardio, pílula do Novo aluno e prints
+- **Cardio:** no Início o aluno marca que fez cardio (tipo e minutos opcionais), mesmo sem treino de força. Um registro por dia (`cardios`). O painel de evolução marca os dias no calendário (3 meses).
+- **Coach:** lê e apaga o cardio, nunca grava. Cardio não entra nos números de força, ranking, relatório nem agenda.
+- **LGPD:** `cardios` entra em "Apagar de vez" e na Limpeza LGPD.
+- **Política de Privacidade:** cita o cardio. `VERSAO_PRIVACIDADE` = 2026-10-13: todos os alunos aceitam de novo uma vez.
+- **Pílula do "Novo aluno":** o fundo ficou no contêiner, para o botão seguinte não cobrir a pílula ao deslizar. Teste de guarda em `e2e/coach.spec.ts`.
+- **Prints para divulgação** (opt-in, só emulador, alunos fictícios; saída fora do repositório):
+  - `PRINTS=1 PRINTS_DIR=<pasta> flock /tmp/claude-emulador.lock npx firebase emulators:exec --only auth,firestore --project demo-forca 'npx playwright test e2e/prints.spec.ts'`
+  - `MARCA=gislane` para a outra marca.
+- **Pendências do Victor:**
+  - no iPhone, conferir a pílula do "Novo aluno" nos dois sentidos e o Cardio;
+  - no Android, conferir os avisos de mensalidade e de treino pronto.

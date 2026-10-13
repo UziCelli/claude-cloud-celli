@@ -1,7 +1,7 @@
 name: Limpeza LGPD
 
 # Todo dia: atende os pedidos de "Apagar de vez" (coleção exclusoes) apagando o que o app não alcança
-# (registros, relatórios, mesos, notas, foto, perfil, logs e o login). Se apagou alguém, faz um backup novo e remove
+# (registros, relatórios, mesos, cardios, notas, foto, perfil, logs e o login). Se apagou alguém, faz um backup novo e remove
 # TODOS os backups antigos (eles ainda guardariam os dados da pessoa). O resumo só tem contagens.
 # Roda para as duas marcas, cada uma só no PRÓPRIO projeto (Auth, Firestore e backups da mesma marca).
 # Backups: vfit = backup-firestore-*; gislane = backup-gislane-firestore-* (um prefixo nunca casa com o outro).
