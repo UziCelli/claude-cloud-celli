@@ -870,3 +870,138 @@ describe('conteúdo dos valores (ACHADO: o tipo dos valores NÃO é validado)', 
     await negar(setDoc(doc(db('ana'), 'notas', 'bia'), { alunoId: 'bia', exercicios: { A: { b: 1 } }, ...agora() }, { merge: true }));
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// Cardio do dia: cardios/{uid}_{AAAA-MM-DD} (dia de São Paulo). Só o próprio aluno, liberado, grava.
+describe('cardios (marcar que fez cardio)', () => {
+  const diaSP = (desloc = 0) => new Date(Date.now() - 3 * 3600_000 + desloc * DIA).toISOString().slice(0, 10);
+  const HOJE = diaSP();
+  const card = (uid: string | undefined, id = `ana_${HOJE}`) => doc(db(uid), 'cardios', id);
+  const marca = (extra: object = {}, aluno = 'ana', dia = HOJE) => ({ alunoId: aluno, dia, em: serverTimestamp(), ...extra });
+  const semear = (aluno: string, dia = HOJE) =>
+    admin((a) => setDoc(doc(a, 'cardios', `${aluno}_${dia}`), { alunoId: aluno, dia, em: Timestamp.now(), min: 30 }));
+
+  it('a marcação válida passa (sem isso os negados abaixo não provam nada)', () =>
+    assertSucceeds(setDoc(card('ana'), marca({ tipo: 'corrida', min: 30 }))));
+
+  it('anônimo e login anônimo do Firebase: get, list, query, criar e apagar', async () => {
+    await semear('ana');
+    const anon = comoFirestore('anon1', { firebase: { sign_in_provider: 'anonymous' } });
+    for (const c of [db(), anon]) {
+      await negar(getDoc(doc(c, 'cardios', `ana_${HOJE}`)));
+      await negar(getDocs(collection(c, 'cardios')));
+      await negar(getDocs(query(collection(c, 'cardios'), where('alunoId', '==', 'ana'))));
+      await negar(getDocs(collectionGroup(c, 'cardios')));
+      await negar(setDoc(doc(c, 'cardios', `ana_${HOJE}`), marca()));
+      await negar(setDoc(doc(c, 'cardios', `anon1_${HOJE}`), marca({}, 'anon1')));
+      await negar(deleteDoc(doc(c, 'cardios', `ana_${HOJE}`)));
+    }
+  });
+
+  it('aluno bloqueado, vencido, aguardando, arquivado, sem pagoAte ou corrompido: nada, nem o próprio', async () => {
+    for (const uid of NAO_LIBERADOS) {
+      await semear(uid);
+      await negar(getDoc(card(uid, `${uid}_${HOJE}`)));
+      await negar(getDoc(card(uid, `${uid}_${diaSP(-1)}`)));
+      await negar(getDocs(query(collection(db(uid), 'cardios'), where('alunoId', '==', uid))));
+      await negar(setDoc(card(uid, `${uid}_${diaSP(-1)}`), marca({}, uid, diaSP(-1))));
+      await negar(setDoc(card(uid, `${uid}_${HOJE}`), marca({ min: 99 }, uid)));
+      await negar(deleteDoc(card(uid, `${uid}_${HOJE}`)));
+    }
+  });
+
+  it('aluno A contra B: ler, listar, criar, trocar e apagar o cardio de B', async () => {
+    await semear('bia');
+    await negar(getDoc(card('ana', `bia_${HOJE}`)));
+    await negar(getDoc(card('ana', `bia_${diaSP(-5)}`))); // doc que ainda não existe
+    await negar(getDocs(query(collection(db('ana'), 'cardios'), where('alunoId', '==', 'bia'))));
+    await negar(getDocs(collection(db('ana'), 'cardios'))); // sem filtro
+    await negar(getDocs(query(collection(db('ana'), 'cardios'), limit(1))));
+    await negar(getDocs(collectionGroup(db('ana'), 'cardios')));
+    await negar(setDoc(card('ana', `bia_${HOJE}`), marca({}, 'bia')));
+    await negar(setDoc(card('ana', `bia_${diaSP(-1)}`), marca({}, 'bia', diaSP(-1))));
+    await negar(updateDoc(card('ana', `bia_${HOJE}`), { min: 1, em: serverTimestamp() }));
+    await negar(deleteDoc(card('ana', `bia_${HOJE}`)));
+  });
+
+  it('id errado: alunoId de outro no próprio id, id de outro com alunoId próprio, id sem dia, dia trocado', async () => {
+    await negar(setDoc(card('ana'), marca({}, 'bia')));
+    await negar(setDoc(card('ana', `bia_${HOJE}`), marca()));
+    await negar(setDoc(card('ana', 'ana'), marca()));
+    await negar(setDoc(card('ana', `ana_${HOJE}_x`), marca()));
+    await negar(setDoc(card('ana', `ana_${diaSP(-1)}`), marca())); // id de ontem, dia de hoje
+    await negar(setDoc(card('ana', `anab_${HOJE}`), marca()));
+    await negar(setDoc(card('ana', `ana${HOJE}`), marca()));
+  });
+
+  it('campo extra e campo obrigatório faltando', async () => {
+    await negar(setDoc(card('ana'), marca({ extra: 1 })));
+    await negar(setDoc(card('ana'), marca({ papel: 'coach' })));
+    await negar(setDoc(card('ana'), marca({ km: 5 })));
+    await negar(setDoc(card('ana'), { dia: HOJE, em: serverTimestamp() }));
+    await negar(setDoc(card('ana'), { alunoId: 'ana', em: serverTimestamp() }));
+    await negar(setDoc(card('ana'), { alunoId: 'ana', dia: HOJE }));
+  });
+
+  it('min: 0, 601, negativo, decimal, texto, nulo, enorme', async () => {
+    for (const min of [0, 601, -5, 30.5, 1.0000001, '30', null, true, 1e9, [30], { m: 30 }]) {
+      await negar(setDoc(card('ana'), marca({ min })));
+    }
+  });
+
+  it('tipo fora da lista: outro texto, maiúsculas, com acento, vazio, número, nulo, lista', async () => {
+    for (const tipo of ['natacao', 'Corrida', 'elíptico', 'corrida ', '', 1, null, ['corrida'], { t: 'corrida' }]) {
+      await negar(setDoc(card('ana'), marca({ tipo })));
+    }
+  });
+
+  it('em forjado: passado, futuro, quase agora, texto, número', async () => {
+    for (const em of [passado, futuro, quaseAgora(), 'agora', 0]) {
+      await negar(setDoc(card('ana'), marca({ em })));
+    }
+  });
+
+  it('dia 2 dias ou mais no futuro e com 15 dias ou mais', async () => {
+    for (const d of [2, 3, 365, -15, -30, -3650]) {
+      await negar(setDoc(card('ana', `ana_${diaSP(d)}`), marca({}, 'ana', diaSP(d))));
+    }
+  });
+
+  it('dia em formato inválido (o id acompanha o dia)', async () => {
+    const [a, m, d] = HOJE.split('-');
+    const ruins: unknown[] = [`${d}-${m}-${a}`, `${a}-${m}-0${d}`, `0${a}-${m}-${d}`, `${a}${m}${d}`, `${HOJE}T00:00`, ` ${HOJE}`,
+      `${a}-13-01`, `${a}-${m}-32`, `${a}-02-30`, 'aaaa-mm-dd', ''];
+    for (const dia of ruins) {
+      await negar(setDoc(card('ana', `ana_${dia}`), marca({}, 'ana', dia as string)));
+    }
+    await negar(setDoc(card('ana'), marca({}, 'ana', 20261013 as never)));
+    await negar(setDoc(card('ana'), marca({}, 'ana', null as never)));
+  });
+
+  it('PERMITIDO DE PROPÓSITO: amanhã (relógio do aparelho adiantado na virada do dia)', () =>
+    assertSucceeds(setDoc(card('ana', `ana_${diaSP(1)}`), marca({}, 'ana', diaSP(1)))));
+
+  it('coach sem 2º fator: não lê, não lista e não apaga', async () => {
+    await semear('ana');
+    const c = comoFirestore('coach', SEM_FATOR);
+    await negar(getDoc(doc(c, 'cardios', `ana_${HOJE}`)));
+    await negar(getDocs(collection(c, 'cardios')));
+    await negar(getDocs(query(collection(c, 'cardios'), where('alunoId', '==', 'ana'))));
+    await negar(deleteDoc(doc(c, 'cardios', `ana_${HOJE}`)));
+  });
+
+  it('coach com 2º fator não cria nem altera (nem para si, nem por aluno)', async () => {
+    await semear('ana');
+    await negar(setDoc(card('coach'), marca()));
+    await negar(setDoc(card('coach', `bia_${HOJE}`), marca({}, 'bia')));
+    await negar(setDoc(card('coach', `coach_${HOJE}`), marca({}, 'coach')));
+    await negar(updateDoc(card('coach'), { min: 600, em: serverTimestamp() }));
+    await negar(setDoc(card('coach'), marca({ min: 10 }), { merge: true }));
+  });
+
+  it('PERMITIDO DE PROPÓSITO: coach com 2º fator lê e apaga (painel e "Apagar de vez")', async () => {
+    await semear('ana');
+    await assertSucceeds(getDocs(collection(db('coach'), 'cardios')));
+    await assertSucceeds(deleteDoc(card('coach')));
+  });
+});

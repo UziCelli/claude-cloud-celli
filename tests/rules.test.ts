@@ -1047,3 +1047,142 @@ describe('relatorios', () => {
     });
   });
 });
+
+// Cardio do dia: cardios/{uid}_{AAAA-MM-DD} (dia de São Paulo) = { alunoId, dia, em, tipo?, min? }.
+// Aluno liberado cria, troca (setDoc inteiro), lê e apaga os próprios; coach lê e apaga, não grava.
+describe('cardios', () => {
+  // Dia de São Paulo (UTC-3, sem horário de verão), deslocado em dias.
+  const diaSP = (desloc = 0) => new Date(Date.now() - 3 * 3600_000 + desloc * DIA).toISOString().slice(0, 10);
+  const HOJE = diaSP();
+  const card = (uid: string | undefined, id = `ana_${HOJE}`) => doc(db(uid), 'cardios', id);
+  const marca = (extra: object = {}, aluno = 'ana', dia = HOJE) => ({ alunoId: aluno, dia, em: serverTimestamp(), ...extra });
+  const existente = (aluno = 'ana', dia = HOJE) =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'cardios', `${aluno}_${dia}`), { alunoId: aluno, dia, em: Timestamp.now() }),
+    );
+  const meus = (uid: string, alvo = uid) =>
+    getDocs(query(collection(db(uid), 'cardios'), where('alunoId', '==', alvo)));
+
+  describe('aluno liberado', () => {
+    it('lê o doc de hoje que ainda não existe (o app abre antes de marcar)', () =>
+      assertSucceeds(getDoc(card('ana'))));
+
+    it('marca só "fez", com tipo, com minutos e com os dois', async () => {
+      await assertSucceeds(setDoc(card('ana'), marca()));
+      await assertSucceeds(setDoc(card('ana'), marca({ tipo: 'esteira' })));
+      await assertSucceeds(setDoc(card('ana'), marca({ min: 30 })));
+      await assertSucceeds(setDoc(card('ana'), marca({ tipo: 'caminhada', min: 45 })));
+    });
+
+    it('aceita todos os tipos da lista e minutos de 1 a 600', async () => {
+      for (const tipo of ['caminhada', 'corrida', 'esteira', 'bicicleta', 'eliptico', 'escada', 'outro']) {
+        await assertSucceeds(setDoc(card('ana'), marca({ tipo })));
+      }
+      await assertSucceeds(setDoc(card('ana'), marca({ min: 1 })));
+      await assertSucceeds(setDoc(card('ana'), marca({ min: 600 })));
+    });
+
+    it('edita (troca o doc inteiro, inclusive tirando tipo e minutos) e apaga', async () => {
+      await assertSucceeds(setDoc(card('ana'), marca({ tipo: 'corrida', min: 20 })));
+      await assertSucceeds(setDoc(card('ana'), marca({ tipo: 'bicicleta', min: 40 })));
+      await assertSucceeds(setDoc(card('ana'), marca()));
+      await assertSucceeds(getDoc(card('ana')));
+      await assertSucceeds(deleteDoc(card('ana')));
+    });
+
+    it('marca dia passado até 14 dias atrás', async () => {
+      await assertSucceeds(setDoc(card('ana', `ana_${diaSP(-1)}`), marca({}, 'ana', diaSP(-1))));
+      await assertSucceeds(setDoc(card('ana', `ana_${diaSP(-14)}`), marca({}, 'ana', diaSP(-14))));
+    });
+
+    it('marca amanhã (relógio do aparelho adiantado na virada do dia)', () =>
+      assertSucceeds(setDoc(card('ana', `ana_${diaSP(1)}`), marca({}, 'ana', diaSP(1)))));
+
+    it('lista os próprios (consulta por alunoId)', async () => {
+      await existente('ana');
+      await existente('ana', diaSP(-2));
+      await existente('bia');
+      await assertSucceeds(meus('ana'));
+    });
+
+    it('não lista sem filtro nem filtrando por outro aluno', async () => {
+      await existente('bia');
+      await assertFails(getDocs(collection(db('ana'), 'cardios')));
+      await assertFails(meus('ana', 'bia'));
+    });
+
+    it('não lê, grava nem apaga o de outro aluno', async () => {
+      await existente('bia');
+      await assertFails(getDoc(card('ana', `bia_${HOJE}`)));
+      await assertFails(getDoc(card('ana', `bia_${diaSP(-3)}`))); // nem o que ainda não existe
+      await assertFails(setDoc(card('ana', `bia_${HOJE}`), marca({}, 'bia')));
+      await assertFails(setDoc(card('ana', `bia_${HOJE}`), marca()));
+      await assertFails(deleteDoc(card('ana', `bia_${HOJE}`)));
+    });
+
+    it('nega campo extra, campo faltando, min e tipo inválidos, em forjado e dia fora da janela', async () => {
+      await assertFails(setDoc(card('ana'), marca({ nota: 'x' })));
+      await assertFails(setDoc(card('ana'), { alunoId: 'ana', dia: HOJE }));
+      await assertFails(setDoc(card('ana'), { alunoId: 'ana', em: serverTimestamp() }));
+      await assertFails(setDoc(card('ana'), marca({ min: 0 })));
+      await assertFails(setDoc(card('ana'), marca({ min: 601 })));
+      await assertFails(setDoc(card('ana'), marca({ min: 30.5 })));
+      await assertFails(setDoc(card('ana'), marca({ tipo: 'natação' })));
+      await assertFails(setDoc(card('ana'), marca({ em: passado })));
+      await assertFails(setDoc(card('ana', `ana_${diaSP(2)}`), marca({}, 'ana', diaSP(2))));
+      await assertFails(setDoc(card('ana', `ana_${diaSP(-15)}`), marca({}, 'ana', diaSP(-15))));
+    });
+
+    it('nega id que não é {uid}_{dia}', async () => {
+      await assertFails(setDoc(card('ana', 'ana'), marca()));
+      await assertFails(setDoc(card('ana', `ana_${diaSP(-1)}`), marca()));
+      await assertFails(setDoc(card('ana', `x_${HOJE}`), marca()));
+    });
+  });
+
+  it('vencido, bloqueado, aguardando e arquivado: nada (nem o próprio)', async () => {
+    for (const uid of ['exp', 'blq', 'agu', 'arq']) {
+      await existente(uid);
+      await assertFails(getDoc(card(uid, `${uid}_${HOJE}`)));
+      await assertFails(meus(uid));
+      await assertFails(setDoc(card(uid, `${uid}_${diaSP(-1)}`), marca({}, uid, diaSP(-1))));
+      await assertFails(setDoc(card(uid, `${uid}_${HOJE}`), marca({ min: 10 }, uid)));
+      await assertFails(deleteDoc(card(uid, `${uid}_${HOJE}`)));
+    }
+  });
+
+  describe('coach', () => {
+    it('lê, lista (todos e por aluno) e apaga', async () => {
+      await existente('ana');
+      await existente('bia');
+      await assertSucceeds(getDoc(card('coach')));
+      await assertSucceeds(getDocs(collection(db('coach'), 'cardios')));
+      await assertSucceeds(meus('coach', 'ana'));
+      await assertSucceeds(deleteDoc(card('coach')));
+    });
+
+    it('não cria nem altera', async () => {
+      await existente('ana');
+      await assertFails(setDoc(card('coach'), marca()));
+      await assertFails(setDoc(card('coach', `bia_${HOJE}`), marca({}, 'bia')));
+      await assertFails(setDoc(card('coach', `coach_${HOJE}`), marca({}, 'coach')));
+      await assertFails(updateDoc(card('coach'), { min: 10 }));
+    });
+
+    it('sem 2º fator: não lê, não lista e não apaga', async () => {
+      await existente('ana');
+      const c = contexto('coach', SEM_FATOR).firestore() as unknown as Firestore;
+      await assertFails(getDoc(doc(c, 'cardios', `ana_${HOJE}`)));
+      await assertFails(getDocs(collection(c, 'cardios')));
+      await assertFails(deleteDoc(doc(c, 'cardios', `ana_${HOJE}`)));
+    });
+  });
+
+  it('sem login: nada', async () => {
+    await existente('ana');
+    await assertFails(getDoc(card(undefined)));
+    await assertFails(getDocs(collection(db(), 'cardios')));
+    await assertFails(setDoc(card(undefined), marca()));
+    await assertFails(deleteDoc(card(undefined)));
+  });
+});

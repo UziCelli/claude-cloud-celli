@@ -34,7 +34,7 @@ export default function Politica() {
         <Logo className="h-10 text-white" />
         Política de Privacidade
       </h1>
-      <p className="text-center text-xs text-slate-500">Versão vigente: 09/10/2026</p>
+      <p className="text-center text-xs text-slate-500">Versão vigente: 13/10/2026</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
           {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
@@ -49,6 +49,7 @@ export default function Politica() {
           <li>Valor da mensalidade e o aviso de pagamento ("Já paguei").</li>
           <li>Treinos, cargas, repetições e anotações.</li>
           <li>Horários de treino.</li>
+          <li>Cardio (dia, tipo e minutos).</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
         </Lista>
         <p>
@@ -83,7 +84,7 @@ export default function Politica() {
         <Lista>
           <li>Enquanto você for aluno.</li>
           <li>
-            Se você pedir a exclusão, apagamos tudo (perfil, login, treinos, cargas, anotações e registros de erro) em até 24 horas,
+            Se você pedir a exclusão, apagamos tudo (perfil, login, treinos, cargas, anotações, cardio e registros de erro) em até 24 horas,
             inclusive das cópias de segurança.
           </li>
           <li>Registros de erro e cópias de segurança são apagados sozinhos após 30 dias.</li>

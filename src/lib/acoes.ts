@@ -38,6 +38,7 @@ import {
 import type { Meso } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
 import { arquivadosVencidos } from './alertas'
+import { idCardio, type TipoCardio } from './cardio'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
 import { auth, authCadastro, db } from './firebase'
 import type { Importado } from './planilha'
@@ -208,7 +209,7 @@ export async function excluirMeso(mesoId: string) {
 export async function apagarAluno(uid: string) {
   await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
   await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
-  for (const col of ['registros', 'relatorios', 'mesos']) {
+  for (const col of ['registros', 'relatorios', 'mesos', 'cardios']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
@@ -231,6 +232,11 @@ export async function duplicarMeso(mesoId: string, novoAlunoId: string, novoNome
 // Alertas arquivados (arquivados/{chave} = { em }; chave = chaveAlerta em alertas.ts). Sem await (offline).
 export const arquivarAlerta = (chave: string) => setDoc(doc(db, 'arquivados', chave), { em: serverTimestamp() })
 export const desarquivarAlerta = (chave: string) => deleteDoc(doc(db, 'arquivados', chave))
+
+// Cardio do dia (cardios/{uid}_{dia}). Substitui o doc inteiro; sem await (offline) e sem campos undefined.
+export const registrarCardio = (uid: string, dia: string, c: { tipo?: TipoCardio; min?: number }) =>
+  setDoc(doc(db, 'cardios', idCardio(uid, dia)), { alunoId: uid, dia, em: serverTimestamp(), ...(c.tipo ? { tipo: c.tipo } : {}), ...(c.min ? { min: c.min } : {}) })
+export const desfazerCardio = (uid: string, dia: string) => deleteDoc(doc(db, 'cardios', idCardio(uid, dia)))
 
 // Apaga os arquivados com mais de 14 dias que não batem com nenhum alerta atual (chavesAtuais em
 // calcularAlertas.ts). Chamar só com tudo carregado. Erro vai para o log; ninguém espera a promessa.

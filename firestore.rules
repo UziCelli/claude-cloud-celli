@@ -132,6 +132,41 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
+    // Dia 'AAAA-MM-DD' de até 14 dias atrás até amanhã ("hoje" = fuso de São Paulo, UTC-3, sem horário
+    // de verão). Aceita amanhã porque o app usa o relógio do aparelho: adiantado alguns segundos perto da
+    // meia-noite, ele grava o dia seguinte, e recusar faria a marcação sumir.
+    // Data inválida (mês 13, dia 32...) dá erro na conversão, e erro nega.
+    function diaCardioValido(dia) {
+      let p = dia.split('-');
+      let d = timestamp.date(int(p[0]), int(p[1]), int(p[2]));
+      let hoje = (request.time - duration.value(3, 'h')).date();
+      return dia.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && d <= hoje + duration.value(1, 'd')
+        && d >= hoje - duration.value(14, 'd');
+    }
+
+    // Cardio do dia: cardios/{uid}_{AAAA-MM-DD} = { alunoId, dia, em, tipo?, min? }. Um por aluno por dia.
+    // O aluno liberado grava (setDoc inteiro), lê e apaga os próprios; o coach lê e apaga, nunca grava.
+    // get e delete conferem o dono pelo id (o app lê o doc de hoje antes de existir: resource == null);
+    // list confere pelo dado (consulta alunoId == uid).
+    match /cardios/{id} {
+      allow get, delete: if isCoach()
+        || (liberado() && id.matches(request.auth.uid + '_[0-9]{4}-[0-9]{2}-[0-9]{2}'));
+      allow list: if isCoach() || (own(resource.data) && liberado());
+
+      allow create, update: if own(request.resource.data) && liberado()
+        && request.resource.data.keys().hasOnly(['alunoId', 'dia', 'em', 'min', 'tipo'])
+        && request.resource.data.keys().hasAll(['alunoId', 'dia', 'em'])
+        && request.resource.data.dia is string
+        && id == request.auth.uid + '_' + request.resource.data.dia
+        && diaCardioValido(request.resource.data.dia)
+        && request.resource.data.em == request.time
+        && (!('min' in request.resource.data)
+            || (request.resource.data.min is int && request.resource.data.min >= 1 && request.resource.data.min <= 600))
+        && (!('tipo' in request.resource.data)
+            || request.resource.data.tipo in ['caminhada', 'corrida', 'esteira', 'bicicleta', 'eliptico', 'escada', 'outro']);
+    }
+
     match /mesos/{mesoId} {
       allow read: if isCoach() || (own(resource.data) && liberado());
       allow write: if isCoach();

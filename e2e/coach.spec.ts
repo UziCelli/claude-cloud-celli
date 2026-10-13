@@ -171,6 +171,27 @@ test('login novo não cai por inatividade antiga', async ({ page }) => {
   await expect(page.getByText('Você saiu por inatividade.')).toHaveCount(0)
 })
 
+test('Novo aluno: seletor sem fundo opaco e campo E-mail some no modo presencial', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Novo aluno' }).click()
+  const usaApp = page.getByRole('button', { name: 'Usa o app' })
+  const presencial = page.getByRole('button', { name: 'Presencial (sem app)' })
+  // Os botões não podem ter fundo próprio: a pílula azul fica por baixo do texto, não é coberta.
+  await expect(usaApp).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(presencial).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+
+  await expect(page.getByLabel('E-mail')).toBeVisible()
+  await presencial.click()
+  await expect(page.getByLabel('E-mail')).toBeHidden()
+  await usaApp.click()
+  await expect(page.getByLabel('E-mail')).toBeVisible()
+})
+
 test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com app', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('E-mail').fill(COACH.email)

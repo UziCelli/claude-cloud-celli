@@ -15,6 +15,7 @@ import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
 import { Centro } from '../../ui'
 import { PIX } from './PagarPix'
+import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
@@ -49,6 +50,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
+      <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
       <Quadros pagoAte={perfil?.pagoAte?.toMillis()} />
     </main>
