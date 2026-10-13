@@ -238,7 +238,7 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
           <Linha icone={<IcPessoa className="size-5" />}>Política de Privacidade</Linha>
         </a>
       </Quadro>
-      <button type="button" onClick={sair} className="vidro-escuro flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-rose-300">
+      <button type="button" onClick={sair} className="vidro-escuro border border-white/20 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-rose-300">
         <IcSair className="size-5" /> Sair
       </button>
     </main>

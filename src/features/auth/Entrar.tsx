@@ -258,7 +258,7 @@ export default function Entrar() {
             <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
             <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
             <button
-              className="h-14 w-full rounded-2xl bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50"
+              className="h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50"
               disabled={enviando || (cadastro && !aceito) || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))}
             >
               {enviando ? 'Enviando…' : !cadastro && espera > 0 ? `Aguarde ${espera} s` : cadastro ? 'Criar conta' : resolver ? 'Confirmar' : 'Entrar'}
@@ -278,7 +278,7 @@ export default function Entrar() {
             {cadastro ? 'Já tem conta?' : 'Primeira vez aqui?'}
             <span className="h-px flex-1 bg-white/20" />
           </div>
-          <button type="button" className="vidro-escuro mt-4 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={() => trocarModo(!cadastro)}>
+          <button type="button" className="vidro-escuro border border-white/20 mt-4 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={() => trocarModo(!cadastro)}>
             {cadastro ? 'Já tenho conta' : 'Criar minha conta'}
           </button>
 

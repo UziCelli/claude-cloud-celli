@@ -101,7 +101,7 @@ export default function Inicio({ nome }: { nome: string }) {
               const d = mesos.dados.find((y) => y.id === x.id)!
               return (
                 <li key={x.id}>
-                  <a href={`#/meso/${x.id}/relatorio`} className="block min-h-11 rounded-full bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                  <a href={`#/meso/${x.id}/relatorio`} className="block min-h-11 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                     {nomeDe.get(d.alunoId)} · {x.nome}
                   </a>
                 </li>
@@ -140,11 +140,11 @@ export default function Inicio({ nome }: { nome: string }) {
                     : [{ k: a.id, href: `#/aluno/${a.id}`, texto: a.nome }]
                   return links.map((l) => (
                     <li key={`${a.id}-${l.k}`} className="flex min-w-0 items-center gap-2">
-                      <a href={l.href} className="block min-h-11 max-w-full truncate rounded-full bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                      <a href={l.href} className="block min-h-11 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                         {l.texto}
                       </a>
                       {titulo === 'Aguardando aprovação' && (
-                        <a href="#/alunos" className="grid h-11 place-items-center rounded-full bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
+                        <a href="#/alunos" className="grid h-11 place-items-center rounded-full border border-marca-400 bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
                       )}
                     </li>
                   ))

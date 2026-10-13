@@ -9,6 +9,7 @@ Uso: python3 tools/planilha_para_meso.py planilha.xlsx "M (6)" [--frequencia N] 
 import argparse
 import json
 import sys
+import unicodedata
 import uuid
 from datetime import datetime
 
@@ -37,10 +38,12 @@ def main():
     ws = openpyxl.load_workbook(a.xlsx, data_only=True)[a.aba]
     c = lambda r, cl: ws.cell(r, cl if isinstance(cl, int) else col(cl)).value
 
-    # Config: rótulo "Semana [n]" em AY3 (abas antigas) ou BN5 (abas novas, com o monitoramento em AY);
+    # Config: rótulo "Semana [n]" ou "Número de semanas" (sem acento/maiúsculas/espaços extras) em AY3
+    # (abas antigas) ou BN5 (abas novas, com o monitoramento em AY);
     # valores na coluna ao lado; a tabela de métodos começa 7 linhas abaixo do rótulo.
+    rotulo = lambda v: ' '.join(''.join(ch for ch in unicodedata.normalize('NFD', texto(v)) if not unicodedata.combining(ch)).lower().split())
     cr, cc = next(((r, k) for r in range(1, 11) for k in range(1, ws.max_column + 1)
-                   if texto(c(r, k)) == 'Semana [n]'), (3, col('AY')))
+                   if rotulo(c(r, k)) in ('semana [n]', 'numero de semanas')), (3, col('AY')))
     semanas = int(c(cr, cc + 1))
     inicio = c(cr + 1, cc + 1)
     if not isinstance(inicio, datetime):

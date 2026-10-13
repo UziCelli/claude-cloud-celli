@@ -225,7 +225,7 @@ export default function EditorMeso({ id }: { id: string }) {
                     type="button"
                     aria-pressed={on}
                     onClick={() => alternarDia(d)}
-                    className={`h-11 rounded-lg text-sm font-semibold ${on ? 'bg-marca-500 text-white' : 'bg-slate-800 text-slate-300'}`}
+                    className={`h-11 rounded-lg border text-sm font-semibold ${on ? 'border-marca-400 bg-marca-500 text-white' : 'border-slate-600 bg-slate-800 text-slate-300'}`}
                   >
                     {n}
                   </button>

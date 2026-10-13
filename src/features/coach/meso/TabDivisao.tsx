@@ -188,7 +188,7 @@ export default function TabDivisao({
               key={t}
               type="button"
               onClick={() => setTreinoSel(t)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${sel === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+              className={`shrink-0 rounded-lg border border-slate-600 px-3 py-1.5 text-sm font-semibold ${sel === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               Treino {t}
             </button>

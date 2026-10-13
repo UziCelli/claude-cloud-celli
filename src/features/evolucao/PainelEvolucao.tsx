@@ -108,7 +108,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
     <main className={base}>
       {cabeca}
       {atual && mesos.length > 1 && (
-        <div className="mb-4 inline-flex rounded-lg bg-slate-800 p-1 text-sm" role="group" aria-label="Período">
+        <div className="mb-4 inline-flex rounded-lg border border-slate-600 bg-slate-800 p-1 text-sm" role="group" aria-label="Período">
           {[false, true].map((v) => (
             <button
               key={String(v)}

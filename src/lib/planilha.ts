@@ -56,12 +56,14 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
   }
   const T = colNum('T')
 
-  // Config: rótulo "Semana [n]" em AY3 (abas antigas) ou BN5 (novas); valores na coluna ao lado.
+  // Config: rótulo "Semana [n]" ou "Número de semanas" (sem acento/maiúsculas/espaços extras) em AY3 (abas antigas)
+  // ou BN5 (novas); valores na coluna ao lado.
+  const rotulo = (v: Valor | undefined) => texto(v).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ')
   let cr = 3
   let cc = colNum('AY')
   busca: for (let r = 1; r <= 10; r++)
     for (let k = 1; k <= maxCol; k++)
-      if (texto(c(r, k)) === 'Semana [n]') {
+      if (['semana [n]', 'numero de semanas'].includes(rotulo(c(r, k)))) {
         cr = r
         cc = k
         break busca
