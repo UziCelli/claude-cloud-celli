@@ -183,3 +183,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - App da Gislane: no ar (ver "04/10/2026 — Gislane no ar"). Plano e histórico em `docs/plano-app-gislane.md`.
 - Importar planilhas de outros alunos: `tools/planilha_para_meso.py` + workflow "Importar mesociclo".
 - A migração do projeto Firebase foi descartada pelo Victor.
+
+## 13/10/2026 — Notificações: mensalidade e treino pronto
+- Plano e contrato: `docs/plano-notificacoes.md`.
+- Worker `push/` agora atende as 2 marcas (a Gislane ganhou push) com rotas `/inscrever`, `/desinscrever`, `/treino-pronto` e `/aviso-pagamento`.
+- Mensalidade: workflow "Avisos de mensalidade" (diário 8h47 de Brasília) avisa quem vence em 3 dias e hoje; toque abre a Conta (Pix).
+- Treino pronto: botão "Avisar aluno: treino pronto" no editor do meso (não é automático).
+- Ícone: `badge-96.png` por marca (V/G branco); textos sem emoji. Aluno liga/desliga em Conta → "Treino novo e mensalidade".
+- A conferir com o Victor num celular real: chegada do aviso e ícone V/G no Android.

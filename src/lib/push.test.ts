@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { b64uParaBytes, juntarUrl, mesmaChave } from './push'
+import { b64uParaBytes, juntarUrl, mesmaChave, precisaInscrever } from './push'
 
 describe('b64uParaBytes', () => {
   it('converte base64url (com - e _, sem =) em bytes', () => {
@@ -25,5 +25,21 @@ describe('mesmaChave', () => {
     expect(mesmaChave(new Uint8Array([1, 2, 4]).buffer, chave)).toBe(false)
     expect(mesmaChave(new Uint8Array([1, 2]).buffer, chave)).toBe(false)
     expect(mesmaChave(null, chave)).toBe(false)
+  })
+})
+
+describe('precisaInscrever', () => {
+  const agora = 10 * 24 * 3600 * 1000
+  it('envia na primeira vez ou com dado inválido', () => {
+    expect(precisaInscrever(null, 'u', 'e', agora)).toBe(true)
+    expect(precisaInscrever(['u', 'e'], 'u', 'e', agora)).toBe(true)
+  })
+  it('não repete dentro de 7 dias com mesmo uid e endpoint', () => {
+    expect(precisaInscrever(['u', 'e', agora - 1000], 'u', 'e', agora)).toBe(false)
+  })
+  it('reenvia se mudou uid, endpoint ou passou 7 dias', () => {
+    expect(precisaInscrever(['u', 'e', agora - 1000], 'v', 'e', agora)).toBe(true)
+    expect(precisaInscrever(['u', 'e', agora - 1000], 'u', 'f', agora)).toBe(true)
+    expect(precisaInscrever(['u', 'e', agora - 7 * 24 * 3600 * 1000], 'u', 'e', agora)).toBe(true)
   })
 })

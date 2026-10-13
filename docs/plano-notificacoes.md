@@ -24,7 +24,7 @@ Todas as rotas POST com `Authorization: Bearer <token>`; respostas JSON; CORS ta
 | `/inscrever` | qualquer usuário com token válido (mesmo bloqueado: precisa do aviso de pagamento) | `{ subscription }` | `{ ok: true }` |
 | `/desinscrever` | token válido | `{}` | `{ ok: true }` |
 | `/treino-pronto` | coach: o Worker lê `usuarios/<alunoId>` **com o token de quem chama**; só o coach (com 2º fator, pelas regras) consegue ler o perfil de outro; `alunoId` ≠ uid de quem chama e `papel` ≠ `coach` | `{ alunoId }` | `{ ok: true, enviado: boolean }` (`false` = aluno sem notificações ativas) |
-| `/aviso-pagamento` | robô: JWT RS256 assinado pela conta de serviço (`iss` = e-mail `…@forca--app.iam.gserviceaccount.com` ou `…@gislane-personal-trainer.iam.gserviceaccount.com`, `aud` = `vfit-push-avisos`, `exp` ≤ `iat` + 600, ainda válido); chave pública em `https://www.googleapis.com/service_accounts/v1/jwk/<iss>` pelo `kid` | `{ projeto, avisos: [{ uid, tipo: 'vence-3d' \| 'vence-hoje' }] }` (máx. 500) | `{ ok: true, enviados: n }` |
+| `/aviso-pagamento` | robô: JWT RS256 assinado pela conta de serviço (`iss` = e-mail `…@forca--app.iam.gserviceaccount.com` ou `…@gislane-personal-trainer.iam.gserviceaccount.com`, `aud` = `vfit-push-avisos`, `exp` ≤ `iat` + 600, ainda válido); chave pública em `https://www.googleapis.com/service_accounts/v1/jwk/<iss>` pelo `kid` | `{ projeto, avisos: [{ uid, tipo: 'vence-3d' \| 'vence-hoje' }] }` (máx. 20 por chamada: limite de subpedidos do plano grátis) | `{ ok: true, enviados: n }` |
 
 Mensagem enviada (JSON do push), lida pelo `public/sw-push.js`:
 

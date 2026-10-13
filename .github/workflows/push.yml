@@ -51,3 +51,7 @@ jobs:
           curl -fsS "$url/vapid" | jq -e '.publicKey | length > 80'
           test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$url/agendar" -H 'Content-Type: application/json' -d '{}')" = 401
           test "$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$url/agendar" -H 'Origin: https://app.vfitcoachapp.com' -H 'Access-Control-Request-Method: POST')" = 204
+          for rota in inscrever treino-pronto aviso-pagamento; do
+            test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$url/$rota" -H 'Content-Type: application/json' -d '{}')" = 401
+          done
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$url/inscrever" -H 'Origin: https://app.gislanepersonaltrainer.com' -H 'Access-Control-Request-Method: POST')" = 204
