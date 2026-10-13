@@ -50,17 +50,17 @@ export function useAlertasCoach() {
 
 const Grupo = ({ titulo, n, cor, children }: { titulo: string; n: number; cor: string; children: ReactNode }) =>
   n > 0 ? (
-    <section className="space-y-2">
+    <m.section layout="position" transition={suave} className="space-y-2">
       <h2 className="font-semibold">
         {titulo} <span className={`font-display text-lg font-bold ${cor}`}>{n}</span>
       </h2>
       <AnimatePresence initial={false}>{children}</AnimatePresence>
-    </section>
+    </m.section>
   ) : null
 
 // Item que some com animação ao ser arquivado.
 const Saindo = ({ children }: { children: ReactNode }) => (
-  <m.div exit={{ opacity: 0, x: -40, height: 0 }} transition={{ ...suave, opacity: saida }} className="overflow-hidden">
+  <m.div layout="position" exit={{ opacity: 0, x: -40 }} transition={{ ...suave, opacity: saida }}>
     {children}
   </m.div>
 )
@@ -172,21 +172,21 @@ export default function Alertas() {
             ))}
           </Grupo>
           {nArq > 0 && (
-            <section className="space-y-2">
+            <m.section layout="position" transition={suave} className="space-y-2">
               <button type="button" aria-expanded={verArq} onClick={() => setVerArq((v) => !v)} className="font-semibold text-slate-300">
                 Arquivados ({nArq}) <IcVoltar className={`inline size-4 align-[-2px] ${verArq ? '-rotate-90' : 'rotate-180'}`} />
               </button>
-              <Painel aberto={verArq}>
-                <ul className="space-y-2 pt-1">
+              {verArq && (
+                <m.ul className="space-y-2 pt-1" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
                   {linhas.map((l) => (
                     <li key={l.chave} className="flex items-center justify-between gap-3 rounded-xl border border-slate-700 p-3 text-sm text-slate-300">
                       <span className="min-w-0"><b>{l.nome}</b> · {l.desc}</span>
                       <button type="button" className={btn} onClick={() => desarquivarAlerta(l.chave).catch(() => {})}>Desarquivar</button>
                     </li>
                   ))}
-                </ul>
-              </Painel>
-            </section>
+                </m.ul>
+              )}
+            </m.section>
           )}
         </div>
       )}
