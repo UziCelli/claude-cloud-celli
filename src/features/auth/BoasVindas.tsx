@@ -107,8 +107,8 @@ export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void;
         </ul>
 
         <div className="mt-6 space-y-3">
-          <button type="button" className="h-14 w-full rounded-2xl bg-marca-500 text-[17px] font-bold text-white shadow-lg" onClick={escolher(onCriar)}>Criar minha conta</button>
-          <button type="button" className="vidro-escuro h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={escolher(onEntrar)}>Já tenho conta</button>
+          <button type="button" className="h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg" onClick={escolher(onCriar)}>Criar minha conta</button>
+          <button type="button" className="vidro-escuro border border-white/20 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={escolher(onEntrar)}>Já tenho conta</button>
         </div>
 
         {(ios || android) && (
@@ -120,7 +120,7 @@ export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void;
                 <p className="text-[15px] text-slate-200">Leva 30 segundos</p>
               </div>
             </div>
-            <button type="button" className="mt-3 h-12 w-full rounded-xl bg-white/15 text-[16px] font-bold text-white" onClick={instalar}>Como instalar</button>
+            <button type="button" className="mt-3 h-12 w-full rounded-xl border border-white/20 bg-white/15 text-[16px] font-bold text-white" onClick={instalar}>Como instalar</button>
             {dica && !evento && <p className="mt-2 text-[15px] text-slate-200">No Chrome, toque em <strong>⋮</strong> e escolha <strong>Instalar app</strong>.</p>}
           </div>
         )}

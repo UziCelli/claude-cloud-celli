@@ -27,11 +27,11 @@ export const Cartao = ({ children, className = '' }: { children: ReactNode; clas
 )
 
 const estilos = {
-  primario: 'bg-marca-500 text-white hover:bg-marca-400',
-  secundario: 'bg-slate-800 text-slate-100 hover:bg-slate-700',
-  perigo: 'bg-red-600 text-white hover:bg-red-500',
-  destaque: 'bg-amber-400 text-slate-950 hover:bg-amber-300',
-  alerta: 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/50 hover:bg-red-500/25',
+  primario: 'border-marca-400 bg-marca-500 text-white hover:bg-marca-400',
+  secundario: 'border-slate-600 hover:border-slate-500 bg-slate-800 text-slate-100 hover:bg-slate-700',
+  perigo: 'border-red-400 bg-red-600 text-white hover:bg-red-500',
+  destaque: 'border-amber-300 bg-amber-400 text-slate-950 hover:bg-amber-300',
+  alerta: 'bg-red-500/15 text-red-300 border-red-400/50 hover:bg-red-500/25',
 }
 
 export const Botao = ({
@@ -49,7 +49,7 @@ export const Botao = ({
     whileTap={{ scale: 0.96 }}
     transition={agil}
     {...p}
-    className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${estilos[tipo]} ${className}`}
+    className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${estilos[tipo]} ${className}`}
   >
     {carregando ? (
       <span className="inline-flex items-center justify-center gap-2">

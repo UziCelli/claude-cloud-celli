@@ -34,7 +34,7 @@ const Linha = ({ s, kg, reps, cinza, faixa }: { s: string; kg: string; reps: str
   </div>
 )
 const Botaozinho = ({ children, className = '' }: { children: ReactNode; className?: string }) => (
-  <span className={`inline-flex items-center rounded-lg px-3 py-2 text-sm font-semibold ${className}`}>{children}</span>
+  <span className={`inline-flex items-center rounded-lg border px-3 py-2 text-sm font-semibold ${className}`}>{children}</span>
 )
 const Selo = ({ nome, cor }: { nome: string; cor: keyof typeof COR_METODO }) => (
   <span className={`rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${COR_METODO[cor].selo}`}>{nome} <IcInfo className="inline size-3 align-[-1px]" /></span>
@@ -51,7 +51,7 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
     texto: 'Na aba Treino (ou em "Ver treino de hoje", no Início), abra o treino e toque em "Iniciar treino". O tempo começa a correr, ao lado do tempo previsto do treino, para você comparar.',
     ilustracao: (
       <div className="space-y-2">
-        <Botaozinho className="w-full justify-center bg-marca-500 text-white"><IcPlay className="mr-1.5 size-4" /> Iniciar treino</Botaozinho>
+        <Botaozinho className="w-full justify-center border-marca-400 bg-marca-500 text-white"><IcPlay className="mr-1.5 size-4" /> Iniciar treino</Botaozinho>
         <p className="text-sm text-slate-400">Treino em andamento · <b className="text-slate-100">00:12:30</b></p>
       </div>
     ),
@@ -98,9 +98,9 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
     texto: 'Depois da série, toque em Play para contar o descanso. O app avisa quando acabar.',
     ilustracao: (
       <div className="flex items-center gap-2">
-        <Botaozinho className="bg-slate-700"><IcPlay className="mr-1.5 size-4" /> 60 s</Botaozinho>
+        <Botaozinho className="border-slate-500 bg-slate-700"><IcPlay className="mr-1.5 size-4" /> 60 s</Botaozinho>
         <span className="text-slate-500">→</span>
-        <Botaozinho className="bg-marca-500 text-white"><IcPausa className="mr-1.5 size-4" /> 0:42</Botaozinho>
+        <Botaozinho className="border-marca-400 bg-marca-500 text-white"><IcPausa className="mr-1.5 size-4" /> 0:42</Botaozinho>
       </div>
     ),
   },
@@ -109,9 +109,9 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
     texto: 'O sininho liga e desliga o aviso quando o descanso termina. O sino avisa; o sino riscado fica em silêncio.',
     ilustracao: (
       <div className="flex items-center gap-3 text-2xl">
-        <Botaozinho className="bg-slate-700"><IcSino className="size-5" /></Botaozinho>
+        <Botaozinho className="border-slate-500 bg-slate-700"><IcSino className="size-5" /></Botaozinho>
         <span className="text-slate-500">ou</span>
-        <Botaozinho className="bg-slate-700"><IcSinoMudo className="size-5" /></Botaozinho>
+        <Botaozinho className="border-slate-500 bg-slate-700"><IcSinoMudo className="size-5" /></Botaozinho>
       </div>
     ),
   },
@@ -128,12 +128,12 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   {
     titulo: 'Anotações',
     texto: 'Toque em "Anotação" para escrever lembretes: altura do banco, pegada, o que sentiu…',
-    ilustracao: <Botaozinho className="w-full justify-center bg-slate-800 ring-1 ring-slate-600"><IcNota className="mr-1.5 size-4" /> Anotação — toque para escrever</Botaozinho>,
+    ilustracao: <Botaozinho className="w-full justify-center border-slate-600 bg-slate-800"><IcNota className="mr-1.5 size-4" /> Anotação — toque para escrever</Botaozinho>,
   },
   {
     titulo: 'Concluir treino',
     texto: 'No fim da página, toque em "Concluir treino". Você recebe um resumo para postar no story.',
-    ilustracao: <Botaozinho className="w-full justify-center bg-marca-500 py-3 text-white">Concluir treino</Botaozinho>,
+    ilustracao: <Botaozinho className="w-full justify-center border-marca-400 bg-marca-500 py-3 text-white">Concluir treino</Botaozinho>,
   },
 ]
 
@@ -184,9 +184,9 @@ export default function Tutorial({ fechar }: { fechar: () => void }) {
           <button type="button" onClick={sair} className="min-h-11 px-2 text-sm text-slate-400 hover:text-slate-200">Pular</button>
           <div className="flex gap-2">
             {i > 0 && (
-              <button type="button" onClick={() => setI(i - 1)} className="min-h-11 rounded-lg bg-slate-800 px-4 text-sm font-semibold">Voltar</button>
+              <button type="button" onClick={() => setI(i - 1)} className="min-h-11 rounded-lg border border-slate-600 bg-slate-800 px-4 text-sm font-semibold">Voltar</button>
             )}
-            <button type="button" onClick={ultimo ? sair : () => setI(i + 1)} className="min-h-11 rounded-lg bg-marca-500 px-5 text-sm font-semibold text-white">
+            <button type="button" onClick={ultimo ? sair : () => setI(i + 1)} className="min-h-11 rounded-lg border border-marca-400 bg-marca-500 px-5 text-sm font-semibold text-white">
               {ultimo ? 'Começar' : 'Próximo'}
             </button>
           </div>

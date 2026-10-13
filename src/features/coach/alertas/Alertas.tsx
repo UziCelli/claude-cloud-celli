@@ -173,7 +173,7 @@ export default function Alertas() {
           </Grupo>
           {nArq > 0 && (
             <m.section layout="position" transition={suave} className="space-y-2">
-              <button type="button" aria-expanded={verArq} onClick={() => setVerArq((v) => !v)} className="font-semibold text-slate-300">
+              <button type="button" aria-expanded={verArq} onClick={() => setVerArq((v) => !v)} className="rounded-lg border border-slate-600 px-3 py-1.5 font-semibold text-slate-300">
                 Arquivados ({nArq}) <IcVoltar className={`inline size-4 align-[-2px] ${verArq ? '-rotate-90' : 'rotate-180'}`} />
               </button>
               {verArq && (

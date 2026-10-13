@@ -78,7 +78,7 @@ export default function RankingAlunos() {
             role="tab"
             aria-selected={aba === k}
             onClick={() => setAba(k)}
-            className={`shrink-0 rounded-lg px-3 py-2 text-sm ${aba === k ? 'bg-marca-600 text-white' : 'bg-slate-800 text-slate-300'}`}
+            className={`shrink-0 rounded-lg border border-slate-600 px-3 py-2 text-sm ${aba === k ? 'bg-marca-600 text-white' : 'bg-slate-800 text-slate-300'}`}
           >
             {t}
           </button>

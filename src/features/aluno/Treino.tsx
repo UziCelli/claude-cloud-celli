@@ -288,7 +288,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     return () => clearInterval(id)
   }, [rodando])
   if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span> · previsto {previsto}</p> : null
-  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40 ring-1 ring-inset ring-marca-400/50" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
+  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">

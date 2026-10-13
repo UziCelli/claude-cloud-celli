@@ -85,7 +85,7 @@ function PainelSugestao({ meso, acima, onAplicar, onCancelar }: { meso: Meso; ac
         <p className="mb-1 text-slate-400">Aplicar nas semanas</p>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: meso.semanas }, (_, i) => i + 1).map((w) => (
-            <label key={w} className={`flex h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg px-2 font-semibold ${semanas.includes(w) ? 'bg-marca-500 text-white' : 'bg-slate-800 text-slate-300'}`}>
+            <label key={w} className={`flex h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg border border-slate-600 px-2 font-semibold ${semanas.includes(w) ? 'bg-marca-500 text-white' : 'bg-slate-800 text-slate-300'}`}>
               <input type="checkbox" className="sr-only" checked={semanas.includes(w)} onChange={() => setSemanas(troca(semanas, w))} />S{w}
             </label>
           ))}

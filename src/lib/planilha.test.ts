@@ -37,6 +37,12 @@ describe('planilhaParaMeso', () => {
     expect(feito.deFora).toBe(0)
   })
 
+  it("layout novo com rótulo 'Número de semanas'", () => {
+    const { meso } = planilhaParaMeso(new Map(Object.entries(aba(true, { BN5: 'Número de semanas' }))), ids())
+    expect(meso.semanas).toBe(2)
+    expect(meso.frequencia).toBe(2)
+  })
+
   it('layout novo: rótulo em BN5, tabela em BN12, métodos deduplicados', () => {
     const linha = metodoLinha(12, ['BN', 'BO', 'BP', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW', 'BX'],
       ['x', 'sim', 1, 1, 2, 'Crucifixo', 'Dropset', 'Todas as séries', 0, null, 0.125])
