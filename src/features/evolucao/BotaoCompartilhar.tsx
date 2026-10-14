@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Botao } from '../../ui'
 import { compartilharArquivo, gerarCartao, type DadosCartao } from './cartaoStory'
 
-export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução' }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string }) {
+export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução', aoGerar }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string; aoGerar?: (blob: Blob) => void }) {
   const [gerando, setGerando] = useState(false)
   const [msg, setMsg] = useState('')
   const [pronta, setPronta] = useState<{ chave: string; blob: Blob } | null>(null)
@@ -12,7 +12,11 @@ export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gera
   useEffect(() => {
     let vivo = true
     gerar(JSON.parse(chave) as T)
-      .then((blob) => vivo && setPronta({ chave, blob }))
+      .then((blob) => {
+        if (!vivo) return
+        setPronta({ chave, blob })
+        aoGerar?.(blob)
+      })
       .catch(() => {})
     return () => {
       vivo = false

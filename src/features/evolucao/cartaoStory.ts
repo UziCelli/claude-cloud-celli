@@ -208,6 +208,7 @@ export type DadosTreino = {
   recordes: string[] // "Supino: 60 kg"
   subiram: string[] // "Remada: 40 → 45 kg"
   semana: { feitos: number; total: number }
+  foto?: string // data URL; fica só no aparelho
 }
 
 const MAX_LISTA = 3
@@ -274,6 +275,102 @@ function desenharTreino(ctx: CanvasRenderingContext2D, d: DadosTreino) {
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
 }
 
+// Textos do story com foto: poucos números (chips) e selo só se houver recorde.
+export function textosFotoTreino(d: DadosTreino) {
+  const n = d.recordes.length
+  const chips: [string, string][] = []
+  if (d.duracao) chips.push(['DURAÇÃO', d.duracao])
+  if (d.volume) chips.push(['VOLUME', d.volume])
+  chips.push(['SEMANA', `${d.semana.feitos} de ${d.semana.total}`])
+  return { chips, selo: n ? `${n} ${n === 1 ? 'NOVO RECORDE' : 'NOVOS RECORDES'}` : undefined }
+}
+
+const carregarImagem = (src: string) =>
+  new Promise<HTMLImageElement>((ok, erro) => {
+    const i = new Image()
+    i.onload = () => ok(i)
+    i.onerror = () => erro(new Error('Foto inválida'))
+    i.src = src
+  })
+
+// Foto em tela cheia + marca. Zona segura do Instagram: nada importante nos ~250 px de cima nem nos ~340 px de baixo.
+function desenharTreinoFoto(ctx: CanvasRenderingContext2D, d: DadosTreino, img: HTMLImageElement) {
+  const t = textosFotoTreino(d)
+  const disp = (px: number, peso = 800) => `${peso} ${px}px Montserrat, 'Arial Black', sans-serif`
+  const sans = (px: number, peso = 600) => `${peso} ${px}px Inter, system-ui, sans-serif`
+  ctx.drawImage(img, 0, 0, W, H)
+  for (const [y0, y1, a0, a1] of [[0, 600, 0.65, 0], [800, H, 0, 0.92]] as const) {
+    const g = ctx.createLinearGradient(0, y0, 0, y1)
+    g.addColorStop(0, `rgba(0,0,0,${a0})`)
+    if (a0 === 0) g.addColorStop(0.55, `rgba(0,0,0,${a1 * 0.8})`)
+    g.addColorStop(1, `rgba(0,0,0,${a1})`)
+    ctx.fillStyle = g
+    ctx.fillRect(0, y0, W, y1 - y0)
+  }
+  // Logo (o "COACH" é vazado: aparece a foto sobre a sombra)
+  const lw = 440
+  const k = lw / LOGO_VIEWBOX.w
+  ctx.save()
+  ctx.translate((W - lw) / 2, 270)
+  ctx.scale(k, k)
+  for (const p of LOGO_PARTES) {
+    ctx.fillStyle = p.cor
+    ctx.fill(new Path2D(p.d), 'evenodd')
+  }
+  ctx.restore()
+
+  ctx.textBaseline = 'alphabetic'
+  ctx.textAlign = 'center'
+  ctx.shadowColor = 'rgba(0,0,0,0.55)'
+  ctx.shadowBlur = 14
+  const texto = (s: string, y: number, cor: string, px: number, peso: number, fam = disp, max = W - 160) => {
+    ctx.fillStyle = cor
+    ajustar(ctx, s, (p) => fam(p, peso), px, max)
+    ctx.fillText(s, W / 2, y)
+  }
+  if (t.selo) {
+    ctx.save()
+    ctx.shadowBlur = 0
+    ctx.font = disp(34, 800)
+    const w = ctx.measureText(t.selo).width + 150
+    ctx.fillStyle = rgba('#000000', 0.45)
+    caixa(ctx, (W - w) / 2, 1090, w, 76, 38)
+    ctx.fill()
+    icone(ctx, D_TROFEU, (W - w) / 2 + 30, 1090 + 56, 40, '#fcd34d')
+    ctx.restore()
+    ctx.fillStyle = '#fcd34d'
+    ctx.font = disp(34, 800)
+    ctx.fillText(t.selo, W / 2 + 36, 1090 + 51)
+  }
+  texto(d.data.toUpperCase(), 1230, C.m300, 36, 700)
+  texto('TREINO CONCLUÍDO', 1330, '#fff', 90, 900)
+  texto(d.nome, 1420, C.m300, 70, 800)
+
+  ctx.shadowBlur = 0
+  const gap = 20
+  const cw = (W - 140 - gap * (t.chips.length - 1)) / t.chips.length
+  t.chips.forEach(([rotulo, valor], i) => {
+    const x = 70 + i * (cw + gap)
+    ctx.fillStyle = rgba('#ffffff', 0.18)
+    caixa(ctx, x, 1450, cw, 120, 30)
+    ctx.fill()
+    ctx.strokeStyle = rgba('#ffffff', 0.35)
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.fillStyle = C.s300
+    ctx.font = sans(24, 700)
+    ctx.fillText(rotulo, x + cw / 2, 1488)
+    ctx.fillStyle = '#fff'
+    ajustar(ctx, valor, (p) => disp(p, 900), 46, cw - 30)
+    ctx.fillText(valor, x + cw / 2, 1542)
+  })
+  ctx.fillStyle = C.m300
+  ctx.font = disp(30, 700)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '10px'
+  ctx.fillText(marca.nome.toUpperCase(), W / 2, H - 70)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+}
+
 export async function gerarCartaoTreino(d: DadosTreino): Promise<Blob> {
   await prepararFontes()
   const c = document.createElement('canvas')
@@ -281,7 +378,8 @@ export async function gerarCartaoTreino(d: DadosTreino): Promise<Blob> {
   c.height = H
   const ctx = c.getContext('2d')
   if (!ctx) throw new Error('Canvas indisponível')
-  desenharTreino(ctx, d)
+  if (d.foto) desenharTreinoFoto(ctx, d, await carregarImagem(d.foto))
+  else desenharTreino(ctx, d)
   return new Promise((ok, erro) => c.toBlob((b) => (b ? ok(b) : erro(new Error('Falha ao gerar a imagem'))), 'image/png'))
 }
 

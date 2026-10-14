@@ -132,7 +132,7 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   },
   {
     titulo: 'Concluir treino',
-    texto: 'No fim da página, toque em "Concluir treino". Você recebe um resumo para postar no story.',
+    texto: 'No fim da página, toque em "Concluir treino". Você recebe um resumo para postar no story, se quiser com a sua foto.',
     ilustracao: <Botaozinho className="w-full justify-center border-marca-400 bg-marca-500 py-3 text-white">Concluir treino</Botaozinho>,
   },
 ]
