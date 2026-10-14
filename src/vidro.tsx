@@ -41,10 +41,22 @@ export function BarraAbas({ abas, className = '' }: { abas: Aba[]; className?: s
 }
 
 // Fundo escuro com dois brilhos da cor da marca (dá profundidade ao vidro). Fica atrás de tudo.
+// Sem filtro: o desfoque pesado fazia o Chrome do Android perder a imagem na volta.
+// Círculo cheio até 1/4 do raio e esmaecendo até a borda (como o antigo blur-3xl).
+const luz = (tom: number, pct: number) => {
+  const c = `color-mix(in srgb, var(--color-marca-${tom}) ${pct}%, transparent)`
+  return `radial-gradient(closest-side, ${c}, ${c} 25%, transparent)`
+}
 export const Brilho = () => (
   <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-    <div className="absolute -left-28 -top-24 size-[26rem] rounded-full bg-marca-500/25 blur-3xl" />
-    <div className="absolute -right-36 top-[22rem] size-[24rem] rounded-full bg-marca-700/45 blur-3xl" />
+    <div
+      className="absolute -left-44 -top-40 size-[34rem]"
+      style={{ background: luz(500, 25) }}
+    />
+    <div
+      className="absolute -right-52 top-[18rem] size-[32rem]"
+      style={{ background: luz(700, 45) }}
+    />
   </div>
 )
 
