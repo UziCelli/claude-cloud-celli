@@ -21,7 +21,7 @@ export type RelatorioCiclo = {
   recordes: { nome: string; kg: number; semana: number; treino: number }[] // contra todo o histórico do aluno
   volumeKg: number
   movimentos: number
-  tempoMedioMin: number | null // realizadoEm − inicioEm; acima de 180 min (esqueceu de concluir) não conta
+  tempoMedioMin: number | null // realizadoEm − inicioEm; duração acima do teto (duracaoTreino: 3 h, esqueceu de concluir) não conta
 }
 
 const DIA = 86400_000

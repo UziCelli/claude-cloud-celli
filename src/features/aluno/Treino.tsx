@@ -463,7 +463,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     limparTreino()
-    marcarRealizado(mesoId, uid, semana, treino, true, ms(docAtual?.realizadoEm) != null) // já concluído antes: mantém a hora original
+    marcarRealizado(mesoId, uid, semana, treino, true, ms(docAtual?.realizadoEm) != null || fimLocal != null) // já concluído antes (inclusive offline, ainda pendente): mantém a hora original
     setFimLocal(Date.now())
     abrirResumo()
   }
