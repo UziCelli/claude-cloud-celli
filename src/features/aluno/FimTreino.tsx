@@ -88,6 +88,7 @@ export default function FimTreino({
     }
   }
   function pronta(blob: Blob) {
+    if (!foto) return // sem foto não há prévia a mostrar
     const r = new FileReader()
     r.onload = () => setPrevia(r.result as string)
     r.onerror = () => {
@@ -170,7 +171,12 @@ export default function FimTreino({
             <IcCamera className="mr-1.5 inline size-5 align-[-4px]" /> Adicionar foto
           </Botao>
         )}
-        <BotaoCompartilhar dados={dados} gerar={gerarCartaoTreino} aoGerar={pronta} />
+        <BotaoCompartilhar
+          dados={dados}
+          gerar={gerarCartaoTreino}
+          aoGerar={pronta}
+          aoErro={foto ? () => { setErro(true); setFoto(undefined) } : undefined}
+        />
         {foto && (
           <div className="flex gap-2">
             <Botao className="flex-1" onClick={() => entrada.current?.click()}>
