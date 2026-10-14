@@ -23,3 +23,11 @@ const montar = (features: Features) =>
 const carregar = () => import('./motionFeatures').then((x) => x.default);
 // Se o chunk falhar (rede), monta mesmo assim no modo assíncrono antigo em vez de ficar em branco.
 carregar().then(montar, () => montar(carregar));
+
+// Android: ao voltar ao app o Chrome às vezes não redesenha as camadas de GPU (tela preta); 1 quadro de opacidade força o redesenho.
+const redesenhar = () => {
+  document.body.style.opacity = '0.999';
+  requestAnimationFrame(() => requestAnimationFrame(() => { document.body.style.opacity = ''; }));
+};
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') redesenhar(); });
+window.addEventListener('pageshow', (e) => { if (e.persisted) redesenhar(); });
