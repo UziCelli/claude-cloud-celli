@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { m } from 'motion/react'
 import { confete } from '../../movimento'
 import type { ReactNode } from 'react'
@@ -7,7 +8,8 @@ import Logo from '@marca/Logo'
 import { Botao, cascata, item } from '../../ui'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
 import { gerarCartaoTreino, limitar, type DadosTreino } from '../evolucao/cartaoStory'
-import { IcSubir, IcTrofeu } from '../../icones'
+import { reduzirFoto } from '../../lib/foto'
+import { IcCamera, IcSubir, IcTrofeu } from '../../icones'
 
 const CONFETE = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#facc15', '#a78bfa']
 
@@ -59,6 +61,10 @@ export default function FimTreino({
   const volTxt = volumeKg > 0 ? `${fmt(Math.round(volumeKg))} kg` : null
   const recTxt = recordes.map((r) => `${r.nome}: ${fmt(r.kg)} kg (antes ${fmt(r.antes)})`)
   const subTxt = subiram.map((s) => `${s.nome}: ${fmt(s.antes)} → ${fmt(s.agora)} kg`)
+  const [foto, setFoto] = useState<string>()
+  const [previa, setPrevia] = useState<string>()
+  const [erro, setErro] = useState(false)
+  const entrada = useRef<HTMLInputElement>(null)
   const dados: DadosTreino = {
     nome: primeiro,
     data,
@@ -68,11 +74,35 @@ export default function FimTreino({
     recordes: recTxt,
     subiram: subTxt,
     semana: { feitos: feitosSemana, total: frequencia },
+    foto,
+  }
+  async function escolher(f?: File) {
+    if (!f) return
+    setErro(false)
+    try {
+      const url = await reduzirFoto(f, 1080, 1920, 1_500_000)
+      setPrevia(undefined)
+      setFoto(url)
+    } catch {
+      setErro(true)
+    }
+  }
+  function pronta(blob: Blob) {
+    if (!foto) return // sem foto não há prévia a mostrar
+    const r = new FileReader()
+    r.onload = () => setPrevia(r.result as string)
+    r.onerror = () => {
+      setErro(true)
+      setFoto(undefined) // sem prévia, volta ao cartão em vez de ficar no esqueleto
+    }
+    r.readAsDataURL(blob) // blob: é barrado pela CSP em <img>
   }
   const segs = Math.min(Math.max(frequencia, 1), 7)
   return (
     <main className="mx-auto max-w-sm px-4 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-      <m.div
+      {foto && previa && <img src={previa} alt="Prévia do story com a sua foto" className="w-full rounded-3xl shadow-xl" />}
+      {foto && !previa && <div className="aspect-[9/16] w-full animate-pulse rounded-3xl bg-slate-800" />}
+      {!foto && <m.div
         variants={cascata}
         initial="hidden"
         animate="show"
@@ -131,10 +161,32 @@ export default function FimTreino({
           <p className="mt-2 text-sm font-bold">{`Semana ${semana}: ${feitosSemana} de ${frequencia} treinos`}</p>
           {feitosSemana >= frequencia && <p className="text-sm font-bold text-marca-300">Semana completa!</p>}
         </m.div>
-      </m.div>
+      </m.div>}
 
       <div className="mt-5 space-y-2">
-        <BotaoCompartilhar dados={dados} gerar={gerarCartaoTreino} />
+        <input ref={entrada} type="file" accept="image/*" hidden onChange={(e) => { void escolher(e.target.files?.[0]); e.target.value = '' }} />
+        {erro && <p role="status" className="text-sm text-red-400">Não deu para abrir essa foto. Tente outra.</p>}
+        {!foto && (
+          <Botao className="w-full" onClick={() => entrada.current?.click()}>
+            <IcCamera className="mr-1.5 inline size-5 align-[-4px]" /> Adicionar foto
+          </Botao>
+        )}
+        <BotaoCompartilhar
+          dados={dados}
+          gerar={gerarCartaoTreino}
+          aoGerar={pronta}
+          aoErro={foto ? () => { setErro(true); setFoto(undefined) } : undefined}
+        />
+        {foto && (
+          <div className="flex gap-2">
+            <Botao className="flex-1" onClick={() => entrada.current?.click()}>
+              Trocar foto
+            </Botao>
+            <Botao className="flex-1" onClick={() => { setFoto(undefined); setPrevia(undefined) }}>
+              Tirar foto
+            </Botao>
+          </div>
+        )}
         <Botao tipo="primario" className="w-full" onClick={voltar}>
           Voltar para Hoje
         </Botao>

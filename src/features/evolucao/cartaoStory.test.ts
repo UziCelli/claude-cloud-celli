@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { limitar, textosCartao } from './cartaoStory'
+import { limitar, textosCartao, textosFotoTreino } from './cartaoStory'
 
 describe('textosCartao', () => {
   it('formata em pt-BR com vírgula e plural', () => {
@@ -18,5 +18,22 @@ describe('limitar', () => {
   it('até 3 itens e "+N" se houver mais', () => {
     expect(limitar(['a', 'b'])).toEqual(['a', 'b'])
     expect(limitar(['a', 'b', 'c', 'd', 'e'])).toEqual(['a', 'b', 'c', '+2'])
+  })
+})
+
+describe('textosFotoTreino', () => {
+  const base = { nome: 'Ana', data: '14 de outubro', duracao: '45:10', volume: '12.500 kg', recordes: [], subiram: [], semana: { feitos: 2, total: 3 } }
+  it('chips completos e sem selo', () => {
+    const t = textosFotoTreino(base)
+    expect(t.chips).toEqual([['DURAÇÃO', '45:10'], ['VOLUME', '12.500 kg'], ['SEMANA', '2 de 3']])
+    expect(t.selo).toBeUndefined()
+  })
+  it('omite chip sem dado', () => {
+    expect(textosFotoTreino({ ...base, duracao: null }).chips.map((c) => c[0])).toEqual(['VOLUME', 'SEMANA'])
+    expect(textosFotoTreino({ ...base, volume: null }).chips.map((c) => c[0])).toEqual(['DURAÇÃO', 'SEMANA'])
+  })
+  it('selo de recorde no singular e no plural', () => {
+    expect(textosFotoTreino({ ...base, recordes: ['a'] }).selo).toBe('1 NOVO RECORDE')
+    expect(textosFotoTreino({ ...base, recordes: ['a', 'b'] }).selo).toBe('2 NOVOS RECORDES')
   })
 })

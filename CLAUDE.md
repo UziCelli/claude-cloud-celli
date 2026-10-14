@@ -24,16 +24,24 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
 ## Comandos
 `npm run dev` · `npm run typecheck` · `npm test` · `npm run build`
 
-## Economia de tokens — regra de delegação
-A sessão principal (Opus) **orquestra**: planeja, decide e delega. Delegue sempre para o agente mais barato que resolve:
+## Hierarquia dos agentes (definida pelo Victor em 14/10/2026)
+Três níveis. Cada um faz só o seu papel:
 
-| Agente | Modelo | Quando |
-|---|---|---|
-| `explorador` | Haiku | achar código/arquivos |
-| `auxiliar` | Haiku | tarefas mecânicas: dados, boilerplate, CI, docs, rodar testes |
-| `dev` | Sonnet | telas, formulários, integração Firebase |
-| `revisor` | Sonnet | revisar diff antes de commit/PR |
-| `arquiteto` | Opus | motor de cálculo, regras de segurança, sync offline, bugs difíceis |
+| Nível | Modelo | Agentes | Papel |
+|---|---|---|---|
+| Arquiteto | **Opus** | `arquiteto` | **Decide e desenha.** Planos, decisões de design, segurança e dados, bugs difíceis. |
+| Executor | **Sonnet** | `dev`, `revisor` | **Executa** o que o arquiteto desenhou: telas, formulários, integração, testes, revisão do diff. |
+| Operacional | **Haiku** | `auxiliar`, `explorador` | **Ações básicas:** commit/push/PR/merge, acompanhar CI e deploy, rodar testes, achar arquivos, docs e dados mecânicos. |
+
+Regras:
+- **Decisão ou questão difícil passa pelo `arquiteto` (Opus) antes de implementar.** Vale para: motor de cálculo, regras do Firestore/segurança, modelo de dados, sync offline, migração de dados, LGPD, bug que resiste, e qualquer escolha de design com mais de um caminho.
+- O executor (Sonnet) que esbarrar numa decisão dessas **para e devolve a pergunta**; não decide sozinho. O operacional (Haiku) nunca decide: segue o pedido.
+- Fluxo de uma feature: `arquiteto` (plano curto + critério de pronto + riscos) → `dev` executa → `revisor` revisa → `auxiliar` faz commit/PR/CI/merge.
+- Não precisa do arquiteto: ajuste visual, texto, copy e bug óbvio sem decisão de design.
+- A sessão principal conversa com o Victor e divide o trabalho. Se ela já for Opus, ela mesma faz o papel de arquiteto (sem pagar um agente a mais); senão, chama o `arquiteto`.
+
+## Economia de tokens — regra de delegação
+Delegue sempre para o agente mais barato que resolve (respeitando a hierarquia acima).
 
 - Prompts de delegação curtos e completos (arquivos, critério de pronto, limite de palavras na resposta).
 - Tarefas independentes em paralelo; nunca dois agentes no mesmo arquivo ao mesmo tempo.

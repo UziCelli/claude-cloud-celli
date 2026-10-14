@@ -1,19 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Botao } from '../../ui'
 import { compartilharArquivo, gerarCartao, type DadosCartao } from './cartaoStory'
 
-export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução' }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string }) {
+export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução', aoGerar, aoErro }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string; aoGerar?: (blob: Blob) => void; aoErro?: () => void }) {
   const [gerando, setGerando] = useState(false)
   const [msg, setMsg] = useState('')
   const [pronta, setPronta] = useState<{ chave: string; blob: Blob } | null>(null)
-  const chave = JSON.stringify(dados)
+  const dadosRef = useRef(dados)
+  dadosRef.current = dados
+  // Texto longo (foto em data URL, até 1,5 MB) entra na chave só pelo tamanho e pelo final: não reserializa a foto a cada render.
+  const chave = JSON.stringify(dados, (_, v) => (typeof v === 'string' && v.length > 1000 ? `${v.length}:${v.slice(-64)}` : v))
 
   // Gera a imagem antes do toque: no clique o share sai na hora (exigência do Safari).
   useEffect(() => {
     let vivo = true
-    gerar(JSON.parse(chave) as T)
-      .then((blob) => vivo && setPronta({ chave, blob }))
-      .catch(() => {})
+    gerar(dadosRef.current)
+      .then((blob) => {
+        if (!vivo) return
+        setPronta({ chave, blob })
+        aoGerar?.(blob)
+      })
+      .catch(() => {
+        if (vivo) aoErro?.()
+      })
     return () => {
       vivo = false
     }

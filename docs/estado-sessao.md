@@ -4,9 +4,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 
 ## Regras combinadas com o Victor
 - **Linguagem:** respostas curtas, em tópicos, pt-BR (ele tem TDAH e não programa).
-- **Economia:** a sessão principal só orquestra.
-  - Código vai para agentes **Sonnet** (dev/arquiteto com `model: sonnet`).
-  - Tarefas executivas (commit, push, PR, merge, acompanhar CI e deploy) vão para o **auxiliar (Haiku)**.
+- **Hierarquia (14/10/2026, `CLAUDE.md`):** Opus é o **arquiteto** (decisões e questões difíceis passam por ele), Sonnet **executa** (`dev`, `revisor`), Haiku faz o **operacional** (`auxiliar`, `explorador`: commit, PR, merge, CI, deploy, testes).
 - **Merge (desde 07/10/2026):** automático depois de revisão própria + CI verde, sem pedir ao Victor (fluxo em `CLAUDE.md`, "PRs: fluxo automático"). Depois de juntar, conferir o workflow "Publicar".
 
 ## Entregas
@@ -209,3 +207,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Pendências do Victor:**
   - no iPhone, conferir a pílula do "Novo aluno" nos dois sentidos e o Cardio;
   - no Android, conferir os avisos de mensalidade e de treino pronto.
+
+## 14/10/2026 — Foto de fim de treino e hierarquia dos agentes
+- **Hierarquia nova** no `CLAUDE.md`: Opus arquiteto, Sonnet executor, Haiku operacional.
+- **Foto no story do fim do treino** (PR #80): "Adicionar foto" na tela "Treino concluído", foto em tela cheia com a marca (logo, data, nome e chips de Duração/Volume/Semana; selo de recorde só se houver). Botões "Trocar foto" e "Tirar foto".
+  - A foto fica só no aparelho (sem Firestore/Storage/regras; política e `VERSAO_PRIVACIDADE` não mudam).
+  - Escolhas do Victor: tela cheia e poucos números. Fora do escopo: zoom/arrastar, filtros, adesivos.
+- **Pendência do Victor:** no iPhone (PWA) e no Android, conferir câmera/galeria e compartilhar direto no Instagram.
+- Próximos combinados (sem mudança): notificações (resto) e lojas.
