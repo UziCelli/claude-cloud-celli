@@ -12,6 +12,7 @@ import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
 import { cancelarTreino, marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
+import { duracaoTreino, TETO_TREINO_MS } from '../../lib/resumo'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
@@ -28,7 +29,7 @@ import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
 
-type RegistroFlag = RegistroDoc & { realizado?: boolean; inicioEm?: unknown; pc?: Record<string, number> }
+type RegistroFlag = RegistroDoc & { realizado?: boolean; inicioEm?: unknown; realizadoEm?: { toMillis(): number } | null; pc?: Record<string, number> }
 
 // Cartão "Novidades": só nas 2 primeiras aberturas (contador no localStorage; sem ele, aparece sempre).
 const CHAVE_NOVIDADES = 'forca-novidades-pc'
@@ -278,7 +279,9 @@ const hms = (ms: number) => {
 // Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
 function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
   const [agora, setAgora] = useState(Date.now)
-  const rodando = inicio != null && !realizado
+  // Parado: concluído, ou "Desfazer" (mantém a hora do fim): o relógio não volta a contar de um início antigo.
+  const parado = realizado || fim != null
+  const rodando = inicio != null && !parado
   // A marca de treino em andamento só sai no "Concluir treino" (abrir um treino antigo já concluído não pode
   // apagar a de outro treino que está rodando neste aparelho).
   useEffect(() => {
@@ -287,13 +290,16 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     const id = setInterval(() => setAgora(Date.now()), 1000)
     return () => clearInterval(id)
   }, [rodando])
-  if (realizado) return inicio != null && fim != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(fim - inicio)}</span> · previsto {previsto}</p> : null
+  if (parado) {
+    const d = duracaoTreino(inicio, fim) // acima de 3 h é treino esquecido aberto: sem duração falsa
+    return d != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(d)}</span> · previsto {previsto}</p> : null
+  }
   if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
         <span aria-hidden className={`h-2 w-2 rounded-full bg-emerald-400 ${quieto ? '' : 'animate-pulse'}`} />
-        Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{hms(agora - inicio)}</span>
+        Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{agora - inicio > TETO_TREINO_MS ? 'mais de 3 h' : hms(agora - inicio)}</span>
         <span className="text-slate-500">· previsto {previsto}</span>
       </p>
       <Botao tipo="alerta" className="whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
@@ -411,6 +417,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     cancelarTreino(mesoId, semana, treino, docAtual)
     limparTreino()
     setInicioLocal(null)
+    setFimLocal(null)
     setPcLocal({})
     jaIniciou.current = false
     descanso.parar()
@@ -419,8 +426,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
   const ms = (t: unknown) => (t as { toMillis?: () => number } | null | undefined)?.toMillis?.() ?? null
   const inicioMs = ms(docAtual?.inicioEm) ?? inicioLocal
-  const fimMs = ms((docAtual as { realizadoEm?: unknown } | undefined)?.realizadoEm) ?? fimLocal
-  const comecou = inicioMs != null || docAtual?.inicioEm !== undefined // início pendente offline (null) também conta
+  const fimMs = ms(docAtual?.realizadoEm) ?? fimLocal
+  const comecou = inicioMs != null || docAtual?.inicioEm !== undefined || fimMs != null // início pendente offline (null) também conta; "Desfazer" mantém o fim, então a semana antiga não tranca
   const travado = !coach && !comecou && !realizado // aluno só anota depois de "Iniciar treino" (treino concluído continua editável)
   if (!coach && !comecou && !realizado && travadoAgenda(meso, docsRegistros, hoje, semana, treino)) {
     return (
@@ -456,7 +463,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     limparTreino()
-    marcarRealizado(mesoId, uid, semana, treino, true)
+    marcarRealizado(mesoId, uid, semana, treino, true, ms(docAtual?.realizadoEm) != null) // já concluído antes: mantém a hora original
     setFimLocal(Date.now())
     abrirResumo()
   }
@@ -482,7 +489,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     return (
       <FimTreino
         nome={perfil?.nome?.trim().split(/\s+/)[0]}
-        duracaoMs={inicioMs != null && fimMs != null ? fimMs - inicioMs : null}
+        duracaoMs={duracaoTreino(inicioMs, fimMs)}
         resumo={resumoTreino(historico, { mesoId, semana, treino })}
         semana={semana}
         feitosSemana={new Set(docsRegistros.filter((r) => r.semana === semana && r.realizado).map((r) => r.treino)).size}

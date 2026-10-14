@@ -609,6 +609,15 @@ describe('registros', () => {
       await assertSucceeds(setDoc(r, { ...id, realizado: false, realizadoEm: null, ...agora() }, { merge: true }));
     });
 
+    it('como marcarRealizado novo: desfazer e concluir de novo sem reenviar realizadoEm (a hora original fica)', async () => {
+      const r = reg('ana', 'm_ana_s01_t1');
+      const id = { alunoId: 'ana', mesoId: 'm_ana', semana: 1, treino: 1 };
+      const agora = () => ({ atualizadoEm: serverTimestamp() });
+      await assertSucceeds(setDoc(r, { ...id, realizado: true, realizadoEm: serverTimestamp(), ...agora() }, { merge: true }));
+      await assertSucceeds(setDoc(r, { ...id, realizado: false, ...agora() }, { merge: true }));
+      await assertSucceeds(setDoc(r, { ...id, realizado: true, ...agora() }, { merge: true }));
+    });
+
     it('nega sem atualizadoEm, realizadoEm inventado ou tipos errados', async () => {
       const r = reg('ana', 'm_ana_s01_t1');
       await assertFails(updateDoc(r, { 'cargas.sup.s2': 50 }));

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
 import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
 import { mesoParaDoc } from './conversores'
-import { inicioJanela, resumoCoach, type AlunoComId } from './resumo'
+import { duracaoTreino, inicioJanela, resumoCoach, TETO_TREINO_MS, type AlunoComId } from './resumo'
 import type { Meso } from '../engine'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
@@ -269,5 +269,23 @@ describe('inicioJanela', () => {
     const esperado = sp('2026-09-26T00:00').getTime()
     expect(inicioJanela(sp('2026-10-10T00:00'), 14)).toBe(esperado)
     expect(inicioJanela(sp('2026-10-10T23:59'), 14)).toBe(esperado)
+  })
+})
+
+describe('duracaoTreino', () => {
+  const MIN = 60_000
+  it('devolve a diferença quando é plausível', () => {
+    expect(duracaoTreino(1000, 1000 + 50 * MIN)).toBe(50 * MIN)
+    expect(duracaoTreino(0, TETO_TREINO_MS)).toBe(TETO_TREINO_MS) // o teto ainda vale
+  })
+  it('esquecido aberto (80 h) não vira duração', () => {
+    expect(duracaoTreino(0, 80 * 60 * MIN)).toBeNull()
+    expect(duracaoTreino(0, TETO_TREINO_MS + 1)).toBeNull()
+  })
+  it('sem dado ou fim antes do início: null', () => {
+    expect(duracaoTreino(null, 5 * MIN)).toBeNull()
+    expect(duracaoTreino(5 * MIN, undefined)).toBeNull()
+    expect(duracaoTreino(5 * MIN, 5 * MIN)).toBeNull()
+    expect(duracaoTreino(10 * MIN, 5 * MIN)).toBeNull()
   })
 })

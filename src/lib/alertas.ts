@@ -3,7 +3,7 @@ import { prescreverSessao, type Meso } from '../engine'
 import { diaSP } from './acesso'
 import { comVolta } from './agenda'
 import { docParaReps, normalizarCargas, type RegistroDoc } from './conversores'
-import { msSessao } from './resumo'
+import { msSessao, TETO_TREINO_MS } from './resumo'
 
 // Meta do aluno = prescrição com a semana de volta (−5%). Só a semana atual: o coach carrega ~14 dias de
 // registros, e para uma semana passada faltaria a semana anterior a ela (daria "volta" falsa).
@@ -14,7 +14,7 @@ export const MIN_ABAIXO = 3 // séries abaixo da meta para alertar
 export const PROPORCAO_ABAIXO = 0.25 // e pelo menos 25% das séries feitas
 export const DEMORA_FATOR = 1.3
 export const DEMORA_MIN = 15
-export const DEMORA_MAX = 180 // acima disso o aluno esqueceu de concluir
+export const DEMORA_MAX = TETO_TREINO_MS / 60_000 // 180 min; acima disso o aluno esqueceu de concluir
 
 type Ts = { toMillis(): number } | null
 export type RegistroAlerta = RegistroDoc & { realizadoEm?: Ts; atualizadoEm?: Ts; inicioEm?: Ts }
