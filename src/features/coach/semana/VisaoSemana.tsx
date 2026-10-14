@@ -103,7 +103,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               realizadoEm={tempos[chave]?.realizadoEm}
               limite={meso.tempoLimiteMin}
               hoje={deHoje[treino]}
-              onRealizado={(v) => marcarRealizado(id, dados.alunoId, semanaAtual, treino, v)}
+              onRealizado={(v) => marcarRealizado(id, dados.alunoId, semanaAtual, treino, v, !!tempos[chave]?.realizadoEm)}
             />
             </div>
           )

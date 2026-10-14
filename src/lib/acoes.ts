@@ -340,8 +340,11 @@ export const apagarFoto = (uid: string) => deleteDoc(doc(db, 'fotos', uid))
 export const aceitarPrivacidade = (uid: string) =>
   updateDoc(doc(db, 'usuarios', uid), { privacidadeEm: serverTimestamp(), privacidadeVersao: VERSAO_PRIVACIDADE })
 
-export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean) =>
-  registro(mesoId, alunoId, semana, treino, { realizado, realizadoEm: realizado ? serverTimestamp() : null })
+// A hora do fim (realizadoEm) só é gravada na 1ª conclusão. "Desfazer" não a apaga e concluir de novo a mantém:
+// senão o treino antigo reaberto ganharia fim = agora e contaria como feito hoje, com duração de dias.
+// `jaTemFim`: o registro já tem realizadoEm confirmado (legado com realizadoEm nulo recebe uma hora nova).
+export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean, jaTemFim = false) =>
+  registro(mesoId, alunoId, semana, treino, { realizado, ...(realizado && !jaTemFim && { realizadoEm: serverTimestamp() }) })
 
 // Primeira ação do aluno no treino: o chamador só chama se o registro ainda não tem inicioEm.
 export const marcarInicio = (mesoId: string, alunoId: string, semana: number, treino: number) =>

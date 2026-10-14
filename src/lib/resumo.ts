@@ -29,6 +29,12 @@ export function msSessao(r: Sessao, agora: Date): number | null {
   return t === undefined ? null : t === null ? agora.getTime() : t.toMillis()
 }
 
+// Teto de um treino plausível: acima de 3 h o aluno esqueceu de concluir (ou reabriu um treino antigo) e o tempo é falso.
+export const TETO_TREINO_MS = 3 * 60 * 60_000
+// Duração (ms) entre o início e o fim, ou null se faltar dado, vier negativa ou passar do teto: nunca mostrar "80 h".
+export const duracaoTreino = (ini: number | null | undefined, fim: number | null | undefined): number | null =>
+  ini == null || fim == null || fim <= ini || fim - ini > TETO_TREINO_MS ? null : fim - ini
+
 // Início (ms) do dia em São Paulo, `dias` dias antes de hoje. Muda só uma vez por dia:
 // a consulta montada com ele fica igual entre renders (useLista não reinscreve).
 export const inicioJanela = (agora: Date, dias: number) => inicioDoDiaSP(diaSP(agora.getTime()) - dias)

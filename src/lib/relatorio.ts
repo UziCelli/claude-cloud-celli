@@ -2,8 +2,8 @@
 // (evolucao.ts, cargas via docsParaRegistros = peso do corpo); relatorios/{mesoId} guarda só o comentário.
 import type { Meso } from '../engine'
 import { diaSP } from './acesso'
-import { DEMORA_MAX } from './alertas'
 import { historicoExercicios, painelEvolucao, recordesDe, treinosFeitos, type Evolucao, type MesoEvolucao, type RegistroEvolucao } from './evolucao'
+import { duracaoTreino } from './resumo'
 import { semanaAtual } from './treino'
 
 export type RelatorioCiclo = {
@@ -21,7 +21,7 @@ export type RelatorioCiclo = {
   recordes: { nome: string; kg: number; semana: number; treino: number }[] // contra todo o histórico do aluno
   volumeKg: number
   movimentos: number
-  tempoMedioMin: number | null // realizadoEm − inicioEm; acima de 180 min (esqueceu de concluir) não conta
+  tempoMedioMin: number | null // realizadoEm − inicioEm; duração acima do teto (duracaoTreino: 3 h, esqueceu de concluir) não conta
 }
 
 const DIA = 86400_000
@@ -41,9 +41,9 @@ export function relatorioCiclo(mesos: MesoEvolucao[], registros: RegistroEvoluca
   const doCiclo = Object.values(hist).flat().filter((o) => o.mesoId === mesoId)
   const painel = painelEvolucao([m], registros, agora, mesoId)
   const tempos = registros.flatMap((r) => {
-    if (r.mesoId !== mesoId || !r.realizado || !r.realizadoEm || !r.inicioEm) return []
-    const min = (r.realizadoEm.toMillis() - r.inicioEm.toMillis()) / 60_000
-    return min > 0 && min <= DEMORA_MAX ? [min] : []
+    if (r.mesoId !== mesoId || !r.realizado) return []
+    const ms = duracaoTreino(r.inicioEm?.toMillis(), r.realizadoEm?.toMillis())
+    return ms != null ? [ms / 60_000] : []
   })
   const previstos = meso.frequencia * decorridas
   return {

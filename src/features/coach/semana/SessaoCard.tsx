@@ -3,6 +3,7 @@ import { registrarCarga } from '../../../lib/acoes'
 import { doc } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
 import { useDoc } from '../../../lib/hooks'
+import { duracaoTreino } from '../../../lib/resumo'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { Cartao } from '../../../ui'
 import type { NotasDoc } from '../../../lib/conversores'
@@ -77,6 +78,7 @@ export default function SessaoCard({
   const m = metricasSessao(sessao, cargas, reps)
   const pausaPrincipais = sessao.exercicios.find((e) => e.pos <= 2 && e.slot.pausaS == null)?.pausaS // sem pausa própria do slot
   const nEtapas = Math.max(0, ...sessao.exercicios.map((e) => e.reps.length - e.n))
+  const real = realizado ? duracaoTreino(inicioEm?.toMillis(), realizadoEm?.toMillis()) : null // acima de 3 h: sem tempo falso
 
   return (
     <Cartao className={hoje ? 'ring-2 ring-inset ring-marca-400' : undefined}>
@@ -92,9 +94,9 @@ export default function SessaoCard({
           </h3>
           <p className="text-xs text-slate-400">
             <b className={`text-sm ${acimaDoLimite(sessao.tempoMin, limite) ? 'text-red-400' : 'text-slate-100'}`}>{fmtMin(sessao.tempoMin)}</b> · pausa {pausaPrincipais !== undefined && pausaPrincipais !== sessao.pausaS ? `${pausaPrincipais}s/` : ''}{sessao.pausaS}s
-            {inicioEm && realizadoEm && (
+            {real != null && (
               <>
-                {' '}· real {Math.ceil((realizadoEm.toMillis() - inicioEm.toMillis()) / 60000)} min · previsto {fmtMin(sessao.tempoMin)}
+                {' '}· real {Math.ceil(real / 60000)} min · previsto {fmtMin(sessao.tempoMin)}
               </>
             )}
           </p>
