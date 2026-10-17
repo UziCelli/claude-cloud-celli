@@ -20,6 +20,10 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
 - `tools/extrair_planilha.py` — lê o .xlsx original (só biblioteca padrão). O .xlsx nunca vai para o repositório.
 - Botão "Importar da planilha" no perfil do aluno (`meso/ImportarPlanilha.tsx`) traz um meso do .xlsx com as cargas; `tools/planilha_para_meso.py` + workflow "Importar mesociclo" ficam como reserva.
 - `docs/marca/` — logo VFITCOACH em SVG. `docs/plano-app-gislane.md` — plano pronto do app da Gislane (segunda marca).
+- Graphify (mapa do código, grátis): instalado pelo script de configuração do ambiente.
+  - Se `graphify-out/` não existir, rode `graphify update .`; ele trabalha sem internet e sem chave.
+  - Depois pergunte com `graphify query "..."` ou `/graphify`.
+  - A pasta `graphify-out/` não vai para o repositório. Não usar o Graphify Cloud, que é pago.
 
 ## Comandos
 `npm run dev` · `npm run typecheck` · `npm test` · `npm run build`
