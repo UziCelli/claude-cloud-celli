@@ -20,9 +20,10 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
 - `tools/extrair_planilha.py` — lê o .xlsx original (só biblioteca padrão). O .xlsx nunca vai para o repositório.
 - Botão "Importar da planilha" no perfil do aluno (`meso/ImportarPlanilha.tsx`) traz um meso do .xlsx com as cargas; `tools/planilha_para_meso.py` + workflow "Importar mesociclo" ficam como reserva.
 - `docs/marca/` — logo VFITCOACH em SVG. `docs/plano-app-gislane.md` — plano pronto do app da Gislane (segunda marca).
-- Graphify (mapa do código, grátis): instalado pelo script de configuração do ambiente.
-  - Se `graphify-out/` não existir, rode `graphify update .`; ele trabalha sem internet e sem chave.
-  - Depois pergunte com `graphify query "..."` ou `/graphify`.
+- Graphify (mapa do código, grátis): skill em `.claude/skills/graphify/`.
+  - Na nuvem, `.claude/hooks/session-start.sh` instala o Graphify e monta o mapa sozinho.
+  - No PC, instale com `uv tool install graphifyy`.
+  - Regras de uso na seção "graphify" no fim deste arquivo.
   - A pasta `graphify-out/` não vai para o repositório. Não usar o Graphify Cloud, que é pago.
 
 ## Comandos
@@ -74,3 +75,14 @@ O Victor não revisa código: a revisão é nossa e o merge também, **sem pedir
 - Aluno só lê o próprio treino e só escreve o próprio registro, e só com `status == 'ativo'` e `pagoAte` no futuro.
 - Textos da interface em português do Brasil.
 - Topo da tela: toda barra ou cabeçalho no topo usa `pt-topo` (área segura + 12px, em `src/index.css`). Nada clicável colado na borda superior: ali o dedo puxa a barra de notificações. Ações frequentes ficam embaixo, perto do polegar.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
