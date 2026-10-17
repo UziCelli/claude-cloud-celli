@@ -24,7 +24,9 @@ Sem Cloud Functions (plano gratuito). Catálogo de exercícios em `src/data/exer
   - Na nuvem, `.claude/hooks/session-start.sh` instala o Graphify e monta o mapa sozinho.
   - No PC, instale com `uv tool install graphifyy`.
   - Regras de uso na seção "graphify" no fim deste arquivo.
-  - A pasta `graphify-out/` não vai para o repositório. Não usar o Graphify Cloud, que é pago.
+  - O grafo pronto fica versionado em `graphify-out/` (`graph.json`, `graph.html`, `GRAPH_REPORT.md`); a sessão usa esse e não o reconstrói.
+  - Depois de mudar código, rode `graphify update .` e inclua o grafo atualizado no commit.
+  - Não usar o Graphify Cloud, que é pago.
 
 ## Comandos
 `npm run dev` · `npm run typecheck` · `npm test` · `npm run build`
