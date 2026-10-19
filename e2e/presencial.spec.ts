@@ -150,3 +150,27 @@ test('grupo: troca de aluno mantém treino e carga do outro', async ({ page }) =
   await expect(b.locator('input[type="number"]').first()).toHaveValue('40')
   await expect(b.getByText('Treino em andamento')).toBeVisible()
 })
+
+test('grupo de 3: Sair no primeiro mantém os outros dois', async ({ page }) => {
+  const { alunoId } = await semear(false)
+  await criarAluno('Caio Grupo', 'caio.pres-e2e@teste.com', 'senha123', 70)
+  await criarAluno('Dani Grupo', 'dani.pres-e2e@teste.com', 'senha123', 60)
+  await entrar(page, COACH.email, COACH.senha)
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.goto(`/#/aluno/${alunoId}/presencial`)
+  const bar = page.getByRole('region', { name: 'Presencial' })
+  await expect(bar.getByText(ALUNO.nome)).toBeVisible()
+  for (const nome of ['Caio Grupo', 'Dani Grupo']) {
+    await bar.getByRole('button', { name: 'Adicionar aluno' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: new RegExp(nome) }).click()
+    await expect(bar.getByText(nome)).toBeVisible()
+  }
+  const seletor = page.getByRole('navigation', { name: 'Alunos do grupo' })
+  await seletor.getByRole('button', { name: 'Bia' }).click()
+  await expect(seletor.getByRole('button', { name: 'Bia' })).toHaveAttribute('aria-current', 'true')
+
+  await bar.getByRole('button', { name: 'Sair' }).click()
+  await expect(seletor.getByRole('button', { name: 'Bia' })).toHaveCount(0)
+  await expect(seletor.getByRole('button', { name: 'Caio' })).toBeVisible()
+  await expect(seletor.getByRole('button', { name: 'Dani' })).toBeVisible()
+})

@@ -158,7 +158,7 @@ export default function Alunos() {
           {a.status === 'aguardando' && !a.presencial && (
             <Botao tipo="primario" onClick={() => { setAberto(a.id); setConfirmando(null); setEditando(a.id) }}>Liberar</Botao>
           )}
-          {PIX && a.pagamentoInformadoEm && <Botao tipo="primario" onClick={() => confirmarPix(a.id, a.pagoAte)}>Confirmar pagamento</Botao>}
+          {PIX && a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial && <Botao tipo="primario" onClick={() => confirmarPix(a.id, a.pagoAte)}>Confirmar pagamento</Botao>}
           <button
             aria-label={`Configurações de ${a.nome}`}
             aria-expanded={aberto === a.id}
