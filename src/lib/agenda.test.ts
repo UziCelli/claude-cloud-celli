@@ -179,6 +179,16 @@ describe('travado', () => {
     expect(travado(base, regs, hoje, 2, 1)).toBe(true)
   })
 
+  it('semana passada: treino iniciado ou desfeito (com fim salvo) não trava', () => {
+    const iniciado = [{ semana: 2, treino: 1, inicioEm: null }]
+    const desfeito = [{ semana: 2, treino: 1, realizado: false, realizadoEm: { toMillis: () => 1 } }]
+    for (const r of [iniciado, desfeito]) {
+      expect(travado(base, r, hoje, 2, 1)).toBe(false)
+      expect(travado(base, r, hoje, 2, 2)).toBe(true)
+      expect(travado(base, r, hoje, 2)).toBe(false)
+    }
+  })
+
   it('semana passada com algum treino feito não trava como um todo', () => {
     expect(travado(base, regs, hoje, 1)).toBe(false)
   })

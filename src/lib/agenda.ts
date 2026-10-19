@@ -5,7 +5,7 @@ import { diaSP } from './acesso'
 import { semanaParaAbrir } from './semana'
 import { semanaAtual } from './treino'
 
-type Reg = { semana: number; treino: number; realizado?: boolean; realizadoEm?: { toMillis(): number } | null }
+type Reg = { semana: number; treino: number; realizado?: boolean; realizadoEm?: { toMillis(): number } | null; inicioEm?: unknown }
 type Dia = { data: string; diaSemana: number; treino: number | null }
 type Proximo = { semana: number; treino: number; dataTreino: string }
 
@@ -67,9 +67,13 @@ export function treinoDeHoje(
 
 // Só para o aluno. Semana atual ou futura nunca trava. Semana passada: com `treino`, trava o não feito;
 // sem `treino`, trava a semana inteira se nenhum treino foi feito nela.
+// Treino "mexido" (iniciado, ou com hora de fim salva após "Desfazer") não trava: o aluno precisa poder concluir.
 export function travado(meso: Meso, registros: Reg[], hoje: Date, semana: number, treino?: number): boolean {
   if (semana >= semanaAtual(meso, hoje).semana) return false
-  return treino == null ? !registros.some((r) => r.realizado && r.semana === semana) : !feitoEm(registros, semana, treino)
+  const mexido = (r: Reg) => r.realizado || r.inicioEm !== undefined || r.realizadoEm != null
+  return treino == null
+    ? !registros.some((r) => r.semana === semana && mexido(r))
+    : !feitoEm(registros, semana, treino) && !registros.some((r) => r.semana === semana && r.treino === treino && mexido(r))
 }
 
 // Semana w >= 2, já começada pela data, e nenhum treino feito na w−1.

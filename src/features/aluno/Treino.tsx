@@ -12,7 +12,7 @@ import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
 import { cancelarTreino, marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
-import { duracaoTreino, TETO_TREINO_MS } from '../../lib/resumo'
+import { duracaoTreino, fimDaSessao, TETO_TREINO_MS } from '../../lib/resumo'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
@@ -279,7 +279,7 @@ const hms = (ms: number) => {
 // Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
 function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
   const [agora, setAgora] = useState(Date.now)
-  // Parado: concluído, ou "Desfazer" (mantém a hora do fim): o relógio não volta a contar de um início antigo.
+  // Parado: concluído, ou "Desfazer" (mantém a hora do fim desta sessão): o relógio não volta a contar de um início antigo.
   const parado = realizado || fim != null
   const rodando = inicio != null && !parado
   // A marca de treino em andamento só sai no "Concluir treino" (abrir um treino antigo já concluído não pode
@@ -403,9 +403,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const pcs = docAtual?.pc ?? {}
   const cargasCruas = docParaCargas(docAtual?.cargas) // o que está gravado de fato (para decidir o que gravar)
   const pcsPorRegistro = Object.fromEntries(docsRegistros.map((r) => [`${r.semana}-${r.treino}`, r.pc]))
-  const iniciado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.inicioEm !== undefined) // pendente offline chega como null
   const iniciou = () => {
-    if (iniciado || jaIniciou.current) return
+    if (inicioMs != null || jaIniciou.current) return // início pendente offline lê null: não conta, senão o botão fica morto depois de recarregar
     jaIniciou.current = true
     const t = Date.now()
     setInicioLocal(t)
@@ -426,10 +425,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const realizado = docsRegistros.some((r) => r.semana === semana && r.treino === treino && r.realizado)
   const ms = (t: unknown) => (t as { toMillis?: () => number } | null | undefined)?.toMillis?.() ?? null
   const inicioMs = ms(docAtual?.inicioEm) ?? inicioLocal
-  const fimMs = ms(docAtual?.realizadoEm) ?? fimLocal
-  const comecou = inicioMs != null || docAtual?.inicioEm !== undefined || fimMs != null // início pendente offline (null) também conta; "Desfazer" mantém o fim, então a semana antiga não tranca
+  const fimMs = fimDaSessao(inicioMs, ms(docAtual?.realizadoEm)) ?? fimLocal
+  const comecou = inicioMs != null || docAtual?.inicioEm !== undefined || fimMs != null // início pendente offline (null) também conta; fimMs é só o fim desta sessão (fim sem início, da planilha, não conta)
   const travado = !coach && !comecou && !realizado // aluno só anota depois de "Iniciar treino" (treino concluído continua editável)
-  if (!coach && !comecou && !realizado && travadoAgenda(meso, docsRegistros, hoje, semana, treino)) {
+  if (!coach && !comecou && !realizado && travadoAgenda(meso, docsRegistros, hoje, semana, treino) && ms(docAtual?.realizadoEm) == null) { // já tem fim salvo ("Desfazer" numa semana antiga): não tranca
     return (
       <Centro>
         <div className="flex flex-col items-center gap-3 text-center">
@@ -463,7 +462,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     limparTreino()
-    marcarRealizado(mesoId, uid, semana, treino, true, ms(docAtual?.realizadoEm) != null || fimLocal != null) // já concluído antes (inclusive offline, ainda pendente): mantém a hora original
+    marcarRealizado(mesoId, uid, semana, treino, true, fimMs != null) // fim real desta sessão (inclusive offline, pendente) é mantido; fim de fora (planilha/antigo) é trocado por agora
     setFimLocal(Date.now())
     abrirResumo()
   }

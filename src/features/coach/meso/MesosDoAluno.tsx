@@ -1,5 +1,5 @@
 import { m } from 'motion/react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Usuario } from '../../../lib/acesso'
 import { darAcessoAoApp, duplicarMeso, excluirMeso, salvarMeso } from '../../../lib/acoes'
@@ -32,13 +32,18 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
     return t
   })
 
+  const criando = useRef(false)
+
   function novoMeso() {
+    if (criando.current) return
+    criando.current = true
     setErro(null)
     const { id, gravado } = salvarMeso(null, uid, `Mesociclo ${mesos.dados.length + 1}`, mesoPadrao())
     ir(`/meso/${id}`)
     gravado.catch((e) => {
       registrarErro('gravacao', `novo meso: ${e?.code ?? e}`, e)
       setErro('Não foi possível salvar o novo mesociclo.')
+      criando.current = false
     })
   }
 

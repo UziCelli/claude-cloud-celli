@@ -51,7 +51,7 @@ import marca from '@marca/marca.json'
 export const definirAcesso = (uid: string, a: { status: Usuario['status']; pagoAte?: string /* YYYY-MM-DD */ }) =>
   updateDoc(doc(db, 'usuarios', uid), {
     status: a.status,
-    ...(a.pagoAte && { pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(a.pagoAte)) }),
+    ...(a.pagoAte && { pagoAte: Timestamp.fromDate(fimDoDiaSaoPaulo(a.pagoAte)), pagamentoInformadoEm: deleteField() }), // liberar/renovar também encerra o "Já paguei"
   })
 
 // Pix simples: o coach define a mensalidade; o aluno toca "Já paguei"; o coach confirma (+1 mês).
@@ -166,7 +166,7 @@ export function salvarMeso(mesoId: string | null, alunoId: string, nome: string,
 }
 
 // Importa um meso da planilha com as cargas já registradas, tudo num lote só (tudo ou nada).
-// Sem a data real do treino: meio-dia (SP) do dia estimado = início + semana + treino, nunca no futuro.
+// Sem a data real do treino: meio-dia (SP) do dia estimado = início + semana + treino, nunca hoje (não aparece como "Feito hoje" para o coach).
 // Offline: o id sai na hora e `gravado` resolve quando o servidor confirmar (como salvarMeso).
 export async function importarMeso(alunoId: string, nome: string, { meso, registros }: Importado) {
   const iguais = await getDocs(query(collection(db, 'mesos'), where('alunoId', '==', alunoId), where('nome', '==', nome)))
@@ -176,7 +176,7 @@ export async function importarMeso(alunoId: string, nome: string, { meso, regist
   b.set(ref, { nome, ...mesoParaDoc(meso), atualizadoEm: serverTimestamp(), alunoId, criadoEm: serverTimestamp() })
   for (const r of registros) {
     const ms = Date.parse(`${meso.inicio}T15:00:00Z`) + ((r.semana - 1) * 7 + (r.treino - 1)) * 864e5
-    const quando = Timestamp.fromMillis(Math.min(ms, Date.now()))
+    const quando = Timestamp.fromMillis(Math.min(ms, Date.now() - 864e5))
     b.set(doc(db, 'registros', registroId(ref.id, r.semana, r.treino)), {
       alunoId, mesoId: ref.id, semana: r.semana, treino: r.treino,
       realizado: r.realizado, realizadoEm: r.realizado ? quando : null, cargas: r.cargas, atualizadoEm: quando,

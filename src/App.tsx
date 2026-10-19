@@ -57,6 +57,15 @@ function Principal() {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
     else telaPronta()
   }, [estagio, carregando, user])
+  // Aluno aberto além do vencimento: força nova avaliação em pagoAte, senão ele ainda vê o treino e o servidor recusa as gravações.
+  const venceEm = perfil?.papel === 'coach' ? 0 : perfil?.pagoAte?.toMillis() ?? 0
+  const [tique, atualizar] = useState(0)
+  useEffect(() => {
+    const falta = venceEm - Date.now()
+    if (falta <= 0) return
+    const t = setTimeout(() => atualizar((n) => n + 1), Math.min(falta, 2 ** 31 - 1))
+    return () => clearTimeout(t)
+  }, [venceEm, tique])
   return (
     <>
       {user && perfil && <Vigia papel={perfil.papel === 'coach' ? 'coach' : 'aluno'} />}

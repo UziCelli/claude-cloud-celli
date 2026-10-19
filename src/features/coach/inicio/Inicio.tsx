@@ -50,7 +50,7 @@ export default function Inicio({ nome }: { nome: string }) {
     new Set(liberados.dados.map((x) => x.id)),
     agora,
   )
-  const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm).length
+  const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial).length
   const blocos: [string, AlunoComId[], string][] = [
     ['Aguardando aprovação', r.aguardando, 'Ninguém aguardando.'],
     ['Vencendo em 7 dias', r.vencendo, 'Ninguém vencendo.'],

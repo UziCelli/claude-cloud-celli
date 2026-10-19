@@ -56,7 +56,10 @@ export default function EditorMeso({ id }: { id: string }) {
     if (!d) return
     const { atualizadoEm: _a, criadoEm: _c, adaptadoEm: _d, ...resto } = d as MesoSalvo & { atualizadoEm?: unknown; criadoEm?: unknown }
     const json = estavel(resto)
-    if (json === base.current) return
+    if (json === base.current) {
+      setConflito(false)
+      return
+    }
     if (dirty) return setConflito(true)
     base.current = json
     setMeso(migrarProgressao(docParaMeso(d)))
@@ -65,6 +68,12 @@ export default function EditorMeso({ id }: { id: string }) {
     setConflito(false)
   }, [mesoDoc.dados, dirty])
 
+  if (!mesoDoc.carregando && !mesoDoc.dados && !meso)
+    return (
+      <Pagina titulo="Mesociclo não encontrado.">
+        <a href="#/alunos" className="text-marca-500 underline">Voltar para os alunos</a>
+      </Pagina>
+    )
   if (mesoDoc.carregando || !meso) return <Pagina titulo="Carregando…">{null}</Pagina>
 
   function atualizar(patch: Partial<Meso>) {
@@ -81,7 +90,10 @@ export default function EditorMeso({ id }: { id: string }) {
     if (adaptou) g.then(() => marcarAdaptado(id)).catch(() => {})
     g.catch((e) => {
       registrarErro('gravacao', `salvar meso: ${e?.code ?? e}`, e)
-      setErro('Não foi possível salvar. Tentando de novo quando houver internet.')
+      // Gravação recusada: o snapshot volta à versão do servidor; devolve a edição para tentar de novo.
+      setMeso(novo)
+      setDirty(true)
+      setErro('Não foi possível salvar. Confira a internet e tente de novo.')
     })
   }
 
@@ -145,9 +157,9 @@ export default function EditorMeso({ id }: { id: string }) {
           <Botao tipo="primario" disabled={!dirty || diasInvalidos(meso)} onClick={() => salvar()}>
             Salvar
           </Botao>
-          <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
+          <Botao onClick={() => (!dirty || confirm('Sair sem salvar as mudanças?')) && ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
           <Botao
-            disabled={dirty || !alunoId}
+            disabled={dirty || mesoDoc.pendente || !alunoId}
             onClick={async () => {
               setAviso('Enviando…')
               const r = await avisarTreinoPronto(alunoId)
