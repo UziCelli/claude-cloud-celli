@@ -8,6 +8,10 @@ const assinar = (cb: () => void) => {
 
 export const useRota = () => useSyncExternalStore(assinar, () => location.hash.slice(1) || '/')
 
+// Navegações dentro do app desde que abriu: sem elas (link direto) history.back() não leva a lugar nenhum.
+let navegou = 0
+addEventListener('hashchange', () => navegou++)
+
 export const ir = (rota: string) => {
   location.hash = rota
 }
@@ -24,3 +28,6 @@ export function casar(padrao: string, rota: string): Record<string, string> | nu
   }
   return params
 }
+
+// Volta uma tela; se o app abriu direto nesta tela, vai para `fallback`.
+export const voltar = (fallback: string) => (navegou > 0 ? history.back() : ir(fallback))

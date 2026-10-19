@@ -80,7 +80,7 @@ function Editor({ r, mesoId, alunoId, aluno, rel }: { r: RelatorioCiclo; mesoId:
             {aluno.email && <a href={linkEmail(aluno.email, `Seu relatório do ciclo ${r.nome}`, aviso)} className={botaoLink}>Avisar por e-mail</a>}
           </div>
         )}
-        <BotaoPdf r={r} aluno={aluno.nome} comentario={rel?.comentario} />
+        <BotaoPdf r={r} aluno={aluno.nome} comentario={texto} />
       </section>
     </div>
   )

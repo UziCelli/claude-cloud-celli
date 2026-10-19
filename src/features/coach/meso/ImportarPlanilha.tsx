@@ -53,7 +53,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
   }, [planilha, aba])
 
   async function importar() {
-    if (!previa || !('ok' in previa) || !nome.trim()) return
+    if (enviando || !previa || !('ok' in previa) || !nome.trim()) return
     setEnviando(true)
     setErro(null)
     try {

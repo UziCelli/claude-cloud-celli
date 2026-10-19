@@ -67,3 +67,25 @@ test('treino esquecido aberto há 80 h não mostra horas falsas', async ({ page 
   await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
   await expect(page.getByText('Duração', { exact: true })).toHaveCount(0) // sem duração falsa no story
 })
+
+test('treino importado da planilha (fim sem início): Desfazer mostra Iniciar e concluir grava a hora nova', async ({ page }) => {
+  const id = await meso('Meso Importado', dia(8 * 24 * H)) // semana 1 já passou
+  const antes = Date.now() - 5 * 24 * H
+  const regId = await criarRegistro(id, alunoId, 1, 1, { cargas: { a: { s1: 20, s2: 20, s3: 20 } }, realizado: true, realizadoEm: new Date(antes) })
+  await entrar(page)
+  await page.goto(`/#/treino/${id}/1/1`)
+  await expect(page.getByText('Treino concluído')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Desfazer', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Concluir treino' })).toHaveCount(0)
+  await expect(page.getByText('Semana 1 já passou.')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Iniciar treino' }).click()
+  await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
+  await expect(page.getByText('Duração', { exact: true })).toBeVisible()
+  await expect
+    .poll(async () => Date.parse(((await lerDoc(`registros/${regId}`))?.fields as any)?.realizadoEm?.timestampValue ?? 0))
+    .toBeGreaterThan(antes)
+})

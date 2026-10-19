@@ -31,7 +31,9 @@ export default function Grupo({ rota }: { rota: string }) {
   const [rotas, setRotas] = useState<Record<string, string>>({})
   const [folha, setFolha] = useState(false)
   const rolagem = useRef<Record<string, number>>({})
-  const membros = grupo.includes(ativo) ? grupo : [ativo]
+  const saiu = useRef('') // quem acabou de sair: enquanto for o ativo, o grupo já restante vale como está
+  if (saiu.current && saiu.current !== ativo) saiu.current = ''
+  const membros = grupo.includes(ativo) || saiu.current === ativo ? grupo : [ativo]
 
   useEffect(() => {
     setGrupo(membros)
@@ -49,6 +51,7 @@ export default function Grupo({ rota }: { rota: string }) {
   const sair = () => {
     const resto = membros.filter((u) => u !== ativo)
     if (!resto.length) return ir(`/aluno/${ativo}`)
+    saiu.current = ativo
     setGrupo(resto)
     ir(rotaDe(resto[0]))
   }

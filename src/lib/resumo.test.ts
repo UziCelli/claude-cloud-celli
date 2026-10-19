@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
 import { fimDoDiaSaoPaulo, type Usuario } from './acesso'
 import { mesoParaDoc } from './conversores'
-import { duracaoTreino, inicioJanela, resumoCoach, TETO_TREINO_MS, type AlunoComId } from './resumo'
+import { duracaoTreino, fimDaSessao, inicioJanela, resumoCoach, TETO_TREINO_MS, type AlunoComId } from './resumo'
 import type { Meso } from '../engine'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
@@ -287,5 +287,22 @@ describe('duracaoTreino', () => {
     expect(duracaoTreino(5 * MIN, undefined)).toBeNull()
     expect(duracaoTreino(5 * MIN, 5 * MIN)).toBeNull()
     expect(duracaoTreino(10 * MIN, 5 * MIN)).toBeNull()
+  })
+})
+
+describe('fimDaSessao', () => {
+  it('sem início: o fim não é desta sessão', () => {
+    expect(fimDaSessao(null, 1000)).toBeNull()
+  })
+  it('fim antes do início: null', () => {
+    expect(fimDaSessao(2000, 1000)).toBeNull()
+  })
+  it('fim igual ou depois do início: o próprio fim', () => {
+    expect(fimDaSessao(1000, 1000)).toBe(1000)
+    expect(fimDaSessao(1000, 5000)).toBe(5000)
+  })
+  it('sem fim: null', () => {
+    expect(fimDaSessao(1000, null)).toBeNull()
+    expect(fimDaSessao(null, null)).toBeNull()
   })
 })

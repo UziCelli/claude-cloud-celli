@@ -29,6 +29,9 @@ export function msSessao(r: Sessao, agora: Date): number | null {
   return t === undefined ? null : t === null ? agora.getTime() : t.toMillis()
 }
 
+// Fim só vale como fim desta sessão se não vier antes do início (planilha importada e treino pré-cronômetro têm fim sem início).
+export const fimDaSessao = (inicio: number | null, fim: number | null) => (inicio != null && fim != null && fim >= inicio ? fim : null)
+
 // Teto de um treino plausível: acima de 3 h o aluno esqueceu de concluir (ou reabriu um treino antigo) e o tempo é falso.
 export const TETO_TREINO_MS = 3 * 60 * 60_000
 // Duração (ms) entre o início e o fim, ou null se faltar dado, vier negativa ou passar do teto: nunca mostrar "80 h".

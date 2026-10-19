@@ -44,10 +44,10 @@ if (!existe.empty) throw new Error(`O aluno já tem um mesociclo "${nome}" (${ex
 const mesoRef = db.collection('mesos').doc()
 b.set(mesoRef, { ...meso, nome, alunoId, criadoEm: FieldValue.serverTimestamp(), atualizadoEm: FieldValue.serverTimestamp() })
 
-// Sem a data real do treino: meio-dia (São Paulo) do dia estimado = início + semana + treino.
+// Sem a data real do treino: meio-dia (São Paulo) do dia estimado = início + semana + treino, nunca hoje (não aparece como "Feito hoje" para o coach).
 const dataDoTreino = (w, t) => {
   const ms = Date.parse(`${meso.inicio}T15:00:00Z`) + ((w - 1) * 7 + (t - 1)) * 864e5
-  return Timestamp.fromMillis(Math.min(ms, Date.now()))
+  return Timestamp.fromMillis(Math.min(ms, Date.now() - 864e5))
 }
 for (const r of registros ?? []) {
   const id = `${mesoRef.id}_s${String(r.semana).padStart(2, '0')}_t${r.treino}`
