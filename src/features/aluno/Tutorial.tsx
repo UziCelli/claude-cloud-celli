@@ -44,7 +44,7 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
   {
     titulo: marca.boasVindas,
     texto: 'Embaixo ficam Início, Treino, Evolução e Conta. Em poucos passos você aprende a usar o app no treino. Dá menos de 1 minuto.',
-    ilustracao: <div className="grid place-items-center"><span className="grid size-20 animate-pulse place-items-center rounded-full text-marca-400 ring-4 ring-marca-500/40"><IcHaltere className="size-12" /></span></div>,
+    ilustracao: <div className="grid place-items-center"><span className="grid size-20 motion-safe:animate-pulse place-items-center rounded-full text-marca-400 ring-4 ring-marca-500/40"><IcHaltere className="size-12" /></span></div>,
   },
   {
     titulo: 'Comece o treino',
@@ -89,7 +89,7 @@ const PASSOS: { titulo: string; texto: string; ilustracao: ReactNode }[] = [
     ilustracao: (
       <div className="flex items-center gap-3">
         <Selo nome="Biset" cor="Biset" />
-        <span aria-hidden className="size-8 animate-ping rounded-full ring-4 ring-marca-400/60" />
+        <span aria-hidden className="size-8 motion-safe:animate-ping rounded-full ring-4 ring-marca-400/60" />
       </div>
     ),
   },

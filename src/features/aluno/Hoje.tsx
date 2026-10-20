@@ -1,5 +1,5 @@
 import { collection, query, where } from 'firebase/firestore'
-import { m, useAnimationControls, useReducedMotion } from 'motion/react'
+import { AnimatePresence, m, useAnimationControls, useReducedMotion } from 'motion/react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { prescreverSessao, type Meso } from '../../engine'
 import { comVolta, diasDaSemana, semanaDeVolta, travado, treinoDeHoje } from '../../lib/agenda'
@@ -8,7 +8,7 @@ import { db } from '../../lib/firebase'
 import { useHoje, useLista } from '../../lib/hooks'
 import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
-import { agil, elastico } from '../../movimento'
+import { agil, elastico, saida } from '../../movimento'
 import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
 import { Chip, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
@@ -104,13 +104,17 @@ function SemanaCarregada({ base, coach, meso, mesoId, nome, registros, hoje, sem
   const travada = (w: number, t?: number) => !coach && travado(meso, registros, hoje, w, t)
 
   return (
-    <m.div animate={tremer}>
+    <>
+      {/* fora do wrapper que treme: com transform ele viraria o referencial do `fixed` */}
+      <AnimatePresence>
       {aviso != null && (
-        <m.div role="alert" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
+        <m.div role="alert" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -80, transition: saida }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-rose-500/20 text-rose-400"><IcCadeado className="size-6" /></span>
           <p className="text-[15px] leading-snug text-slate-100">Semana {aviso} já passou. Faça o treino desta semana.</p>
         </m.div>
       )}
+      </AnimatePresence>
+      <m.div animate={tremer}>
       <header className="pt-2">
         <h1 className="text-[30px] leading-tight">Semana {semana} de {meso.semanas}</h1>
         <p className="text-[15px] text-slate-300">{nome} · {diaCurto(hojeISO)}, {Number(hojeISO.slice(8))}</p>
@@ -199,6 +203,7 @@ function SemanaCarregada({ base, coach, meso, mesoId, nome, registros, hoje, sem
         </m.div>
       </Deslizar>
       {!coach && <div className="mt-4"><AvisoReps meso={meso} mesoId={mesoId} registros={registros} /></div>}
-    </m.div>
+      </m.div>
+    </>
   )
 }

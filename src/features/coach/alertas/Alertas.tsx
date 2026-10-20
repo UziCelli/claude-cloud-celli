@@ -48,15 +48,19 @@ export function useAlertasCoach() {
   return { ...r, carregando }
 }
 
-const Grupo = ({ titulo, n, cor, children }: { titulo: string; n: number; cor: string; children: ReactNode }) =>
-  n > 0 ? (
-    <m.section layout="position" transition={suave} className="space-y-2">
-      <h2 className="font-semibold">
-        {titulo} <span className={`font-display text-lg font-bold ${cor}`}>{n}</span>
-      </h2>
-      <AnimatePresence initial={false}>{children}</AnimatePresence>
-    </m.section>
-  ) : null
+// A seção sai com animação quando o último cartão é arquivado (n vira 0).
+const Grupo = ({ titulo, n, cor, children }: { titulo: string; n: number; cor: string; children: ReactNode }) => (
+  <AnimatePresence initial={false}>
+    {n > 0 && (
+      <m.section layout="position" exit={{ opacity: 0, transition: saida }} transition={suave} className="space-y-2">
+        <h2 className="font-semibold">
+          {titulo} <span className={`font-display text-lg font-bold ${cor}`}>{n}</span>
+        </h2>
+        <AnimatePresence initial={false}>{children}</AnimatePresence>
+      </m.section>
+    )}
+  </AnimatePresence>
+)
 
 // Item que some com animação ao ser arquivado.
 const Saindo = ({ children }: { children: ReactNode }) => (

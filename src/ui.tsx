@@ -102,38 +102,41 @@ export const Msg = ({ children, className = '' }: { children?: ReactNode; classN
 )
 
 // Tela de abertura: logo entra, pulsa de leve enquanto carrega.
-export const Abertura = ({ texto, children }: { texto?: string; children?: ReactNode }) => (
-  <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-4">
-    <m.div
-      initial={{ opacity: 0, scale: 0.85, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={suave}
-    >
+export const Abertura = ({ texto, children }: { texto?: string; children?: ReactNode }) => {
+  const parado = useReducedMotion() // pulso em loop (opacidade) não é coberto pelo MotionConfig
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-4">
       <m.div
-        animate={{ opacity: [1, 0.55, 1], scale: [1, 1.04, 1] }}
-        transition={{ duration: 1.6, delay: 0.5, repeat: Infinity, ease: 'easeInOut' }}
+        initial={{ opacity: 0, scale: 0.85, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={suave}
       >
-        <Logo className="h-10 text-white" />
+        <m.div
+          animate={parado ? undefined : { opacity: [1, 0.55, 1], scale: [1, 1.04, 1] }}
+          transition={{ duration: 1.6, delay: 0.5, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <Logo className="h-10 text-white" />
+        </m.div>
       </m.div>
-    </m.div>
-    <m.div
-      aria-hidden
-      className="h-0.5 w-24 origin-left rounded bg-marca-500"
-      initial={{ scaleX: 0, opacity: 0 }}
-      animate={{ scaleX: 1, opacity: 1 }}
-      transition={{ ...suave, delay: 0.2 }}
-    />
-    <m.p
-      className="h-5 text-sm text-slate-400"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: texto ? 1 : 0 }}
-      transition={{ ...suave, delay: 0.4 }}
-    >
-      {texto}
-    </m.p>
-    {children}
-  </div>
-)
+      <m.div
+        aria-hidden
+        className="h-0.5 w-24 origin-left rounded bg-marca-500"
+        initial={{ scaleX: 0, opacity: 0 }}
+        animate={{ scaleX: 1, opacity: 1 }}
+        transition={{ ...suave, delay: 0.2 }}
+      />
+      <m.p
+        className="h-5 text-sm text-slate-400"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: texto ? 1 : 0 }}
+        transition={{ ...suave, delay: 0.4 }}
+      >
+        {texto}
+      </m.p>
+      {children}
+    </div>
+  )
+}
 
 export const Centro = ({ children }: { children: ReactNode }) => (
   <div className="flex min-h-dvh items-center justify-center px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] text-center">
@@ -189,11 +192,12 @@ export const Painel = ({ aberto, children, className }: { aberto: boolean; child
   <AnimatePresence initial={false}>
     {aberto && (
       <m.div
-        initial={{ height: 0, opacity: 0 }}
-        animate={{ height: 'auto', opacity: 1 }}
-        exit={{ height: 0, opacity: 0, transition: saida }}
+        // overflow escondido só durante abrir/fechar: aberto, não corta o anel de foco dos campos
+        initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+        animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }}
+        exit={{ height: 0, opacity: 0, overflow: 'hidden', transition: saida }}
         transition={suave}
-        className={`overflow-hidden ${className ?? ''}`}
+        className={className}
       >
         {children}
       </m.div>
@@ -239,15 +243,17 @@ export const Deslizar = ({ chave, children }: { chave: number; children: ReactNo
   )
 }
 
-// Número que conta de 0 até `n` ao aparecer (sem animar se o usuário pede menos movimento).
+// Número que conta de 0 (ou do valor já mostrado) até `n` (sem animar se o usuário pede menos movimento).
 export const Contar = ({ n }: { n: number }) => {
   const [v, setV] = useState(0)
+  const mostrado = useRef(0)
   useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches || n === 0) return setV(n)
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || n === 0) return setV((mostrado.current = n))
     const t0 = performance.now()
+    const de = mostrado.current
     let id = requestAnimationFrame(function passo(t) {
       const k = Math.min(1, (t - t0) / 500)
-      setV(Math.round(n * (1 - (1 - k) ** 3)))
+      setV((mostrado.current = Math.round(de + (n - de) * (1 - (1 - k) ** 3))))
       if (k < 1) id = requestAnimationFrame(passo)
     })
     return () => cancelAnimationFrame(id)
