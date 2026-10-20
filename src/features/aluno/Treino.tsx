@@ -359,7 +359,7 @@ function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolea
 
 export default function Treino({ uid, mesoId, semana, treino, base = '', coach }: { uid: string; mesoId: string; semana: number; treino: number; base?: string; coach?: boolean }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', mesoId))
-  const { dados: docsRegistros, pendente } = useLista<RegistroFlag>(
+  const { dados: docsRegistros, pendente, carregando: carregandoReg } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', uid))
@@ -385,14 +385,22 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const [verResumo, setVerResumo] = useState(false)
   const [fimLocal, setFimLocal] = useState<number | null>(null) // hora do "Concluir", até o servidor confirmar
 
-  if (carregando) return <Centro>Carregando…</Centro>
-  if (!dados) return <Centro>Treino não encontrado.</Centro>
+  const naoEncontrado = (
+    <Centro>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <p className="text-lg font-semibold">Treino não encontrado.</p>
+        <button onClick={() => ir(base || '/')} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">← Hoje</button>
+      </div>
+    </Centro>
+  )
+  if (carregando || carregandoReg) return <Centro>Carregando…</Centro> // registros também: senão treino já iniciado aparece como "Iniciar treino"
+  if (!dados || !(Number.isInteger(semana) && semana >= 1 && Number.isInteger(treino) && treino >= 1)) return naoEncontrado // NaN faria prescreverSessao lançar
 
   const hoje = new Date()
   const meso = comVolta(docParaMeso(dados), docsRegistros, hoje) // semana de volta: prescrição com −5%
   const volta = semanaDeVolta(meso, docsRegistros, hoje, semana) // e a carga anterior (número cinza) também
   const sessao = prescreverSessao(meso, semana, treino)
-  if (!sessao) return <Centro>Treino não encontrado.</Centro>
+  if (!sessao) return naoEncontrado
 
   const cargas = docsParaRegistros(docsRegistros, meso) // totais normalizados (ver normalizarCargas)
   const repsFeitas = docsParaRegistrosReps(docsRegistros)

@@ -19,7 +19,7 @@ export default function Aceite({ uid }: { uid: string }) {
           <li>Não vendemos seus dados.</li>
           <li>Você pode pedir cópia ou exclusão a qualquer momento pelo WhatsApp.</li>
         </ul>
-        <a href="/privacidade" target="_blank" rel="noopener" className="block text-sm underline">Ler a política completa</a>
+        <a href="/privacidade" className="block text-sm underline">Ler a política completa</a>
         <CaixaAceite marcada={marcada} onChange={setMarcada} />
       </Cartao>
       <Botao

@@ -64,7 +64,7 @@ function comparar(a: Aluno, b: Aluno) {
 }
 
 export default function Alunos() {
-  const { dados } = useLista<Usuario>(query(collection(db, 'usuarios'), where('papel', '==', 'aluno')))
+  const { dados, carregando } = useLista<Usuario>(query(collection(db, 'usuarios'), where('papel', '==', 'aluno')))
   const alunos = dados as Aluno[]
   const { dados: fotos } = useLista<Foto>(collection(db, 'fotos'))
   const imgs = new Map(fotos.map((f) => [f.id, f.img]))
@@ -207,10 +207,14 @@ export default function Alunos() {
           </div>
         )}
       </Msg>
-      {alunos.length === 0 ? (
+      {carregando && alunos.length === 0 ? (
+        <p className="text-slate-400">Carregando…</p>
+      ) : alunos.length === 0 ? (
         <Cartao className="text-slate-400">
           Nenhum aluno ainda. Use Novo aluno, ou peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
         </Cartao>
+      ) : filtrados.length === 0 ? (
+        <Cartao className="text-slate-400">Nenhum aluno encontrado.</Cartao>
       ) : (
         <>
         <div className="space-y-3 md:hidden">

@@ -47,7 +47,7 @@ function Semana({ uid, base, coach, mesoId, nome, meso, hoje }: { uid: string; b
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   if (carregando) return <Centro>Carregando…</Centro>
-  return <SemanaCarregada base={base} coach={coach} mesoId={mesoId} nome={nome} meso={meso} registros={registros} hoje={hoje} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
+  return <SemanaCarregada key={mesoId} base={base} coach={coach} mesoId={mesoId} nome={nome} meso={meso} registros={registros} hoje={hoje} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
 }
 
 // Aviso de reps abaixo da meta nos últimos 7 dias; "Entendi" guarda no aparelho (sem armazenamento, volta no próximo acesso).

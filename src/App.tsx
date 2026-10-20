@@ -104,16 +104,16 @@ function PerfilDemora() {
 function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
   const aviso = useInatividade(papel)
   return aviso ? (
-    <div role="alert" className="fixed inset-x-0 top-0 z-50 bg-amber-950 px-4 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] text-center text-sm text-amber-200">
+    <div role="alert" className="fixed inset-x-0 top-0 z-50 bg-amber-950 px-4 pb-2 pt-topo text-center text-sm text-amber-200">
       Conecte-se à internet para salvar suas cargas antes de sair.
     </div>
   ) : null
 }
 
 const ativaAba = (rota: string) =>
-  rota === '/' ? 'inicio'
-  : rota === '/alertas' || rota === '/ranking' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
-  : 'alunos' // /alunos, /aluno/..., /meso/...
+  rota === '/alertas' || rota === '/ranking' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
+  : rota === '/alunos' || rota.startsWith('/alunos/') || rota.startsWith('/aluno/') || rota.startsWith('/meso/') ? 'alunos'
+  : 'inicio' // '/' e rotas desconhecidas (a tela padrão é o Início)
 
 // Menu do coach: abas embaixo no celular, menu lateral fixo no computador (≥ lg).
 function Menu({ rota }: { rota: string }) {
@@ -164,7 +164,7 @@ function Menu({ rota }: { rota: string }) {
         className="lg:hidden"
         abas={itens
           .filter((i) => i.id !== 'ranking')
-          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: at === i.id, selo: i.selo }))}
+          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: (at === 'ranking' ? 'inicio' : at) === i.id, selo: i.selo }))}
       />
     </>
   )
@@ -190,7 +190,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
-  else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n)} />
+  else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n) || 1} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
   return (

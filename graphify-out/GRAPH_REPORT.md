@@ -1,17 +1,17 @@
 # Graph Report - claude-cloud-celli  (2026-10-20)
 
 ## Corpus Check
-- 264 files · ~241,083 words
+- 264 files · ~241,506 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
 ## Summary
-- 2031 nodes · 5639 edges · 128 communities (113 shown, 15 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 236 edges (avg confidence: 0.94)
+- 2031 nodes · 5642 edges · 128 communities (113 shown, 15 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 239 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a2e5586f`
+- Built from commit: `9dcda81a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -139,11 +139,11 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `Botao()` - 79 edges
-2. `Treino()` - 67 edges
-3. `Pontos sensíveis (leia antes de auditar ou mexer)` - 67 edges
+2. `Pontos sensíveis (leia antes de auditar ou mexer)` - 70 edges
+3. `Treino()` - 67 edges
 4. `vitest` - 57 edges
 5. `react` - 51 edges
-6. `prescreverSessao()` - 50 edges
+6. `prescreverSessao()` - 51 edges
 7. `Meso` - 47 edges
 8. `Cartao()` - 46 edges
 9. `firebase` - 37 edges
@@ -627,7 +627,7 @@ Nodes (3): vitest, meso, base
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `vitest` connect `vitest` to `InicioAluno.tsx`, `ataques.test.ts`, `planilha.ts`, `alertas.ts`, `vigia.test.ts`, `conversores.ts`, `TabMetodos.tsx`, `MinhaConta.tsx`, `calcularAlertas.ts`, `push.ts`, `Alunos.tsx`, `ContaAluno.tsx`, `acoes.ts`, `prescreverSessao`, `Árvore por pasta`, `descanso.ts`, `jwt.ts`, `sugestao.ts`, `Onde fica cada coisa`, `relatorio.ts`, `engine/index.ts`, `webpush.ts`, `TabDivisao.tsx`, `cartaoStory.ts`, `ref_node_fs`, `validar.ts`, `AlunoApp.tsx`, `ehRecorde`, `metricas.ts`, `src/acesso.ts`, `diaSP`, `package.json`, `evolucao.test.ts`, `PainelEvolucao.tsx`, `src/index.ts`, `aluno-exemplo.test.ts`, `limpeza-lgpd.test.ts`, `marcas_vfit_marca`, `vitest`, `marca.test.ts`, `Cartao`, `firebase-admin`?**
-  _High betweenness centrality (0.160) - this node is a cross-community bridge._
+  _High betweenness centrality (0.159) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Botao()` (e.g. with `Pontos sensíveis (leia antes de auditar ou mexer)` and ``src/` — Raiz`) actually correct?**
   _`Botao()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `@cloudflare/workers-types`, `@types/react`, `@types/react-dom` to the rest of the system?**
@@ -636,7 +636,7 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.05952380952380952 - nodes in this community are weakly interconnected._
 - **Why does `firebase` connect `App.tsx` to `InicioAluno.tsx`, `evolucao.ts`, `ui.tsx`, `PainelEvolucao.tsx`, `ataques.test.ts`, `cartaoStory.ts`, `MinhaConta.tsx`, `useLista`, `Alunos.tsx`, `ContaAluno.tsx`, `acoes.ts`, `Cartao`, `Treino.tsx`, `package.json`, `Alertas.tsx`, `evolucao.test.ts`, `relatorio.ts`?**
   _High betweenness centrality (0.056) - this node is a cross-community bridge._
-- **Are the 66 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `Menu()` and `Principal()`) actually correct?**
-  _`Pontos sensíveis (leia antes de auditar ou mexer)` has 66 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 69 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `Menu()` and `Principal()`) actually correct?**
+  _`Pontos sensíveis (leia antes de auditar ou mexer)` has 69 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Lógica da planilha "Força 2027.1" — especificação do motor` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._

@@ -47,6 +47,13 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
     })
   }
 
+  if (!aluno.carregando && !aluno.dados && !aluno.cache) // só com a resposta do servidor: offline sem cache não é "não encontrado"
+    return (
+      <Pagina titulo="Aluno não encontrado.">
+        <a href="#/alunos" className="text-marca-500 underline">Voltar para os alunos</a>
+      </Pagina>
+    )
+
   return (
     <Pagina
       titulo={`Mesociclos de ${aluno.dados?.nome ?? '…'}`}

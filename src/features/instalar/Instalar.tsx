@@ -68,6 +68,7 @@ export default function Instalar() {
       {eAndroid() && <PassosAndroid promptEvento={promptEvento} />}
       {eIOS() && <PassosIOS copiado={copiado} onCopiar={() => copiarLink(setCopiado)} />}
       {!eAndroid() && !eIOS() && <PassosDesktop />}
+      <a href="/" className="block text-center text-sm text-slate-400 underline hover:text-slate-200">Voltar ao app</a>
     </main>
   )
 }
