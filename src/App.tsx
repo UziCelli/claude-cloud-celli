@@ -48,7 +48,7 @@ function Principal() {
   let tela: ReactNode
   if (carregando) [estagio, tela] = ['abertura', <Abertura />]
   else if (!user) [estagio, tela] = ['entrar', <Entrar />]
-  else if (!perfil) [estagio, tela] = ['abertura', <Abertura texto="Preparando sua conta…" />]
+  else if (!perfil) [estagio, tela] = ['abertura', <PerfilDemora />]
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso uid={user.uid} perfil={perfil} />]
   else if (!aceitouPrivacidade(perfil)) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} />]
@@ -71,6 +71,25 @@ function Principal() {
       {user && perfil && <Vigia papel={perfil.papel === 'coach' ? 'coach' : 'aluno'} />}
       <Tela chave={estagio}>{tela}</Tela>
     </>
+  )
+}
+
+// Perfil que não chega: depois de 10 s oferece a saída em vez de girar para sempre.
+function PerfilDemora() {
+  const [demora, setDemora] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setDemora(true), 10_000)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <Abertura texto="Preparando sua conta…">
+      {demora && (
+        <div className="max-w-xs space-y-3 text-center text-sm text-slate-300">
+          <p>Não conseguimos abrir sua conta. Confira a internet ou fale com seu coach.</p>
+          <Botao onClick={sair}>Sair</Botao>
+        </div>
+      )}
+    </Abertura>
   )
 }
 

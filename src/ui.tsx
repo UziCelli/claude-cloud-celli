@@ -102,7 +102,7 @@ export const Msg = ({ children, className = '' }: { children?: ReactNode; classN
 )
 
 // Tela de abertura: logo entra, pulsa de leve enquanto carrega.
-export const Abertura = ({ texto }: { texto?: string }) => (
+export const Abertura = ({ texto, children }: { texto?: string; children?: ReactNode }) => (
   <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-4">
     <m.div
       initial={{ opacity: 0, scale: 0.85, y: 8 }}
@@ -131,6 +131,7 @@ export const Abertura = ({ texto }: { texto?: string }) => (
     >
       {texto}
     </m.p>
+    {children}
   </div>
 )
 

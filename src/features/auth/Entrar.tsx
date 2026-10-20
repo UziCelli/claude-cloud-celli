@@ -3,10 +3,12 @@ import { elastico } from '../../movimento'
 import { useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import type { MultiFactorResolver } from 'firebase/auth'
-import { cadastrar, confirmarLoginTotp, entrar, recuperarSenha, resolverMfa } from '../../lib/acoes'
+import { cadastrar, confirmarLoginTotp, entrar, resolverMfa } from '../../lib/acoes'
 import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
 import { Aviso, Msg, Painel } from '../../ui'
 import { Brilho } from '../../vidro'
+import { ir, useRota } from '../../rota'
+import EsqueciSenha, { campo, rotulo } from './EsqueciSenha'
 import BoasVindas, { deveMostrarBoasVindas } from './BoasVindas'
 import { jaInstalado } from '../instalar/Instalar'
 import Logo from '@marca/Logo'
@@ -17,15 +19,16 @@ import { registrarErro } from '../../lib/log'
 import { atualizarNaEntrada } from '../../lib/atualizar'
 import marca from '@marca/marca.json'
 
-const rotulo = 'block text-[15px] font-semibold text-slate-300'
-const campo = 'h-14 w-full rounded-2xl bg-white/10 px-4 text-[17px] text-white ring-1 ring-white/25 placeholder:text-slate-400'
+const SENHA_ERRADA = 'E-mail ou senha incorretos. Primeiro acesso ou esqueceu a senha? Toque em Esqueci minha senha.'
 
 const erros: Record<string, string> = {
-  'auth/wrong-password': 'E-mail ou senha incorretos.',
-  'auth/user-not-found': 'E-mail ou senha incorretos.',
-  'auth/invalid-credential': 'E-mail ou senha incorretos.',
+  'auth/wrong-password': SENHA_ERRADA,
+  'auth/user-not-found': SENHA_ERRADA,
+  'auth/invalid-credential': SENHA_ERRADA,
+  'auth/user-disabled': 'Sua conta está desativada. Fale com seu coach.',
+  'auth/missing-password': 'Digite sua senha.',
   'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos ou use Esqueci minha senha.',
-  'auth/email-already-in-use': 'Já existe uma conta com esse e-mail',
+  'auth/email-already-in-use': 'Esse e-mail já tem conta. Toque em Já tenho conta e depois em Esqueci minha senha.',
   'auth/weak-password': 'Senha muito fraca (mínimo 6 caracteres)',
   'auth/invalid-email': 'E-mail inválido',
   'auth/network-request-failed': 'Sem internet. Verifique sua conexão e tente de novo.',
@@ -42,15 +45,8 @@ const mensagemErro = (e: unknown) => {
 // Código do autenticador errado: mensagem do 2º fator (e a tela volta ao e-mail/senha se a sessão venceu).
 const SESSAO_MFA_VENCIDA = 'auth/invalid-multi-factor-session'
 
-const mensagemRecuperar = (e: unknown) => {
-  if (e instanceof FirebaseError && e.code === 'auth/invalid-email') return 'E-mail inválido'
-  if (e instanceof FirebaseError && e.code === 'auth/network-request-failed')
-    return 'Sem internet. Verifique sua conexão e tente de novo.'
-  // user-not-found (e qualquer outro erro) mostra a mesma mensagem de sucesso, para não revelar contas.
-  return ''
-}
-
 export default function Entrar() {
+  const rota = useRota()
   const [cadastro, setCadastro] = useState(false)
   const [boasVindas, setBoasVindas] = useState(() => deveMostrarBoasVindas(jaInstalado()))
   const [verSenha, setVerSenha] = useState(false)
@@ -60,7 +56,6 @@ export default function Entrar() {
   const [aceito, setAceito] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [msgRecuperar, setMsgRecuperar] = useState('')
   const [tremor, setTremor] = useState(0)
   const [resolver, setResolver] = useState<MultiFactorResolver | null>(null)
   const [codigo, setCodigo] = useState('')
@@ -140,23 +135,8 @@ export default function Entrar() {
     setErro(msg)
   }
 
-  async function esqueciSenha() {
-    setErro('')
-    setMsgRecuperar('')
-    if (!email) return falhou('Digite seu e-mail para recuperar a senha')
-    try {
-      await recuperarSenha(email)
-      setMsgRecuperar('Enviamos um link para seu e-mail (confira o spam)')
-    } catch (e) {
-      const erroEspecifico = mensagemRecuperar(e)
-      setMsgRecuperar(erroEspecifico ? '' : 'Enviamos um link para seu e-mail (confira o spam)')
-      if (erroEspecifico) falhou(erroEspecifico)
-    }
-  }
-
   function trocarModo(paraCadastro: boolean) {
     setErro('')
-    setMsgRecuperar('')
     setResolver(null)
     setCadastro(paraCadastro)
   }
@@ -174,6 +154,8 @@ export default function Entrar() {
         }}
       />
     )
+
+  if (rota === '/esqueci-senha') return <EsqueciSenha email={email} setEmail={setEmail} />
 
   return (
     <div className="min-h-dvh">
@@ -256,7 +238,6 @@ export default function Entrar() {
             <Msg>{saiu && <Aviso>Você saiu por inatividade.</Aviso>}</Msg>
             <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
             <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
-            <Msg>{msgRecuperar && <Aviso>{msgRecuperar}</Aviso>}</Msg>
             <button
               className="h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50"
               disabled={enviando || (cadastro && !aceito) || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))}
@@ -267,7 +248,7 @@ export default function Entrar() {
 
           <Painel aberto={!cadastro && !resolver}>
             <p className="mt-4 text-center">
-              <button type="button" className="text-[15px] font-semibold text-marca-300" onClick={esqueciSenha}>
+              <button type="button" className="text-[15px] font-semibold text-marca-300" onClick={() => { setErro(''); ir('/esqueci-senha') }}>
                 Esqueci minha senha
               </button>
             </p>
