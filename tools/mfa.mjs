@@ -2,7 +2,7 @@
 // - ativar-totp: liga o TOTP (app autenticador) no projeto. Exige antes o upgrade para o Identity Platform
 //   (console do Firebase -> Authentication -> Configurações -> "Fazer upgrade").
 // - desativar-coach: EMERGÊNCIA (o coach perdeu o celular e não consegue o código). Remove os fatores do coach
-//   pelo e-mail; no próximo login ele entra só com a senha e ativa de novo em "Minha conta".
+//   pelo e-mail e encerra todas as sessões dele; no próximo login ele entra só com a senha e ativa de novo em "Minha conta".
 // Uso local: PROJETO=forca--app (ou gislane-personal-trainer) ACAO=ativar-totp GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
 //            ACAO=desativar-coach EMAIL=coach@x.com GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
 import { appendFileSync } from 'node:fs'
@@ -58,5 +58,7 @@ if (acao === 'ativar-totp') {
   if (papel !== 'coach') throw new Error(`${email} não é coach (papel: ${papel ?? 'sem perfil'}). Nada foi alterado.`)
   const antes = user.multiFactor?.enrolledFactors?.length ?? 0
   await getAuth().updateUser(user.uid, { multiFactor: { enrolledFactors: null } })
-  avisar(`2 etapas removidas do coach ${email} (${marca}) (${antes} fator(es)). No próximo login, só a senha; ative de novo em "Minha conta".`)
+  // Celular perdido/roubado: derruba também as sessões abertas (o app nele sai em até 1 hora).
+  await getAuth().revokeRefreshTokens(user.uid)
+  avisar(`2 etapas removidas e sessões encerradas do coach ${email} (${marca}) (${antes} fator(es)). No próximo login, só a senha; ative de novo em "Minha conta".`)
 }
