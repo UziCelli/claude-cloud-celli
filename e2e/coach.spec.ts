@@ -158,6 +158,17 @@ test('coach arquiva, vê em Arquivados e reativa', async ({ page }) => {
   await expect(linha.getByText('Ativo')).toBeVisible()
 })
 
+test('aluno inexistente mostra aviso e volta para a lista', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.goto('/#/aluno/naoexiste')
+  await expect(page.getByRole('heading', { name: 'Aluno não encontrado.' })).toBeVisible()
+  await page.getByRole('link', { name: 'Voltar para os alunos' }).click()
+  await expect(page).toHaveURL(/#\/alunos$/)
+})
+
 // Bug de 01/10/2026: a marca de uso da sessão anterior (velha) derrubava o login novo na hora.
 test('login novo não cai por inatividade antiga', async ({ page }) => {
   await page.goto('/')

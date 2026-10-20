@@ -378,3 +378,14 @@ test('aluno não abre treino não feito de semana que já passou', async ({ page
   await expect(page.getByText('Semana 1 já passou.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Iniciar treino' })).toHaveCount(0)
 })
+
+test('treino que não existe tem saída para o Início', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(ALUNO.email)
+  await page.getByLabel('Senha').fill(ALUNO.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.goto(`/#/treino/${mesoId}/99/1`)
+  await expect(page.getByText('Treino não encontrado.')).toBeVisible()
+  await page.getByRole('button', { name: '← Hoje' }).click()
+  await expect(page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Início' })).toBeVisible()
+})
