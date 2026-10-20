@@ -101,7 +101,7 @@ export default function FimTreino({
   return (
     <main className="mx-auto max-w-sm px-4 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       {foto && previa && <img src={previa} alt="Prévia do story com a sua foto" className="w-full rounded-3xl shadow-xl" />}
-      {foto && !previa && <div className="aspect-[9/16] w-full animate-pulse rounded-3xl bg-slate-800" />}
+      {foto && !previa && <div className="aspect-[9/16] w-full motion-safe:animate-pulse rounded-3xl bg-slate-800" />}
       {!foto && <m.div
         variants={cascata}
         initial="hidden"

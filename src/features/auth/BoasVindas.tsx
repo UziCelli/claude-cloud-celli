@@ -48,8 +48,9 @@ function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
         aria-hidden
         initial={{ y: -8 }}
         animate={{ y: [0, 10, 0] }}
+        exit={{ opacity: 0, transition: saida }}
         transition={{ duration: 1.1, repeat: Infinity }}
-        className="fixed bottom-[88px] right-[22px] z-40 text-marca-300 drop-shadow-lg"
+        className="pointer-events-none fixed bottom-[88px] right-[22px] z-40 text-marca-300 drop-shadow-lg"
       >
         <IcSeta className="size-14 rotate-90" />
       </m.div>
