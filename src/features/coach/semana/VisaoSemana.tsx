@@ -7,7 +7,7 @@ import { diaSP } from '../../../lib/acesso'
 import { msSessao } from '../../../lib/resumo'
 import { comVolta } from '../../../lib/agenda'
 import { db } from '../../../lib/firebase'
-import { useDoc, useLista } from '../../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Botao, Centro, Deslizar, Msg, Pagina } from '../../../ui'
 import EvolucaoCoach from './EvolucaoCoach'
@@ -19,6 +19,7 @@ type RegistroDocCompleto = RegistroDoc & { realizado?: boolean; pc?: Record<stri
 
 export default function VisaoSemana({ id, semana }: { id: string; semana: number }) {
   const { dados, carregando } = useDoc<MesoSalvo>(doc(db, 'mesos', id))
+  const semInternet = useSemInternet()
   const { dados: docsRegistros, pendente } = useLista<RegistroDocCompleto>(
     query(collection(db, 'registros'), where('mesoId', '==', id)),
   )
@@ -44,7 +45,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   }, [semana, primeiro, carregando])
 
   if (carregando) return <Centro>Carregando…</Centro>
-  if (!dados) return <Centro>Meso não encontrado.</Centro>
+  if (!dados) return <Centro>{semInternet ? TEXTO_SEM_INTERNET : 'Meso não encontrado.'}</Centro>
 
   const meso = comVolta(docParaMeso(dados), docsRegistros, agora) // prescrito = o que o aluno viu (semana de volta −5%)
   const registros = docsParaRegistros(docsRegistros, meso)

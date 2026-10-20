@@ -9,8 +9,8 @@ import { registrarErro } from '../../../lib/log'
 import { avisarTreinoPronto } from '../../../lib/push'
 import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
-import { useDoc, useLista } from '../../../lib/hooks'
-import { ir } from '../../../rota'
+import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
+import { ir, protegerSaida } from '../../../rota'
 import { Aviso, Botao, Campo, Msg, Pagina } from '../../../ui'
 import Preview from './Preview'
 import { LinhaAcima, treinosAcima } from './SugestaoTempo'
@@ -34,6 +34,7 @@ const estavel = (v: unknown) =>
 export default function EditorMeso({ id }: { id: string }) {
   const ref = useMemo(() => doc(db, 'mesos', id), [id])
   const mesoDoc = useDoc<MesoSalvo>(ref)
+  const semInternet = useSemInternet()
   const registrosQ = useMemo(() => query(collection(db, 'registros'), where('mesoId', '==', id)), [id])
   const registrosDocs = useLista<RegistroDoc>(registrosQ)
   const registros = useMemo(() => docsParaRegistros(registrosDocs.dados), [registrosDocs.dados])
@@ -68,9 +69,15 @@ export default function EditorMeso({ id }: { id: string }) {
     setConflito(false)
   }, [mesoDoc.dados, dirty])
 
+  // Avisa ao sair da tela (menu, abas, voltar, fechar a aba) com mudanças não salvas.
+  useEffect(() => {
+    protegerSaida(dirty ? 'Sair sem salvar as mudanças?' : null)
+    return () => protegerSaida(null)
+  }, [dirty])
+
   if (!mesoDoc.carregando && !mesoDoc.dados && !meso)
     return (
-      <Pagina titulo="Mesociclo não encontrado.">
+      <Pagina titulo={semInternet ? TEXTO_SEM_INTERNET : 'Mesociclo não encontrado.'}>
         <a href="#/alunos" className="text-marca-500 underline">Voltar para os alunos</a>
       </Pagina>
     )
@@ -157,7 +164,7 @@ export default function EditorMeso({ id }: { id: string }) {
           <Botao tipo="primario" disabled={!dirty || diasInvalidos(meso) || !nome.trim() || !meso.inicio} onClick={() => salvar()}>
             Salvar
           </Botao>
-          <Botao onClick={() => (!dirty || confirm('Sair sem salvar as mudanças?')) && ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
+          <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
           <Botao
             disabled={dirty || mesoDoc.pendente || !alunoId || aviso === 'Enviando…'}
             onClick={async () => {

@@ -2,7 +2,7 @@ import { collection, query, where, type Timestamp } from 'firebase/firestore'
 import { useMemo } from 'react'
 import { primeiroNome } from '../../lib/contato'
 import { db } from '../../lib/firebase'
-import { useLista } from '../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { Centro } from '../../ui'
 import Relatorio, { BotaoPdf } from './Relatorio'
@@ -17,6 +17,7 @@ export const useRelatoriosLiberados = (uid: string) =>
 export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nome: string; mesoId: string }) {
   const rels = useRelatoriosLiberados(uid)
   const dados = useDadosAluno(uid)
+  const semInternet = useSemInternet()
   const doc = rels.dados.find((x) => x.mesoId === mesoId)
   const r = doc ? relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date()) : null
   return (
@@ -25,7 +26,7 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
       {rels.carregando || dados.carregando ? (
         <Centro>Carregando…</Centro>
       ) : !doc || !r ? (
-        <p className="py-6 text-center text-slate-400">Este relatório ainda não está disponível.</p>
+        <p className="py-6 text-center text-slate-400">{semInternet ? TEXTO_SEM_INTERNET : 'Este relatório ainda não está disponível.'}</p>
       ) : (
         <div className="space-y-3">
           <Relatorio r={r} aluno={primeiroNome(nome)} comentario={doc.comentario} compartilhar />

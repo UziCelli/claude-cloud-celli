@@ -6,7 +6,7 @@ import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
 import { apagarAluno, confirmarPagamento, definirAcesso, salvarMensalidade } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
 import { db } from '../../../lib/firebase'
-import { useLista } from '../../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
@@ -66,6 +66,7 @@ function comparar(a: Aluno, b: Aluno) {
 export default function Alunos() {
   const { dados, carregando } = useLista<Usuario>(query(collection(db, 'usuarios'), where('papel', '==', 'aluno')))
   const alunos = dados as Aluno[]
+  const semInternet = useSemInternet()
   const { dados: fotos } = useLista<Foto>(collection(db, 'fotos'))
   const imgs = new Map(fotos.map((f) => [f.id, f.img]))
   const avatar = (a: Aluno) => <Avatar img={imgs.get(a.id)} nome={a.nome} selo={a.selo} tamanho={36} />
@@ -211,7 +212,9 @@ export default function Alunos() {
         <p className="text-slate-400">Carregando…</p>
       ) : alunos.length === 0 ? (
         <Cartao className="text-slate-400">
-          Nenhum aluno ainda. Use Novo aluno, ou peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.
+          {semInternet
+            ? TEXTO_SEM_INTERNET
+            : 'Nenhum aluno ainda. Use Novo aluno, ou peça para seus alunos criarem a conta no app — eles aparecem aqui para você liberar.'}
         </Cartao>
       ) : filtrados.length === 0 ? (
         <Cartao className="text-slate-400">Nenhum aluno encontrado.</Cartao>

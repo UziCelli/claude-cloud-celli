@@ -8,6 +8,29 @@ const assinar = (cb: () => void) => {
 
 export const useRota = () => useSyncExternalStore(assinar, () => location.hash.slice(1) || '/')
 
+// Aviso de saída: com `aviso`, trocar de endereço pede confirmação; recusar volta ao endereço anterior.
+// Listener registrado antes dos outros para rodar primeiro e barrar os demais (stopImmediatePropagation).
+let aviso: string | null = null
+let atual = location.hash
+export const protegerSaida = (msg: string | null) => {
+  aviso = msg
+}
+addEventListener('hashchange', (e) => {
+  if (aviso && location.hash !== atual) {
+    if (!confirm(aviso)) {
+      history.replaceState(null, '', atual)
+      return e.stopImmediatePropagation()
+    }
+    aviso = null
+  }
+  atual = location.hash
+})
+addEventListener('beforeunload', (e) => {
+  if (!aviso) return
+  e.preventDefault()
+  e.returnValue = ''
+})
+
 // Navegações dentro do app desde que abriu: sem elas (link direto) history.back() não leva a lugar nenhum.
 let navegou = 0
 addEventListener('hashchange', () => navegou++)

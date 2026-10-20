@@ -4,7 +4,7 @@ import type { Usuario } from '../../lib/acesso'
 import { docParaMeso, type MesoSalvo } from '../../lib/conversores'
 import { rankingAlunos, type LinhaRanking, type RegistroEvolucao } from '../../lib/evolucao'
 import { db } from '../../lib/firebase'
-import { useLista } from '../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../lib/hooks'
 import { Cartao, Pagina } from '../../ui'
 import { IcMedalha } from '../../icones'
 
@@ -20,6 +20,7 @@ const MEDALHA = ['text-amber-400', 'text-slate-300', 'text-orange-400']
 export default function RankingAlunos() {
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
   const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
+  const semInternet = useSemInternet()
   const [aba, setAba] = useState<Aba>('evoluiu')
   const [registros, setRegistros] = useState<RegistroEvolucao[]>([])
   const agora = new Date()
@@ -86,7 +87,7 @@ export default function RankingAlunos() {
       </div>
       <Cartao>
         {lista.length === 0 ? (
-          <p className="text-sm text-slate-500">{alunos.carregando ? 'Carregando…' : vazio}</p>
+          <p className="text-sm text-slate-500">{alunos.carregando ? 'Carregando…' : semInternet ? TEXTO_SEM_INTERNET : vazio}</p>
         ) : (
           <ol className="divide-y divide-slate-800">
             {lista.map((l, i) => (

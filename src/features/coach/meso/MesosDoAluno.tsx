@@ -6,7 +6,7 @@ import { darAcessoAoApp, duplicarMeso, excluirMeso, salvarMeso } from '../../../
 import { registrarErro } from '../../../lib/log'
 import { docParaMeso, type MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
-import { useDoc, useLista } from '../../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagina, Painel } from '../../../ui'
@@ -24,6 +24,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
   const aluno = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const mesosQ = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
   const mesos = useLista<MesoSalvo>(mesosQ)
+  const semInternet = useSemInternet()
   const [erro, setErro] = useState<string | null>(null)
   const [importando, setImportando] = useState(false)
   const [aviso] = useState(() => {
@@ -76,7 +77,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       </Painel>
       <Msg>{erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}</Msg>
       {mesos.carregando && <p className="text-slate-400">Carregando…</p>}
-      {!mesos.carregando && mesos.dados.length === 0 && <p className="text-slate-400">Nenhum mesociclo ainda.</p>}
+      {!mesos.carregando && mesos.dados.length === 0 && <p className="text-slate-400">{semInternet ? TEXTO_SEM_INTERNET : 'Nenhum mesociclo ainda.'}</p>}
       <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
         {mesos.dados.map((d) => (
           <m.div key={d.id} variants={item}>
