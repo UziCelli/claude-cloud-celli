@@ -379,10 +379,10 @@ export const salvarNota = (alunoId: string, exercicio: string, texto: string) =>
 
 // ---------- login ----------
 
-export const entrar = (email: string, senha: string) => signInWithEmailAndPassword(auth, email, senha)
+export const entrar = (email: string, senha: string) => signInWithEmailAndPassword(auth, email.trim(), senha)
 
 // E-mail em pt-BR (auth.languageCode em firebase.ts).
-export const recuperarSenha = (email: string) => sendPasswordResetEmail(auth, email)
+export const recuperarSenha = (email: string) => sendPasswordResetEmail(auth, email.trim())
 
 // Troca de e-mail: confirma a senha e manda o link para o e-mail NOVO. A troca só acontece
 // quando a pessoa clica no link (até lá o login continua com o e-mail antigo).
@@ -442,6 +442,7 @@ export function sincronizarEmail(uid: string, perfilEmail: string) {
 
 // Cria o perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
 export async function cadastrar(nome: string, email: string, senha: string) {
+  email = email.trim()
   const { user } = await createUserWithEmailAndPassword(auth, email, senha)
   await setDoc(doc(db, 'usuarios', user.uid), {
     papel: 'aluno',
