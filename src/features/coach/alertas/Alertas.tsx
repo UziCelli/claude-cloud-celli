@@ -5,7 +5,7 @@ import type { Usuario } from '../../../lib/acesso'
 import { arquivarAlerta, consultaRegistrosRecentes, desarquivarAlerta, limparArquivadosAntigos, marcarAdaptado, salvarMeso } from '../../../lib/acoes'
 import type { MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
-import { useLista } from '../../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks'
 import { inicioJanela } from '../../../lib/resumo'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../../lib/contato'
 import { saida, suave } from '../../../movimento'
@@ -125,6 +125,7 @@ const rotulo = {
 
 export default function Alertas() {
   const a = useAlertasCoach()
+  const semInternet = useSemInternet()
   const [verArq, setVerArq] = useState(false)
   const arq = a.arquivados
   const nArq = arq.abaixo.length + arq.acima.length + arq.demorados.length
@@ -139,7 +140,12 @@ export default function Alertas() {
         <p className="text-slate-400">Carregando…</p>
       ) : (
         <div className="space-y-6">
-          {a.total === 0 && <p className="text-slate-400">Nenhum alerta. Tudo em dia <IcCheck className="inline size-4 align-[-2px]" /></p>}
+          {a.total === 0 &&
+            (semInternet ? (
+              <p className="text-slate-400">{TEXTO_SEM_INTERNET}</p>
+            ) : (
+              <p className="text-slate-400">Nenhum alerta. Tudo em dia <IcCheck className="inline size-4 align-[-2px]" /></p>
+            ))}
           <Grupo titulo="Reps abaixo da meta (7 dias)" n={a.abaixo.length} cor="text-rose-300">
             {a.abaixo.map((x) => <Saindo key={x.chave}><CartaoAbaixo x={x} /></Saindo>)}
           </Grupo>

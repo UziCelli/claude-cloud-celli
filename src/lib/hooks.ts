@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import {
   doc,
@@ -66,6 +66,18 @@ export function useLista<T>(q: Query | null): Estado<(T & { id: string })[]> {
   }, [alvo])
   return e
 }
+
+// Aparelho sem conexão (modo avião, sem sinal): tela vazia diz "sem internet" em vez de "nada aqui".
+export const TEXTO_SEM_INTERNET = 'Sem internet. Conecte-se para carregar.'
+const assinarRede = (cb: () => void) => {
+  addEventListener('online', cb)
+  addEventListener('offline', cb)
+  return () => {
+    removeEventListener('online', cb)
+    removeEventListener('offline', cb)
+  }
+}
+export const useSemInternet = () => useSyncExternalStore(assinarRede, () => !navigator.onLine)
 
 export function useUsuarioAtual() {
   const [user, setUser] = useState<User | null | undefined>(undefined) // undefined = ainda verificando

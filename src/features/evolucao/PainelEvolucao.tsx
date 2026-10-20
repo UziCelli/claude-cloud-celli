@@ -9,7 +9,7 @@ import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, 
 import { comparacaoToneladas, historicoExercicios, painelEvolucao, type Conquista, type RegistroEvolucao } from '../../lib/evolucao'
 import { diaNumero, type CardioDoc } from '../../lib/cardio'
 import { db } from '../../lib/firebase'
-import { useDoc, useLista } from '../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { ir } from '../../rota'
 import { campoBase, Cartao, cascata, Centro, Contar, item } from '../../ui'
 import { mesoAtual } from '../aluno/mesoAtual'
@@ -44,6 +44,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
   const mesosL = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid]))
   const regsL = useLista<RegistroEvolucao>(useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid]))
   const cardiosL = useLista<CardioDoc>(useMemo(() => query(collection(db, 'cardios'), where('alunoId', '==', uid)), [uid]))
+  const semInternet = useSemInternet()
   const [soMeso, setSoMeso] = useState(false)
   const [exercicio, setExercicio] = useState('')
 
@@ -75,8 +76,8 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
       <main className={base}>
         {cabeca}
         <Cartao className="py-8 text-center">
-          <p className="text-lg font-semibold">Seu primeiro treino vai aparecer aqui</p>
-          <p className="mt-1 text-sm text-slate-400">Cada treino feito entra na sua evolução.</p>
+          <p className="text-lg font-semibold">{semInternet ? TEXTO_SEM_INTERNET : 'Seu primeiro treino vai aparecer aqui'}</p>
+          {!semInternet && <p className="mt-1 text-sm text-slate-400">Cada treino feito entra na sua evolução.</p>}
         </Cartao>
       </main>
     )

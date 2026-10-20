@@ -5,7 +5,7 @@ import { comVolta, diasDaSemana, treinoDeHoje } from '../../lib/agenda'
 import type { RegistroAlerta } from '../../lib/alertas'
 import type { MesoSalvo } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
-import { useDoc, useHoje, useLista } from '../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useDoc, useHoje, useLista, useSemInternet } from '../../lib/hooks'
 import { fmtMin } from '../../lib/tempo'
 import { IcCartao, IcCheck, IcFogo, IcGrafico, IcLivro, IcPrancheta, IcRelogio, IcSeta } from '../../icones'
 import { ir } from '../../rota'
@@ -29,6 +29,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
     atual ? query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', atual.doc.id)) : null,
   )
   const hoje = useHoje()
+  const semInternet = useSemInternet()
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const relatorios = useRelatoriosLiberados(uid)
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
@@ -46,7 +47,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
         </a>
       </div>
-      {!atual && <Msg>Seu coach ainda não montou seu treino.</Msg>}
+      {!atual && <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>}
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}

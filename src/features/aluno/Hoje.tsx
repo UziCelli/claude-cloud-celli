@@ -5,7 +5,7 @@ import { prescreverSessao, type Meso } from '../../engine'
 import { comVolta, diasDaSemana, semanaDeVolta, travado, treinoDeHoje } from '../../lib/agenda'
 import { repsAbaixo, type RegistroAlerta } from '../../lib/alertas'
 import { db } from '../../lib/firebase'
-import { useHoje, useLista } from '../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useHoje, useLista, useSemInternet } from '../../lib/hooks'
 import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
 import { agil, elastico, saida } from '../../movimento'
@@ -24,10 +24,11 @@ const Msg = ({ children }: { children: ReactNode }) => <p className="mt-10 text-
 export default function Hoje({ uid, base = '', coach }: { uid: string; base?: string; coach?: boolean }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
   const hoje = useHoje()
+  const semInternet = useSemInternet()
   if (carregando) return <Centro>Carregando…</Centro>
 
   const atual = mesoAtual(mesos, hoje)
-  if (!atual) return <Msg>Seu coach ainda não montou seu treino.</Msg>
+  if (!atual) return <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>
   const { doc, meso, estado } = atual
 
   return (

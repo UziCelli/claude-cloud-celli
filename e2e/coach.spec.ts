@@ -304,6 +304,7 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
   await expect(page.getByRole('button', { name: 'Voltar ao padrão' })).toHaveCount(0)
 
   // Alertas: cartão com aluno, semana, treino e tempo; Início só mostra o banner
+  page.once('dialog', (d) => d.accept()) // editor com mudanças não salvas avisa ao sair
   await page.getByRole('link', { name: 'Início' }).click()
   await expect(page.getByRole('link', { name: /alerta/ })).toBeVisible({ timeout: 10_000 })
   await page.getByRole('link', { name: /^Alertas/ }).click()
@@ -315,6 +316,33 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
   await cartao.getByRole('button', { name: 'Aplicar', exact: true }).first().click()
   await expect(page.getByRole('heading', { name: /Treinos acima do tempo/ })).toHaveCount(0, { timeout: 10_000 })
   await expect.poll(async () => Boolean(((await lerDoc(`mesos/${id}`))?.fields as Record<string, unknown> | undefined)?.adaptadoEm), { timeout: 10_000 }).toBe(true)
+})
+
+test('editor com mudanças não salvas avisa ao sair pelo menu', async ({ page }) => {
+  const alunoId = await criarAluno('Caio Aviso', 'caio.e2e@teste.com', 'senha123')
+  const id = await criarMeso({
+    alunoId, nome: 'Meso Aviso', frequencia: 1, semanas: 1, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: [{ slotId: 'a0', nome: 'Supino Reto Barra' }] }, progressao: { principais: { w1: [10, 10, 10, null, null, null] }, auxiliares: { w1: [10, 10, 10, null, null, null] } },
+  })
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.goto(`/#/meso/${id}`)
+  const campo = page.locator('main h1 input')
+  await expect(campo).toHaveValue('Meso Aviso')
+  await campo.fill('Meso Renomeado')
+  await expect(page.getByText('Alterações não salvas')).toBeVisible()
+  // Recusar: continua no editor com o nome digitado
+  page.once('dialog', (d) => d.dismiss())
+  await page.getByRole('link', { name: 'Alunos', exact: true }).click()
+  await expect(page).toHaveURL(new RegExp(`#/meso/${id}$`))
+  await expect(campo).toHaveValue('Meso Renomeado')
+  // Aceitar: vai para a lista
+  page.once('dialog', (d) => d.accept())
+  await page.getByRole('link', { name: 'Alunos', exact: true }).click()
+  await expect(page).toHaveURL(/#\/alunos$/)
 })
 
 test('divisão: navegação por teclado e copiar treino', async ({ page }) => {

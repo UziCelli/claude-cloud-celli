@@ -6,7 +6,7 @@ import type { Usuario } from '../../../lib/acesso'
 import { consultaRegistrosRecentes } from '../../../lib/acoes'
 import type { MesoSalvo } from '../../../lib/conversores'
 import { db } from '../../../lib/firebase'
-import { useLista } from '../../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks'
 import { inicioJanela, resumoCoach, type AlunoComId } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
@@ -28,6 +28,7 @@ export default function Inicio({ nome }: { nome: string }) {
   const chave = inicioJanela(agora, 14)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
+  const semInternet = useSemInternet()
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
   const arquivados = useArquivados()
   const liberados = useLista<{ id: string }>(useMemo(() => query(collection(db, 'relatorios'), where('liberado', '==', true)), []))
@@ -36,7 +37,7 @@ export default function Inicio({ nome }: { nome: string }) {
     return (
       <Pagina titulo="Início">
         <Cartao className="space-y-4 text-center">
-          <p className="text-slate-400">Nenhum aluno ainda.</p>
+          <p className="text-slate-400">{semInternet ? TEXTO_SEM_INTERNET : 'Nenhum aluno ainda.'}</p>
           <Botao tipo="primario" className="w-full py-4 text-base" onClick={() => ir('/alunos/novo')}>
             Cadastrar primeiro aluno
           </Botao>

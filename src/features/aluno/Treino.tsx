@@ -17,7 +17,7 @@ import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
-import { useDoc, useLista } from '../../lib/hooks'
+import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
@@ -366,6 +366,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const descanso = useDescanso()
+  const semInternet = useSemInternet()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
   const [inicioLocal, setInicioLocal] = useState<number | null>(null) // hora do toque, até o servidor confirmar
   const jaIniciou = useRef(false)
@@ -388,7 +389,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const naoEncontrado = (
     <Centro>
       <div className="flex flex-col items-center gap-3 text-center">
-        <p className="text-lg font-semibold">Treino não encontrado.</p>
+        <p className="text-lg font-semibold">{semInternet ? TEXTO_SEM_INTERNET : 'Treino não encontrado.'}</p>
         <button onClick={() => ir(base || '/')} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">← Hoje</button>
       </div>
     </Centro>
