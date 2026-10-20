@@ -140,6 +140,8 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [ok, setOk] = useState('')
+  const [enviandoSenha, setEnviandoSenha] = useState(false)
+  const [saindo, setSaindo] = useState(false)
   const { dados: perfil, carregando } = useDoc<Usuario>(doc(db, 'usuarios', uid))
 
   // Depois de confirmar o link e entrar de novo, o perfil alcança o e-mail do login.
@@ -167,12 +169,20 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
   async function trocarSenha() {
     setErro('')
     setOk('')
+    setEnviandoSenha(true)
     try {
       await recuperarSenha(email)
       setOk(`Enviamos um link para ${email} para criar uma senha nova (confira o spam).`)
     } catch (e) {
       setErro(e instanceof FirebaseError && e.code === 'auth/network-request-failed' ? SEM_INTERNET : mensagemErro(e))
+    } finally {
+      setEnviandoSenha(false)
     }
+  }
+
+  function sairAgora() {
+    setSaindo(true)
+    sair().catch(() => setSaindo(false))
   }
 
   return (
@@ -208,11 +218,11 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
         {perfil?.papel === 'coach' && !carregando && <DuasEtapas />}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
         <Msg>{ok && <Aviso>{ok}</Aviso>}</Msg>
-        <Botao type="button" className="w-full" onClick={trocarSenha}>
-          Trocar senha
+        <Botao type="button" className="w-full" disabled={enviandoSenha} onClick={trocarSenha}>
+          {enviandoSenha ? 'Enviando…' : 'Trocar senha'}
         </Botao>
-        <Botao type="button" className="w-full lg:hidden" onClick={sair}>
-          Sair
+        <Botao type="button" className="w-full lg:hidden" disabled={saindo} onClick={sairAgora}>
+          {saindo ? 'Saindo…' : 'Sair'}
         </Botao>
         <a href="/privacidade" className="block text-center text-sm text-slate-400 underline hover:text-slate-200">Política de Privacidade</a>
       </div>

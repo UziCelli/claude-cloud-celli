@@ -45,7 +45,7 @@ const Passo = ({ n, children }: { n: number; children: React.ReactNode }) => (
 
 export default function Instalar() {
   const promptEvento = useEventoInstalar()
-  const [copiado, setCopiado] = useState(false)
+  const [copiado, setCopiado] = useState<boolean | 'erro'>(false)
 
   if (jaInstalado()) {
     return (
@@ -72,14 +72,21 @@ export default function Instalar() {
   )
 }
 
-function copiarLink(setCopiado: (v: boolean) => void) {
-  navigator.clipboard?.writeText(location.href).then(() => {
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 2000)
-  })
+function copiarLink(setCopiado: (v: boolean | 'erro') => void) {
+  // Navegador do WhatsApp/Instagram pode não ter a área de transferência.
+  const falhou = () => setCopiado('erro')
+  if (!navigator.clipboard) return falhou()
+  navigator.clipboard
+    .writeText(location.href)
+    .then(() => {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    })
+    .catch(falhou)
 }
 
 function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }) {
+  const [usado, setUsado] = useState(false) // prompt() só vale 1 vez: depois, só o menu do Chrome
   return (
     <>
       {marca.apk && (
@@ -97,8 +104,8 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
 
       <Cartao>
         <p className="mb-3 text-sm font-semibold">{marca.apk ? 'Ou instale direto pelo Chrome' : 'Instale pelo Chrome'}</p>
-        {promptEvento ? (
-          <Botao tipo="secundario" className="w-full" onClick={() => promptEvento.prompt()}>
+        {promptEvento && !usado ? (
+          <Botao tipo="secundario" className="w-full" onClick={() => { promptEvento.prompt(); setUsado(true) }}>
             Instalar pelo Chrome
           </Botao>
         ) : (
@@ -112,7 +119,7 @@ function PassosAndroid({ promptEvento }: { promptEvento: EventoInstalar | null }
   )
 }
 
-function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => void }) {
+function PassosIOS({ copiado, onCopiar }: { copiado: boolean | 'erro'; onCopiar: () => void }) {
   return (
     <>
       <Cartao className="space-y-3 border-l-4 border-marca-500 bg-marca-900/60">
@@ -120,8 +127,9 @@ function PassosIOS({ copiado, onCopiar }: { copiado: boolean; onCopiar: () => vo
           Abriu pelo WhatsApp ou Instagram? Toque na bússola do Safari <IcBussola className="inline size-4 align-[-2px]" /> (canto de baixo) para abrir no Safari — ou copie o link e cole no Safari.
         </p>
         <Botao tipo="primario" className="w-full" onClick={onCopiar}>
-          {copiado ? <>Link copiado <IcCheck className="inline size-4 align-[-2px]" /></> : 'Copiar link'}
+          {copiado === true ? <>Link copiado <IcCheck className="inline size-4 align-[-2px]" /></> : 'Copiar link'}
         </Botao>
+        {copiado === 'erro' && <p className="text-sm text-amber-300">Não deu para copiar. Toque e segure o endereço lá em cima e copie.</p>}
       </Cartao>
 
       <Cartao>

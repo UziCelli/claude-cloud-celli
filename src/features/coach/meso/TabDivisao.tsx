@@ -57,6 +57,7 @@ export default function TabDivisao({
         setHint(`Não dá para limpar a posição ${p}: existem exercícios depois dela no treino ${t}.`)
         return
       }
+      if (semanasComHistorico(meso, registros, t, p).length && !confirm('Este exercício já tem cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?')) return
       const divisao = [...meso.divisao]
       divisao[t - 1] = arr.slice(0, -1)
       onAtualizar({ divisao })
@@ -149,7 +150,7 @@ export default function TabDivisao({
                   />
                 )}
                 {slot && p === arr.length && (
-                  <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="shrink-0 px-1 text-lg text-slate-500 hover:text-red-400">
+                  <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="grid size-11 shrink-0 place-items-center text-lg text-slate-500 hover:text-red-400">
                     ×
                   </button>
                 )}

@@ -347,7 +347,7 @@ function FormularioData({
         onChange={(e) => setValor(e.target.value)}
         className={`${campoBase} px-2 py-1 outline-none focus:border-marca-500`}
       />
-      <Botao tipo="primario" onClick={() => onConfirmar(valor)}>
+      <Botao tipo="primario" disabled={!valor} onClick={() => onConfirmar(valor)}>
         Confirmar
       </Botao>
       <Botao onClick={onCancelar}>Cancelar</Botao>

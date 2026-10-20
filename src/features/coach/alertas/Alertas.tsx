@@ -69,7 +69,7 @@ const Saindo = ({ children }: { children: ReactNode }) => (
   </m.div>
 )
 
-const btn = 'rounded-lg border border-current/40 px-3 py-1.5 text-xs font-semibold opacity-90 active:scale-95'
+const btn = 'inline-flex min-h-11 items-center justify-center rounded-lg border border-current/40 px-3 text-xs font-semibold opacity-90 active:scale-95'
 
 // Arquivar, WhatsApp e E-mail com a mensagem pronta. Sem telefone guardado: o WhatsApp abre sem contato.
 function Acoes({ chave, email, assunto, texto }: { chave: string; email: string; assunto: string; texto: string }) {

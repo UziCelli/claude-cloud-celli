@@ -99,10 +99,10 @@ function Barra({ uid, onAdicionar, onSair }: { uid: string; onAdicionar: () => v
           <div className="text-[11px] uppercase tracking-wider text-slate-400">Presencial</div>
           <div className="truncate text-sm font-semibold">{nome || '…'}</div>
         </div>
-        <button onClick={onAdicionar} aria-label="Adicionar aluno" className="flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-sm text-slate-200 ring-1 ring-white/15">
+        <button onClick={onAdicionar} aria-label="Adicionar aluno" className="flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm text-slate-200 ring-1 ring-white/15">
           <IcMais className="size-4" /> Aluno
         </button>
-        <button onClick={onSair} className="flex h-9 shrink-0 items-center gap-1 text-sm text-slate-400">
+        <button onClick={onSair} className="flex h-11 shrink-0 items-center gap-1 text-sm text-slate-400">
           <IcSair className="size-4" /> Sair
         </button>
       </div>

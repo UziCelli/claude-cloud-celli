@@ -459,7 +459,14 @@ export async function cadastrar(nome: string, email: string, senha: string) {
 // Antes de sair, espera as gravações pendentes chegarem ao servidor (ex.: o cadastro recém-feito);
 // trocar de usuário com escrita na fila a deixaria presa. Offline, desiste em 5 s: o que ficou na
 // fila continua salvo no aparelho e sobe quando essa pessoa entrar de novo.
-export async function sair() {
-  await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
-  await signOut(auth)
+// Reentrante: toques repetidos reaproveitam a mesma saída.
+let saindo: Promise<void> | null = null
+export function sair() {
+  saindo ??= (async () => {
+    await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
+    await signOut(auth)
+  })().finally(() => {
+    saindo = null
+  })
+  return saindo
 }

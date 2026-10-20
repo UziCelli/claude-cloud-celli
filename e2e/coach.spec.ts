@@ -288,6 +288,7 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
   await expect(page.getByRole('heading', { name: /Principais|Auxiliares/ })).toHaveCount(0)
   await page.getByRole('button', { name: 'Personalizar' }).first().click()
   await expect(page.getByRole('button', { name: 'Voltar ao padrão' })).toHaveCount(1)
+  page.once('dialog', (d) => d.accept()) // "Voltar ao padrão" confirma antes de apagar a personalização
   await page.getByRole('button', { name: 'Voltar ao padrão' }).click()
   await expect(page.getByRole('button', { name: 'Voltar ao padrão' })).toHaveCount(0)
 
