@@ -172,7 +172,7 @@ Comece por aqui para achar onde mexer.
 
 ### `tools/` — Scripts offline
 - **Marca/projeto nos scripts operacionais** (`mfa`, `backup`, `limpeza-lgpd`, `vigia`, `erros`): todos exigem a env `PROJETO` (`forca--app` ou `gislane-personal-trainer`); sem ela saem com erro. Agendados rodam nas 2 marcas (matrix, `fail-fast: false`); manuais têm o input `marca` (padrão vfit). Issues da Gislane levam "(gislane)" no título; backups `backup-gislane-firestore-<data>`. Teste: `tests/projeto-explicito.test.ts`.
-- `tools/mfa.mjs` + `.github/workflows/mfa.yml`: ativa o TOTP no projeto e remove o 2º fator do coach em emergência.
+- `tools/mfa.mjs` + `.github/workflows/mfa.yml`: ativa o TOTP no projeto e, em emergência (celular perdido/roubado), remove o 2º fator do coach e encerra as sessões dele (`revokeRefreshTokens`; o app no aparelho sai em até 1 hora).
 - `tools/erros.mjs` + `.github/workflows/erros.yml` ("Ver erros do app"): lista os 100 logs mais recentes no resumo e apaga os com mais de 30 dias.
 - `tools/limpeza-lgpd.mjs` + `.github/workflows/limpeza-lgpd.yml` ("Limpeza LGPD", diário): atende `exclusoes/{uid}`, apaga Auth/logs/dados, faz backup novo e apaga os com 30+ dias. Teste em `tests/limpeza-lgpd.test.ts`.
 - `extrair_planilha.py` — lê .xlsx original (conversão manual)
