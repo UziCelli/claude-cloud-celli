@@ -9,7 +9,7 @@ export default function GuiaMetodos() {
   const [feito, setFeito] = useState(false)
   return (
     <main className="mx-auto max-w-md px-4 py-4">
-      <button onClick={() => voltar('/')} className="mb-2 text-sm text-slate-400">
+      <button onClick={() => voltar('/')} className="mb-2 inline-flex min-h-11 items-center pr-4 text-sm text-slate-400">
         ← Voltar
       </button>
       <h1 className="mb-3 text-lg font-bold">Guia de métodos</h1>

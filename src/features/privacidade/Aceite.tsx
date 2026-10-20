@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { aceitarPrivacidade, sair } from '../../lib/acoes'
-import { Botao, Cartao, Centro } from '../../ui'
+import { Aviso, Botao, Cartao, Centro, Msg } from '../../ui'
 import { CaixaAceite } from './Politica'
 
 // Aluno liberado que ainda não aceitou a versão vigente. A gravação fica na fila se estiver offline.
 export default function Aceite({ uid }: { uid: string }) {
   const [marcada, setMarcada] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const [saindo, setSaindo] = useState(false)
+  const [erro, setErro] = useState(false)
   return (
     <Centro>
       <h1 className="text-2xl font-bold">Sua privacidade</h1>
@@ -27,13 +29,26 @@ export default function Aceite({ uid }: { uid: string }) {
         carregando={enviando}
         onClick={() => {
           setEnviando(true)
+          setErro(false)
           // Offline o updateDoc só resolve ao sincronizar: não esperamos; o perfil local muda na hora.
-          aceitarPrivacidade(uid).catch(() => setEnviando(false))
+          aceitarPrivacidade(uid).catch(() => {
+            setEnviando(false)
+            setErro(true)
+          })
         }}
       >
         Aceitar e continuar
       </Botao>
-      <Botao onClick={sair}>Sair</Botao>
+      <Msg>{erro && <Aviso>Não deu para salvar o aceite. Tente de novo.</Aviso>}</Msg>
+      <Botao
+        disabled={saindo}
+        onClick={() => {
+          setSaindo(true)
+          sair().catch(() => setSaindo(false))
+        }}
+      >
+        {saindo ? 'Saindo…' : 'Sair'}
+      </Botao>
     </Centro>
   )
 }

@@ -91,6 +91,7 @@ test('aluno personaliza a conta (nome, foto, selo, peso, senha) e o coach vê a 
   })
 
   await test.step('remove a foto e voltam as iniciais', async () => {
+    page.once('dialog', (d) => d.accept()) // "Remover foto" confirma antes de apagar
     await page.getByRole('button', { name: 'Remover foto' }).click()
     await expect(page.getByRole('img', { name: `Foto de ${NOVO_NOME}` })).toHaveCount(0)
     await expect(page.getByText('CS', { exact: true })).toBeVisible()

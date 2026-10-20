@@ -154,12 +154,12 @@ export default function EditorMeso({ id }: { id: string }) {
       acoes={
         <>
           <span className="self-center text-sm text-slate-400">{status}</span>
-          <Botao tipo="primario" disabled={!dirty || diasInvalidos(meso)} onClick={() => salvar()}>
+          <Botao tipo="primario" disabled={!dirty || diasInvalidos(meso) || !nome.trim() || !meso.inicio} onClick={() => salvar()}>
             Salvar
           </Botao>
           <Botao onClick={() => (!dirty || confirm('Sair sem salvar as mudanças?')) && ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
           <Botao
-            disabled={dirty || mesoDoc.pendente || !alunoId}
+            disabled={dirty || mesoDoc.pendente || !alunoId || aviso === 'Enviando…'}
             onClick={async () => {
               setAviso('Enviando…')
               const r = await avisarTreinoPronto(alunoId)

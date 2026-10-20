@@ -39,7 +39,7 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
         titulo="Progressão padrão"
         linhas={padrao}
         onLinhas={setPadrao}
-        acao={{ rotulo: 'Aplicar semana 1 em todas', fazer: () => setPadrao(padrao.map(() => [...(padrao[0] ?? vazia())])) }}
+        acao={{ rotulo: 'Aplicar semana 1 em todas', fazer: () => confirm('Isso apaga as diferenças entre as semanas da progressão padrão. Continuar?') && setPadrao(padrao.map(() => [...(padrao[0] ?? vazia())])) }}
       />
       <p className="text-sm text-slate-400">Todo exercício segue a padrão, a menos que você personalize.</p>
       {meso.divisao.map((slots, t) => (
@@ -63,7 +63,7 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
                 titulo={slot.nome}
                 linhas={padrao.map((_, w) => deSemana(propria, w))}
                 onLinhas={(l) => setProprio(slot.slotId, l)}
-                acao={{ rotulo: 'Voltar ao padrão', fazer: () => voltarPadrao(slot.slotId) }}
+                acao={{ rotulo: 'Voltar ao padrão', fazer: () => confirm('Isso apaga a personalização deste exercício. Continuar?') && voltarPadrao(slot.slotId) }}
               />
             )
           })}
@@ -262,7 +262,7 @@ function TabelaProgressao({
                   <span className="md:hidden">S{w}</span>
                   <span className="hidden md:inline">{w}</span>
                   {w > 1 && (
-                    <button type="button" aria-label="Copiar anterior" onClick={() => copiarAnterior(w)} className="block px-1 text-marca-300 md:hidden">
+                    <button type="button" aria-label="Copiar anterior" onClick={() => copiarAnterior(w)} className="grid size-11 place-items-center text-marca-300 md:hidden">
                       ↑
                     </button>
                   )}

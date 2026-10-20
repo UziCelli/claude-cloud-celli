@@ -74,8 +74,15 @@ function Principal() {
   )
 }
 
+// Sair com retorno: desativa e avisa enquanto espera as gravações pendentes.
+function useSair() {
+  const [saindo, setSaindo] = useState(false)
+  return [saindo, () => { setSaindo(true); sair().catch(() => setSaindo(false)) }] as const
+}
+
 // Perfil que não chega: depois de 10 s oferece a saída em vez de girar para sempre.
 function PerfilDemora() {
+  const [saindo, sairAgora] = useSair()
   const [demora, setDemora] = useState(false)
   useEffect(() => {
     const t = setTimeout(() => setDemora(true), 10_000)
@@ -86,7 +93,7 @@ function PerfilDemora() {
       {demora && (
         <div className="max-w-xs space-y-3 text-center text-sm text-slate-300">
           <p>Não conseguimos abrir sua conta. Confira a internet ou fale com seu coach.</p>
-          <Botao onClick={sair}>Sair</Botao>
+          <Botao disabled={saindo} onClick={sairAgora}>{saindo ? 'Saindo…' : 'Sair'}</Botao>
         </div>
       )}
     </Abertura>
@@ -110,6 +117,7 @@ const ativaAba = (rota: string) =>
 
 // Menu do coach: abas embaixo no celular, menu lateral fixo no computador (≥ lg).
 function Menu({ rota }: { rota: string }) {
+  const [saindo, sairAgora] = useSair()
   const at = ativaAba(rota)
   // Mesmas 4 consultas do Início (com os arquivados): o Firestore junta as iguais (sem leitura extra). Menu não existe no presencial.
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
@@ -148,8 +156,8 @@ function Menu({ rota }: { rota: string }) {
             </a>
           ))}
         </nav>
-        <button onClick={sair} className="flex h-12 items-center gap-3 px-4 text-base font-semibold text-slate-400 hover:text-white">
-          <IcSair className="size-5" /> Sair
+        <button disabled={saindo} onClick={sairAgora} className="flex h-12 items-center gap-3 px-4 text-base font-semibold text-slate-400 hover:text-white disabled:opacity-50">
+          <IcSair className="size-5" /> {saindo ? 'Saindo…' : 'Sair'}
         </button>
       </aside>
       <BarraAbas
@@ -212,6 +220,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
 }
 
 function SemAcesso({ uid, perfil }: { uid: string; perfil: Usuario }) {
+  const [saindo, sairAgora] = useSair()
   const aguardando = perfil.status === 'aguardando'
   const vencido = perfil.status === 'ativo' && !!PIX
   return (
@@ -223,7 +232,7 @@ function SemAcesso({ uid, perfil }: { uid: string; perfil: Usuario }) {
           : 'Seu acesso está pausado. Fale com seu coach para reativar.'}
       </p>
       {vencido && <PagarPix uid={uid} perfil={perfil} />}
-      <Botao onClick={sair}>Sair</Botao>
+      <Botao disabled={saindo} onClick={sairAgora}>{saindo ? 'Saindo…' : 'Sair'}</Botao>
     </Centro>
   )
 }

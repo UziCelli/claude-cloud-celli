@@ -1,6 +1,6 @@
 import { m } from 'motion/react'
 import { agil } from '../../../movimento'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { criarAlunoComApp, criarAlunoPresencial } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
 import { hojeMaisDias } from '../../../lib/acesso'
@@ -15,15 +15,20 @@ export default function NovoAluno() {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
 
+  const criando = useRef(false)
+
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
     setErro('')
     if (!app) {
+      if (criando.current) return
+      criando.current = true
       const { id, gravado } = criarAlunoPresencial({ nome: nome.trim() })
       ir('/aluno/' + id)
       gravado.catch((e) => {
         registrarErro('gravacao', `novo aluno: ${e?.code ?? e}`, e)
         alert('Não foi possível salvar o aluno. Tente de novo.')
+        criando.current = false
       })
       return
     }

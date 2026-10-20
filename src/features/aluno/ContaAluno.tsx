@@ -160,6 +160,8 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
   const [nome, setNome] = useState('')
   const [erro, setErro] = useState('')
   const [enviandoFoto, setEnviandoFoto] = useState(false)
+  const [enviandoSenha, setEnviandoSenha] = useState(false)
+  const [saindo, setSaindo] = useState(false)
   const [senhaOk, setSenhaOk] = useState('')
   const nomeValido = nome.trim().length >= 1 && nome.trim().length <= 80
   const falhou = () => setErro(GRAVAR)
@@ -181,12 +183,19 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
   function trocarSenha() {
     setErro('')
     setSenhaOk('')
+    setEnviandoSenha(true)
     recuperarSenha(perfil.email)
       .then(() => setSenhaOk(`Enviamos um link para ${perfil.email}`))
       .catch((e) => {
         const c = e instanceof FirebaseError ? e.code : ''
         setErro(c === 'auth/network-request-failed' ? SEM_INTERNET : c === 'auth/too-many-requests' ? 'Muitas tentativas. Espere alguns minutos e tente de novo.' : 'Não deu para enviar o link. Tente de novo.')
       })
+      .finally(() => setEnviandoSenha(false))
+  }
+
+  function sairAgora() {
+    setSaindo(true)
+    sair().catch(() => setSaindo(false))
   }
 
   return (
@@ -222,7 +231,7 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
         {perfil.criadoEm && <p className="text-sm text-slate-500">Aluno desde {desde(perfil.criadoEm.toDate())}</p>}
         <div className="flex gap-2">
           <Botao type="button" disabled={enviandoFoto} carregando={enviandoFoto} onClick={() => arquivo.current?.click()}>Trocar foto</Botao>
-          {foto && <Botao type="button" onClick={() => apagarFoto(uid).catch(falhou)}>Remover foto</Botao>}
+          {foto && <Botao type="button" onClick={() => window.confirm('Remover sua foto?') && apagarFoto(uid).catch(falhou)}>Remover foto</Botao>}
         </div>
         {!foto && <p className="text-sm text-slate-400">Sua foto aparece só para você e seu coach. Remova quando quiser.</p>}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
@@ -240,7 +249,7 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
       <AvisoDescanso />
 
       <Quadro className="space-y-3">
-        <Botao type="button" className="w-full" onClick={trocarSenha}>Trocar senha</Botao>
+        <Botao type="button" className="w-full" disabled={enviandoSenha} onClick={trocarSenha}>{enviandoSenha ? 'Enviando…' : 'Trocar senha'}</Botao>
         <Msg>{senhaOk && <p className="text-sm text-emerald-400">{senhaOk}</p>}</Msg>
       </Quadro>
 
@@ -255,8 +264,8 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
           <Linha icone={<IcPessoa className="size-5" />}>Política de Privacidade</Linha>
         </a>
       </Quadro>
-      <button type="button" onClick={sair} className="vidro-escuro border border-white/20 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-rose-300">
-        <IcSair className="size-5" /> Sair
+      <button type="button" disabled={saindo} onClick={sairAgora} className="vidro-escuro border border-white/20 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-rose-300">
+        <IcSair className="size-5" /> {saindo ? 'Saindo…' : 'Sair'}
       </button>
     </main>
   )

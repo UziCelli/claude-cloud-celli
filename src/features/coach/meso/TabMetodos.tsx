@@ -55,10 +55,10 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
 
   function copiarParaTodas(idx: number) {
     const item = metodos[idx]
-    const copias = Array.from({ length: meso.semanas }, (_, i) => i + 1)
-      .filter((w) => w !== item.semana)
-      .map((w) => ({ ...item, semana: w }))
-    onAtualizar({ metodos: [...metodos, ...copias] })
+    const mesmo = (m: AplicacaoMetodo, w: number) => m.semana === w && m.treino === item.treino && m.exercicio === item.exercicio && m.metodo === item.metodo && m.escopo === item.escopo && m.serie === item.serie && m.grupo === item.grupo
+    const semanas = Array.from({ length: meso.semanas }, (_, i) => i + 1).filter((w) => w !== item.semana)
+    const resto = metodos.filter((m) => !semanas.some((w) => mesmo(m, w)))
+    onAtualizar({ metodos: [...resto, ...semanas.map((w) => ({ ...item, semana: w }))] })
   }
 
   const avisos = useMemo(() => {

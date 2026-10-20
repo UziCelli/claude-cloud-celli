@@ -294,7 +294,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     const d = duracaoTreino(inicio, fim) // acima de 3 h é treino esquecido aberto: sem duração falsa
     return d != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(d)}</span> · previsto {previsto}</p> : null
   }
-  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
+  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 min-h-11 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
@@ -302,7 +302,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
         Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{agora - inicio > TETO_TREINO_MS ? 'mais de 3 h' : hms(agora - inicio)}</span>
         <span className="text-slate-500">· previsto {previsto}</span>
       </p>
-      <Botao tipo="alerta" className="whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
+      <Botao tipo="alerta" className="min-h-11 whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
     </div>
   )
 }
@@ -434,7 +434,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         <div className="flex flex-col items-center gap-3 text-center">
           <IcCadeado className="size-10 text-slate-400" />
           <p className="text-lg font-semibold">Semana {semana} já passou.</p>
-          <button onClick={() => ir(base || '/')} className="text-sm text-marca-400 underline">← Hoje</button>
+          <button onClick={() => ir(base || '/')} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">← Hoje</button>
         </div>
       </Centro>
     )
@@ -502,7 +502,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   return (
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
       <AvisoNotificacoes />
-      <button onClick={() => ir(base || '/')} className="mb-2 text-sm text-slate-400">
+      <button onClick={() => ir(base || '/')} className="mb-2 inline-flex min-h-11 items-center pr-4 text-sm text-slate-400">
         ← Hoje
       </button>
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -594,19 +594,19 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Botao aria-label="Som do cronômetro" onClick={descanso.alternarSom}>
+                  <Botao aria-label="Som do cronômetro" className="min-h-11" onClick={descanso.alternarSom}>
                     {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
                   </Botao>
                   <Botao
                     tipo={descanso.slot === slot ? 'primario' : undefined}
                     aria-label={descanso.slot === slot ? `${descanso.rodando ? 'Pausar' : 'Continuar'} ${mmss(descanso.restante)}` : `Descansar ${e.pausaS} s`}
-                    className="inline-flex items-center gap-1"
+                    className="inline-flex min-h-11 items-center gap-1"
                     onClick={() => descanso.alternar(e.pausaS, slot)}
                   >
                     {descanso.slot === slot ? <>{descanso.rodando ? <IcPausa className="size-4" /> : <IcPlay className="size-4" />} {mmss(descanso.restante)}</> : <><IcPlay className="size-4" /> {e.pausaS} s</>}
                   </Botao>
                   {descanso.slot === slot && (
-                    <Botao aria-label="Reiniciar" onClick={() => descanso.iniciar(e.pausaS, slot)}>
+                    <Botao aria-label="Reiniciar" className="min-h-11" onClick={() => descanso.iniciar(e.pausaS, slot)}>
                       <IcReiniciar className="size-4" />
                     </Botao>
                   )}
@@ -740,7 +740,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               <div className="text-xs text-slate-400">Descanso</div>
               <div className="font-display text-2xl font-bold tabular-nums">{mmss(descanso.restante)}</div>
             </div>
-            <Botao onClick={descanso.parar}>Pular</Botao>
+            <Botao className="min-h-11" onClick={descanso.parar}>Pular</Botao>
           </div>
         </m.div>
       )}
