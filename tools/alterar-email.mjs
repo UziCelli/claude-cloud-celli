@@ -13,4 +13,4 @@ initializeApp({ credential: applicationDefault(), projectId: 'forca--app' })
 const { uid } = await getAuth().getUserByEmail(atual)
 await getAuth().updateUser(uid, { email: novo, emailVerified: false })
 await getFirestore().doc(`usuarios/${uid}`).update({ email: novo })
-console.log(`E-mail alterado: ${atual} -> ${novo} (uid ${uid}). A senha continua a mesma.`)
+console.log('E-mail alterado. A senha continua a mesma.') // sem e-mails no registro: o repositório é público

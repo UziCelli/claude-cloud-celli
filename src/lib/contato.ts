@@ -3,7 +3,7 @@
 export const linkWhatsApp = (texto: string) => `https://wa.me/?text=${encodeURIComponent(texto)}`
 
 export const linkEmail = (email: string, assunto: string, corpo: string) =>
-  `mailto:${email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`
+  `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`
 
 // Saudação pelo primeiro nome.
 export const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0] ?? ''

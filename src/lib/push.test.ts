@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { b64uParaBytes, juntarUrl, mesmaChave, precisaInscrever } from './push'
+import { b64uParaBytes, cabecalhosPush, juntarUrl, mesmaChave, precisaInscrever } from './push'
 
 describe('b64uParaBytes', () => {
   it('converte base64url (com - e _, sem =) em bytes', () => {
@@ -41,5 +41,14 @@ describe('precisaInscrever', () => {
     expect(precisaInscrever(['u', 'e', agora - 1000], 'v', 'e', agora)).toBe(true)
     expect(precisaInscrever(['u', 'e', agora - 1000], 'u', 'f', agora)).toBe(true)
     expect(precisaInscrever(['u', 'e', agora - 7 * 24 * 3600 * 1000], 'u', 'e', agora)).toBe(true)
+  })
+})
+
+describe('cabecalhosPush', () => {
+  it('manda o App Check quando existe', () => {
+    expect(cabecalhosPush('t', 'ac')['X-Firebase-AppCheck']).toBe('ac')
+  })
+  it('sem App Check (ou falha ao obter): só Authorization e Content-Type', () => {
+    expect(cabecalhosPush('t')).toEqual({ Authorization: 'Bearer t', 'Content-Type': 'application/json' })
   })
 })

@@ -10,7 +10,7 @@ export const cors = (origem: string | null): Record<string, string> =>
   origem && ORIGENS.includes(origem)
     ? {
         'Access-Control-Allow-Origin': origem,
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Firebase-AppCheck',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Max-Age': '86400',
         Vary: 'Origin',

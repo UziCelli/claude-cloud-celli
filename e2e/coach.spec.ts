@@ -335,13 +335,16 @@ test('editor com mudanças não salvas avisa ao sair pelo menu', async ({ page }
   await campo.fill('Meso Renomeado')
   await expect(page.getByText('Alterações não salvas')).toBeVisible()
   // Recusar: continua no editor com o nome digitado
-  page.once('dialog', (d) => d.dismiss())
+  // Espera o aviso ser tratado antes do passo seguinte (sem isso, os dois tratadores podiam pegar o mesmo aviso).
+  const recusado = new Promise<void>((ok) => page.once('dialog', (d) => void d.dismiss().then(() => ok())))
   await page.getByRole('link', { name: 'Alunos', exact: true }).click()
+  await recusado
   await expect(page).toHaveURL(new RegExp(`#/meso/${id}$`))
   await expect(campo).toHaveValue('Meso Renomeado')
   // Aceitar: vai para a lista
-  page.once('dialog', (d) => d.accept())
+  const aceito = new Promise<void>((ok) => page.once('dialog', (d) => void d.accept().then(() => ok())))
   await page.getByRole('link', { name: 'Alunos', exact: true }).click()
+  await aceito
   await expect(page).toHaveURL(/#\/alunos$/)
 })
 
