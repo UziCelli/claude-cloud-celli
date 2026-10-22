@@ -50,6 +50,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
       - name: Avisar mensalidade (${{ matrix.marca }})
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -57,6 +59,4 @@ jobs:
         run: |
           trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-          mkdir -p "$RUNNER_TEMP/adm" && cp tools/avisos-pagamento.mjs "$RUNNER_TEMP/adm/"
-          (cd "$RUNNER_TEMP/adm" && npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0 &&
-            GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" node avisos-pagamento.mjs)
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/avisos-pagamento.mjs

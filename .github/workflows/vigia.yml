@@ -52,15 +52,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
       - name: Vigiar (${{ matrix.marca }})
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJETO: ${{ matrix.projeto }}
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-          mkdir -p "$RUNNER_TEMP/adm" && cp tools/vigia.mjs "$RUNNER_TEMP/adm/"
-          (cd "$RUNNER_TEMP/adm" && npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0 &&
-            GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node vigia.mjs "$RUNNER_TEMP/alertas.json")
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/vigia.mjs "$RUNNER_TEMP/alertas.json"
           rm -f "$RUNNER_TEMP/sa.json"
       # As dependências são do repositório, iguais nas duas marcas: checa só na vfit para não repetir a Issue.
       - name: Dependências

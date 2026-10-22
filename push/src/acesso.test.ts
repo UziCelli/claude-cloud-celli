@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { acessoComCache, lerPermissao, podeAvisarTreino, registrarAgendamento } from './acesso'
+import { acessoComCache, appCheckOk, lerPermissao, podeAvisarTreino, registrarAgendamento } from './acesso'
 
 const AGORA = Date.parse('2026-10-01T12:00:00Z')
 const perfil = (campos: Record<string, string>) => ({
@@ -151,5 +151,33 @@ describe('registrarAgendamento com limite próprio', () => {
     for (let i = 0; i < 3; i++) marcas = registrarAgendamento(marcas, AGORA + i, 3, 600_000)!
     expect(registrarAgendamento(marcas, AGORA + 10, 3, 600_000)).toBeNull()
     expect(registrarAgendamento(marcas, AGORA + 600_000 + 2, 3, 600_000)).toHaveLength(1)
+  })
+})
+
+describe('X-Firebase-AppCheck', () => {
+  const hdr = (b: typeof fetch) => ((b as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0][1].headers as Record<string, string>)
+  it('repassa o cabeçalho ao Firestore quando válido', async () => {
+    const b = buscaCom(perfil({ papel: 'coach' }))
+    await lerPermissao('u', 'tok', AGORA, 'forca--app', b, 'ac-token_1.x')
+    expect(hdr(b)['X-Firebase-AppCheck']).toBe('ac-token_1.x')
+    expect(hdr(b).Authorization).toBe('Bearer tok')
+  })
+  it('ausente: chamada igual à de antes', async () => {
+    const b = buscaCom(perfil({ papel: 'coach' }))
+    await lerPermissao('u', 'tok', AGORA, 'forca--app', b)
+    expect(hdr(b)).toEqual({ Authorization: 'Bearer tok' })
+  })
+  it('inválido é ignorado', async () => {
+    for (const v of ['', 'a b', 'a\nb', 'x'.repeat(4097), 5, null]) {
+      const b = buscaCom(perfil({ papel: 'coach' }))
+      await lerPermissao('u', 'tok', AGORA, 'forca--app', b, v as string)
+      expect(hdr(b)).toEqual({ Authorization: 'Bearer tok' })
+    }
+    expect(appCheckOk('x'.repeat(4096))).toBeDefined()
+  })
+  it('/treino-pronto também repassa', async () => {
+    const b = buscaCom(perfil({ papel: 'aluno' }))
+    await podeAvisarTreino('forca--app', 'c', 'a1', 't', b, 'ac')
+    expect(hdr(b)['X-Firebase-AppCheck']).toBe('ac')
   })
 })

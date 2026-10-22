@@ -61,6 +61,7 @@ O repositório ficou público para o GitHub Actions ser grátis e ilimitado. O q
 - **Registros e resumos dos robôs são públicos:** não imprimem nome, e-mail nem uid de aluno (a tabela do "Ver erros do app" também não).
 - **Campos digitados nos workflows manuais aparecem na página da execução** (e-mail atual/novo em "Alterar e-mail", e-mail do coach em "2 etapas", nome do aluno em "Importar mesociclo"). Para dado de aluno, prefira o botão dentro do app.
 - Segredos (`FIREBASE_SERVICE_ACCOUNT`, etc.) continuam privados: nenhum workflow roda com segredos a partir de fork.
+- **Instalação segura nos robôs:** os workflows com a chave (`FIREBASE_SERVICE_ACCOUNT`) instalam com `npm ci --ignore-scripts` (lockfile) num passo separado, sem a chave no ambiente e antes de gravar o `sa.json`. Nada de `npm install` solto.
 - Nunca commitar: .xlsx, backups, nomes ou telefones reais, e-mails de alunos.
 
 ### Passos do Victor (console, uma vez)
@@ -145,12 +146,12 @@ Plano Spark do Firebase:
 - **Regras do Firestore:** iguais às da auditoria de 02/10; o app da Gislane publica as MESMAS regras no projeto dela.
 - **Workflows das duas marcas** (backup, Limpeza LGPD, vigia, erros, 2 etapas, APK): cada execução só toca o próprio projeto (`PROJETO` obrigatório e validado), backups com prefixos que não se misturam, entradas manuais validadas por `case`. Nenhum gatilho perigoso (`pull_request_target`, comentário de issue); permissões mínimas. O CI ganhou `permissions: contents: read`.
 - **Cabeçalhos do site:** CSP estrita (sem script de terceiros além do reCAPTCHA), HSTS, `X-Frame-Options: DENY`, `nosniff`, `Permissions-Policy`.
-- **Segredos:** nenhum no repositório (`.env.*` só têm a configuração pública do Firebase; o keystore do APK está criptografado). Repositório privado.
+- **Segredos:** nenhum no repositório (`.env.*` só têm a configuração pública do Firebase; o keystore do APK está criptografado). O repositório é público desde 22/10/2026: a proteção do keystore depende só da força de `APK_SENHA` (use senha longa e aleatória).
 - **Dependências:** app em produção com 0 vulnerabilidades. Ferramentas de desenvolvimento: 2 alertas novos corrigidos (`@modelcontextprotocol/sdk`, `source-map-js`; `firebase-tools` 15.32.1). Restam alertas só dentro do `firebase-tools` (roda no GitHub, nunca no celular), sem correção ainda; o Dependabot avisa quando sair.
 - **Evolução/ranking/recorde:** só leitura de dados que as regras já liberam (aluno: só os próprios; coach: todos). Cartão do story leva só o primeiro nome e números.
 - **Inatividade do aluno em 4 h** (pedido do Victor): risco baixo (celular do próprio aluno, só vê o próprio treino). Coach continua com 20 min.
 - **Pendências (console, Victor):**
   - App Check da VFIT: mudar de Monitorar para **Aplicar**;
-  - App Check da Gislane: ainda **não existe** (o `.env.gislane` não tem `VITE_RECAPTCHA_KEY`). Criar a chave reCAPTCHA Enterprise no projeto `gislane-personal-trainer` (domínio `app.gislanepersonaltrainer.com`), registrar no App Check e me passar a chave do site;
+  - App Check da Gislane: chave reCAPTCHA criada e registrada no App Check (22/10/2026); a chave do site está no `.env.gislane`. Fica em **Monitorar**; mudar para **Aplicar** depois de alguns dias sem requisições não verificadas;
   - Gislane: conferir se a chave de navegador (API key) está restrita aos domínios dela, como na VFIT (não há registro disso nos docs);
   - as duas marcas usam a mesma conta de serviço (`FIREBASE_SERVICE_ACCOUNT`): se vazar, afeta os dois projetos. Aceitável hoje; separar se a Gislane crescer.
