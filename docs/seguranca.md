@@ -145,7 +145,7 @@ Plano Spark do Firebase:
 - **Regras do Firestore:** iguais às da auditoria de 02/10; o app da Gislane publica as MESMAS regras no projeto dela.
 - **Workflows das duas marcas** (backup, Limpeza LGPD, vigia, erros, 2 etapas, APK): cada execução só toca o próprio projeto (`PROJETO` obrigatório e validado), backups com prefixos que não se misturam, entradas manuais validadas por `case`. Nenhum gatilho perigoso (`pull_request_target`, comentário de issue); permissões mínimas. O CI ganhou `permissions: contents: read`.
 - **Cabeçalhos do site:** CSP estrita (sem script de terceiros além do reCAPTCHA), HSTS, `X-Frame-Options: DENY`, `nosniff`, `Permissions-Policy`.
-- **Segredos:** nenhum no repositório (`.env.*` só têm a configuração pública do Firebase; o keystore do APK está criptografado). Repositório privado.
+- **Segredos:** nenhum no repositório (`.env.*` só têm a configuração pública do Firebase; o keystore do APK está criptografado). O repositório é público desde 22/10/2026: a proteção do keystore depende só da força de `APK_SENHA` (use senha longa e aleatória).
 - **Dependências:** app em produção com 0 vulnerabilidades. Ferramentas de desenvolvimento: 2 alertas novos corrigidos (`@modelcontextprotocol/sdk`, `source-map-js`; `firebase-tools` 15.32.1). Restam alertas só dentro do `firebase-tools` (roda no GitHub, nunca no celular), sem correção ainda; o Dependabot avisa quando sair.
 - **Evolução/ranking/recorde:** só leitura de dados que as regras já liberam (aluno: só os próprios; coach: todos). Cartão do story leva só o primeiro nome e números.
 - **Inatividade do aluno em 4 h** (pedido do Victor): risco baixo (celular do próprio aluno, só vê o próprio treino). Coach continua com 20 min.
