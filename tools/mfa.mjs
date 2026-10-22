@@ -55,10 +55,10 @@ if (acao === 'ativar-totp') {
   const user = await getAuth().getUserByEmail(email)
   const papel = (await getFirestore().doc(`usuarios/${user.uid}`).get()).get('papel')
   // Só coach: este atalho nunca pode tirar a proteção de um aluno.
-  if (papel !== 'coach') throw new Error(`${email} não é coach (papel: ${papel ?? 'sem perfil'}). Nada foi alterado.`)
+  if (papel !== 'coach') throw new Error(`O e-mail informado não é coach (papel: ${papel ?? 'sem perfil'}). Nada foi alterado.`)
   const antes = user.multiFactor?.enrolledFactors?.length ?? 0
   await getAuth().updateUser(user.uid, { multiFactor: { enrolledFactors: null } })
   // Celular perdido/roubado: derruba também as sessões abertas (o app nele sai em até 1 hora).
   await getAuth().revokeRefreshTokens(user.uid)
-  avisar(`2 etapas removidas e sessões encerradas do coach ${email} (${marca}) (${antes} fator(es)). No próximo login, só a senha; ative de novo em "Minha conta".`)
+  avisar(`2 etapas removidas e sessões encerradas do coach (${marca}) (${antes} fator(es)). No próximo login, só a senha; ative de novo em "Minha conta".`)
 }

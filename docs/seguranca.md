@@ -51,6 +51,18 @@ Tudo grátis (plano Spark). Faça na ordem. Peça ao Claude para guiar qualquer 
   - Se apagou alguém, faz um backup novo e **apaga todos os backups antigos**.
 - **Retenção:** backups e erros por 30 dias.
 
+### Repositório público (22/10/2026)
+
+O repositório ficou público para o GitHub Actions ser grátis e ilimitado. O que muda:
+
+- **Backups sempre criptografados** (AES-256, senha no segredo `BACKUP_SENHA`). Sem o segredo, o robô falha e **não guarda nada**.
+  - Abrir um backup: `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in backup.json.enc -out backup.json` (pede a senha).
+  - Guarde a senha também fora do GitHub (gerenciador de senhas): sem ela o backup não abre.
+- **Registros e resumos dos robôs são públicos:** não imprimem nome, e-mail nem uid de aluno (a tabela do "Ver erros do app" também não).
+- **Campos digitados nos workflows manuais aparecem na página da execução** (e-mail atual/novo em "Alterar e-mail", e-mail do coach em "2 etapas", nome do aluno em "Importar mesociclo"). Para dado de aluno, prefira o botão dentro do app.
+- Segredos (`FIREBASE_SERVICE_ACCOUNT`, etc.) continuam privados: nenhum workflow roda com segredos a partir de fork.
+- Nunca commitar: .xlsx, backups, nomes ou telefones reais, e-mails de alunos.
+
 ### Passos do Victor (console, uma vez)
 1. **GitHub → Settings → Actions → General → "Artifact and log retention" → 30 dias.** Os resumos de execução (ex.: "Ver erros do app") guardam o uid do aluno.
 2. **App Check → Aplicar**, depois de alguns dias em Monitorar sem erros (item 3).

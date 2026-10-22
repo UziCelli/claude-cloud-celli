@@ -26,20 +26,20 @@ if (aluno.includes('@')) {
   const alunos = (await db.collection('usuarios').where('papel', '==', 'aluno').get()).docs
   const exatos = alunos.filter((d) => norm(d.get('nome') ?? '') === norm(aluno))
   const parecidos = alunos.filter((d) => norm(d.get('nome') ?? '').includes(norm(aluno)))
-  if (exatos.length > 1) throw new Error(`Mais de um aluno chamado "${aluno}": use o e-mail`)
+  if (exatos.length > 1) throw new Error('Mais de um aluno com esse nome: use o e-mail')
   if (exatos.length === 1) alunoId = exatos[0].id
-  else if (parecidos.length) throw new Error(`Nenhum aluno chamado exatamente "${aluno}". Parecidos: ${parecidos.map((d) => d.get('nome')).join(', ')}`)
+  else if (parecidos.length) throw new Error(`Nenhum aluno com esse nome exato. Parecidos: ${parecidos.length} (confira a grafia)`)
   else {
     const ref = db.collection('usuarios').doc()
     b.set(ref, { papel: 'aluno', status: 'ativo', presencial: true, nome: aluno, email: '', criadoEm: FieldValue.serverTimestamp() })
     alunoId = ref.id
-    console.log(`Aluno "${aluno}" não existia: será criado como presencial.`)
+    console.log('Aluno não existia: será criado como presencial.')
   }
 }
 
 // Rodar duas vezes não duplica.
 const existe = await db.collection('mesos').where('alunoId', '==', alunoId).where('nome', '==', nome).get()
-if (!existe.empty) throw new Error(`O aluno já tem um mesociclo "${nome}" (${existe.docs[0].id})`)
+if (!existe.empty) throw new Error(`O aluno já tem um mesociclo com esse nome (${existe.docs[0].id})`)
 
 const mesoRef = db.collection('mesos').doc()
 b.set(mesoRef, { ...meso, nome, alunoId, criadoEm: FieldValue.serverTimestamp(), atualizadoEm: FieldValue.serverTimestamp() })
@@ -58,4 +58,4 @@ for (const r of registros ?? []) {
   })
 }
 await b.commit()
-console.log(`Mesociclo "${nome}" criado (${mesoRef.id}) para o aluno ${alunoId}, com ${registros?.length ?? 0} treino(s) registrado(s).`)
+console.log(`Mesociclo criado (${mesoRef.id}), com ${registros?.length ?? 0} treino(s) registrado(s).`)

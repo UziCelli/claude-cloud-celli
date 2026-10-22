@@ -93,7 +93,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Worker `gislane-site` na conta Cloudflare dela.
   - Publica pelo workflow manual "Publicar site da Gislane" (`vfitcoach-site`); juntar no `master` não publica.
   - PRs #3 (Dependabot), #4 e #5 daquele repositório juntadas.
-  - Conteúdo: foto dela (fundo vermelho), WhatsApp (11) 91568-8424, @gislane_personal, agenda do Google, Vila Andrade e Vila das Belezas (SP).
+  - Conteúdo: foto dela (fundo vermelho), WhatsApp (número no arquivo da marca), @gislane_personal, agenda do Google, Vila Andrade e Vila das Belezas (SP).
   - Resultados: 4 alunas, **só iniciais** (G., G., B., J.), números exatos das fichas de avaliação, sem arredondar.
   - Primeiros nomes só com termo de autorização das alunas (Victor vai perguntar a ela).
 - **DNS (Cloudflare dela):** os registros copiados da Squarespace (A 198.x e CNAME www) foram apagados. Sem isso, o Worker não liga o domínio (erro 100117). A Squarespace só registra o domínio.

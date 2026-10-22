@@ -67,11 +67,19 @@ jobs:
           npm init -y > /dev/null && npm install --silent firebase-admin@14.5.0
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node backup.mjs "$GITHUB_WORKSPACE/backup.json"
           rm -f "$RUNNER_TEMP/sa.json"
+      - name: Criptografar o backup
+        env:
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          # Repositório público: o arquivo nunca sobe sem senha. Sem o segredo, falha aqui e nada é guardado.
+          test -n "$BACKUP_SENHA" || { echo "Falta o segredo BACKUP_SENHA (Settings > Secrets and variables > Actions). Backup NÃO guardado."; exit 1; }
+          openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -in backup.json -out backup.json.enc -pass env:BACKUP_SENHA
+          rm -f backup.json
       - name: Data
         id: data
         run: echo "d=$(date -u +%F)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.marca == 'vfit' && 'backup-firestore' || format('backup-{0}-firestore', matrix.marca) }}-${{ steps.data.outputs.d }}
-          path: backup.json
+          path: backup.json.enc
           retention-days: 30

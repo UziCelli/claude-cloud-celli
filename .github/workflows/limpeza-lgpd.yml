@@ -72,6 +72,15 @@ jobs:
             GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node backup.mjs "$GITHUB_WORKSPACE/backup.json"
           fi
           rm -f "$RUNNER_TEMP/sa.json"
+      - name: Criptografar o backup
+        if: steps.limpeza.outputs.apagados != '0'
+        env:
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          # Repositório público: o arquivo nunca sobe sem senha. Sem o segredo, falha aqui e nada é guardado.
+          test -n "$BACKUP_SENHA" || { echo "Falta o segredo BACKUP_SENHA (Settings > Secrets and variables > Actions). Backup NÃO guardado."; exit 1; }
+          openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -in backup.json -out backup.json.enc -pass env:BACKUP_SENHA
+          rm -f backup.json
       - name: Data
         if: steps.limpeza.outputs.apagados != '0'
         id: data
@@ -82,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PREFIXO }}-${{ steps.data.outputs.d }}-lgpd
-          path: backup.json
+          path: backup.json.enc
           retention-days: 30
       - name: Apagar backups antigos (${{ matrix.marca }})
         if: steps.limpeza.outputs.apagados != '0'
