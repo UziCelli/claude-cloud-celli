@@ -56,13 +56,29 @@ async function inscricao(base: string): Promise<PushSubscription> {
   return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uParaBytes(chave) })
 }
 
+// Authorization sempre; X-Firebase-AppCheck só se houver token (o Worker repassa ao Firestore).
+export const cabecalhosPush = (token: string, appCheck?: string): Record<string, string> => ({
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json',
+  ...(appCheck ? { 'X-Firebase-AppCheck': appCheck } : {}),
+})
+
 async function chamar(base: string, caminho: string, corpo: object) {
-  const { auth } = await import('./firebase') // só carrega o Firebase se for mesmo usar
+  const { auth, appCheck } = await import('./firebase') // só carrega o Firebase se for mesmo usar
   const token = await auth.currentUser?.getIdToken()
   if (!token) return
+  let ac: string | undefined
+  if (appCheck) {
+    try {
+      const { getToken } = await import('firebase/app-check')
+      ac = (await getToken(appCheck, false)).token
+    } catch {
+      /* sem App Check: segue sem o cabeçalho */
+    }
+  }
   return fetch(juntarUrl(base, caminho), {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: cabecalhosPush(token, ac),
     body: JSON.stringify(corpo),
     keepalive: true,
   })

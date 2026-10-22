@@ -113,13 +113,13 @@ const alunoDoc = achados[0]
 const alunoId = alunoDoc.id
 const pesoKg = alunoDoc.get('pesoKg') || 80
 
-console.log(`Modo: ${modo}. Hoje (São Paulo): ${hoje}. Aluno: ${alunoDoc.get('nome')} (${alunoId}).`)
+console.log(`Modo: ${modo}. Hoje (São Paulo): ${hoje}. Aluno: ${alunoId}.`)
 const b = db.batch()
 
 // ---------- perfil (só estes campos) ----------
 const perfil = { nome: NOME_FINAL, status: 'ativo', pagoAte, ...(alunoDoc.get('pesoKg') ? {} : { pesoKg }) }
 b.update(alunoDoc.ref, perfil)
-console.log(`Perfil: nome "${NOME_FINAL}", status ativo, pagoAte ${umAnoDepois} 23:59:59 (São Paulo)${perfil.pesoKg ? `, pesoKg ${pesoKg}` : ''}.`)
+console.log(`Perfil: status ativo, pagoAte ${umAnoDepois} 23:59:59 (São Paulo)${perfil.pesoKg ? `, pesoKg ${pesoKg}` : ''}.`)
 
 // ---------- meso de exemplo (idempotente: id fixo) ----------
 const mesoRef = db.doc(`mesos/${MESO_ID}`)
@@ -165,10 +165,10 @@ for (const o of outros) {
   const ini = String(o.get('inicio')).slice(0, 10)
   const dias = Math.round((Date.parse(`${hoje}T12:00:00Z`) - Date.parse(`${ini}T12:00:00Z`)) / DIA)
   const durante = dias >= 0 && dias < o.get('semanas') * 7
-  if (!durante) { console.log(`Meso antigo ${o.id} ("${o.get('nome')}", início ${ini}): não mexe.`); continue }
+  if (!durante) { console.log(`Meso antigo ${o.id} (início ${ini}): não mexe.`); continue }
   const novo = dia(hoje, -o.get('semanas') * 7 - 7)
   b.update(o.ref, { inicio: novo, ...(o.get('inicioOriginal') ? {} : { inicioOriginal: ini }) })
-  console.log(`Meso antigo ${o.id} ("${o.get('nome')}"): estava em andamento; início ${ini} -> ${novo} (concluído). Cargas e registros intactos.`)
+  console.log(`Meso antigo ${o.id}: estava em andamento; início ${ini} -> ${novo} (concluído). Cargas e registros intactos.`)
 }
 
 if (!gravar) { console.log('SIMULAÇÃO: nada foi gravado. Rode com modo "gravar" para aplicar.'); process.exit(0) }

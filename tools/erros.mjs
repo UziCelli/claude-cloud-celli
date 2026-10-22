@@ -16,13 +16,19 @@ initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), proje
 const db = getFirestore()
 
 const snap = await db.collection('logs').orderBy('em', 'desc').limit(100).get()
-const celula = (v) => String(v ?? '').replace(/\s+/g, ' ').replace(/\|/g, '\\|')
+// Resumo público (repositório aberto): ids longos (uid, ids de rota) viram "…" e o uid nem entra na tabela.
+// Texto vem de qualquer usuário logado: escapa Markdown/HTML (links, imagens, tags, ênfase) para não virar link no resumo.
+const celula = (v) =>
+  String(v ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/[A-Za-z0-9_-]{20,}/g, '…')
+    .replace(/[\\[\]()<>!`*_|&]/g, '\\$&')
 const data = (t) => (t ? t.toDate().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '')
 
-const linhas = ['| Data (SP) | Tipo | Mensagem | Tela | Aparelho | uid |', '|---|---|---|---|---|---|']
+const linhas = ['| Data (SP) | Tipo | Mensagem | Tela | Aparelho |', '|---|---|---|---|---|']
 for (const d of snap.docs) {
   const x = d.data()
-  linhas.push(`| ${[data(x.em), x.tipo, x.mensagem, x.tela, x.aparelho, x.uid].map(celula).join(' | ')} |`)
+  linhas.push(`| ${[data(x.em), x.tipo, x.mensagem, x.tela, x.aparelho].map(celula).join(' | ')} |`)
 }
 
 const corte = Timestamp.fromMillis(Date.now() - 30 * 86400_000)
