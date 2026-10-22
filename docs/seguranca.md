@@ -11,6 +11,11 @@ Tudo grátis (plano Spark). Faça na ordem. Peça ao Claude para guiar qualquer 
 ## 2. Proteção contra enumeração de e-mail (feito)
 - Authentication → Configurações → **Proteção contra enumeração de e-mail** → ligar.
 
+## 2b. URL de ação dos e-mails (/acao)
+1. Console do Firebase → **Authentication** → **Modelos** → **Redefinição de senha** → lápis → **Personalizar URL de ação** = `https://<domínio>/acao`.
+2. VFIT e Gislane: cada projeto no seu domínio. O URL de ação é único por projeto e vale para todos os tipos de e-mail (senha, troca de e-mail).
+3. O domínio precisa estar em **Authentication** → **Configurações** → **Domínios autorizados**.
+
 ## 3. App Check (reCAPTCHA Enterprise, invisível)
 1. ✅ (feito em 01/10/2026) em https://console.cloud.google.com/security/recaptcha?project=forca--app crie uma chave tipo **Site**, com os domínios `app.vfitcoachapp.com` e `forca--app.web.app`, **sem** o desafio de caixa de seleção.
 2. ⏳ Pendente: Console do Firebase → **App Check** → app web → **reCAPTCHA Enterprise** → cole a **mesma chave do site** (não existe chave secreta). Validade do token: **1 dia** (gasta menos avaliações).
