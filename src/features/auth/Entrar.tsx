@@ -21,6 +21,8 @@ import marca from '@marca/marca.json'
 
 const SENHA_ERRADA = 'E-mail ou senha incorretos. Primeiro acesso ou esqueceu a senha? Toque em Esqueci minha senha.'
 
+export const SENHA_FRACA = 'Senha muito fraca (mínimo 6 caracteres)'
+
 const erros: Record<string, string> = {
   'auth/wrong-password': SENHA_ERRADA,
   'auth/user-not-found': SENHA_ERRADA,
@@ -29,7 +31,7 @@ const erros: Record<string, string> = {
   'auth/missing-password': 'Digite sua senha.',
   'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos ou use Esqueci minha senha.',
   'auth/email-already-in-use': 'Esse e-mail já tem conta. Toque em Já tenho conta e depois em Esqueci minha senha.',
-  'auth/weak-password': 'Senha muito fraca (mínimo 6 caracteres)',
+  'auth/weak-password': SENHA_FRACA,
   'auth/invalid-email': 'E-mail inválido',
   'auth/network-request-failed': 'Sem internet. Verifique sua conexão e tente de novo.',
 }

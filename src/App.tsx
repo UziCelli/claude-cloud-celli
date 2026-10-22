@@ -29,6 +29,7 @@ import AlunoApp from './features/aluno/AlunoApp'
 import Instalar from './features/instalar/Instalar'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
+import AcaoEmail from './features/auth/AcaoEmail'
 import Politica from './features/privacidade/Politica'
 import PagarPix, { PIX } from './features/aluno/PagarPix'
 import Aceite from './features/privacidade/Aceite'
@@ -36,8 +37,9 @@ import marca from '@marca/marca.json'
 import { IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
 import { BarraAbas, Bolha, Brilho } from './vidro'
 
-// /instalar e /privacidade são públicas (link enviado pelo WhatsApp): não depende de login.
+// /instalar, /privacidade e /acao (links dos e-mails do Firebase) são públicas (link enviado pelo WhatsApp): não depende de login.
 export default function App() {
+  if (location.pathname === '/acao') return <Tela chave="acao"><AcaoEmail /></Tela>
   if (location.pathname === '/privacidade') return <Tela chave="privacidade"><Politica /></Tela>
   return location.pathname === '/instalar' ? <Tela chave="instalar"><Instalar /></Tela> : <Principal />
 }

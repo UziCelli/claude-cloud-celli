@@ -84,6 +84,9 @@ for (const largura of [1280, 390]) {
     await page.goto('/privacidade')
     await expect(page.getByRole('heading').first()).toBeVisible()
     await confere('privacidade')
+    await page.goto('/acao?mode=x')
+    await expect(page.getByRole('heading', { name: 'Link inválido' })).toBeVisible()
+    await confere('acao')
 
     // Coach
     await entrar(page, COACH.email, COACH.senha, 'Início')

@@ -1,6 +1,8 @@
 // Gravações no Firestore. Offline, a promessa só resolve quando o servidor confirma:
 // a tela não deve esperar (await) para mostrar o valor — o cache local já tem.
 import {
+  applyActionCode,
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   EmailAuthProvider,
   getMultiFactorResolver,
@@ -13,6 +15,7 @@ import {
   type MultiFactorResolver,
   type TotpSecret,
   verifyBeforeUpdateEmail,
+  verifyPasswordResetCode,
   sendEmailVerification,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
@@ -383,6 +386,11 @@ export const entrar = (email: string, senha: string) => signInWithEmailAndPasswo
 
 // E-mail em pt-BR (auth.languageCode em firebase.ts).
 export const recuperarSenha = (email: string) => sendPasswordResetEmail(auth, email.trim())
+
+// Página /acao (links dos e-mails do Firebase). O oobCode nunca vai para log.
+export const emailDoCodigo = (oobCode: string) => verifyPasswordResetCode(auth, oobCode)
+export const definirSenhaNova = (oobCode: string, senha: string) => confirmPasswordReset(auth, oobCode, senha)
+export const aplicarCodigo = (oobCode: string) => applyActionCode(auth, oobCode)
 
 // Troca de e-mail: confirma a senha e manda o link para o e-mail NOVO. A troca só acontece
 // quando a pessoa clica no link (até lá o login continua com o e-mail antigo).

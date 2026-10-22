@@ -64,6 +64,7 @@ Comece por aqui para achar onde mexer.
 - `src/*.test.ts` — testes (rodam com o `npm test` da raiz); tsconfig próprio (`npm run typecheck` confere)
 
 ### `src/features/auth/` — Autenticação
+- `AcaoEmail.tsx` — rota pública `/acao`: destino dos links dos e-mails do Firebase (redefinir senha, confirmar/restaurar e-mail)
 - `Entrar.tsx` — login Google/e-mail, cadastro
 - `EsqueciSenha.tsx` — tela própria em `#/esqueci-senha` (o e-mail digitado no login vem junto); conta inexistente mostra o mesmo sucesso
 - `BoasVindas.tsx` — boas-vindas da 1ª visita no navegador (marca `forca-boas-vindas-visto`) e folha "instalar no iPhone"
@@ -205,6 +206,7 @@ Comece por aqui para achar onde mexer.
 |---------|-----------|------|
 | `/` | Home | Ambos |
 | `/instalar` | Instalar | Público |
+| `/acao` | AcaoEmail | Público |
 | `/alunos` | Alunos | Coach |
 | `/alunos/novo` | NovoAluno | Coach |
 | `/aluno/:uid` | MesosDoAluno | Coach |
@@ -298,6 +300,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
+| Links dos e-mails (22/10/2026) | `AcaoEmail.tsx`, `acoes.ts` | O `oobCode` nunca vai para log/`registrarErro` (só o código do erro). `/acao` precisa tratar todos os modos (`resetPassword`, `verifyAndChangeEmail`, `recoverEmail`, `verifyEmail`) enquanto o URL de ação do Firebase apontar para ela, senão a troca de e-mail quebra. | `acao.spec.ts` |
 | Login do aluno (20/10/2026) | `Entrar.tsx`, `EsqueciSenha.tsx`, `App.tsx` | Login do aluno: senha errada aponta Esqueci minha senha; e-mail com trim; perfil que não chega mostra Sair após 10 s. | `entrada.spec.ts` |
 | Animação e reduzir movimento (20/10/2026) | `ui.tsx`, `IconeMetodo.tsx`, `Hoje.tsx` | Reduzir movimento vale também para opacidade em loop (`Abertura`, `IconeMetodo` com `useReducedMotion`; CSS com `motion-safe:`). `Painel` só esconde overflow durante a animação (não corta o anel de foco). `Contar` parte do valor anterior. Alerta `fixed` fica fora de wrapper com transform (`Hoje`). | revisão manual |
 | Botões sem retorno (20/10/2026) | `acoes.ts` (`sair`), `App.tsx`, `ContaAluno.tsx`, `MinhaConta.tsx`, `Aceite.tsx`, `Instalar.tsx`, `Treino.tsx` | `sair()` é reentrante (espera até 5 s pelas gravações; botões Sair desativam e mostram "Saindo…"); Trocar senha trava até enviar; Remover foto pede confirmação; `prompt()` de instalar só vale 1 vez; cópia de link e aceite mostram erro; ações do treino com alvo ≥ 44px. | revisão manual |
