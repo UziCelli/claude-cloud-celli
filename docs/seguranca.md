@@ -61,6 +61,7 @@ O repositório ficou público para o GitHub Actions ser grátis e ilimitado. O q
 - **Registros e resumos dos robôs são públicos:** não imprimem nome, e-mail nem uid de aluno (a tabela do "Ver erros do app" também não).
 - **Campos digitados nos workflows manuais aparecem na página da execução** (e-mail atual/novo em "Alterar e-mail", e-mail do coach em "2 etapas", nome do aluno em "Importar mesociclo"). Para dado de aluno, prefira o botão dentro do app.
 - Segredos (`FIREBASE_SERVICE_ACCOUNT`, etc.) continuam privados: nenhum workflow roda com segredos a partir de fork.
+- **Instalação segura nos robôs:** os workflows com a chave (`FIREBASE_SERVICE_ACCOUNT`) instalam com `npm ci --ignore-scripts` (lockfile) num passo separado, sem a chave no ambiente e antes de gravar o `sa.json`. Nada de `npm install` solto.
 - Nunca commitar: .xlsx, backups, nomes ou telefones reais, e-mails de alunos.
 
 ### Passos do Victor (console, uma vez)
