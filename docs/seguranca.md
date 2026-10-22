@@ -151,6 +151,6 @@ Plano Spark do Firebase:
 - **Inatividade do aluno em 4 h** (pedido do Victor): risco baixo (celular do próprio aluno, só vê o próprio treino). Coach continua com 20 min.
 - **Pendências (console, Victor):**
   - App Check da VFIT: mudar de Monitorar para **Aplicar**;
-  - App Check da Gislane: ainda **não existe** (o `.env.gislane` não tem `VITE_RECAPTCHA_KEY`). Criar a chave reCAPTCHA Enterprise no projeto `gislane-personal-trainer` (domínio `app.gislanepersonaltrainer.com`), registrar no App Check e me passar a chave do site;
+  - App Check da Gislane: chave reCAPTCHA criada e registrada no App Check (22/10/2026); a chave do site está no `.env.gislane`. Fica em **Monitorar**; mudar para **Aplicar** depois de alguns dias sem requisições não verificadas;
   - Gislane: conferir se a chave de navegador (API key) está restrita aos domínios dela, como na VFIT (não há registro disso nos docs);
   - as duas marcas usam a mesma conta de serviço (`FIREBASE_SERVICE_ACCOUNT`): se vazar, afeta os dois projetos. Aceitável hoje; separar se a Gislane crescer.
