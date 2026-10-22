@@ -22,7 +22,15 @@ self.addEventListener('push', (e) => {
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close()
-  const url = (e.notification.data && e.notification.data.url) || '/'
+  // Só caminho do próprio app ('/x', nunca '//x') ou URL da mesma origem; o resto vira '/'.
+  const bruta = (e.notification.data && e.notification.data.url) || '/'
+  let url = '/'
+  try {
+    const u = new URL(bruta, self.location.origin)
+    if (u.origin === self.location.origin && !/^[\\/]{2}/.test(bruta)) url = u.pathname + u.search + u.hash
+  } catch {
+    /* URL inválida: usa '/' */
+  }
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (janelas) => {
       const aberta = janelas.find((j) => 'focus' in j)

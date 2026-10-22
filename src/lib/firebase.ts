@@ -1,5 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from 'firebase/app-check'
 import { connectAuthEmulator, getAuth, inMemoryPersistence, initializeAuth, type Auth } from 'firebase/auth'
 import {
   connectFirestoreEmulator,
@@ -25,11 +25,12 @@ const config = emulador
 const app = initializeApp(config)
 
 // App Check (reCAPTCHA v3): só liga com a chave em .env.production e fora do emulador (docs/seguranca.md).
-const protegerApp = (a: FirebaseApp) => {
-  if (!emulador && env.VITE_RECAPTCHA_KEY)
-    initializeAppCheck(a, { provider: new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_KEY), isTokenAutoRefreshEnabled: true })
-}
-protegerApp(app)
+const protegerApp = (a: FirebaseApp): AppCheck | undefined =>
+  !emulador && env.VITE_RECAPTCHA_KEY
+    ? initializeAppCheck(a, { provider: new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_KEY), isTokenAutoRefreshEnabled: true })
+    : undefined
+// Exportado para o push mandar o token ao Worker (ele lê o Firestore em nome do usuário). Sem chave = undefined.
+export const appCheck = protegerApp(app)
 
 export const auth = getAuth(app)
 auth.languageCode = 'pt-BR' // e-mails do Firebase (ex.: recuperar senha) em português

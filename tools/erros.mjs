@@ -17,7 +17,12 @@ const db = getFirestore()
 
 const snap = await db.collection('logs').orderBy('em', 'desc').limit(100).get()
 // Resumo público (repositório aberto): ids longos (uid, ids de rota) viram "…" e o uid nem entra na tabela.
-const celula = (v) => String(v ?? '').replace(/\s+/g, ' ').replace(/\|/g, '\\|').replace(/[A-Za-z0-9_-]{20,}/g, '…')
+// Texto vem de qualquer usuário logado: escapa Markdown/HTML (links, imagens, tags, ênfase) para não virar link no resumo.
+const celula = (v) =>
+  String(v ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/[A-Za-z0-9_-]{20,}/g, '…')
+    .replace(/[\\[\]()<>!`*_|&]/g, '\\$&')
 const data = (t) => (t ? t.toDate().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '')
 
 const linhas = ['| Data (SP) | Tipo | Mensagem | Tela | Aparelho |', '|---|---|---|---|---|']
