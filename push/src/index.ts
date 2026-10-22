@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers'
-import { acessoComCache, lerPermissao, podeAvisarTreino, registrarAgendamento, type CacheAcesso } from './acesso'
+import { acessoComCache, appCheckOk, lerPermissao, podeAvisarTreino, registrarAgendamento, type CacheAcesso } from './acesso'
 import { cors } from './cors'
 import { chaveDaConta, chaveDoGoogle, verificarAviso, verificarIdToken, type Projeto } from './jwt'
 import { nomeDO, uidOk, validarAvisos, validarFimEm, validarInscricao, type Aviso, type Inscricao } from './validar'
@@ -41,12 +41,12 @@ export class Descanso extends DurableObject<Env> {
   }
 
   // Limite de frequência, depois acesso (ativo e em dia), depois agenda.
-  async agendar(uid: string, projeto: Projeto, token: string, inscricao: Inscricao, fimEm: number): Promise<'ok' | 'limite' | 'bloqueado' | 'indisponivel'> {
+  async agendar(uid: string, projeto: Projeto, token: string, inscricao: Inscricao, fimEm: number, appCheck?: string): Promise<'ok' | 'limite' | 'bloqueado' | 'indisponivel'> {
     const agora = Date.now()
     const marcas = registrarAgendamento(this.marcas, agora)
     if (!marcas) return 'limite'
     this.marcas = marcas
-    const r = await acessoComCache(this.acesso, agora, () => lerPermissao(uid, token, agora, projeto))
+    const r = await acessoComCache(this.acesso, agora, () => lerPermissao(uid, token, agora, projeto, fetch, appCheck))
     this.acesso = r.cache
     if (r.ok === null) return 'indisponivel'
     if (!r.ok) return 'bloqueado'
@@ -118,6 +118,7 @@ export default {
 
     const token = /^Bearer (\S+)$/.exec(req.headers.get('Authorization') ?? '')?.[1]
     const agora = Math.floor(Date.now() / 1000)
+    const appCheck = appCheckOk(req.headers.get('X-Firebase-AppCheck')) // nunca logar
     const lerJson = async (max: number): Promise<{ corpo: unknown } | Response> => {
       const texto = await req.text()
       if (texto.length > max) return json({ erro: 'corpo grande demais' }, 413)
@@ -165,7 +166,7 @@ export default {
       const corpo = (j as { corpo: { subscription?: unknown; fimEm?: unknown; alunoId?: unknown } | null }).corpo
 
       if (pathname === '/treino-pronto') {
-        const s = await podeAvisarTreino(projeto, uid, corpo?.alunoId, token)
+        const s = await podeAvisarTreino(projeto, uid, corpo?.alunoId, token, fetch, appCheck)
         if (s === 400) return json({ erro: 'alunoId inválido' }, 400)
         if (s === 403) return json({ erro: 'sem permissão' }, 403)
         if (s === 503) return json({ erro: 'não foi possível verificar o aluno' }, 503)
@@ -182,7 +183,7 @@ export default {
       }
 
       if (!validarFimEm(corpo?.fimEm, Date.now())) return json({ erro: 'fimEm fora da janela (1 s a 15 min)' }, 400)
-      const r = await meu.agendar(uid, projeto, token, inscricao, corpo.fimEm)
+      const r = await meu.agendar(uid, projeto, token, inscricao, corpo.fimEm, appCheck)
       if (r === 'limite') return json({ erro: 'muitos agendamentos' }, 429, { 'Retry-After': '60' })
       if (r === 'bloqueado') return json({ erro: 'acesso bloqueado' }, 403)
       if (r === 'indisponivel') return json({ erro: 'não foi possível verificar o acesso' }, 503)

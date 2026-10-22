@@ -17,6 +17,7 @@ Pedido do Victor:
 
 ## Contrato do Worker
 Todas as rotas POST com `Authorization: Bearer <token>`; respostas JSON; CORS também para `https://app.gislanepersonaltrainer.com` e `https://gislane-personal-trainer.web.app`.
+Cabeçalho opcional `X-Firebase-AppCheck: <token>` (liberado no CORS): o app manda quando o App Check está ligado; o Worker repassa igual na leitura de `usuarios/<uid>` no Firestore (sem ele, o Firestore em "Aplicar" recusa com 403). Valor inválido (vazio, com espaço/quebra, > 4096) é ignorado; nunca é logado nem entra no cache de permissão.
 
 | Rota | Quem | Corpo | Resposta |
 |---|---|---|---|

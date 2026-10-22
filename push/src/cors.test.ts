@@ -14,6 +14,9 @@ describe('cors', () => {
   it('libera origem de produção', () => {
     expect(cors('https://app.vfitcoachapp.com')['Access-Control-Allow-Origin']).toBe('https://app.vfitcoachapp.com')
   })
+  it('libera o cabeçalho do App Check', () => {
+    expect(cors('https://app.vfitcoachapp.com')['Access-Control-Allow-Headers']).toContain('X-Firebase-AppCheck')
+  })
   it('libera as origens da Gislane', () => {
     for (const o of ['https://app.gislanepersonaltrainer.com', 'https://gislane-personal-trainer.web.app'])
       expect(cors(o)['Access-Control-Allow-Origin']).toBe(o)
