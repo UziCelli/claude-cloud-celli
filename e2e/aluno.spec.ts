@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, devices } from '@playwright/test'
-import { criarAluno, criarCoach, criarMeso, hojeSaoPaulo, lerDoc, limparEmuladores } from './seed'
+import { criarAluno, criarCoach, criarMeso, criarRegistro, hojeSaoPaulo, lerDoc, limparEmuladores } from './seed'
 
 const COACH = { nome: 'Victor', email: 'victor.aluno-e2e@teste.com', senha: 'senha123' }
 const ALUNO = { nome: 'Ana Aluna', email: 'ana.aluno-e2e@teste.com', senha: 'senha123' }
@@ -67,7 +67,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await page.getByRole('button', { name: 'Iniciar treino' }).click()
 
     const cartaoExercicio1 = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' })
-    const kgInputs = cartaoExercicio1.locator('input[type="number"]')
+    const kgInputs = cartaoExercicio1.locator('input[inputmode="decimal"]')
     // Duas colunas por série (kg, reps): a de kg é a de índice par (0, 2, 4...).
     await kgInputs.nth(0).fill('40')
     await kgInputs.nth(0).blur()
@@ -100,7 +100,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await context.setOffline(true)
 
     const cartaoExercicio1 = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' })
-    const kgInputs = cartaoExercicio1.locator('input[type="number"]')
+    const kgInputs = cartaoExercicio1.locator('input[inputmode="decimal"]')
     // Série 2: par de inputs seguinte (kg = índice 2).
     await kgInputs.nth(2).fill('42')
     await kgInputs.nth(2).blur()
@@ -138,7 +138,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
   await test.step('anotação do exercício sobrevive ao recarregar', async () => {
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' })
     await cartao.getByRole('button', { name: /Anotação/ }).click()
-    await cartao.getByRole('textbox').fill('banco na posição 3')
+    await cartao.locator('textarea').fill('banco na posição 3')
     await cartao.getByRole('button', { name: 'Salvar' }).click()
     // Só recarrega depois que a nota chegou ao servidor: recarregar no meio da gravação perde a nota (corrida do teste, lenta no CI).
     await expect
@@ -173,7 +173,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
     await cartao.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
     await expect(cartao.getByText('Peso do corpo contado: 80 kg (100% de 80 kg)')).toBeVisible()
 
-    const kg = cartao.locator('input[type="number"]').first()
+    const kg = cartao.locator('input[inputmode="decimal"]').first()
     await kg.fill('10')
     await kg.blur()
 
@@ -321,7 +321,7 @@ test('cronômetro não inicia o treino; cancelar apaga tempo e cargas', async ({
   await page.screenshot({ path: 'test-results/prints/93-treino-nao-iniciado.png' })
 
   const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
-  const kg = cartao.locator('input[type="number"]').first()
+  const kg = cartao.locator('input[inputmode="decimal"]').first()
 
   await test.step('(a) tocar no cronômetro não inicia o treino', async () => {
     await cartao.getByRole('button', { name: /^Descansar \d+ s$/ }).click()
@@ -388,4 +388,73 @@ test('treino que não existe tem saída para o Início', async ({ page }) => {
   await expect(page.getByText('Treino não encontrado.')).toBeVisible()
   await page.getByRole('button', { name: '← Hoje' }).click()
   await expect(page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Início' })).toBeVisible()
+})
+
+async function entrarNoTreino(page: import('@playwright/test').Page, u: { email: string; senha: string }, rota: string) {
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(u.email)
+  await page.getByLabel('Senha').fill(u.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
+  await page.goto(`/#/treino/${rota}`)
+  const entendi = page.getByRole('dialog', { name: 'Métodos deste treino' }).getByRole('button', { name: 'Entendi', exact: true })
+  await entendi.click({ timeout: 3000 }).catch(() => {})
+}
+
+test('triset em grupo: A1/A2/A3 e descanso só no último', async ({ page }) => {
+  const prog = { w1: [8, 8, 8], w2: [8, 8, 8], w3: [8, 8, 8], w4: [8, 8, 8] }
+  const u = { email: 'dora.triset-e2e@teste.com', senha: 'senha123' }
+  const id = await criarAluno('Dora Triset', u.email, u.senha)
+  const mesoTriset = await criarMeso({
+    alunoId: id, nome: 'Meso Triset', frequencia: 1, semanas: 4, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }, { slotId: 'b', nome: 'Supino Reto Barra' }, { slotId: 'c', nome: 'Remada Curvada Barra' }] },
+    progressao: { principais: prog, auxiliares: prog },
+    metodos: [1, 2, 3].map((exercicio) => ({ ativo: true, semana: 1, treino: 1, exercicio, metodo: 'Triset', escopo: 'Todas as séries', grupo: 1 })),
+  })
+  await entrarNoTreino(page, u, `${mesoTriset}/1/1`)
+  for (const l of ['A1', 'A2', 'A3']) await expect(page.getByText(l, { exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Descansar \d+ s$/ })).toHaveCount(1)
+  const ultimo = page.locator('.rounded-xl.border').filter({ hasText: 'Remada Curvada Barra' })
+  await expect(ultimo.getByRole('button', { name: /^Descansar \d+ s$/ })).toBeVisible()
+})
+
+test('carga com vírgula persiste; valor negativo não grava', async ({ page }) => {
+  const prog = { w1: [8, 8, 8], w2: [8, 8, 8], w3: [8, 8, 8], w4: [8, 8, 8] }
+  const u = { email: 'edu.virgula-e2e@teste.com', senha: 'senha123' }
+  const id = await criarAluno('Edu Virgula', u.email, u.senha)
+  const m = await criarMeso({
+    alunoId: id, nome: 'Meso Virgula', frequencia: 1, semanas: 4, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }] },
+    progressao: { principais: prog, auxiliares: prog },
+  })
+  await entrarNoTreino(page, u, `${m}/1/1`)
+  await page.getByRole('button', { name: 'Iniciar treino' }).click()
+  const kg = () => page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' }).locator('input[inputmode="decimal"]').first()
+  await kg().fill('12,5')
+  await kg().blur()
+  await expect.poll(async () => JSON.stringify(((await lerDoc(`registros/${m}_s01_t1`))?.fields ?? {}) as object)).toContain('12.5')
+  await page.reload()
+  await expect(kg()).toHaveValue('12.5')
+  await kg().fill('-3')
+  await kg().blur()
+  await expect(kg()).toHaveValue('12.5')
+  expect(JSON.stringify((await lerDoc(`registros/${m}_s01_t1`))?.fields)).not.toContain('-3')
+})
+
+test('dica da semana passada: S4 não herda o D1', async ({ page }) => {
+  const u = { email: 'fabi.drop-e2e@teste.com', senha: 'senha123' }
+  const id = await criarAluno('Fabi Drop', u.email, u.senha)
+  const inicio = new Date(Date.now() - 3 * 3600_000 - 7 * 86400_000).toISOString().slice(0, 10) // semana atual = 2
+  const m = await criarMeso({
+    alunoId: id, nome: 'Meso Drop', frequencia: 1, semanas: 4, inicio, pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }] },
+    progressao: { principais: { w1: [8, 8, 8], w2: [8, 8, 8, 8], w3: [8, 8, 8, 8], w4: [8, 8, 8, 8] }, auxiliares: { w1: [8, 8, 8], w2: [8, 8, 8, 8], w3: [8, 8, 8, 8], w4: [8, 8, 8, 8] } },
+    metodos: [{ ativo: true, semana: 1, treino: 1, exercicio: 1, metodo: 'Dropset', escopo: 'Últimas 2 séries', etapas: 1 }],
+  })
+  await criarRegistro(m, id, 1, 1, { realizado: true, cargas: { a: { s1: 50, s2: 50, s3: 50, s4: 31 } } })
+  await entrarNoTreino(page, u, `${m}/2/1`)
+  const kgs = page.locator('.rounded-xl.border').filter({ hasText: 'Agachamento Livre Halter' }).locator('input[inputmode="decimal"]')
+  await expect(kgs.nth(0)).toHaveAttribute('placeholder', '50')
+  await expect(kgs.nth(6)).not.toHaveAttribute('placeholder', '31') // S4 (kg de cada série = índice par)
+  await expect(kgs.nth(6)).not.toHaveAttribute('placeholder', /.+/)
 })

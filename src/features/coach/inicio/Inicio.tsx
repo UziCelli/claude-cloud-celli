@@ -76,11 +76,11 @@ export default function Inicio({ nome }: { nome: string }) {
           </Quadro>
         ))}
       </div>
-      <div className="mb-3 grid grid-cols-[1fr_auto] gap-3 lg:max-w-md">
-        <Botao tipo="primario" className="flex h-12 items-center justify-center gap-2 rounded-2xl text-base font-bold" onClick={() => ir('/alunos/novo')}>
+      <div className="mb-3 grid grid-cols-2 gap-3 lg:max-w-md">
+        <Botao tipo="primario" className="flex h-12 min-w-0 items-center justify-center gap-2 rounded-2xl text-base font-bold" onClick={() => ir('/alunos/novo')}>
           <IcMais className="size-5" /> Novo aluno
         </Botao>
-        <a href="#/ranking" className="grid h-12 place-items-center rounded-2xl bg-white/10 px-6 text-base font-bold ring-1 ring-white/20">
+        <a href="#/ranking" className="grid min-h-12 min-w-0 place-items-center rounded-2xl bg-white/10 px-3 text-center text-base font-bold leading-tight ring-1 ring-white/20">
           Ranking de evolução
         </a>
       </div>
@@ -101,8 +101,8 @@ export default function Inicio({ nome }: { nome: string }) {
             {paraRevisar.map((x) => {
               const d = mesos.dados.find((y) => y.id === x.id)!
               return (
-                <li key={x.id}>
-                  <a href={`#/meso/${x.id}/relatorio`} className="block min-h-11 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                <li key={x.id} className="max-w-full min-w-0">
+                  <a href={`#/meso/${x.id}/relatorio`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                     {nomeDe.get(d.alunoId)} · {x.nome}
                   </a>
                 </li>
@@ -121,7 +121,7 @@ export default function Inicio({ nome }: { nome: string }) {
       )}
       <m.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={cascata} initial="hidden" animate="show">
         {blocos.map(([titulo, lista, vazio]) => (
-          <m.div key={titulo} variants={item}>
+          <m.div key={titulo} variants={item} className="min-w-0">
           <Quadro className="h-full space-y-2 !p-3.5">
             <h2 className="font-semibold">
               {titulo} <span className="font-display text-lg font-bold text-marca-300"><Contar n={lista.length} /></span>
@@ -140,12 +140,12 @@ export default function Inicio({ nome }: { nome: string }) {
                       }))
                     : [{ k: a.id, href: `#/aluno/${a.id}`, texto: a.nome }]
                   return links.map((l) => (
-                    <li key={`${a.id}-${l.k}`} className="flex min-w-0 items-center gap-2">
+                    <li key={`${a.id}-${l.k}`} className="flex max-w-full min-w-0 items-center gap-2">
                       <a href={l.href} className="block min-h-11 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                         {l.texto}
                       </a>
                       {titulo === 'Aguardando aprovação' && (
-                        <a href="#/alunos" className="grid h-11 place-items-center rounded-full border border-marca-400 bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
+                        <a href="#/alunos" className="grid h-11 shrink-0 place-items-center rounded-full border border-marca-400 bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
                       )}
                     </li>
                   ))

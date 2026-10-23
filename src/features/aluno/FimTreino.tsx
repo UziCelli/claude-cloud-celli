@@ -158,7 +158,7 @@ export default function FimTreino({
               <span key={i} className={`h-2.5 flex-1 rounded-full ${i < feitosSemana ? 'bg-marca-300' : 'bg-white/20'}`} />
             ))}
           </div>
-          <p className="mt-2 text-sm font-bold">{`Semana ${semana}: ${feitosSemana} de ${frequencia} treinos`}</p>
+          <p className="mt-2 text-sm font-bold">{`Semana ${semana}: ${feitosSemana} de ${frequencia} ${frequencia === 1 ? 'treino' : 'treinos'}`}</p>
           {feitosSemana >= frequencia && <p className="text-sm font-bold text-marca-300">Semana completa!</p>}
         </m.div>
       </m.div>}

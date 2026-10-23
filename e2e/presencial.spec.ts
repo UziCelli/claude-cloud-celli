@@ -62,7 +62,7 @@ for (const presencial of [false, true]) {
     const tela = page.getByRole('region', { name: `Treino de ${ALUNO.nome}` })
     await tela.getByRole('button', { name: 'Iniciar treino' }).click()
     const militar = tela.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
-    const [kg, reps] = [militar.locator('input[type="number"]').nth(0), militar.locator('input[type="number"]').nth(1)]
+    const [kg, reps] = [militar.locator('input[inputmode="decimal"]').nth(0), militar.locator('input[inputmode="decimal"]').nth(1)]
     await kg.fill('30')
     await kg.blur()
     await reps.fill('7')
@@ -101,7 +101,7 @@ test('coach sem Iniciar: carga fica salva, treino não conta como feito', async 
   await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
   await page.goto(`/#/aluno/${alunoId}/presencial/treino/${mesoId}/1/1`)
   const tela = page.getByRole('region', { name: `Treino de ${ALUNO.nome}` })
-  const kg = tela.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' }).locator('input[type="number"]').first()
+  const kg = tela.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' }).locator('input[inputmode="decimal"]').first()
   await expect(kg).toBeEnabled()
   await kg.fill('25')
   await kg.blur()
@@ -132,7 +132,7 @@ test('grupo: troca de aluno mantém treino e carga do outro', async ({ page }) =
   const b = page.getByRole('region', { name: 'Treino de Caio Grupo' })
   await b.getByRole('button', { name: /Treino 1/ }).click()
   await b.getByRole('button', { name: 'Iniciar treino' }).click()
-  const kgB = b.locator('input[type="number"]').first()
+  const kgB = b.locator('input[inputmode="decimal"]').first()
   await kgB.fill('40')
   await kgB.blur()
 
@@ -147,7 +147,7 @@ test('grupo: troca de aluno mantém treino e carga do outro', async ({ page }) =
   await seletor.getByRole('button', { name: 'Caio' }).click()
   await expect(bar.getByText('Caio Grupo')).toBeVisible()
   await expect(seletor.getByRole('button', { name: 'Caio' })).toHaveAttribute('aria-current', 'true')
-  await expect(b.locator('input[type="number"]').first()).toHaveValue('40')
+  await expect(b.locator('input[inputmode="decimal"]').first()).toHaveValue('40')
   await expect(b.getByText('Treino em andamento')).toBeVisible()
 })
 

@@ -40,6 +40,7 @@ describe('semanaAtual (dia de calendário em São Paulo)', () => {
 describe('cargaAnterior', () => {
   const meso: Meso = {
     ...base,
+    progressao: { principais: [[10, 10], [10, 10], [10, 10], [10, 10]], auxiliares: [[10, 10], [10, 10], [10, 10], [10, 10]] },
     trocas: {
       '2-1-1': slot('x', 'Remada'), // outro exercício na semana 2
       '4-1-2': slot('b4', 'Agachamento'), // mesmo nome, outro slotId
@@ -52,11 +53,11 @@ describe('cargaAnterior', () => {
   }
 
   it('semana anterior mais recente com o mesmo nome, pelo slotId daquela semana', () => {
-    expect(cargaAnterior(meso, registros, 4, 1, 2)).toEqual([90, null]) // s4 b4 ← s3 b
+    expect(cargaAnterior(meso, registros, 4, 1, 2)).toEqual({ series: [90, null], drops: [] }) // s4 b4 ← s3 b
   })
   it('pula semana sem carga e semana com exercício trocado', () => {
-    expect(cargaAnterior(meso, registros, 4, 1, 1)).toEqual([40, 42]) // s3 vazia, s2 Remada
-    expect(cargaAnterior(meso, registros, 3, 1, 2)).toEqual([80]) // s2 b = []
+    expect(cargaAnterior(meso, registros, 4, 1, 1)).toEqual({ series: [40, 42], drops: [] }) // s3 vazia, s2 Remada
+    expect(cargaAnterior(meso, registros, 3, 1, 2)).toEqual({ series: [80], drops: [] }) // s2 b = []
   })
   it('null quando não há carga anterior', () => {
     expect(cargaAnterior(meso, registros, 1, 1, 1)).toBeNull()
@@ -66,8 +67,19 @@ describe('cargaAnterior', () => {
   })
   it('com pcs, devolve só o extra: total menos o peso do corpo DAQUELE registro (não o de hoje)', () => {
     const pcs = { '3-1': { b: 76 }, '1-1': { b: 0 } }
-    expect(cargaAnterior(meso, registros, 4, 1, 2, pcs)).toEqual([14, null]) // 90 - 76
-    expect(cargaAnterior(meso, registros, 3, 1, 2, pcs)).toEqual([80]) // s1 b: pc 0, total = extra
-    expect(cargaAnterior(meso, { '3-1': { b: [70, 90] } }, 4, 1, 2, pcs)).toEqual([0, 14]) // nunca negativo
+    expect(cargaAnterior(meso, registros, 4, 1, 2, pcs)).toEqual({ series: [14, null], drops: [] }) // 90 - 76
+    expect(cargaAnterior(meso, registros, 3, 1, 2, pcs)).toEqual({ series: [80], drops: [] }) // s1 b: pc 0, total = extra
+    expect(cargaAnterior(meso, { '3-1': { b: [70, 90] } }, 4, 1, 2, pcs)).toEqual({ series: [0, 14], drops: [] }) // nunca negativo
+  })
+  it('separa séries e drops pelo n da semana anterior (3 séries + D1 vs. 4 séries hoje)', () => {
+    const m: Meso = {
+      ...base,
+      divisao: [[slot('a', 'Supino')]],
+      progressao: { principais: [[10, 10, 10], [10, 10, 10, 10]], auxiliares: [] },
+      metodos: [{ semana: 1, treino: 1, exercicio: 1, metodo: 'Dropset', ativo: true, escopo: 'Últimas 2 séries', etapas: 1 }],
+    }
+    const r = cargaAnterior(m, { '1-1': { a: [50, 50, 50, 30] } }, 2, 1, 1)
+    expect(r).toEqual({ series: [50, 50, 50], drops: [30] })
+    expect(r!.series[3]).toBeUndefined() // S4 não herda o D1
   })
 })
