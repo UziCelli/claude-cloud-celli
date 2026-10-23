@@ -54,7 +54,7 @@ test('coach importa um mesociclo da planilha', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Ver semanas' }).click()
   await page.waitForURL(/#\/meso\/.+\/semana\/1/)
-  await expect(page.getByRole('spinbutton').first()).toHaveValue('20')
+  await expect(page.locator('input[inputmode="decimal"]').first()).toHaveValue('20')
   expect((await lerDoc(`registros/${mesoId}_s01_t1`))?.fields).toMatchObject({ alunoId: { stringValue: alunoId }, realizado: { booleanValue: true } })
 
   await page.goto(`/#/aluno/${alunoId}`)

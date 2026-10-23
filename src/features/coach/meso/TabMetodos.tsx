@@ -170,7 +170,7 @@ function LinhaMetodo({
           <span className="text-slate-400">Escopo</span>
           <select
             value={m.escopo}
-            onChange={(e) => onSet({ escopo: e.target.value as Escopo })}
+            onChange={(e) => { const escopo = e.target.value as Escopo; onSet({ escopo, ...(escopo === 'Série específica' && m.serie == null ? { serie: 1 } : {}) }) }}
             className={`${campoBase} w-full max-w-full px-2 py-2`}
           >
             {ESCOPOS.map((op) => (

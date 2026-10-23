@@ -1,5 +1,5 @@
 // Ajudas da tela do aluno. Funções puras.
-import type { Meso, Registros } from '../engine'
+import { prescreverSessao, type Meso, type Registros } from '../engine'
 import { diaSP } from './acesso'
 
 // Semana w cobre os dias [inicio + 7(w−1), inicio + 7w), contados no calendário de São Paulo.
@@ -13,6 +13,7 @@ export function semanaAtual(meso: Meso, hoje: Date) {
 
 // Cargas da semana anterior mais recente em que a mesma posição do treino tinha o mesmo
 // exercício (pelo nome, já com trocas) e alguma carga anotada. Lida pelo slotId daquela semana.
+// Devolve `series` (S1..Sn daquela semana) e `drops` (D1.. daquela semana) separados: o n muda entre semanas.
 // Sem `pcs`, devolve o total gravado. Com `pcs` (`${semana}-${treino}` -> { slotId: kg do corpo }),
 // devolve só o extra: total menos o corpo DAQUELE registro (o de hoje pode ser outro), nunca negativo.
 export function cargaAnterior(
@@ -32,7 +33,9 @@ export function cargaAnterior(
     const cargas = registros[`${w}-${treino}`]?.[s.slotId]
     if (!cargas?.some((c) => c != null)) continue
     const corpo = pcs?.[`${w}-${treino}`]?.[s.slotId] ?? 0
-    return corpo > 0 ? cargas.map((c) => (c == null ? null : Math.max(0, Math.round((c - corpo) * 100) / 100))) : cargas
+    const extra = corpo > 0 ? cargas.map((c) => (c == null ? null : Math.max(0, Math.round((c - corpo) * 100) / 100))) : cargas
+    const n = prescreverSessao(meso, w, treino)?.exercicios[pos - 1]?.n ?? extra.length
+    return { series: extra.slice(0, n), drops: extra.slice(n) }
   }
   return null
 }

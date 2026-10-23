@@ -3,7 +3,7 @@ import { aceitouPrivacidade } from './lib/privacidade'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
 import { collection, query, where } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
-import { consultaRegistrosRecentes, sair } from './lib/acoes'
+import { consultaRegistrosRecentes } from './lib/acoes'
 import { useLista, useUsuarioAtual } from './lib/hooks'
 import { inicioJanela, type AlunoComId } from './lib/resumo'
 import type { MesoSalvo } from './lib/conversores'
@@ -14,6 +14,7 @@ import { casar, useRota } from './rota'
 import { Abertura, Aviso, Botao, Centro, Tela } from './ui'
 import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
+import BotaoSair, { useSair } from './features/auth/BotaoSair'
 import Inicio from './features/coach/inicio/Inicio'
 import Alertas from './features/coach/alertas/Alertas'
 import NovoAluno from './features/coach/alunos/NovoAluno'
@@ -74,12 +75,6 @@ function Principal() {
       <Tela chave={estagio}>{tela}</Tela>
     </>
   )
-}
-
-// Sair com retorno: desativa e avisa enquanto espera as gravações pendentes.
-function useSair() {
-  const [saindo, setSaindo] = useState(false)
-  return [saindo, () => { setSaindo(true); sair().catch(() => setSaindo(false)) }] as const
 }
 
 // Perfil que não chega: depois de 10 s oferece a saída em vez de girar para sempre.
@@ -201,10 +196,11 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
       {!presencial && <Menu rota={rota} />}
       <div className={`min-w-0 flex-1 min-h-lvh ${presencial ? '' : 'pb-barra lg:pb-0'}`}>
         <header hidden={presencial} className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-topo lg:hidden">
-          <div className="mx-auto max-w-6xl px-4 pb-3">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 pb-3">
             <a href="#/" className="inline-block text-white" aria-label={marca.nome}>
               <Logo className="h-5" />
             </a>
+            <BotaoSair />
           </div>
         </header>
         {semFator && (

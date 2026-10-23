@@ -42,7 +42,7 @@ test('treino de hoje em destaque: Início com link certo e selo na semana', asyn
   // Carga digitada pelo coach num treino não iniciado é correção: grava, mas não vira "Treinando hoje".
   const cartao1 = page.locator('.rounded-xl.border').filter({ has: page.getByRole('heading', { name: /Treino 1/ }) })
   const linha = cartao1.locator('table tbody tr').first()
-  const serie1 = linha.locator('input[type="number"]').first()
+  const serie1 = linha.locator('input[inputmode="decimal"]').first()
   await serie1.fill('30')
   await serie1.press('Enter')
   await expect(linha.locator('td:nth-last-child(2)')).toHaveText('30', { timeout: 10_000 })

@@ -33,7 +33,7 @@ test('recorde: carga maior que a anterior festeja; menor não', async ({ page })
   await page.getByRole('button', { name: 'Iniciar treino' }).click()
 
   const digitar = async (exercicio: string, kg: string) => {
-    const campo = page.locator('.rounded-xl.border').filter({ hasText: exercicio }).locator('input[type="number"]').first()
+    const campo = page.locator('.rounded-xl.border').filter({ hasText: exercicio }).locator('input[inputmode="decimal"]').first()
     await campo.fill(kg)
     await campo.blur()
   }

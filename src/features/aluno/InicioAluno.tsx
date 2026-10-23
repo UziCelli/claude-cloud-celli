@@ -17,6 +17,7 @@ import { Centro } from '../../ui'
 import { PIX } from './PagarPix'
 import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
+import BotaoSair from '../auth/BotaoSair'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
 
@@ -41,8 +42,9 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       <div className="flex items-center gap-3 pt-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm text-slate-400">{data[0].toUpperCase() + data.slice(1)}</p>
-          <h1 className="text-[28px] leading-tight">Olá, {nome.split(' ')[0]}</h1>
+          <h1 className="truncate text-[28px] leading-tight">Olá, {nome.split(' ')[0]}</h1>
         </div>
+        <BotaoSair />
         <a href="#/conta" aria-label="Minha conta" className="toque rounded-full">
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
         </a>

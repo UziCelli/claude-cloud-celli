@@ -66,6 +66,7 @@ Comece por aqui para achar onde mexer.
 ### `src/features/auth/` — Autenticação
 - `AcaoEmail.tsx` — rota pública `/acao`: destino dos links dos e-mails do Firebase (redefinir senha, confirmar/restaurar e-mail)
 - `Entrar.tsx` — login Google/e-mail, cadastro
+- `BotaoSair.tsx` — `useSair()` e botão "Sair" com confirmação (topo do coach no celular, início do aluno)
 - `EsqueciSenha.tsx` — tela própria em `#/esqueci-senha` (o e-mail digitado no login vem junto); conta inexistente mostra o mesmo sucesso
 - `BoasVindas.tsx` — boas-vindas da 1ª visita no navegador (marca `forca-boas-vindas-visto`) e folha "instalar no iPhone"
 
@@ -301,6 +302,9 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
 | Links dos e-mails (22/10/2026) | `AcaoEmail.tsx`, `acoes.ts` | O `oobCode` nunca vai para log/`registrarErro` (só o código do erro). `/acao` precisa tratar todos os modos (`resetPassword`, `verifyAndChangeEmail`, `recoverEmail`, `verifyEmail`) enquanto o URL de ação do Firebase apontar para ela, senão a troca de e-mail quebra. | `acao.spec.ts` |
+| Campo de carga (23/10/2026) | `LoadInput.tsx` | É `type="text" inputMode="decimal"`: com `type="number"` no Android pt-BR, "12,5" virava "" e o blur apagava a carga gravada. Texto inválido ou negativo não grava, só restaura o valor. | `aluno.spec.ts` |
+| Dica da semana passada e métodos no treino (23/10/2026) | `treino.ts` (`cargaAnterior`), `Treino.tsx`, `TabMetodos.tsx` | `cargaAnterior` separa séries e drops pelo `n` daquela semana (S4 nunca herda o D1; drop usa a sugestão do coach, senão o drop anterior). Em grupo (Biset/Triset/Superset/Circuito), Descansar só no último membro; grupo de 1 não é grupo. Barra de descanso restaurada começa em `restante/total`. Escopo "Série específica" grava `serie: 1` junto (senão o aluno não via o método). | `treino.test.ts`, `aluno.spec.ts` |
+| Overflow no celular (23/10/2026) | `ui.tsx` (`Tela`), `Inicio.tsx` | `Tela` tem `overflow-x-clip`: o `scrollWidth` nunca acusa overflow. Item de grid precisa de `min-w-0` (senão a coluna cresce com o texto). O e2e `nadaPassaDaTela` mede `right > innerWidth` de a/button/h1/h2/p/li (coach 360px, aluna com nome longo). | `layout.spec.ts`, `sair.spec.ts` |
 | Login do aluno (20/10/2026) | `Entrar.tsx`, `EsqueciSenha.tsx`, `App.tsx` | Login do aluno: senha errada aponta Esqueci minha senha; e-mail com trim; perfil que não chega mostra Sair após 10 s. | `entrada.spec.ts` |
 | Animação e reduzir movimento (20/10/2026) | `ui.tsx`, `IconeMetodo.tsx`, `Hoje.tsx` | Reduzir movimento vale também para opacidade em loop (`Abertura`, `IconeMetodo` com `useReducedMotion`; CSS com `motion-safe:`). `Painel` só esconde overflow durante a animação (não corta o anel de foco). `Contar` parte do valor anterior. Alerta `fixed` fica fora de wrapper com transform (`Hoje`). | revisão manual |
 | Botões sem retorno (20/10/2026) | `acoes.ts` (`sair`), `App.tsx`, `ContaAluno.tsx`, `MinhaConta.tsx`, `Aceite.tsx`, `Instalar.tsx`, `Treino.tsx` | `sair()` é reentrante (espera até 5 s pelas gravações; botões Sair desativam e mostram "Saindo…"); Trocar senha trava até enviar; Remover foto pede confirmação; `prompt()` de instalar só vale 1 vez; cópia de link e aceite mostram erro; ações do treino com alvo ≥ 44px. | revisão manual |

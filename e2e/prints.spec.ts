@@ -207,7 +207,7 @@ test('prints do aluno', async ({ browser }) => {
   const entendi = page.getByRole('dialog', { name: 'Métodos deste treino' }).getByRole('button', { name: 'Entendi', exact: true })
   if (await entendi.isVisible().catch(() => false)) await entendi.click()
   await page.getByRole('button', { name: 'Iniciar treino' }).click()
-  const campos = page.locator('input[type="number"]')
+  const campos = page.locator('input[inputmode="decimal"]')
   for (const [i, v] of ['25.5', '10', '25.5', '10'].entries()) {
     await campos.nth(i).fill(v)
     await campos.nth(i).blur()

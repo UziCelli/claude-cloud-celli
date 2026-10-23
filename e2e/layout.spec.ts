@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { criarAluno, criarCoach, criarMeso, criarRegistro, hojeSaoPaulo, limparEmuladores } from './seed'
+import { criarAluno, criarAlunoAguardando, criarCoach, criarMeso, criarRegistro, hojeSaoPaulo, limparEmuladores } from './seed'
 
 const ALUNO = { nome: 'Bia Layout', email: 'bia.layout-e2e@teste.com', senha: 'senha123' }
 const COACH = { email: 'victor.layout-e2e@teste.com', senha: 'senha123' }
@@ -11,6 +11,7 @@ const UA_IPHONE =
 test.beforeAll(async () => {
   await limparEmuladores()
   await criarCoach('Victor Celli com nome bem comprido para testar', COACH.email, COACH.senha)
+  await criarAlunoAguardando('Maria Aparecida dos Santos Albuquerque Ferreira', 'maria.longa-e2e@teste.com', 'senha123')
   alunoId = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
   const w = [8, 8, 8, null, null, null]
   mesoId = await criarMeso({
@@ -66,6 +67,21 @@ async function semTransbordar(page: Page) {
   expect(ruins).toEqual([])
 }
 
+// `Tela` tem overflow-x-clip: o scrollWidth nunca acusa. Mede cada elemento visível contra a largura da tela.
+async function nadaPassaDaTela(page: Page) {
+  const ruins = await page.evaluate(() =>
+    [...document.querySelectorAll('a, button, h1, h2, p, li')]
+      .filter((e) => {
+        const r = e.getBoundingClientRect()
+        if (r.width === 0 || r.height === 0 || getComputedStyle(e).visibility === 'hidden') return false
+        if (e.closest('[hidden], [aria-hidden="true"], .overflow-x-auto')) return false // rolagem interna é permitida
+        return r.right > window.innerWidth + 1
+      })
+      .map((e) => e.tagName + ':' + (e.textContent ?? '').slice(0, 30)),
+  )
+  expect(ruins).toEqual([])
+}
+
 for (const vp of [
   { width: 390, height: 844 },
   { width: 375, height: 667 },
@@ -102,7 +118,7 @@ for (const vp of [
     await expect(page.getByRole('dialog', { name: 'Métodos deste treino' })).toBeHidden()
     // Os viewports repetem o mesmo aluno: o treino pode já estar iniciado por um deles.
     await page.getByRole('button', { name: 'Iniciar treino' }).click({ timeout: 3000 }).catch(() => {})
-    const kg = page.locator('input[type="number"]').first()
+    const kg = page.locator('input[inputmode="decimal"]').first()
     await kg.fill('100.5')
     await kg.blur()
     await page.getByRole('button', { name: /^Descansar \d+ s$/ }).first().click()
@@ -122,6 +138,7 @@ for (const vp of [
 // Menu do coach: abas embaixo abaixo de 1024px; menu lateral fixo a partir daí. Nunca rolagem horizontal.
 for (const vp of [
   { width: 320, height: 640 },
+  { width: 360, height: 800 },
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
   { width: 1024, height: 768 },
@@ -159,6 +176,8 @@ for (const vp of [
       await expect(abas.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
     }
     await confere(page)
+    await expect(page.getByText('Maria Aparecida dos Santos Albuquerque Ferreira').first()).toBeVisible()
+    await nadaPassaDaTela(page)
     await foto('32-coach-inicio-iphone')
 
     // Aba ativa pela rota: editor de meso e página do aluno contam como Alunos.
@@ -209,8 +228,8 @@ for (const vp of [
     await page.goto('/#/conta')
     await expect(page.getByRole('heading', { name: 'Minha conta' })).toBeVisible()
     await confere(page)
-    // "Sair" fica na Minha conta no celular e no menu lateral no computador (um só visível).
-    await expect(page.getByRole('button', { name: 'Sair' })).toHaveCount(1)
+    // Celular: Sair no topo e em Minha conta; computador: só no menu lateral.
+    await expect(page.getByRole('button', { name: 'Sair' })).toHaveCount(lateral ? 1 : 2)
     await ctx.close()
   })
 }

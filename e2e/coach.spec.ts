@@ -118,7 +118,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
   await test.step('carga registrada sobrevive a um reload', async () => {
     const tabelaTreino1 = page.locator('table').first()
     const linhaExercicio1 = tabelaTreino1.locator('tbody tr').first()
-    const inputSerie1 = linhaExercicio1.locator('input[type="number"]').first()
+    const inputSerie1 = linhaExercicio1.locator('input[inputmode="decimal"]').first()
 
     await inputSerie1.fill('20')
     await inputSerie1.press('Enter')
@@ -130,7 +130,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
 
     const tabelaTreino1Depois = page.locator('table').first()
     const linhaExercicio1Depois = tabelaTreino1Depois.locator('tbody tr').first()
-    await expect(linhaExercicio1Depois.locator('input[type="number"]').first()).toHaveValue('20')
+    await expect(linhaExercicio1Depois.locator('input[inputmode="decimal"]').first()).toHaveValue('20')
     await expect(linhaExercicio1Depois.locator('td:nth-last-child(2)')).toHaveText('20')
   })
 })
@@ -232,7 +232,7 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
   await page.getByRole('button', { name: 'Ver semanas' }).click()
   await page.waitForURL(/#\/meso\/.+\/semana\/1/)
   const linha = page.locator('table').first().locator('tbody tr').first()
-  const serie1 = linha.locator('input[type="number"]').first()
+  const serie1 = linha.locator('input[inputmode="decimal"]').first()
   await serie1.fill('30')
   await serie1.press('Enter')
   await expect(linha.locator('td:nth-last-child(2)')).toHaveText('30', { timeout: 10_000 })

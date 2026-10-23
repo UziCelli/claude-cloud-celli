@@ -481,7 +481,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     const l = meso.metodos.find((x) => x.ativo && x.semana === semana && x.treino === treino && x.exercicio === pos && x.grupo != null && METODOS_SEQUENCIA.test(x.metodo))
     return l ? `${l.metodo}|${l.grupo}` : null
   }
-  const chaves = sessao.exercicios.map((e) => grupoDe(e.pos))
+  const chavesBrutas = sessao.exercicios.map((e) => grupoDe(e.pos))
+  const chaves = chavesBrutas.map((c) => (chavesBrutas.filter((x) => x === c).length >= 2 ? c : null)) // grupo de 1 só exercício não é grupo
   const ordemGrupos = [...new Set(chaves.filter(Boolean))]
   const visitado = new Set<number>()
   const exibicao = sessao.exercicios.flatMap((e, i) => {
@@ -535,12 +536,11 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
       <Novidades />
       <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
-        {exibicao.map((e, idx) => {
-          const gk = grupoDe(e.pos)
-          const membros = gk ? exibicao.filter((x) => grupoDe(x.pos) === gk) : []
+        {exibicao.map((e) => {
+          const gk = chaves[sessao.exercicios.indexOf(e)]
+          const membros = gk ? exibicao.filter((x) => chaves[sessao.exercicios.indexOf(x)] === gk) : []
           const ordem = membros.indexOf(e)
           const letra = String.fromCharCode(65 + ordemGrupos.indexOf(gk))
-          void idx
           const colunasCargas = cs[e.slot.slotId] ?? []
           const colunasReps = rs[e.slot.slotId] ?? []
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos, pcsPorRegistro) // só o extra, com o corpo do registro de origem
@@ -585,11 +585,11 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   <div className="font-semibold">{e.slot.nome}</div>
                   {e.rotulo && (
                     <div className="mt-1 flex flex-wrap gap-1.5">
-                      {e.rotulo.split('; ').map((parte) => {
+                      {e.rotulo.split('; ').map((parte, ip) => {
                         const mt = metodoDoRotulo(parte)
                         return (
                           <button
-                            key={parte}
+                            key={`${ip}-${parte}`}
                             disabled={!mt}
                             onClick={() => mt && setExplicar(mt)}
                             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${mt ? COR_METODO[mt].selo : 'bg-slate-700 text-slate-100 ring-slate-500'}`}
@@ -606,6 +606,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   <Botao aria-label="Som do cronômetro" className="min-h-11" onClick={descanso.alternarSom}>
                     {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
                   </Botao>
+                  {(!gk || ordem === membros.length - 1) && (
+                    <>
                   <Botao
                     tipo={descanso.slot === slot ? 'primario' : undefined}
                     aria-label={descanso.slot === slot ? `${descanso.rodando ? 'Pausar' : 'Continuar'} ${mmss(descanso.restante)}` : `Descansar ${e.pausaS} s`}
@@ -619,6 +621,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                       <IcReiniciar className="size-4" />
                     </Botao>
                   )}
+                    </>
+                  )}
                 </div>
               </div>
               <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} />
@@ -627,9 +631,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   const dropStage = k >= e.n
                   const rotuloCol = dropStage ? `D${k - e.n + 1}` : `S${k + 1}`
                   const placeholderKg = dropStage
-                    ? (e.cargaSugerida[k] ?? null)
-                    : anterior?.[k] != null
-                      ? fmt(volta ? cargaVolta(anterior[k]!) : anterior[k]!)
+                    ? (e.cargaSugerida[k] ?? anterior?.drops[k - e.n] ?? null)
+                    : anterior?.series[k] != null
+                      ? fmt(volta ? cargaVolta(anterior.series[k]!) : anterior.series[k]!)
                       : null
                   // Uma faixa colorida por método que cobre esta série (etapas do drop = Dropset).
                   const cores = [...new Set(partes.filter(({ p, mt }) => mt && (dropStage ? mt === 'Dropset' : seriesDoRotulo(p, e.n).includes(k + 1))).map(({ mt }) => mt!))]
@@ -739,7 +743,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
             <m.div
               key={descanso.ciclo}
               className="h-full rounded bg-marca-500"
-              initial={{ width: '100%' }}
+              initial={{ width: `${(descanso.restante / descanso.total) * 100}%` }}
               animate={{ width: descanso.pausado ? `${(descanso.restante / descanso.total) * 100}%` : '0%' }}
               transition={{ duration: descanso.pausado ? 0 : descanso.restante, ease: 'linear' }}
             />

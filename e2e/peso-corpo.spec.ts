@@ -37,7 +37,7 @@ test('peso do corpo: marcar depois de digitar mantém o extra; concluir preenche
 
   await test.step('(a) digita o extra e depois marca "Feito com o peso do corpo"', async () => {
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
-    const kg = cartao.locator('input[type="number"]').first()
+    const kg = cartao.locator('input[inputmode="decimal"]').first()
     await kg.fill('20')
     await kg.blur()
     await expect.poll(() => cargaDe('a', 's1'), { timeout: 15_000 }).toBe(20)
@@ -121,7 +121,7 @@ test('formato antigo concluído: coach soma o corpo (80 + extra) e o aluno vê "
     await expect(linha.getByText('Inclui peso do corpo: 80 kg')).toBeVisible()
     await expect(linha).toContainText('1.936') // 8 × (82 + 80 + 80)
     await expect(linha).toContainText('80,7') // (82 + 80 + 80) / 3
-    const campos = linha.locator('input[type="number"]')
+    const campos = linha.locator('input[inputmode="decimal"]')
     await expect(campos.nth(0)).toHaveValue('2')
     await expect(campos.nth(1)).toHaveValue('0')
     // o coach digita o extra (5); grava extra + corpo, como a tela do aluno
@@ -139,7 +139,7 @@ test('formato antigo concluído: coach soma o corpo (80 + extra) e o aluno vê "
     await page.getByRole('button', { name: /Treino 1/ }).click()
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Desenvolvimento Militar Barra' })
     await expect(cartao.getByText('Peso do corpo contado: 80 kg')).toBeVisible()
-    const kg = cartao.locator('input[type="number"]')
+    const kg = cartao.locator('input[inputmode="decimal"]')
     await expect(kg.nth(0)).toHaveValue('2')
     await expect(kg.nth(2)).toHaveValue('5')
     await expect(kg.nth(4)).toHaveValue('0')
@@ -161,7 +161,7 @@ test('formato antigo NÃO concluído: série em branco e sem reps não conta o c
   await expect(linha.getByText('Inclui peso do corpo: 80 kg')).toBeVisible()
   await expect(linha).toContainText('656') // só a S1: 8 × 82
   await expect(linha).not.toContainText('1.936')
-  const campos = linha.locator('input[type="number"]')
+  const campos = linha.locator('input[inputmode="decimal"]')
   await expect(campos.nth(0)).toHaveValue('2')
   await expect(campos.nth(1)).toHaveValue('')
   await ctx.close()
