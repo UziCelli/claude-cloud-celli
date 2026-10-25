@@ -6,7 +6,7 @@ name: Backup semanal
 # Restaurar: baixe o artifact em Actions -> execução -> Artifacts e regrave cada documento com firebase-admin
 # (db.collection(c).doc(id).set(dados)); datas estão em ISO e voltam a Timestamp com Timestamp.fromDate.
 # A limpeza LGPD (limpeza-lgpd.yml) apaga os backups antigos da MESMA marca depois de uma exclusão: ambos usam o mesmo grupo de concorrência.
-# ATENÇÃO: o artifact contém dados pessoais dos alunos. Mantenha o repositório privado.
+# ATENÇÃO: o artifact contém dados pessoais dos alunos, mas é CRIPTOGRAFADO (AES-256 com BACKUP_SENHA). Guarde a senha; sem ela o backup não abre.
 on:
   schedule:
     - cron: '0 6 * * 0'
