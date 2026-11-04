@@ -45,8 +45,14 @@ async function percorrer(page: Page, titulo: string, total: number, atalho: { te
   await expect(dialogo).toBeHidden()
 
   await page.getByRole('button', { name: 'Como usar' }).click()
+  // O app atrás fica inerte: o Tab nunca para num botão do app (só no onboarding ou fora da página).
+  for (let n = 0; n < 6; n++) {
+    await page.keyboard.press('Tab')
+    expect(await page.evaluate(() => !!document.getElementById('root')?.contains(document.activeElement))).toBe(false)
+  }
   await page.keyboard.press('Escape')
   await expect(dialogo).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Como usar' })).toBeFocused()
 
   await page.getByRole('button', { name: 'Como usar' }).click()
   for (let n = 1; n < total; n++) await page.keyboard.press('ArrowRight')

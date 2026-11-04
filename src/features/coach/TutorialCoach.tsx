@@ -152,7 +152,7 @@ function Acompanhar() {
 function Presencial() {
   return (
     <div className="space-y-2.5">
-      <div className="rounded-xl bg-sky-900/50 px-3 py-2 text-center text-sm font-semibold text-sky-200">Presencial: Ana Souza</div>
+      <div className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10"><span className="size-2 rounded-full bg-amber-400" /><span className="leading-tight"><span className="block text-[11px] uppercase tracking-wider text-slate-400">Presencial</span><span className="text-sm font-semibold text-white">Ana Souza</span></span></div>
       <div className="flex items-center gap-2 rounded-xl bg-slate-800/80 py-1.5 pl-3 pr-2 text-sm">
         <span className="w-6 font-bold text-slate-300">S1</span>
         <span className="flex h-9 w-20 items-center justify-center rounded-lg bg-slate-950 font-semibold ring-2 ring-marca-400">50</span>
@@ -176,7 +176,7 @@ function Relatorio() {
         <p className="mt-1.5 inline-block rounded-full bg-white/10 px-3 py-1.5 text-xs text-slate-200 ring-1 ring-white/20">Ana Souza · Meso 3</p>
       </div>
       <div className="flex gap-2">
-        <Pilula className="flex-1 border-marca-400 bg-marca-500 text-white">Liberar</Pilula>
+        <Pilula className="flex-1 border-marca-400 bg-marca-500 text-white">Liberar para o aluno</Pilula>
         <Pilula className="flex-1 border-slate-500 bg-slate-700 text-white">Baixar PDF</Pilula>
       </div>
       <div className="flex items-center justify-center gap-1.5 text-sm text-slate-300"><IcTrofeu className="size-4 text-amber-300" /> Ranking: quem mais evoluiu</div>
@@ -226,7 +226,7 @@ const passos = (nome: string): Passo[] => [
   {
     rotulo: 'Passo 6',
     titulo: 'Treino presencial',
-    texto: 'Treinando junto? Toque em "Presencial" no aluno. Você anota as cargas no seu celular e pode mudar o treino do dia.',
+    texto: 'Treinando junto? Toque em "Treino presencial" no aluno. Você anota as cargas no seu celular e pode mudar o treino do dia.',
     ilustracao: <Palco><Presencial /></Palco>,
   },
   {

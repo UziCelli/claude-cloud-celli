@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { agil, saida, suave } from '../../movimento'
 import { Brilho, IconeQuadrado } from '../../vidro'
@@ -72,6 +73,10 @@ export default function Onboarding({
   const acoes = useRef({ sair, ir, i })
   acoes.current = { sair, ir, i }
   useEffect(() => {
+    // Fica fora do #root (portal) e deixa o app atrás inerte: o Tab não escapa. Ao fechar, o foco volta a quem abriu.
+    const raiz = document.getElementById('root')
+    const antes = document.activeElement as HTMLElement | null
+    if (raiz) raiz.inert = true
     ref.current?.focus()
     const tecla = (e: KeyboardEvent) => {
       const a = acoes.current
@@ -80,12 +85,16 @@ export default function Onboarding({
       else if (e.key === 'ArrowLeft') a.ir(a.i - 1)
     }
     window.addEventListener('keydown', tecla)
-    return () => window.removeEventListener('keydown', tecla)
+    return () => {
+      window.removeEventListener('keydown', tecla)
+      if (raiz) raiz.inert = false
+      antes?.focus?.()
+    }
   }, [])
 
   const p = passos[i]
   const desloca = quieto ? 0 : 60
-  return (
+  return createPortal(
     <m.div
       ref={ref}
       tabIndex={-1}
@@ -157,7 +166,8 @@ export default function Onboarding({
         {/* Sempre o mesmo lugar (o botão principal não pula de posição); no último passo fica só o espaço. */}
         <button type="button" onClick={sair} className={`mt-1 h-11 w-full text-[15px] font-semibold text-slate-400 hover:text-white ${ultimo ? 'invisible' : ''}`}>Pular</button>
       </div>
-    </m.div>
+    </m.div>,
+    document.body,
   )
 }
 
