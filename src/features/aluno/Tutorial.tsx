@@ -6,7 +6,8 @@ import { COR_METODO } from '../../data/metodos'
 import { IcCasa, IcCheck, IcGrafico, IcHaltere, IcInfo, IcLivro, IcNota, IcPausa, IcPessoa, IcPlay, IcSino, IcTrofeu, IcVoltar } from '../../icones'
 import Onboarding, { naoVisto, Palco, useTique, type Passo } from '../onboarding/Onboarding'
 
-const CHAVE = 'forca-tutorial-visto'
+// v2 = onboarding novo (11/2026): chave nova para quem já tinha visto o tutorial antigo ver o novo 1 vez.
+const CHAVE = 'forca-tutorial-v2-visto'
 export const tutorialNaoVisto = () => naoVisto(CHAVE)
 
 const Linha = ({ s, kg, reps, cinza, faixa, destaque }: { s: string; kg: string; reps: string; cinza?: string; faixa?: string; destaque?: boolean }) => (
