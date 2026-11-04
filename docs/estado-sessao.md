@@ -215,3 +215,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Escolhas do Victor: tela cheia e poucos números. Fora do escopo: zoom/arrastar, filtros, adesivos.
 - **Pendência do Victor:** no iPhone (PWA) e no Android, conferir câmera/galeria e compartilhar direto no Instagram.
 - Próximos combinados (sem mudança): notificações (resto) e lojas.
+
+## 04/11/2026 — Login que não cai, 2FA menos vezes e concluir com confirmação
+- **Saída por inatividade:** aluno 30 dias (era 4 h), coach 7 dias (era 20 min). Fechar o app e voltar não pede login de novo; o 2FA do coach só volta em aparelho novo, depois de "Sair" ou de 7 dias sem abrir.
+- **Concluir treino:** pede um 2º toque ("Concluir o treino?" → Sim, concluir / Continuar treinando).
+- **Desfazer:** logo depois de concluir (até 3 h do início), o treino volta a correr com o tempo do início original; cargas ficam.
+- Vale para as duas marcas (mesmo código).

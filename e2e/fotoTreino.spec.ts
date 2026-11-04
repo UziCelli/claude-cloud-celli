@@ -34,6 +34,7 @@ test('foto no fim do treino: prévia, trocar e tirar', async ({ page }) => {
   await page.getByRole('button', { name: /Treino 1/ }).click()
   await page.getByRole('button', { name: 'Iniciar treino' }).click()
   await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await page.getByRole('button', { name: 'Sim, concluir' }).click()
   await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
 
   await page.locator('input[type="file"]').setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: PNG })

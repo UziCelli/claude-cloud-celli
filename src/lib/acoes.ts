@@ -349,6 +349,10 @@ export const aceitarPrivacidade = (uid: string) =>
 export const marcarRealizado = (mesoId: string, alunoId: string, semana: number, treino: number, realizado: boolean, jaTemFim = false) =>
   registro(mesoId, alunoId, semana, treino, { realizado, ...(realizado && !jaTemFim && { realizadoEm: serverTimestamp() }) })
 
+// "Desfazer" logo depois de concluir: apaga a hora do fim para o relógio voltar a contar do início original.
+export const reabrirTreino = (mesoId: string, alunoId: string, semana: number, treino: number) =>
+  registro(mesoId, alunoId, semana, treino, { realizado: false, realizadoEm: deleteField() })
+
 // Primeira ação do aluno no treino: o chamador só chama se o registro ainda não tem inicioEm.
 export const marcarInicio = (mesoId: string, alunoId: string, semana: number, treino: number) =>
   registro(mesoId, alunoId, semana, treino, { inicioEm: serverTimestamp() })

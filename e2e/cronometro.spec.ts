@@ -49,6 +49,7 @@ test('Desfazer num treino antigo mantém a duração, não revive o relógio e n
   await expect(page.getByText('50:00')).toBeVisible()
 
   await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await page.getByRole('button', { name: 'Sim, concluir' }).click()
   await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
   await expect(page.getByText('50:00')).toBeVisible()
   await expect.poll(async () => ((await lerDoc(`registros/${regId}`))?.fields as any)?.realizado?.booleanValue).toBe(true)
@@ -64,6 +65,7 @@ test('treino esquecido aberto há 80 h não mostra horas falsas', async ({ page 
   await expect(page.getByTestId('relogio-treino')).toHaveText('mais de 3 h')
 
   await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await page.getByRole('button', { name: 'Sim, concluir' }).click()
   await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
   await expect(page.getByText('Duração', { exact: true })).toHaveCount(0) // sem duração falsa no story
 })
@@ -83,9 +85,37 @@ test('treino importado da planilha (fim sem início): Desfazer mostra Iniciar e 
 
   await page.getByRole('button', { name: 'Iniciar treino' }).click()
   await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await page.getByRole('button', { name: 'Sim, concluir' }).click()
   await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
   await expect(page.getByText('Duração', { exact: true })).toBeVisible()
   await expect
     .poll(async () => Date.parse(((await lerDoc(`registros/${regId}`))?.fields as any)?.realizadoEm?.timestampValue ?? 0))
     .toBeGreaterThan(antes)
+})
+
+test('Concluir pede confirmação; Desfazer logo depois volta o relógio do início, sem perder o tempo', async ({ page }) => {
+  const id = await meso('Meso Hoje', dia(0))
+  const regId = await criarRegistro(id, alunoId, 1, 1, { cargas: { a: { s1: 20 } }, inicioEm: new Date(Date.now() - 20 * 60_000) })
+  await entrar(page)
+  await page.goto(`/#/treino/${id}/1/1`)
+  await expect(page.getByRole('timer')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await expect(page.getByText('Concluir o treino?')).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar treinando' }).click() // toque sem querer: nada muda
+  await expect(page.getByRole('timer')).toBeVisible()
+  expect(((await lerDoc(`registros/${regId}`))?.fields as any)?.realizado).toBeUndefined()
+
+  await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await page.getByRole('button', { name: 'Sim, concluir' }).click()
+  await expect(page.getByRole('heading', { name: 'Treino concluído' })).toBeVisible()
+  await expect.poll(async () => ((await lerDoc(`registros/${regId}`))?.fields as any)?.realizadoEm).toBeDefined()
+
+  await page.getByRole('button', { name: 'Ver treino' }).click()
+  await page.getByRole('button', { name: 'Desfazer', exact: true }).click()
+  await expect(page.getByText('Treino em andamento')).toBeVisible()
+  await expect(page.getByTestId('relogio-treino')).toHaveText(/^2\d:\d\d$/) // conta do início real (~20 min), não do zero
+  await expect.poll(async () => ((await lerDoc(`registros/${regId}`))?.fields as any)?.realizadoEm).toBeUndefined()
+  const f = ((await lerDoc(`registros/${regId}`))?.fields ?? {}) as Record<string, any>
+  expect(f.cargas.mapValue.fields.a.mapValue.fields.s1).toBeDefined() // a carga anotada continua lá
 })
