@@ -3,10 +3,11 @@ import { m } from 'motion/react'
 import marca from '@marca/marca.json'
 import Logo from '@marca/Logo'
 import { COR_METODO } from '../../data/metodos'
-import { IcCasa, IcCheck, IcGrafico, IcHaltere, IcInfo, IcLivro, IcNota, IcPausa, IcPessoa, IcPlay, IcSino, IcTrofeu } from '../../icones'
+import { IcCasa, IcCheck, IcGrafico, IcHaltere, IcInfo, IcLivro, IcNota, IcPausa, IcPessoa, IcPlay, IcSino, IcTrofeu, IcVoltar } from '../../icones'
 import Onboarding, { naoVisto, Palco, useTique, type Passo } from '../onboarding/Onboarding'
 
-const CHAVE = 'forca-tutorial-visto'
+// v2 = onboarding novo (11/2026): chave nova para quem já tinha visto o tutorial antigo ver o novo 1 vez.
+const CHAVE = 'forca-tutorial-v2-visto'
 export const tutorialNaoVisto = () => naoVisto(CHAVE)
 
 const Linha = ({ s, kg, reps, cinza, faixa, destaque }: { s: string; kg: string; reps: string; cinza?: string; faixa?: string; destaque?: boolean }) => (
@@ -124,11 +125,14 @@ const passos = (nome: string): Passo[] => [
   {
     rotulo: 'Passo 3',
     titulo: 'Cores mostram o método',
-    texto: 'A faixa colorida marca as séries com método. D1, D2… são as etapas do dropset. Não sabe fazer? Toque no selo e veja o passo a passo.',
+    texto: 'A faixa colorida marca as séries com método. No dropset, toque em "Drop da S2" para abrir as etapas D1, D2… Não sabe fazer? Toque no selo e veja o passo a passo.',
     ilustracao: (
       <Palco>
         <div className="space-y-1.5">
           <Linha s="S2" kg="40" reps="10" faixa={COR_METODO.Dropset.faixa} />
+          <span className={`ml-6 inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold ring-1 ${COR_METODO.Dropset.selo}`}>
+            Drop da S2 · 1 etapa <IcVoltar className="size-4 rotate-90" />
+          </span>
           <Linha s="D1" kg="30" reps="8" faixa={COR_METODO.Dropset.faixa} />
           <div className="flex flex-wrap items-center gap-2 pt-2">
             <Selo nome="Dropset" cor="Dropset" />
