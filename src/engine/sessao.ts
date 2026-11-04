@@ -1,4 +1,4 @@
-import type { AplicacaoMetodo, ExercicioPrescrito, Meso, Sessao } from './tipos'
+import type { AplicacaoMetodo, ExercicioPrescrito, Meso, Sessao, SlotSessao } from './tipos'
 
 // MAX da planilha: campos vazios valem 0 e MAX de nada é 0.
 const max = (linhas: AplicacaoMetodo[], campo: (m: AplicacaoMetodo) => number | null | undefined) =>
@@ -47,17 +47,30 @@ export function linhaPrescrita(meso: Meso, semana: number, treino: number, pos: 
   )
 }
 
+// Exercícios do dia: a sessão editada no presencial, senão a divisão com as trocas pontuais (de = posição).
+export function slotsDaSessao(meso: Meso, semana: number, treino: number): SlotSessao[] {
+  const editada = meso.sessoes?.[`${semana}-${treino}`]
+  if (editada) return editada.exercicios
+  return (meso.divisao[treino - 1] ?? []).map((original, i) => ({ ...(meso.trocas?.[`${semana}-${treino}-${i + 1}`] ?? original), de: i + 1 }))
+}
+
+// Linhas de método do dia (ativas ou não): as da sessão editada, senão as do plano.
+export function metodosDaSessao(meso: Meso, semana: number, treino: number): AplicacaoMetodo[] {
+  const editada = meso.sessoes?.[`${semana}-${treino}`]
+  return editada ? editada.metodos : meso.metodos.filter((m) => m.semana === semana && m.treino === treino)
+}
+
 export function prescreverSessao(meso: Meso, semana: number, treino: number): Sessao | null {
   if (semana < 1 || semana > meso.semanas || treino < 1 || treino > meso.frequencia) return null
 
   const [ano, mes, dia] = meso.inicio.slice(0, 10).split('-').map(Number)
   const inicioSemana = new Date(Date.UTC(ano, mes - 1, dia + 7 * (semana - 1))).toISOString().slice(0, 10)
-  const doTreino = meso.metodos.filter((m) => m.ativo && m.semana === semana && m.treino === treino)
+  const doTreino = metodosDaSessao(meso, semana, treino).filter((m) => m.ativo)
 
-  const exercicios = (meso.divisao[treino - 1] ?? []).map((original, i): ExercicioPrescrito => {
+  const exercicios = slotsDaSessao(meso, semana, treino).map(({ de, ...slot }, i): ExercicioPrescrito => {
     const pos = i + 1
-    const slot = meso.trocas?.[`${semana}-${treino}-${pos}`] ?? original
-    const linha = linhaPrescrita(meso, semana, treino, pos)
+    // Exercício novo (sem `de`): progressão padrão, senão a dos auxiliares.
+    const linha = de != null ? linhaPrescrita(meso, semana, treino, de) : (meso.progressao.padrao ?? meso.progressao.auxiliares)[semana - 1] ?? []
     const base = (k: number) => linha[k - 1] ?? 0
     const n = linha.filter((r) => typeof r === 'number').length
     const linhas = doTreino.filter((m) => m.exercicio === pos)
@@ -85,7 +98,7 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
     }
 
     const rotulo = linhas.map((m) => `${m.metodo} [${sufixo(m)}]`).join('; ')
-    const pausaS = slot.pausaS ?? (pos <= 2 ? (meso.pausaPrincipaisS ?? meso.pausaS) : meso.pausaS)
+    const pausaS = slot.pausaS ?? (de != null && de <= 2 ? (meso.pausaPrincipaisS ?? meso.pausaS) : meso.pausaS)
     return { pos, slot, n, reps, rotulo, cargaSugerida, pausaS }
   })
 

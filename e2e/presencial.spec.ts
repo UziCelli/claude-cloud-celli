@@ -174,3 +174,54 @@ test('grupo de 3: Sair no primeiro mantém os outros dois', async ({ page }) => 
   await expect(seletor.getByRole('button', { name: 'Caio' })).toBeVisible()
   await expect(seletor.getByRole('button', { name: 'Dani' })).toBeVisible()
 })
+
+test('coach edita o treino do dia: troca, método, adiciona, tira e volta ao planejado', async ({ page }) => {
+  const { alunoId, mesoId } = await semear(false)
+  await entrar(page, COACH.email, COACH.senha)
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.goto(`/#/aluno/${alunoId}/presencial/treino/${mesoId}/1/1`)
+  const tela = page.getByRole('region', { name: `Treino de ${ALUNO.nome}` })
+  const cartao = (nome: string) => tela.locator('.rounded-xl.border').filter({ hasText: nome })
+  const dialogo = page.getByRole('dialog')
+  const confirmar = async (nome: string) => {
+    const campo = dialogo.getByRole('combobox')
+    await campo.fill(nome)
+    await campo.press('Enter')
+  }
+  page.on('dialog', (d) => d.accept())
+
+  await tela.getByRole('button', { name: 'Editar Desenvolvimento Militar Barra', exact: true }).click()
+  await confirmar('Supino Reto Barra')
+  await expect(cartao('Supino Reto Barra')).toBeVisible()
+  await expect(tela.getByText('Treino ajustado só hoje')).toBeVisible()
+
+  await tela.getByRole('button', { name: 'Editar Barra Fixa Aberta', exact: true }).click()
+  await dialogo.getByRole('button', { name: 'Adicionar Dropset' }).click()
+  await expect(dialogo.getByRole('button', { name: 'Tirar Dropset' })).toBeVisible()
+  await page.mouse.click(5, 5) // toque fora fecha
+  await expect(cartao('Barra Fixa Aberta').getByText('D1')).toBeVisible()
+
+  await tela.getByRole('button', { name: '+ Adicionar exercício' }).click()
+  await confirmar('Remada Curvada Barra')
+  const novo = cartao('Remada Curvada Barra')
+  await expect(novo).toBeVisible()
+  const kg = novo.locator('input[inputmode="decimal"]').first()
+  await kg.fill('30')
+  await kg.blur()
+
+  await tela.getByRole('button', { name: 'Editar Supino Reto Barra', exact: true }).click()
+  await dialogo.getByRole('button', { name: 'Tirar do treino de hoje' }).click()
+  await expect(cartao('Supino Reto Barra')).toHaveCount(0)
+
+  await expect.poll(async () => {
+    const d = ((await lerDoc(`mesos/${mesoId}`))?.fields ?? {}) as Record<string, any>
+    const r = ((await lerDoc(`registros/${mesoId}_s01_t1`))?.fields ?? {}) as Record<string, any>
+    const cargas = Object.values(r.cargas?.mapValue?.fields ?? {}) as any[]
+    return [!!d.sessoes?.mapValue?.fields?.['1-1'], cargas.some((c) => num(c.mapValue?.fields?.s1) === 30)]
+  }, { timeout: 15_000 }).toEqual([true, true])
+
+  await tela.getByRole('button', { name: 'Voltar ao planejado' }).click()
+  await expect(cartao('Desenvolvimento Militar Barra')).toBeVisible()
+  await expect(cartao('Remada Curvada Barra')).toHaveCount(0)
+  await expect(tela.getByText('Treino ajustado só hoje')).toHaveCount(0)
+})

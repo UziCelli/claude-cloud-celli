@@ -83,3 +83,18 @@ describe('cargaAnterior', () => {
     expect(r!.series[3]).toBeUndefined() // S4 não herda o D1
   })
 })
+
+describe('cargaAnterior com treino ajustado no presencial', () => {
+  const m: Meso = {
+    frequencia: 1, semanas: 2, inicio: '2026-01-05', pausaS: 60,
+    divisao: [[{ slotId: 'A', nome: 'Supino' }, { slotId: 'B', nome: 'Remada' }]],
+    progressao: { principais: [[10, 10], [10, 10]], auxiliares: [[12, 12], [12, 12]] },
+    metodos: [],
+    sessoes: { '2-1': { semana: 2, treino: 1, exercicios: [{ slotId: 'B', nome: 'Remada', de: 2 }, { slotId: 'n', nome: 'Supino' }], metodos: [] } },
+  }
+  it('acha o mesmo exercício em outra posição da semana anterior', () => {
+    const regs = { '1-1': { A: [50, 52], B: [30, null] } }
+    expect(cargaAnterior(m, regs, 2, 1, 1)).toEqual({ series: [30, null], drops: [] })
+    expect(cargaAnterior(m, regs, 2, 1, 2)).toEqual({ series: [50, 52], drops: [] })
+  })
+})

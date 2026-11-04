@@ -25,6 +25,7 @@ import {
   deleteDoc,
   deleteField,
   doc,
+  FieldPath,
   getDoc,
   getDocFromServer,
   getDocs,
@@ -38,7 +39,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import type { Meso } from '../engine'
+import type { Meso, SessaoEditada } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
 import { arquivadosVencidos } from './alertas'
 import { idCardio, type TipoCardio } from './cardio'
@@ -187,6 +188,13 @@ export async function importarMeso(alunoId: string, nome: string, { meso, regist
   }
   return { id: ref.id, gravado: b.commit() }
 }
+
+// Treino do dia ajustado no presencial (só aquela semana + treino). Grava só o campo da sessão, nunca o meso
+// inteiro: offline fica na fila e o editor do meso não o apaga (mesoParaDoc não leva `sessoes`).
+export const salvarSessaoEditada = (mesoId: string, s: SessaoEditada) =>
+  updateDoc(doc(db, 'mesos', mesoId), new FieldPath('sessoes', `${s.semana}-${s.treino}`), s)
+export const voltarAoPlanejado = (mesoId: string, semana: number, treino: number) =>
+  updateDoc(doc(db, 'mesos', mesoId), new FieldPath('sessoes', `${semana}-${treino}`), deleteField())
 
 // Marca que o coach adaptou o treino (o aluno vê o aviso uma vez).
 export const marcarAdaptado = (mesoId: string) => updateDoc(doc(db, 'mesos', mesoId), { adaptadoEm: serverTimestamp() })

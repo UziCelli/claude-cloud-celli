@@ -2,7 +2,7 @@ import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { confete, elastico, saida, suave } from '../../movimento'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { prescreverSessao, type Metodo } from '../../engine'
+import { metodosDaSessao, prescreverSessao, type Metodo } from '../../engine'
 import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
 import { limparTreino, marcarTreino } from '../../lib/inatividade'
 import { mmss, useDescanso } from '../../lib/descanso'
@@ -28,6 +28,7 @@ import { Botao, cascata, Centro, item, Painel } from '../../ui'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
+import { AdicionarExercicio, EditarExercicio, FaixaAjustado } from '../coach/presencial/EditarTreino'
 
 type RegistroFlag = RegistroDoc & { realizado?: boolean; inicioEm?: unknown; realizadoEm?: { toMillis(): number } | null; pc?: Record<string, number> }
 
@@ -478,7 +479,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
 
   // Exercícios do mesmo grupo de método ficam juntos (só a ordem de exibição muda).
   const grupoDe = (pos: number) => {
-    const l = meso.metodos.find((x) => x.ativo && x.semana === semana && x.treino === treino && x.exercicio === pos && x.grupo != null && METODOS_SEQUENCIA.test(x.metodo))
+    const l = metodosDaSessao(meso, semana, treino).find((x) => x.ativo && x.exercicio === pos && x.grupo != null && METODOS_SEQUENCIA.test(x.metodo))
     return l ? `${l.metodo}|${l.grupo}` : null
   }
   const chavesBrutas = sessao.exercicios.map((e) => grupoDe(e.pos))
@@ -535,6 +536,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
       {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
       <Novidades />
+      {coach && meso.sessoes?.[chave] && <FaixaAjustado mesoId={mesoId} semana={semana} treino={treino} />}
       <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
         {exibicao.map((e) => {
           const gk = chaves[sessao.exercicios.indexOf(e)]
@@ -603,6 +605,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1">
+                  {coach && <EditarExercicio meso={meso} mesoId={mesoId} semana={semana} treino={treino} pos={e.pos} nome={e.slot.nome} n={e.n} temCarga={colunasCargas.some((v) => v != null)} />}
                   <Botao aria-label="Som do cronômetro" className="min-h-11" onClick={descanso.alternarSom}>
                     {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
                   </Botao>
@@ -699,6 +702,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
           )
         })}
       </m.div>
+      {coach && <div className="mt-4"><AdicionarExercicio meso={meso} mesoId={mesoId} semana={semana} treino={treino} /></div>}
 
       <div className="mt-6">
         {realizado ? (

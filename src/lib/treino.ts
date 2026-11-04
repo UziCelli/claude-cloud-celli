@@ -11,8 +11,8 @@ export function semanaAtual(meso: Meso, hoje: Date) {
   return { estado: 'durante' as const, semana }
 }
 
-// Cargas da semana anterior mais recente em que a mesma posição do treino tinha o mesmo
-// exercício (pelo nome, já com trocas) e alguma carga anotada. Lida pelo slotId daquela semana.
+// Cargas da semana anterior mais recente em que o mesmo treino tinha o mesmo exercício (pelo nome, já com
+// trocas e sessões editadas; de preferência na mesma posição) e alguma carga anotada. Lida pelo slotId daquela semana.
 // Devolve `series` (S1..Sn daquela semana) e `drops` (D1.. daquela semana) separados: o n muda entre semanas.
 // Sem `pcs`, devolve o total gravado. Com `pcs` (`${semana}-${treino}` -> { slotId: kg do corpo }),
 // devolve só o extra: total menos o corpo DAQUELE registro (o de hoje pode ser outro), nunca negativo.
@@ -24,18 +24,17 @@ export function cargaAnterior(
   pos: number,
   pcs?: Record<string, Record<string, number> | undefined>,
 ) {
-  const slot = (w: number) => meso.trocas?.[`${w}-${treino}-${pos}`] ?? meso.divisao[treino - 1]?.[pos - 1]
-  const alvo = slot(semana)
+  const alvo = prescreverSessao(meso, semana, treino)?.exercicios[pos - 1]?.slot
   if (!alvo) return null
   for (let w = semana - 1; w >= 1; w--) {
-    const s = slot(w)
-    if (s?.nome !== alvo.nome) continue
-    const cargas = registros[`${w}-${treino}`]?.[s.slotId]
-    if (!cargas?.some((c) => c != null)) continue
-    const corpo = pcs?.[`${w}-${treino}`]?.[s.slotId] ?? 0
+    const exs = prescreverSessao(meso, w, treino)?.exercicios ?? []
+    const comCarga = (e: (typeof exs)[number]) => e.slot.nome === alvo.nome && registros[`${w}-${treino}`]?.[e.slot.slotId]?.some((c) => c != null)
+    const e = [exs[pos - 1], ...exs].find((x) => x && comCarga(x))
+    if (!e) continue
+    const cargas = registros[`${w}-${treino}`][e.slot.slotId]
+    const corpo = pcs?.[`${w}-${treino}`]?.[e.slot.slotId] ?? 0
     const extra = corpo > 0 ? cargas.map((c) => (c == null ? null : Math.max(0, Math.round((c - corpo) * 100) / 100))) : cargas
-    const n = prescreverSessao(meso, w, treino)?.exercicios[pos - 1]?.n ?? extra.length
-    return { series: extra.slice(0, n), drops: extra.slice(n) }
+    return { series: extra.slice(0, e.n), drops: extra.slice(e.n) }
   }
   return null
 }
