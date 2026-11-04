@@ -152,6 +152,7 @@ test('fluxo completo do aluno, incluindo offline', async ({ page, context }) => 
 
   await test.step('conclui o treino e vê o ✓ na tela Hoje', async () => {
     await page.getByRole('button', { name: 'Concluir treino' }).click()
+    await page.getByRole('button', { name: 'Sim, concluir' }).click()
     await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
     await expect(page.getByText('Semana 1: 1 de')).toBeVisible()
     await expect(page.getByText('Volume', { exact: true })).toBeVisible()

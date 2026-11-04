@@ -6,16 +6,18 @@ vi.mock('./acoes', () => ({ sair: () => {} }))
 const { expirou, LIMITE_MIN, treinoEmAndamento, marcarTreino, limparTreino } = await import('./inatividade')
 
 describe('inatividade', () => {
-  it('limites por papel', () => {
-    expect(LIMITE_MIN).toEqual({ coach: 20, aluno: 240 })
+  it('limites por papel: coach 7 dias, aluno 30 dias', () => {
+    expect(LIMITE_MIN).toEqual({ coach: 7 * 24 * 60, aluno: 30 * 24 * 60 })
   })
   it('expira no limite exato, não antes', () => {
     const t0 = 1_000_000
-    expect(expirou(t0, t0 + 19 * 60_000, 'coach')).toBe(false)
-    expect(expirou(t0, t0 + 20 * 60_000, 'coach')).toBe(true)
-    expect(expirou(t0, t0 + 20 * 60_000, 'aluno')).toBe(false)
-    expect(expirou(t0, t0 + 239 * 60_000, 'aluno')).toBe(false)
-    expect(expirou(t0, t0 + 240 * 60_000, 'aluno')).toBe(true)
+    const D = 24 * 60 * 60_000
+    expect(expirou(t0, t0 + 5 * 60 * 60_000, 'coach')).toBe(false) // fechar o app e voltar horas depois não pede 2FA
+    expect(expirou(t0, t0 + 7 * D - 1, 'coach')).toBe(false)
+    expect(expirou(t0, t0 + 7 * D, 'coach')).toBe(true)
+    expect(expirou(t0, t0 + 7 * D, 'aluno')).toBe(false)
+    expect(expirou(t0, t0 + 30 * D - 1, 'aluno')).toBe(false)
+    expect(expirou(t0, t0 + 30 * D, 'aluno')).toBe(true)
   })
   it('sem marca (aparelho sem armazenamento) não derruba ninguém', () => {
     expect(expirou(0, Date.now(), 'coach')).toBe(false)

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { criarAluno, criarCoach, limparEmuladores } from './seed'
 
@@ -15,27 +15,28 @@ test.beforeAll(async () => {
   await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
 })
 
-test('tutorial do aluno: Próximo até Começar e Pular', async ({ page }) => {
+async function entrar(page: Page, email: string, senha: string) {
   await page.goto('/')
-  await page.getByLabel('E-mail').fill(ALUNO.email)
-  await page.getByLabel('Senha').fill(ALUNO.senha)
+  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
-  const dialogo = page.getByRole('dialog')
-  await expect(page.getByText('Olá, Tati')).toBeVisible()
-  await expect(dialogo).toBeHidden() // no e2e (webdriver) não abre sozinho
+}
 
-  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Conta' }).click()
+// Percorre o onboarding: Próximo até o fim, Voltar, Começar; depois Pular, Esc e um atalho do "Tudo pronto".
+async function percorrer(page: Page, titulo: string, total: number, atalho: { texto: string; url: RegExp }) {
+  const dialogo = page.getByRole('dialog')
   await page.getByRole('button', { name: 'Como usar' }).click()
   await expect(dialogo).toBeVisible()
-  await expect(dialogo.getByRole('heading', { name: marca.boasVindas })).toBeVisible()
-  for (let n = 1; n <= 10; n++) {
-    await expect(dialogo.getByText(`${n} de 11`)).toBeVisible()
+  await expect(dialogo.getByText(titulo)).toBeVisible()
+  for (let n = 1; n < total; n++) {
+    await expect(dialogo.getByText(`${n} de ${total}`)).toBeVisible()
     await dialogo.getByRole('button', { name: 'Próximo' }).click()
   }
-  await expect(dialogo.getByText('11 de 11')).toBeVisible()
+  await expect(dialogo.getByText(`${total} de ${total}`)).toBeVisible()
+  await expect(dialogo.getByRole('heading', { name: 'Agora é com você!' })).toBeVisible()
   await dialogo.getByRole('button', { name: 'Voltar' }).click()
-  await expect(dialogo.getByText('10 de 11')).toBeVisible()
-  await dialogo.getByRole('button', { name: 'Próximo' }).click()
+  await expect(dialogo.getByText(`${total - 1} de ${total}`)).toBeVisible()
+  await page.keyboard.press('ArrowRight')
   await dialogo.getByRole('button', { name: 'Começar' }).click()
   await expect(dialogo).toBeHidden()
 
@@ -46,4 +47,26 @@ test('tutorial do aluno: Próximo até Começar e Pular', async ({ page }) => {
   await page.getByRole('button', { name: 'Como usar' }).click()
   await page.keyboard.press('Escape')
   await expect(dialogo).toBeHidden()
+
+  await page.getByRole('button', { name: 'Como usar' }).click()
+  for (let n = 1; n < total; n++) await page.keyboard.press('ArrowRight')
+  await dialogo.getByRole('link', { name: atalho.texto }).click()
+  await expect(dialogo).toBeHidden()
+  await expect(page).toHaveURL(atalho.url)
+}
+
+test('onboarding do aluno', async ({ page }) => {
+  await entrar(page, ALUNO.email, ALUNO.senha)
+  await expect(page.getByText('Olá, Tati')).toBeVisible()
+  await expect(page.getByRole('dialog')).toBeHidden() // no e2e (webdriver) não abre sozinho
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Conta' }).click()
+  await percorrer(page, marca.boasVindas, 8, { texto: 'Ver o treino de hoje', url: /#\/treino$/ })
+})
+
+test('onboarding do coach', async ({ page }) => {
+  await entrar(page, COACH.email, COACH.senha)
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Conta' }).click()
+  await percorrer(page, `Seu painel ${marca.doNome}`, 9, { texto: 'Cadastrar um aluno', url: /#\/alunos\/novo$/ })
 })

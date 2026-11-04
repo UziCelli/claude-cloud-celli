@@ -72,6 +72,7 @@ for (const presencial of [false, true]) {
     await fixa.getByRole('checkbox', { name: /Feito com o peso do corpo/ }).check()
 
     await page.getByRole('button', { name: 'Concluir treino' }).click()
+    await page.getByRole('button', { name: 'Sim, concluir' }).click()
     await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
     await expect(page.getByRole('button', { name: /Treino 1.*Feito/ })).toBeVisible() // voltou ao Hoje presencial

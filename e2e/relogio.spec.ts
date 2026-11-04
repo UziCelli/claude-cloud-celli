@@ -50,6 +50,7 @@ async function iniciarEConcluir(page: Page, print = false, aluno = false) {
   await expect.poll(() => seg(page), { timeout: 8000 }).toBeGreaterThan(a)
   if (print) await page.screenshot({ path: PRINT })
   await page.getByRole('button', { name: 'Concluir treino' }).click()
+  await page.getByRole('button', { name: 'Sim, concluir' }).click()
   await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
   await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
   if (aluno) await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click() // aluno volta ao Início
@@ -79,27 +80,16 @@ test('coach presencial: iniciar, relógio andando, concluir', async ({ page }) =
   await iniciarEConcluir(page)
 })
 
-// Treino iniciado neste aparelho conta como uso; sem treino, o coach cai em 20 min.
-for (const comTreino of [true, false]) {
-  test(`inatividade do coach ${comTreino ? 'não cai com treino iniciado' : 'cai sem treino iniciado'}`, async ({ page }) => {
-    await semear()
-    await page.clock.install()
-    await entrar(page, COACH.email, COACH.senha)
-    await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
-    await page.goto(`/#/aluno/${alunoId}`)
-    await page.getByRole('button', { name: 'Treino presencial' }).click()
-    await page.getByRole('button', { name: /Treino 1/ }).click()
-    await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
-    if (comTreino) await page.getByRole('button', { name: 'Iniciar treino' }).click()
-    else await page.getByRole('button', { name: '‹ Voltar' }).or(page.getByRole('button', { name: '← Hoje' })).first().click()
-    await page.clock.fastForward('25:00')
-    if (comTreino) {
-      await page.waitForTimeout(1500)
-      expect(await saiu(page)).toBeNull()
-      await expect(page.getByText('Treino em andamento')).toBeVisible()
-    } else {
-      // O app marca "saiu por inatividade" e chama sair() (a tela de login não renderiza sob relógio falso).
-      await expect.poll(() => saiu(page), { timeout: 15_000 }).toBe('1')
-    }
-  })
-}
+// Coach fica conectado: 25 min parado não derruba (antes caía em 20 min e pedia o 2FA de novo); 7 dias sem uso, sim.
+test('inatividade do coach: não cai em 25 min, cai depois de 7 dias', async ({ page }) => {
+  await semear()
+  await page.clock.install()
+  await entrar(page, COACH.email, COACH.senha)
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.clock.fastForward('25:00')
+  await page.waitForTimeout(1500)
+  expect(await saiu(page)).toBeNull()
+  await page.clock.fastForward(7 * 24 * 60 * 60_000)
+  // O app marca "saiu por inatividade" e chama sair() (a tela de login não renderiza sob relógio falso).
+  await expect.poll(() => saiu(page), { timeout: 15_000 }).toBe('1')
+})

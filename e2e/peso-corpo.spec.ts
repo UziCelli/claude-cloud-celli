@@ -55,6 +55,7 @@ test('peso do corpo: marcar depois de digitar mantém o extra; concluir preenche
     const cartao = page.locator('.rounded-xl.border').filter({ hasText: 'Barra Fixa Aberta' })
     await expect(cartao.getByText('Séries em branco contam só o peso do corpo ao concluir.')).toBeVisible()
     await page.getByRole('button', { name: 'Concluir treino' }).click()
+    await page.getByRole('button', { name: 'Sim, concluir' }).click()
     await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
     await page.getByRole('button', { name: 'Voltar para Hoje' }).click()
     await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Treino', exact: true }).click()
