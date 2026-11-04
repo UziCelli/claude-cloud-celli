@@ -174,7 +174,7 @@ export default function Alunos() {
         {aberto === a.id && (
           <m.div className="pt-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
             {confirmando?.id === a.id ? (
-              <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} />
+              <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />
             ) : editando === a.id ? (
               <div className="w-full space-y-3 pb-2">
                 <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
@@ -290,7 +290,7 @@ export default function Alunos() {
   )
 }
 
-function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string; tipo: 'arquivar' | 'apagar'; onFechar: () => void }) {
+function ConfirmarAluno({ id, nome, tipo, onFechar, onErro }: { id: string; nome: string; tipo: 'arquivar' | 'apagar'; onFechar: () => void; onErro: () => void }) {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const apagar = tipo === 'apagar'
@@ -298,9 +298,18 @@ function ConfirmarAluno({ id, nome, tipo, onFechar }: { id: string; nome: string
   function confirmar() {
     setEnviando(true)
     setErro('')
+    if (!apagar) {
+      // Arquivar grava na hora (offline) e o aluno já passa para Arquivados: fecha o menu agora. Esperar o servidor
+      // fechava o menu que o coach tivesse acabado de abrir lá (o mesmo aluno). Erro aparece no topo da lista.
+      definirAcesso(id, { status: 'arquivado' }).catch((e) => {
+        registrarErro('gravacao', `arquivar: ${e?.code ?? e}`, e)
+        onErro()
+      })
+      onFechar()
+      return
+    }
     // Sucesso: o aluno some da lista sozinho.
-    const p = apagar ? apagarAluno(id) : definirAcesso(id, { status: 'arquivado' })
-    p.then(onFechar).catch(() => {
+    apagarAluno(id).then(onFechar).catch(() => {
       setErro(apagar ? 'Não foi possível apagar. Confira a internet e tente de novo.' : 'Não deu para gravar. Tente de novo.')
       setEnviando(false)
     })
