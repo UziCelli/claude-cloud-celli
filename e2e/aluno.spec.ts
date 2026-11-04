@@ -442,6 +442,35 @@ test('carga com vírgula persiste; valor negativo não grava', async ({ page }) 
   expect(JSON.stringify((await lerDoc(`registros/${m}_s01_t1`))?.fields)).not.toContain('-3')
 })
 
+test('drop na S1: chavinha abre D1 e D2 dentro da S1, antes da S2', async ({ page }) => {
+  const prog = { w1: [8, 8, 8], w2: [8, 8, 8], w3: [8, 8, 8], w4: [8, 8, 8] }
+  const u = { email: 'gabi.drop-s1-e2e@teste.com', senha: 'senha123' }
+  const id = await criarAluno('Gabi Drop', u.email, u.senha)
+  const m = await criarMeso({
+    alunoId: id, nome: 'Meso Drop S1', frequencia: 1, semanas: 4, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Supino Reto Barra' }] },
+    progressao: { principais: prog, auxiliares: prog },
+    metodos: [{ ativo: true, semana: 1, treino: 1, exercicio: 1, metodo: 'Dropset', escopo: 'Série específica', serie: 1, etapas: 2 }],
+  })
+  await entrarNoTreino(page, u, `${m}/1/1`)
+  const card = page.locator('.rounded-xl.border').filter({ hasText: 'Supino Reto Barra' })
+  const chave = card.getByRole('button', { name: /Drop da S1 · 2 etapas/ })
+  await expect(chave).toHaveAttribute('aria-expanded', 'false')
+  await expect(card.getByText('D1', { exact: true })).toHaveCount(0)
+  // Anotar a carga da S1 abre o drop dela (é o que vem logo depois).
+  await page.getByRole('button', { name: 'Iniciar treino' }).click()
+  const kg = card.locator('input[inputmode="decimal"]').first()
+  await kg.fill('40')
+  await kg.blur()
+  await expect(chave).toHaveAttribute('aria-expanded', 'true')
+  const y = async (t: string) => (await card.getByText(t, { exact: true }).boundingBox())!.y
+  expect(await y('S1')).toBeLessThan(await y('D1'))
+  expect(await y('D1')).toBeLessThan(await y('D2'))
+  expect(await y('D2')).toBeLessThan(await y('S2'))
+  await chave.click() // fecha
+  await expect(card.getByText('D1', { exact: true })).toHaveCount(0)
+})
+
 test('dica da semana passada: S4 não herda o D1', async ({ page }) => {
   const u = { email: 'fabi.drop-e2e@teste.com', senha: 'senha123' }
   const id = await criarAluno('Fabi Drop', u.email, u.senha)

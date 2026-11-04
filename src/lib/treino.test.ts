@@ -79,8 +79,23 @@ describe('cargaAnterior', () => {
       metodos: [{ semana: 1, treino: 1, exercicio: 1, metodo: 'Dropset', ativo: true, escopo: 'Últimas 2 séries', etapas: 1 }],
     }
     const r = cargaAnterior(m, { '1-1': { a: [50, 50, 50, 30] } }, 2, 1, 1)
-    expect(r).toEqual({ series: [50, 50, 50], drops: [30] })
+    expect(r).toEqual({ series: [50, 50, 50], drops: [] }) // hoje não tem drop
     expect(r!.series[3]).toBeUndefined() // S4 não herda o D1
+    const comDrop = { ...m, metodos: [...m.metodos, { ...m.metodos[0], semana: 2 }] }
+    expect(cargaAnterior(comDrop, { '1-1': { a: [50, 50, 50, 30] } }, 2, 1, 1)!.drops).toEqual([30]) // D1 da S3 → D1 da S4
+  })
+
+  it('drops seguem a série: o D1 da S1 puxa o D1 da S1 da semana anterior', () => {
+    const d = (semana: number, serie: number, etapas: number) =>
+      ({ semana, treino: 1, exercicio: 1, metodo: 'Dropset', ativo: true, escopo: 'Série específica', serie, etapas }) as const
+    const m: Meso = {
+      ...base,
+      divisao: [[slot('a', 'Supino')]],
+      progressao: { principais: [[10, 10, 10], [10, 10, 10]], auxiliares: [] },
+      metodos: [d(1, 1, 1), d(1, 3, 2), d(2, 3, 1)], // semana 2: só o drop da S3
+    }
+    // semana 1: S1 S2 S3 | S1·D1=40 | S3·D1=30 S3·D2=20
+    expect(cargaAnterior(m, { '1-1': { a: [60, 60, 60, 40, 30, 20] } }, 2, 1, 1)!.drops).toEqual([30])
   })
 })
 

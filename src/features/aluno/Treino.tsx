@@ -1,7 +1,7 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { confete, elastico, saida, suave } from '../../movimento'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { metodosDaSessao, prescreverSessao, type Metodo } from '../../engine'
 import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
 import { limparTreino, marcarTreino } from '../../lib/inatividade'
@@ -22,7 +22,7 @@ import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvoluc
 import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
-import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo } from '../../icones'
+import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir } from '../../rota'
 import { Botao, cascata, Centro, item, Painel } from '../../ui'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
@@ -369,6 +369,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const descanso = useDescanso()
   const semInternet = useSemInternet()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
+  // Chavinha do drop de cada série (`${slotId}-${serie}`). Sem escolha: aberto se o drop já tem algo anotado.
+  const [dropsAbertos, setDropsAbertos] = useState<Record<string, boolean>>({})
   const [inicioLocal, setInicioLocal] = useState<number | null>(null) // hora do toque, até o servidor confirmar
   const jaIniciou = useRef(false)
   // Festa no recorde: só leitura do histórico inteiro do aluno.
@@ -641,9 +643,16 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               </div>
               <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} />
               <div className="space-y-2">
-                {e.reps.map((repAlvo, k) => {
+                {(() => {
+                // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.
+                const dropsDa = (s: number) => e.drops.flatMap((d, j) => (d.serie === s ? [e.n + j] : []))
+                const soltos = e.drops.flatMap((d, j) => (d.serie >= 1 && d.serie <= e.n ? [] : [e.n + j]))
+                const linha = (k: number) => {
+                  const repAlvo = e.reps[k]
                   const dropStage = k >= e.n
-                  const rotuloCol = dropStage ? `D${k - e.n + 1}` : `S${k + 1}`
+                  const rotuloCol = dropStage ? `D${e.drops[k - e.n]?.etapa ?? k - e.n + 1}` : `S${k + 1}`
+                  const chaveDrop = `${slot}-${k + 1}`
+                  const temDrop = !dropStage && dropsDa(k + 1).length > 0
                   const placeholderKg = dropStage
                     ? (e.cargaSugerida[k] ?? anterior?.drops[k - e.n] ?? null)
                     : anterior?.series[k] != null
@@ -652,7 +661,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   // Uma faixa colorida por método que cobre esta série (etapas do drop = Dropset).
                   const cores = [...new Set(partes.filter(({ p, mt }) => mt && (dropStage ? mt === 'Dropset' : seriesDoRotulo(p, e.n).includes(k + 1))).map(({ mt }) => mt!))]
                   return (
-                    <div key={k} className={`relative grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5 ${e.rotulo ? 'pl-3' : ''}`}>
+                    <div key={k} className={`relative grid grid-cols-[1.75rem_3.25rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5 ${dropStage ? 'pl-6' : e.rotulo ? 'pl-3' : ''}`}>
                       {cores.length > 0 && (
                         <span aria-hidden className="absolute inset-y-0 left-0 flex gap-0.5">
                           {cores.map((c) => (
@@ -669,6 +678,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                         placeholder={placeholderKg}
                         onSalvar={(v) => {
                           if (auto && v != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
+                          if (temDrop && v != null && dropsAbertos[chaveDrop] === undefined) setDropsAbertos((p) => ({ ...p, [chaveDrop]: true })) // série feita: o drop vem logo depois
                           const total = v == null ? null : Math.round((v + corpo) * 100) / 100
                           registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, total)
                           if (comecou && !festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
@@ -689,7 +699,36 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                       <span className="text-xs text-slate-600">feitas</span>
                     </div>
                   )
-                })}
+                }
+                return (
+                  <>
+                    {Array.from({ length: e.n }, (_, k) => {
+                      const cols = dropsDa(k + 1)
+                      const chave = `${slot}-${k + 1}`
+                      const aberto = dropsAbertos[chave] ?? cols.some((c) => colunasCargas[c] != null || colunasReps[c] != null)
+                      return (
+                        <Fragment key={k}>
+                          {linha(k)}
+                          {cols.length > 0 && (
+                            <button
+                              type="button"
+                              aria-expanded={aberto}
+                              onClick={() => setDropsAbertos((p) => ({ ...p, [chave]: !aberto }))}
+                              className={`ml-6 flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-bold ring-1 ${COR_METODO.Dropset.selo}`}
+                            >
+                              <IconeMetodo metodo="Dropset" tamanho={16} />
+                              Drop da S{k + 1} · {cols.length} {cols.length === 1 ? 'etapa' : 'etapas'}
+                              <IcVoltar className={`size-4 transition-transform ${aberto ? 'rotate-90' : '-rotate-90'}`} />
+                            </button>
+                          )}
+                          {aberto && cols.map(linha)}
+                        </Fragment>
+                      )
+                    })}
+                    {soltos.map(linha)}
+                  </>
+                )
+                })()}
               </div>
               {/* Logo abaixo das séries: o app soma o peso do corpo ao extra digitado. */}
               <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">

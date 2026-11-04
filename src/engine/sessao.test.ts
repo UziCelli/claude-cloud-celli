@@ -180,6 +180,39 @@ describe('prescreverSessao — dropset (etapas extras e carga sugerida)', () => 
 
   it('etapas só contam em linhas Dropset', () => {
     expect(ex1(com([met({ metodo: 'Biset', etapas: 2 })])).reps).toEqual([10, 9, 8, 7])
+    expect(ex1(com([met({ metodo: 'Biset', etapas: 2 })])).drops).toEqual([])
+  })
+})
+
+describe('prescreverSessao — drop de cada série (drops)', () => {
+  const drop = (o: Partial<AplicacaoMetodo>) => met({ metodo: 'Dropset', ...o })
+
+  it('Série específica 1: as etapas são da S1 e usam a base da S1', () => {
+    const e = ex1(com([drop({ escopo: 'Série específica', serie: 1, etapas: 2 })]))
+    expect(e.reps).toEqual([10, 9, 8, 7, 10, 10])
+    expect(e.drops).toEqual([{ serie: 1, etapa: 1 }, { serie: 1, etapa: 2 }])
+  })
+
+  it('Todas/Últimas ficam na última série; Primeiras k na série k', () => {
+    expect(ex1(com([drop({ escopo: 'Todas as séries', etapas: 1 })])).drops).toEqual([{ serie: 4, etapa: 1 }])
+    expect(ex1(com([drop({ escopo: 'Últimas 2 séries', etapas: 1 })])).drops).toEqual([{ serie: 4, etapa: 1 }])
+    expect(ex1(com([drop({ escopo: 'Primeiras 2 séries', etapas: 1 })])).drops).toEqual([{ serie: 2, etapa: 1 }])
+  })
+
+  it('série além de n vai para a última (como antes)', () => {
+    expect(ex1(com([drop({ escopo: 'Série específica', serie: 6, etapas: 1 })])).drops).toEqual([{ serie: 4, etapa: 1 }])
+  })
+
+  it('um drop em cada série: blocos próprios, em ordem de série', () => {
+    const e = ex1(
+      com([
+        drop({ escopo: 'Série específica', serie: 3, etapas: 1, cargaEtapa: [20] }),
+        drop({ escopo: 'Série específica', serie: 1, etapas: 2, cargaEtapa: [40, 30], repsEtapa: [6] }),
+      ]),
+    )
+    expect(e.drops).toEqual([{ serie: 1, etapa: 1 }, { serie: 1, etapa: 2 }, { serie: 3, etapa: 1 }])
+    expect(e.reps).toEqual([10, 9, 8, 7, 6, 10, 8]) // S1: repsEtapa 6, depois base(1); S3: base(3)
+    expect(e.cargaSugerida).toEqual([null, null, null, null, 40, 30, 20])
   })
 })
 

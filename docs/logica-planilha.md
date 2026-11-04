@@ -48,14 +48,17 @@ Padrões sugeridos ao criar um método (aba "Avaliador e Referências"):
 ## 5. Reps de cada série — `AvRep(base, n, semana, treino, ex, pos)`
 - **Série normal (`pos ≤ n`)**: linhas que casam **e cobrem `pos`** → `pad = MAX(repsPadrao)`, `bloco = MAX(repsPorBloco)`.
   Resultado: `pad > 0 ? pad : bloco > 0 ? bloco : base(pos)`.
-- **Etapa extra de dropset (`pos > n`)**: linhas Dropset do exercício (escopo **não** filtra aqui).
-  `passo = pos − n`; `et = MAX(etapas)`; se `1 ≤ passo ≤ et`:
-  `repEt = MAX(repsEtapa[passo])`, `padDrop = MAX(repsPadrao)`, `alvo = MAX(serie)` (ou `n` se vazio) →
-  `repEt > 0 ? repEt : padDrop > 0 ? padDrop : base(min(alvo, n))`. Senão, a coluna fica vazia.
-- As etapas do dropset aparecem como colunas depois da última série (na planilha, até 6 colunas no total).
+- **Etapa extra de dropset (`pos > n`)** — [MUDADO NO APP, 04/11/2026: drop de cada série]: cada linha Dropset
+  pendura as etapas numa série `s`: "Série específica" → `min(serie, n)`; outros escopos → a última série que o
+  escopo cobre (Todas/Últimas = `n`, Primeiras k = `k`). Linhas com o mesmo `s` se juntam; para cada `s`, em ordem:
+  `et = MAX(etapas)`, e para `passo = 1..et`: `repEt = MAX(repsEtapa[passo])`, `padDrop = MAX(repsPadrao)` →
+  `repEt > 0 ? repEt : padDrop > 0 ? padDrop : base(s)`. `ExercicioPrescrito.drops[j]` = `{ serie: s, etapa: passo }`
+  da coluna `n + j`. (Planilha original: um bloco só, `alvo = MAX(serie)`; com drop numa série só, é igual.)
+- As etapas do dropset continuam gravadas como colunas depois da última série (cargas antigas não mudam de lugar);
+  a tela do aluno mostra cada bloco logo abaixo da sua série, numa chavinha "Drop da Sx".
 
 ## 6. Carga sugerida das etapas do dropset — `AvCarga`
-Para `pos > n` e `1 ≤ passo ≤ et`: `cargaEtapa[passo]` da **primeira** linha Dropset que casa (0 = vazio). Para `pos ≤ n` a carga é a registrada pelo aluno. (Na aba 3x a função não é usada nas células — no app ela vira a **sugestão** mostrada ao aluno.)
+Para `pos > n` e `1 ≤ passo ≤ et`: `cargaEtapa[passo]` da **primeira** linha Dropset daquela série (0 = vazio). Para `pos ≤ n` a carga é a registrada pelo aluno. (Na aba 3x a função não é usada nas células — no app ela vira a **sugestão** mostrada ao aluno.)
 
 ## 7. Rótulo — `AvRotulo(semana, treino, ex)`
 Linhas ativas que casam, na ordem da tabela, unidas por `"; "`: `metodo + sufixo`.

@@ -119,7 +119,7 @@ export default function SessaoCard({
             ))}
             {Array.from({ length: nEtapas }, (_, i) => (
               <th key={`d${i}`} className="p-2 text-center">
-                D{i + 1}
+                Drop
               </th>
             ))}
             <th className="p-2 text-right">Movimentos</th>
@@ -171,6 +171,7 @@ export default function SessaoCard({
                     <td key={j} className="p-2 text-center">
                       {tem ? (
                         <>
+                          {e.drops[j] && <div className="text-[10px] font-semibold text-rose-300">S{e.drops[j].serie}·D{e.drops[j].etapa}</div>}
                           <RepsFeitas alvo={e.reps[coluna]} feita={rs[coluna]} />
                           <LoadInput
                             valor={extra(cs[coluna])}
