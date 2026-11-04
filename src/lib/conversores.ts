@@ -22,7 +22,9 @@ const paraMapa =<T>(linhas: T[][], p: string): Linhas<T> =>
 // Pelo índice (não pela ordem das chaves): w10 vem depois de w9.
 const deMapa = <T>(m: Linhas<T>, p: string): T[][] => Object.keys(m).map((_, i) => m[`${p}${i + 1}`])
 
-export function mesoParaDoc(meso: Meso): MesoDoc {
+// `sessoes` (treinos ajustados no presencial) nunca sai daqui: o editor do meso grava com updateDoc e não pode
+// apagar nem regravar um ajuste feito no celular do coach. Só salvarSessaoEditada/voltarAoPlanejado mexem nelas.
+export function mesoParaDoc({ sessoes: _s, ...meso }: Meso): MesoDoc {
   return {
     ...meso,
     // Sempre presente: ao editar (updateDoc), trocas removidas não podem sobrar no documento.
@@ -62,6 +64,7 @@ export function docParaMeso(d: MesoDoc): Meso {
     ...(d.limiteReps != null && { limiteReps: d.limiteReps }),
     ...(d.tempoLimiteMin != null && { tempoLimiteMin: d.tempoLimiteMin }),
     ...((d.dias?.length ?? 0) > 0 && { dias: d.dias }),
+    ...(Object.keys(d.sessoes ?? {}).length > 0 && { sessoes: d.sessoes }),
     ...(Object.keys(d.progressaoExercicio ?? {}).length > 0 && {
       progressaoExercicio: Object.fromEntries(
         Object.entries(d.progressaoExercicio!).map(([k, m]) => [k, deMapa(m, 'w')]),

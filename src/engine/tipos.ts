@@ -36,6 +36,19 @@ export interface Slot {
   pausaS?: number // pausa deste exercício; sem valor = pausa da posição (principais/auxiliares)
 }
 
+// Exercício de uma sessão editada na hora. `de` = posição do treino planejado cuja progressão (séries/reps)
+// e pausa ele segue; sem `de` (exercício novo) = progressão padrão (ou auxiliares) e pausa do meso.
+export type SlotSessao = Slot & { de?: number }
+
+// Treino de um dia (semana + treino) ajustado pelo coach no presencial. Substitui só aquela sessão:
+// a lista de exercícios (divisão + trocas) e os métodos dela. Posições dos métodos = índice + 1 nesta lista.
+export interface SessaoEditada {
+  semana: number
+  treino: number
+  exercicios: SlotSessao[]
+  metodos: AplicacaoMetodo[]
+}
+
 export interface Meso {
   frequencia: number
   semanas: number
@@ -57,6 +70,8 @@ export interface Meso {
   // Progressão própria de cada exercício: chave = slotId do slot da divisão, valor [semana-1][serie-1].
   // (Legado: chave `${treino}-${pos}`, ainda lida pelo motor até migrarProgressao.)
   progressaoExercicio?: Record<string, (number | null)[][]>
+  // Sessões ajustadas na hora (presencial). Chave `${semana}-${treino}`. Nunca gravado pelo editor do meso.
+  sessoes?: Record<string, SessaoEditada>
 }
 
 // Onde um ajuste de volume se aplica.
