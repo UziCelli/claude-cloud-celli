@@ -74,7 +74,7 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
     const base = (k: number) => linha[k - 1] ?? 0
     const n = linha.filter((r) => typeof r === 'number').length
     const linhas = doTreino.filter((m) => m.exercicio === pos)
-    const drops = linhas.filter((m) => m.metodo === 'Dropset')
+    const dropLinhas = linhas.filter((m) => m.metodo === 'Dropset')
 
     // §5 — séries normais
     const reps: number[] = []
@@ -87,19 +87,29 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
       cargaSugerida.push(null)
     }
 
-    // §5/§6 — etapas extras do dropset (escopo não filtra)
-    const et = max(drops, (m) => m.etapas)
-    const padDrop = max(drops, (m) => m.repsPadrao)
-    const alvo = max(drops, (m) => m.serie) || n
-    for (let passo = 1; passo <= et; passo++) {
-      const repEt = max(drops, (m) => m.repsEtapa?.[passo - 1])
-      reps.push(repEt > 0 ? repEt : padDrop > 0 ? padDrop : base(Math.min(alvo, n)))
-      cargaSugerida.push(drops[0].cargaEtapa?.[passo - 1] || null)
+    // §5/§6 — etapas extras do dropset. Cada linha pendura as etapas numa série: a específica (limitada a n),
+    // senão a última série que o escopo cobre (Todas/Últimas = n). Linhas da mesma série se juntam (MAX).
+    // Colunas depois das séries, em ordem de série; com uma série só são as mesmas de antes (cargas antigas no lugar).
+    const serieDoDrop = (m: AplicacaoMetodo) =>
+      m.escopo === 'Série específica'
+        ? Math.min(m.serie || n, n)
+        : Math.max(0, ...Array.from({ length: n }, (_, i) => i + 1).filter((k) => cobre(m, k, n))) || n
+    const drops: { serie: number; etapa: number }[] = []
+    for (const serie of [...new Set(dropLinhas.map(serieDoDrop))].sort((a, b) => a - b)) {
+      const daSerie = dropLinhas.filter((m) => serieDoDrop(m) === serie)
+      const et = max(daSerie, (m) => m.etapas)
+      const padDrop = max(daSerie, (m) => m.repsPadrao)
+      for (let passo = 1; passo <= et; passo++) {
+        const repEt = max(daSerie, (m) => m.repsEtapa?.[passo - 1])
+        reps.push(repEt > 0 ? repEt : padDrop > 0 ? padDrop : base(serie))
+        cargaSugerida.push(daSerie[0].cargaEtapa?.[passo - 1] || null)
+        drops.push({ serie, etapa: passo })
+      }
     }
 
     const rotulo = linhas.map((m) => `${m.metodo} [${sufixo(m)}]`).join('; ')
     const pausaS = slot.pausaS ?? (de != null && de <= 2 ? (meso.pausaPrincipaisS ?? meso.pausaS) : meso.pausaS)
-    return { pos, slot, n, reps, rotulo, cargaSugerida, pausaS }
+    return { pos, slot, n, reps, rotulo, cargaSugerida, pausaS, drops }
   })
 
   // §8 — tempo

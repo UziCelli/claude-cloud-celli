@@ -200,6 +200,7 @@ test('coach edita o treino do dia: troca, método, adiciona, tira e volta ao pla
   await dialogo.getByRole('button', { name: 'Adicionar Dropset' }).click()
   await expect(dialogo.getByRole('button', { name: 'Tirar Dropset' })).toBeVisible()
   await page.mouse.click(5, 5) // toque fora fecha
+  await cartao('Barra Fixa Aberta').getByRole('button', { name: /Drop da S\d/ }).click() // drop começa fechado na chavinha
   await expect(cartao('Barra Fixa Aberta').getByText('D1')).toBeVisible()
 
   await tela.getByRole('button', { name: '+ Adicionar exercício' }).click()
