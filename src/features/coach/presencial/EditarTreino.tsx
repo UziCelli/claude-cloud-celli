@@ -1,7 +1,7 @@
 // Edição do treino do dia no presencial (só o coach). Cada toque grava na hora; o motor é `engine/editarSessao`.
 import { useRef, useState, type ReactNode } from 'react'
-import { adicionarExercicio, adicionarMetodo, iniciarEdicao, removerExercicio, removerMetodo, trocarExercicio } from '../../../engine'
-import type { Meso, Metodo, SessaoEditada } from '../../../engine'
+import { adicionarExercicio, adicionarMetodo, alternarSerieDropset, iniciarEdicao, removerExercicio, escoposPara, mudarSeries, removerMetodo, serieDoDrop, trocarExercicio } from '../../../engine'
+import type { Escopo, Meso, Metodo, SessaoEditada } from '../../../engine'
 import { COR_METODO } from '../../../data/metodos'
 import { salvarSessaoEditada, voltarAoPlanejado } from '../../../lib/acoes'
 import { IcLapis } from '../../../icones'
@@ -13,6 +13,12 @@ export const MAX_EXERCICIOS = 10
 const DIRETOS: Metodo[] = ['Dropset', 'Rest-pause', 'Clusterset']
 const SEQUENCIA: Metodo[] = ['Biset', 'Triset', 'Superset', 'Circuito']
 const totalCerto = (m: Metodo, total: number) => (m === 'Biset' ? total === 2 : m === 'Triset' ? total === 3 : m === 'Superset' ? total >= 4 : total >= 2)
+
+const opcoesSeries = (n: number): [string, Escopo, number?][] => [
+  ['Todas', 'Todas as séries'],
+  ...Array.from({ length: n }, (_, k): [string, Escopo, number] => [`S${k + 1}`, 'Série específica', k + 1]),
+  ...escoposPara(n).filter((e) => e !== 'Todas as séries' && e !== 'Série específica').map((e): [string, Escopo] => [e.replace(' séries', ''), e]),
+]
 
 type Base = { meso: Meso; mesoId: string; semana: number; treino: number }
 const grava = (mesoId: string, s: SessaoEditada) => salvarSessaoEditada(mesoId, s).catch(() => window.alert('Não foi possível salvar o ajuste. Tente de novo.'))
@@ -30,6 +36,7 @@ function Folha({ titulo, onFechar, children }: { titulo: string; onFechar: () =>
 
 export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, temCarga }: Base & { pos: number; nome: string; n: number; temCarga: boolean }) {
   const [aberto, setAberto] = useState(false)
+  const [seriesDe, setSeriesDe] = useState<Metodo | null>(null)
   const [juntando, setJuntando] = useState<Metodo | null>(null)
   const [parceiros, setParceiros] = useState<number[]>([])
   // Enquanto a folha está aberta, o próximo toque parte do último ajuste gravado (o snapshot pode não ter chegado).
@@ -37,7 +44,7 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
   const s = ultimo.current ?? iniciarEdicao(meso, semana, treino)
   const atuais = s.metodos.filter((x) => x.exercicio === pos)
   const nomesAtuais = [...new Set(atuais.map((x) => x.metodo))]
-  const fechar = () => { setAberto(false); setJuntando(null); setParceiros([]); ultimo.current = null }
+  const fechar = () => { setAberto(false); setSeriesDe(null); setJuntando(null); setParceiros([]); ultimo.current = null }
   const aplicar = (novo: SessaoEditada, fecha = false) => {
     if (novo === s) return
     grava(mesoId, novo)
@@ -69,10 +76,30 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {nomesAtuais.map((m) => (
                   <span key={m} className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${COR_METODO[m].selo}`}>
-                    <IconeMetodo metodo={m} tamanho={20} /> {m}
+                    <button aria-label={`Séries do ${m}`} aria-expanded={seriesDe === m} className="flex min-h-8 items-center gap-1.5" onClick={() => setSeriesDe(seriesDe === m ? null : m)}>
+                      <IconeMetodo metodo={m} tamanho={20} /> {m}
+                    </button>
                     <button aria-label={`Tirar ${m}`} className="min-h-8 px-1" onClick={() => aplicar(removerMetodo(s, pos, m))}>✕</button>
                   </span>
                 ))}
+              </div>
+            )}
+            {seriesDe === 'Dropset' && nomesAtuais.includes('Dropset') && (
+              // Dropset: liga/desliga em cada série (drop em várias séries); a última ligada não desliga.
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {Array.from({ length: n }, (_, k) => k + 1).map((k) => {
+                  const ativo = atuais.some((x) => x.metodo === 'Dropset' && serieDoDrop(x, n) === k)
+                  return <Botao key={k} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={() => aplicar(alternarSerieDropset(s, pos, k, n))}>S{k}</Botao>
+                })}
+              </div>
+            )}
+            {seriesDe && seriesDe !== 'Dropset' && nomesAtuais.includes(seriesDe) && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {opcoesSeries(n).map(([rotulo, escopo, serie]) => {
+                  const a = atuais.find((x) => x.metodo === seriesDe)
+                  const ativo = a?.escopo === escopo && (escopo !== 'Série específica' || a.serie === serie)
+                  return <Botao key={rotulo} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={() => aplicar(mudarSeries(s, pos, seriesDe, escopo, serie))}>{rotulo}</Botao>
+                })}
               </div>
             )}
             <div className="flex flex-wrap gap-1.5">
