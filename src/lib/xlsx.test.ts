@@ -44,6 +44,13 @@ describe('xlsx', () => {
     await expect(p.ler('Z')).rejects.toThrow('não encontrada')
   })
 
+  it('rejeita conteúdo descompactado acima do teto (zip bomba)', async () => {
+    const msg = 'Este arquivo não é uma planilha do Excel (.xlsx).'
+    const grande = await criarXlsxBruto({ A: `<sheetData>${'<row r="1"/>'.repeat(2000)}</sheetData>` })
+    await expect(abrirPlanilha(grande, { teto: 1000 }).then((p) => p.ler('A'))).rejects.toThrow(msg)
+    await expect((await abrirPlanilha(grande)).ler('A')).resolves.toBeDefined()
+  })
+
   it('rejeita arquivo que não é xlsx', async () => {
     const msg = 'Este arquivo não é uma planilha do Excel (.xlsx).'
     await expect(abrirPlanilha(new TextEncoder().encode('isto é texto, não zip'))).rejects.toThrow(msg)

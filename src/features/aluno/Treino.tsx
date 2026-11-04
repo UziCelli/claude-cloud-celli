@@ -15,7 +15,7 @@ import { cancelarTreino, marcarInicio, marcarRealizado, registrarCarga, registra
 import { duracaoTreino, fimDaSessao, TETO_TREINO_MS } from '../../lib/resumo'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
-import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
+import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
@@ -409,9 +409,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const cs = cargas[chave] ?? {}
   const rs = repsFeitas[chave] ?? {}
   const docAtual = docsRegistros.find((r) => r.semana === semana && r.treino === treino)
-  const pcs = docAtual?.pc ?? {}
+  const pcs = lerPc(docAtual?.pc)
   const cargasCruas = docParaCargas(docAtual?.cargas) // o que está gravado de fato (para decidir o que gravar)
-  const pcsPorRegistro = Object.fromEntries(docsRegistros.map((r) => [`${r.semana}-${r.treino}`, r.pc]))
+  const pcsPorRegistro = Object.fromEntries(docsRegistros.map((r) => [`${r.semana}-${r.treino}`, lerPc(r.pc)]))
   const iniciou = () => {
     if (inicioMs != null || jaIniciou.current) return // início pendente offline lê null: não conta, senão o botão fica morto depois de recarregar
     jaIniciou.current = true

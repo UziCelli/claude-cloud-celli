@@ -7,6 +7,7 @@ import {
   docParaReps,
   docsParaRegistros,
   docsParaRegistrosReps,
+  lerPc,
   mesoParaDoc,
   normalizarCargas,
   registroId,
@@ -198,5 +199,28 @@ describe('normalizarCargas (peso do corpo)', () => {
     expect(docsParaRegistros(docs, m)).toEqual({ '1-1': { a: [82, 80, 80] } })
     expect(docsParaRegistros(docs)).toEqual({ '1-1': { a: [82] } }) // sem meso: maior índice
     expect(docsParaRegistrosReps(docs)).toEqual({ '1-1': {} }) // reps nunca mudam
+  })
+})
+
+// Dado gravado fora do app (as regras não conseguem conferir os valores dentro de `cargas`).
+describe('leitura blindada contra dado inválido', () => {
+  it('coluna absurda é ignorada sem montar lista gigante', () => {
+    const t = Date.now()
+    expect(docParaCargas({ a: { s1: 40, s999999999: 1, s41: 5, s0: 3, x: 2 } as never })).toEqual({ a: [40] })
+    expect(Date.now() - t).toBeLessThan(100)
+  })
+
+  it('valor que não é número finito vira vazio; negativo e decimal ficam', () => {
+    const cargas = { a: { s1: 'abc', s2: NaN, s3: Infinity, s4: -10, s5: 250.5, s6: 2001, s7: true } } as never
+    expect(docParaCargas(cargas)).toEqual({ a: [null, null, null, -10, 250.5, null, null] })
+    expect(docParaReps({ a: { s1: '8', s2: 8 } } as never)).toEqual({ a: [null, 8] })
+  })
+
+  it('peso do corpo inválido conta como desligado', () => {
+    expect(lerPc({ a: '5', b: 1e9, c: NaN, d: -3, e: 80, f: 0 } as never)).toEqual({ a: 0, b: 0, c: 0, d: 0, e: 80, f: 0 })
+    expect(lerPc(undefined)).toEqual({})
+    const cargas = { a: { s1: 2 } }
+    expect(normalizarCargas({ cargas, pc: { a: '5' } as never, realizado: true }, { a: 2 })).toEqual({ a: [2] })
+    expect(normalizarCargas({ cargas, pc: { a: 1e9 } as never, realizado: true }, { a: 2 })).toEqual({ a: [2] })
   })
 })

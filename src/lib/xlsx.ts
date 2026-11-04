@@ -36,7 +36,12 @@ function indice(b: Uint8Array): Map<string, Entrada> {
   return mapa
 }
 
-async function extrair(b: Uint8Array, e: Entrada): Promise<string> {
+// Tetos contra "zip bomba": entrada comprimida e conteúdo descompactado.
+const MAX_COMPRIMIDO = 20 * 1024 * 1024
+const MAX_DESCOMPACTADO = 50 * 1024 * 1024
+
+async function extrair(b: Uint8Array, e: Entrada, teto: number): Promise<string> {
+  if (e.tamanho > MAX_COMPRIMIDO) throw new Error(ERRO)
   const v = new DataView(b.buffer, b.byteOffset, b.byteLength)
   if (v.getUint32(e.local, true) !== 0x04034b50) throw new Error(ERRO)
   const ini = e.local + 30 + v.getUint16(e.local + 26, true) + v.getUint16(e.local + 28, true)
@@ -44,7 +49,25 @@ async function extrair(b: Uint8Array, e: Entrada): Promise<string> {
   let bytes: Uint8Array = dados
   if (e.metodo === 8) {
     const fluxo = new Blob([dados as BlobPart]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
-    bytes = new Uint8Array(await new Response(fluxo).arrayBuffer())
+    const leitor = fluxo.getReader()
+    const pedacos: Uint8Array[] = []
+    let total = 0
+    for (;;) {
+      const { done, value } = await leitor.read()
+      if (done) break
+      total += value.length
+      if (total > teto) {
+        await leitor.cancel()
+        throw new Error(ERRO)
+      }
+      pedacos.push(value)
+    }
+    bytes = new Uint8Array(total)
+    let o = 0
+    for (const p of pedacos) {
+      bytes.set(p, o)
+      o += p.length
+    }
   } else if (e.metodo !== 0) throw new Error(ERRO)
   return new TextDecoder().decode(bytes)
 }
@@ -93,7 +116,7 @@ function celulas(xml: string, comp: string[]): Map<string, Valor> {
   return mapa
 }
 
-export async function abrirPlanilha(dados: ArrayBuffer | Uint8Array): Promise<Planilha> {
+export async function abrirPlanilha(dados: ArrayBuffer | Uint8Array, { teto = MAX_DESCOMPACTADO } = {}): Promise<Planilha> {
   const b = dados instanceof Uint8Array ? dados : new Uint8Array(dados)
   let arquivos: Map<string, Entrada>
   let abas: { nome: string; rid: string }[]
@@ -103,7 +126,7 @@ export async function abrirPlanilha(dados: ArrayBuffer | Uint8Array): Promise<Pl
     const lerTxt = async (n: string) => {
       const e = arquivos.get(n)
       if (!e) throw new Error(ERRO)
-      return extrair(b, e)
+      return extrair(b, e, teto)
     }
     const wb = await lerTxt('xl/workbook.xml')
     abas = [...wb.matchAll(/<sheet\b([^>]*?)\/?>/g)].map((m) => ({ nome: attr(m[1], 'name') ?? '', rid: attr(m[1], 'r:id') ?? '' }))
@@ -122,8 +145,8 @@ export async function abrirPlanilha(dados: ArrayBuffer | Uint8Array): Promise<Pl
       const caminho = alvo.startsWith('/') ? alvo.slice(1) : `xl/${alvo}`
       const e = arquivos.get(caminho)
       if (!e) throw new Error(`Aba "${aba}" não encontrada na planilha.`)
-      comp ??= arquivos.has('xl/sharedStrings.xml') ? extrair(b, arquivos.get('xl/sharedStrings.xml')!).then(compartilhadas) : Promise.resolve([])
-      return celulas(await extrair(b, e), await comp)
+      comp ??= arquivos.has('xl/sharedStrings.xml') ? extrair(b, arquivos.get('xl/sharedStrings.xml')!, teto).then(compartilhadas) : Promise.resolve([])
+      return celulas(await extrair(b, e, teto), await comp)
     },
   }
 }
