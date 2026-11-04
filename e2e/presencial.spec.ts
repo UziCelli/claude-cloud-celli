@@ -198,7 +198,16 @@ test('coach edita o treino do dia: troca, método, adiciona, tira e volta ao pla
   await tela.getByRole('button', { name: 'Editar Barra Fixa Aberta', exact: true }).click()
   await dialogo.getByRole('button', { name: 'Adicionar Dropset' }).click()
   await expect(dialogo.getByRole('button', { name: 'Tirar Dropset' })).toBeVisible()
+  await dialogo.getByRole('button', { name: 'Séries do Dropset' }).click()
+  await dialogo.getByRole('button', { name: 'S1', exact: true }).click()
+  await expect.poll(async () => {
+    const d = ((await lerDoc(`mesos/${mesoId}`))?.fields ?? {}) as Record<string, any>
+    const ms = (d.sessoes?.mapValue?.fields?.['1-1']?.mapValue?.fields?.metodos?.arrayValue?.values ?? []) as any[]
+    const f = ms.map((m) => m.mapValue.fields).find((x) => x.metodo.stringValue === 'Dropset')
+    return [f?.escopo?.stringValue, num(f?.serie)]
+  }, { timeout: 15_000 }).toEqual(['Série específica', 1])
   await page.mouse.click(5, 5) // toque fora fecha
+  await expect(cartao('Barra Fixa Aberta').getByText('Dropset [S1]')).toBeVisible()
   await expect(cartao('Barra Fixa Aberta').getByText('D1')).toBeVisible()
 
   await tela.getByRole('button', { name: '+ Adicionar exercício' }).click()
