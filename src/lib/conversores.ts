@@ -87,13 +87,19 @@ export interface RegistroDoc {
   realizado?: boolean
 }
 
+// O aluno grava o registro direto no Firestore e as regras não conferem os valores de dentro de `cargas`:
+// coluna fora de s1..s40 (s999999999 travaria a tela montando a lista) e valor que não é número finito
+// até 2000 são ignorados na leitura. Negativo fica (máquina assistida, gravado antes do LoadInput de texto).
+const MAX_COLUNA = 40
+const numeroOk = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 2000
+
 export function docParaCargas(cargas: CargasDoc | undefined): Cargas {
   const r: Cargas = {}
   for (const [slotId, cols] of Object.entries(cargas ?? {})) {
     const arr: (number | null)[] = []
-    for (const [k, kg] of Object.entries(cols)) {
-      const n = /^s(\d+)$/.exec(k)?.[1]
-      if (n) arr[Number(n) - 1] = kg
+    for (const [k, kg] of Object.entries(cols ?? {})) {
+      const n = Number(/^s(\d{1,2})$/.exec(k)?.[1])
+      if (n >= 1 && n <= MAX_COLUNA) arr[n - 1] = numeroOk(kg) ? kg : null
     }
     r[slotId] = Array.from(arr, (kg) => kg ?? null) // buracos viram null
   }
@@ -101,6 +107,10 @@ export function docParaCargas(cargas: CargasDoc | undefined): Cargas {
 }
 
 export const docParaReps = docParaCargas
+
+// Peso do corpo por exercício: o que não é número de 0 a 300 conta como 0 (desligado).
+export const lerPc = (pc: RegistroDoc['pc']): Record<string, number> =>
+  Object.fromEntries(Object.entries(pc ?? {}).map(([slot, kg]) => [slot, numeroOk(kg) && kg > 0 && kg <= 300 ? kg : 0]))
 
 const arred = (x: number) => Math.round(x * 100) / 100
 
@@ -122,7 +132,7 @@ export function normalizarCargas(
 ): Cargas {
   const r = docParaCargas(doc.cargas)
   const reps = docParaReps(doc.reps)
-  for (const [slot, pc] of Object.entries(doc.pc ?? {})) {
+  for (const [slot, pc] of Object.entries(lerPc(doc.pc))) {
     if (!(pc > 0)) continue
     const cs = r[slot] ?? []
     const rs = reps[slot] ?? []
@@ -138,7 +148,7 @@ export function normalizarCargas(
 
 // Séries prescritas (sem drop) de cada exercício do treino; só calculado quando o registro tem pc.
 const seriesDe = (meso: Meso | undefined, d: RegistroDoc): Record<string, number> =>
-  meso && Object.values(d.pc ?? {}).some((p) => p > 0)
+  meso && Object.values(lerPc(d.pc)).some((p) => p > 0)
     ? Object.fromEntries((prescreverSessao(meso, d.semana, d.treino)?.exercicios ?? []).map((e) => [e.slot.slotId, e.n]))
     : {}
 

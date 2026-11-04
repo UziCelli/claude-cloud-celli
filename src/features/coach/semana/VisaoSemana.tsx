@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { collection, doc, query, where, type Timestamp } from 'firebase/firestore'
 import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
-import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
+import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
 import { diaSP } from '../../../lib/acesso'
 import { msSessao } from '../../../lib/resumo'
 import { comVolta } from '../../../lib/agenda'
@@ -98,7 +98,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               sessao={sessao}
               cargas={registros[chave] ?? {}}
               reps={reps[chave] ?? {}}
-              pc={tempos[chave]?.pc}
+              pc={lerPc(tempos[chave]?.pc)}
               realizado={!!realizados[chave]}
               inicioEm={tempos[chave]?.inicioEm}
               realizadoEm={tempos[chave]?.realizadoEm}
