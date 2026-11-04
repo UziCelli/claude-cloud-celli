@@ -200,15 +200,20 @@ test('coach edita o treino do dia: troca, método, adiciona, tira e volta ao pla
   await dialogo.getByRole('button', { name: 'Adicionar Dropset' }).click()
   await expect(dialogo.getByRole('button', { name: 'Tirar Dropset' })).toBeVisible()
   await dialogo.getByRole('button', { name: 'Séries do Dropset' }).click()
-  await dialogo.getByRole('button', { name: 'S1', exact: true }).click()
-  await expect.poll(async () => {
+  const seriesDrop = async () => {
     const d = ((await lerDoc(`mesos/${mesoId}`))?.fields ?? {}) as Record<string, any>
     const ms = (d.sessoes?.mapValue?.fields?.['1-1']?.mapValue?.fields?.metodos?.arrayValue?.values ?? []) as any[]
-    const f = ms.map((m) => m.mapValue.fields).find((x) => x.metodo.stringValue === 'Dropset')
-    return [f?.escopo?.stringValue, num(f?.serie)]
-  }, { timeout: 15_000 }).toEqual(['Série específica', 1])
+    return ms.map((m) => m.mapValue.fields).filter((x) => x.metodo.stringValue === 'Dropset').map((f) => [f.escopo?.stringValue, num(f.serie)])
+  }
+  // Drop em várias séries: liga a S1 (a S3, onde ele entrou, continua), depois desliga a S3.
+  await dialogo.getByRole('button', { name: 'S1', exact: true }).click()
+  await expect.poll(seriesDrop, { timeout: 15_000 }).toEqual([['Série específica', 3], ['Série específica', 1]])
+  await expect(cartao('Barra Fixa Aberta').getByText('Dropset [S3]')).toBeVisible()
+  await dialogo.getByRole('button', { name: 'S3', exact: true }).click()
+  await expect.poll(seriesDrop, { timeout: 15_000 }).toEqual([['Série específica', 1]])
   await page.mouse.click(5, 5) // toque fora fecha
   await expect(cartao('Barra Fixa Aberta').getByText('Dropset [S1]')).toBeVisible()
+  await expect(cartao('Barra Fixa Aberta').getByText('Dropset [S3]')).toHaveCount(0)
   await cartao('Barra Fixa Aberta').getByRole('button', { name: 'Drop da S1' }).click() // drop começa fechado na chavinha, agora na S1
   await expect(cartao('Barra Fixa Aberta').getByText('D1')).toBeVisible()
 

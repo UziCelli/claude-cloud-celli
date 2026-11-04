@@ -1,6 +1,6 @@
 // Edição do treino do dia no presencial (só o coach). Cada toque grava na hora; o motor é `engine/editarSessao`.
 import { useRef, useState, type ReactNode } from 'react'
-import { adicionarExercicio, adicionarMetodo, iniciarEdicao, removerExercicio, escoposPara, mudarSeries, removerMetodo, trocarExercicio } from '../../../engine'
+import { adicionarExercicio, adicionarMetodo, alternarSerieDropset, iniciarEdicao, removerExercicio, escoposPara, mudarSeries, removerMetodo, serieDoDrop, trocarExercicio } from '../../../engine'
 import type { Escopo, Meso, Metodo, SessaoEditada } from '../../../engine'
 import { COR_METODO } from '../../../data/metodos'
 import { salvarSessaoEditada, voltarAoPlanejado } from '../../../lib/acoes'
@@ -84,7 +84,16 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
                 ))}
               </div>
             )}
-            {seriesDe && nomesAtuais.includes(seriesDe) && (
+            {seriesDe === 'Dropset' && nomesAtuais.includes('Dropset') && (
+              // Dropset: liga/desliga em cada série (drop em várias séries); a última ligada não desliga.
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {Array.from({ length: n }, (_, k) => k + 1).map((k) => {
+                  const ativo = atuais.some((x) => x.metodo === 'Dropset' && serieDoDrop(x, n) === k)
+                  return <Botao key={k} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={() => aplicar(alternarSerieDropset(s, pos, k, n))}>S{k}</Botao>
+                })}
+              </div>
+            )}
+            {seriesDe && seriesDe !== 'Dropset' && nomesAtuais.includes(seriesDe) && (
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {opcoesSeries(n).map(([rotulo, escopo, serie]) => {
                   const a = atuais.find((x) => x.metodo === seriesDe)

@@ -109,3 +109,26 @@ export function mudarSeries(s: SessaoEditada, pos: number, metodo: Metodo, escop
     }),
   }
 }
+
+// Série onde o drop cai (como no motor): a específica (até n), senão a última que o escopo cobre.
+export function serieDoDrop(m: AplicacaoMetodo, n: number): number {
+  if (m.escopo === 'Série específica') return Math.min(m.serie || n, n)
+  if (m.escopo.startsWith('Primeiras')) return Math.min(Number(m.escopo.split(' ')[1]), n)
+  return n
+}
+
+// Liga/desliga o drop numa série do exercício (drop em várias séries). A série nova copia os ajustes do
+// primeiro drop (etapas, redução, pausa). Drops em outros escopos viram "Série específica" onde já caíam.
+// Nunca tira o último: para tirar o Dropset todo, removerMetodo.
+export function alternarSerieDropset(s: SessaoEditada, pos: number, serie: number, n: number): SessaoEditada {
+  const eDrop = (m: AplicacaoMetodo) => m.exercicio === pos && m.metodo === 'Dropset'
+  const drops = s.metodos.filter(eDrop)
+  if (!drops.length) return s
+  const normal = s.metodos.map((m) => (eDrop(m) && m.escopo !== 'Série específica' ? { ...m, escopo: 'Série específica' as Escopo, serie: serieDoDrop(m, n) } : m))
+  const naSerie = normal.filter((m) => eDrop(m) && serieDoDrop(m, n) === serie)
+  if (naSerie.length) {
+    if (naSerie.length === normal.filter(eDrop).length) return s
+    return { ...s, metodos: normal.filter((m) => !naSerie.includes(m)) }
+  }
+  return { ...s, metodos: [...normal, { ...normal.find(eDrop)!, serie }] }
+}

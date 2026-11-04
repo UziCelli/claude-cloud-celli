@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   adicionarExercicio,
   adicionarMetodo,
+  alternarSerieDropset,
   escoposPara,
   iniciarEdicao,
   mudarSeries,
@@ -187,5 +188,35 @@ describe('mudarSeries', () => {
     const s = adicionarMetodo(limpo(), 1, 'Dropset', 3)
     expect(mudarSeries(s, 1, 'Dropset', 'Série específica', 3)).toBe(s)
     expect(mudarSeries(s, 2, 'Dropset', 'Todas as séries')).toBe(s)
+  })
+})
+
+describe('alternarSerieDropset (drop em várias séries)', () => {
+  const comDrop = () => adicionarMetodo(iniciarEdicao({ ...base, metodos: [] }, 1, 1), 1, 'Dropset', 3) // na S3
+  const series = (s: ReturnType<typeof comDrop>) => s.metodos.filter((m) => m.metodo === 'Dropset').map((m) => m.serie)
+
+  it('liga a S1 além da S3, copiando etapas e redução; o motor faz um drop por série', () => {
+    const s = alternarSerieDropset(comDrop(), 1, 1, 3)
+    expect(series(s)).toEqual([3, 1])
+    expect(s.metodos[1]).toMatchObject({ escopo: 'Série específica', serie: 1, etapas: 1, reducaoCarga: 20, pausaInternaS: 10 })
+    expect(prescreverSessao(editado(s), 1, 1)!.exercicios[0].drops).toEqual([{ serie: 1, etapa: 1 }, { serie: 3, etapa: 1 }])
+  })
+
+  it('desliga uma série, mas nunca a última que sobrou', () => {
+    const s = alternarSerieDropset(comDrop(), 1, 1, 3)
+    expect(series(alternarSerieDropset(s, 1, 3, 3))).toEqual([1])
+    const so = comDrop()
+    expect(alternarSerieDropset(so, 1, 3, 3)).toBe(so)
+  })
+
+  it('drop do plano em "Todas as séries" vira a série onde ele cai (a última) antes de somar outra', () => {
+    const plano = { ...base, metodos: [met({ exercicio: 1, escopo: 'Todas as séries', serie: undefined, etapas: 2 })] }
+    const s = alternarSerieDropset(iniciarEdicao(plano, 1, 1), 1, 2, 3)
+    expect(s.metodos.map((m) => [m.escopo, m.serie, m.etapas])).toEqual([['Série específica', 3, 2], ['Série específica', 2, 2]])
+  })
+
+  it('sem dropset no exercício: não faz nada', () => {
+    const s = iniciarEdicao({ ...base, metodos: [] }, 1, 1)
+    expect(alternarSerieDropset(s, 1, 1, 3)).toBe(s)
   })
 })
