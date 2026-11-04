@@ -27,6 +27,8 @@ import Grupo from './features/coach/presencial/Presencial'
 import RelatorioCoach from './features/relatorio/RelatorioCoach'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
+import TutorialCoach, { tutorialCoachNaoVisto } from './features/coach/TutorialCoach'
+import { AnimatePresence } from 'motion/react'
 import Instalar from './features/instalar/Instalar'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
@@ -170,6 +172,7 @@ function Menu({ rota }: { rota: string }) {
 function Coach({ uid, email, nome }: { uid: string; email: string; nome: string }) {
   const rota = useRota()
   const [semFator, setSemFator] = useState(false)
+  const [tutorial, setTutorial] = useState(tutorialCoachNaoVisto)
   useEffect(() => {
     // O token vale até o próximo login: quem acabou de ativar o 2º fator precisa sair e entrar de novo.
     auth.currentUser?.getIdTokenResult().then((t) => setSemFator(faltaSegundoFator(t.claims))).catch(() => {})
@@ -189,10 +192,11 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n) || 1} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
-  else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} />
+  else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} abrirTutorial={() => setTutorial(true)} />
   return (
     <div className="lg:flex">
       <Brilho />
+      <AnimatePresence>{tutorial && <TutorialCoach nome={nome} fechar={() => setTutorial(false)} />}</AnimatePresence>
       {!presencial && <Menu rota={rota} />}
       <div className={`min-w-0 flex-1 min-h-lvh ${presencial ? '' : 'pb-barra lg:pb-0'}`}>
         <header hidden={presencial} className="pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-topo lg:hidden">

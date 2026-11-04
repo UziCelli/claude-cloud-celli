@@ -134,7 +134,7 @@ function DuasEtapas() {
 }
 
 // Só do coach (o aluno usa a ContaAluno). email = e-mail do perfil (usuarios/{uid}.email).
-export default function MinhaConta({ uid, email }: { uid: string; email: string }) {
+export default function MinhaConta({ uid, email, abrirTutorial }: { uid: string; email: string; abrirTutorial: () => void }) {
   const [novo, setNovo] = useState('')
   const [senha, setSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -218,6 +218,7 @@ export default function MinhaConta({ uid, email }: { uid: string; email: string 
         {perfil?.papel === 'coach' && !carregando && <DuasEtapas />}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
         <Msg>{ok && <Aviso>{ok}</Aviso>}</Msg>
+        <Botao type="button" className="w-full" onClick={abrirTutorial}>Como usar</Botao>
         <Botao type="button" className="w-full" disabled={enviandoSenha} onClick={trocarSenha}>
           {enviandoSenha ? 'Enviando…' : 'Trocar senha'}
         </Botao>
