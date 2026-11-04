@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { AplicacaoMetodo, Escopo, Meso, Metodo } from '../../../engine'
+import { padraoMetodo, type AplicacaoMetodo, type Escopo, type Meso, type Metodo } from '../../../engine'
 import { Aviso, Botao, Campo, campoBase, Cartao } from '../../../ui'
 import { filtrarMetodos, seriesDaPosicao, type FiltroMetodos } from './util'
 
@@ -16,22 +16,8 @@ const ESCOPOS: Escopo[] = [
 ]
 const TAMANHO_GRUPO: Partial<Record<Metodo, number>> = { Biset: 2, Triset: 3, Superset: 4 }
 
-function padrao(metodo: Metodo, meso: Meso, semana: number, treino: number, exercicio: number): AplicacaoMetodo {
-  const n = seriesDaPosicao(meso, semana, exercicio) || 1
-  const base = { ativo: true, semana, treino, exercicio, metodo }
-  switch (metodo) {
-    case 'Dropset':
-      return { ...base, escopo: 'Série específica', serie: n, pausaInternaS: 10, blocos: 1, etapas: 1, reducaoCarga: 20 }
-    case 'Rest-pause':
-      return { ...base, escopo: 'Série específica', serie: n, pausaInternaS: 20, blocos: 2 }
-    case 'Clusterset':
-      return { ...base, escopo: 'Todas as séries', pausaInternaS: 30, blocos: 3 }
-    case 'Circuito':
-      return { ...base, escopo: 'Todas as séries', pausaInternaS: 20, blocos: 3, grupo: 1 }
-    default: // Biset, Triset, Superset
-      return { ...base, escopo: 'Todas as séries', pausaInternaS: 15, blocos: 1, grupo: 1 }
-  }
-}
+const padrao = (metodo: Metodo, meso: Meso, semana: number, treino: number, exercicio: number) =>
+  padraoMetodo(metodo, semana, treino, exercicio, seriesDaPosicao(meso, semana, exercicio))
 
 export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
   const metodos = meso.metodos

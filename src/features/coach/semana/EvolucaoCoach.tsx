@@ -7,6 +7,7 @@ export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Me
   const nomes = new Set<string>()
   meso.divisao.flat().forEach((s) => nomes.add(s.nome))
   Object.values(meso.trocas ?? {}).forEach((s) => nomes.add(s.nome))
+  Object.values(meso.sessoes ?? {}).forEach((s) => s.exercicios.forEach((e) => nomes.add(e.nome))) // ajustes do presencial
   const lista = [...nomes].sort((a, b) => a.localeCompare(b))
   const [nome, setNome] = useState(lista[0] ?? '')
 

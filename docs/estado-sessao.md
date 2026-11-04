@@ -216,6 +216,12 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Pendência do Victor:** no iPhone (PWA) e no Android, conferir câmera/galeria e compartilhar direto no Instagram.
 - Próximos combinados (sem mudança): notificações (resto) e lojas.
 
+## 04/11/2026 — Editar o treino na hora (presencial)
+- No presencial, o coach ajusta **só o treino daquele dia**: lápis em cada exercício (trocar, tirar, pôr/tirar método) e "+ Adicionar exercício" no fim.
+- "Treino ajustado só hoje" + "Voltar ao planejado" desfaz tudo; nenhuma carga é apagada.
+- O planejamento do meso não muda. Detalhes e limites: `docs/mapa.md`, linha "Treino ajustado na hora".
+- Pendência do Victor: testar no celular num treino real.
+
 ## 04/11/2026 — Login que não cai, 2FA menos vezes e concluir com confirmação
 - **Saída por inatividade:** aluno 30 dias (era 4 h), coach 7 dias (era 20 min). Fechar o app e voltar não pede login de novo; o 2FA do coach só volta em aparelho novo, depois de "Sair" ou de 7 dias sem abrir.
 - **Concluir treino:** pede um 2º toque ("Concluir o treino?" → Sim, concluir / Continuar treinando).

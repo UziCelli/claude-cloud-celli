@@ -98,6 +98,14 @@ describe('meso <-> documento', () => {
     expect(docParaMeso(antigo)).not.toHaveProperty('dias')
   })
 
+  it('sessões editadas no presencial: lidas do documento, nunca gravadas pelo editor', () => {
+    const sessoes = { '1-1': { semana: 1, treino: 1, exercicios: [{ slotId: 'x', nome: 'X' }], metodos: [] } }
+    expect(mesoParaDoc({ ...meso, sessoes })).not.toHaveProperty('sessoes')
+    expect(temArrayDeArray({ sessoes })).toBe(false)
+    expect(docParaMeso({ ...mesoParaDoc(meso), sessoes })).toEqual({ ...meso, sessoes })
+    expect(docParaMeso({ ...mesoParaDoc(meso), sessoes: {} })).not.toHaveProperty('sessoes')
+  })
+
   it('ignora campos do documento que não são do motor', () => {
     const doc = { ...mesoParaDoc(meso), alunoId: 'ana', nome: 'Meso 1', criadoEm: 1, atualizadoEm: 2 }
     expect(docParaMeso(doc)).toEqual(meso)
