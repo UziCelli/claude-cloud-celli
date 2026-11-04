@@ -215,3 +215,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
   - Escolhas do Victor: tela cheia e poucos números. Fora do escopo: zoom/arrastar, filtros, adesivos.
 - **Pendência do Victor:** no iPhone (PWA) e no Android, conferir câmera/galeria e compartilhar direto no Instagram.
 - Próximos combinados (sem mudança): notificações (resto) e lojas.
+
+## 04/11/2026 — Editar o treino na hora (presencial)
+- No presencial, o coach ajusta **só o treino daquele dia**: lápis em cada exercício (trocar, tirar, pôr/tirar método) e "+ Adicionar exercício" no fim.
+- "Treino ajustado só hoje" + "Voltar ao planejado" desfaz tudo; nenhuma carga é apagada.
+- O planejamento do meso não muda. Detalhes e limites: `docs/mapa.md`, linha "Treino ajustado na hora".
+- Pendência do Victor: testar no celular num treino real.
