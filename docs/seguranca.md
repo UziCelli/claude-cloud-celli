@@ -155,6 +155,7 @@ Plano Spark do Firebase:
 - **Dependências:** app em produção com 0 vulnerabilidades. Ferramentas de desenvolvimento: 2 alertas novos corrigidos (`@modelcontextprotocol/sdk`, `source-map-js`; `firebase-tools` 15.32.1). Restam alertas só dentro do `firebase-tools` (roda no GitHub, nunca no celular), sem correção ainda; o Dependabot avisa quando sair.
 - **Evolução/ranking/recorde:** só leitura de dados que as regras já liberam (aluno: só os próprios; coach: todos). Cartão do story leva só o primeiro nome e números.
 - **Inatividade do aluno em 4 h** (pedido do Victor): risco baixo (celular do próprio aluno, só vê o próprio treino). Coach continua com 20 min.
+- **04/11/2026 (pedido do Victor):** inatividade do aluno em 30 dias e do coach em 7 dias, para o 2FA não ser pedido a cada 20 min. O 2FA continua obrigatório em todo login novo (aparelho novo ou depois de "Sair"). Risco aceito: quem pegar o celular do coach desbloqueado vê os alunos; a proteção passa a ser o bloqueio de tela do aparelho. Em computador emprestado, tocar em "Sair" ao terminar.
 - **Pendências (console, Victor):**
   - App Check da VFIT: mudar de Monitorar para **Aplicar**;
   - App Check da Gislane: chave reCAPTCHA criada e registrada no App Check (22/10/2026); a chave do site está no `.env.gislane`. Fica em **Monitorar**; mudar para **Aplicar** depois de alguns dias sem requisições não verificadas;

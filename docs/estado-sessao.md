@@ -221,3 +221,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - "Treino ajustado só hoje" + "Voltar ao planejado" desfaz tudo; nenhuma carga é apagada.
 - O planejamento do meso não muda. Detalhes e limites: `docs/mapa.md`, linha "Treino ajustado na hora".
 - Pendência do Victor: testar no celular num treino real.
+
+## 04/11/2026 — Login que não cai, 2FA menos vezes e concluir com confirmação
+- **Saída por inatividade:** aluno 30 dias (era 4 h), coach 7 dias (era 20 min). Fechar o app e voltar não pede login de novo; o 2FA do coach só volta em aparelho novo, depois de "Sair" ou de 7 dias sem abrir.
+- **Concluir treino:** pede um 2º toque ("Concluir o treino?" → Sim, concluir / Continuar treinando).
+- **Desfazer:** logo depois de concluir (até 3 h do início), o treino volta a correr com o tempo do início original; cargas ficam.
+- Vale para as duas marcas (mesmo código).

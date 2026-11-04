@@ -11,7 +11,7 @@ import { seriesDoRotulo } from '../../lib/metodoSeries'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
-import { cancelarTreino, marcarInicio, marcarRealizado, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
+import { cancelarTreino, marcarInicio, marcarRealizado, reabrirTreino, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import { duracaoTreino, fimDaSessao, TETO_TREINO_MS } from '../../lib/resumo'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
@@ -386,6 +386,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const fecharFesta = useCallback(() => setFesta(null), [])
   const [verResumo, setVerResumo] = useState(false)
   const [fimLocal, setFimLocal] = useState<number | null>(null) // hora do "Concluir", até o servidor confirmar
+  const [confirmarFim, setConfirmarFim] = useState(false) // 2º toque no "Concluir": aluno pediu, concluía sem querer
 
   const naoEncontrado = (
     <Centro>
@@ -474,7 +475,17 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     limparTreino()
     marcarRealizado(mesoId, uid, semana, treino, true, fimMs != null) // fim real desta sessão (inclusive offline, pendente) é mantido; fim de fora (planilha/antigo) é trocado por agora
     setFimLocal(Date.now())
+    setConfirmarFim(false)
     abrirResumo()
+  }
+  // Desfazer logo depois de concluir (até 3 h do início): o treino volta a correr do início original, sem perder o tempo.
+  // Treino antigo ou sem início (planilha) segue como antes: mantém a hora do fim e o relógio parado.
+  const desfazer = () => {
+    if (inicioMs != null && Date.now() - inicioMs < TETO_TREINO_MS) {
+      reabrirTreino(mesoId, uid, semana, treino)
+      marcarTreino(inicioMs)
+      setFimLocal(null)
+    } else marcarRealizado(mesoId, uid, semana, treino, false)
   }
 
   // Exercícios do mesmo grupo de método ficam juntos (só a ordem de exibição muda).
@@ -722,15 +733,24 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               <Botao tipo="primario" onClick={abrirResumo}>
                 Ver resumo
               </Botao>
-              <Botao onClick={() => marcarRealizado(mesoId, uid, semana, treino, false)}>Desfazer</Botao>
+              <Botao onClick={desfazer}>Desfazer</Botao>
             </div>
           </div>
         ) : (
-          comecou && (
-            <Botao tipo="primario" className="w-full py-4 text-base" onClick={concluir}>
+          comecou && (confirmarFim ? (
+            <div role="alertdialog" aria-label="Concluir o treino?" className="space-y-3 rounded-xl border border-slate-700 bg-slate-900 p-4 text-center">
+              <p className="font-semibold">Concluir o treino?</p>
+              <p className="text-sm text-slate-400">Confira se anotou todas as cargas.</p>
+              <div className="flex gap-2">
+                <Botao className="min-h-11 flex-1" onClick={() => setConfirmarFim(false)}>Continuar treinando</Botao>
+                <Botao tipo="primario" className="min-h-11 flex-1" onClick={concluir}>Sim, concluir</Botao>
+              </div>
+            </div>
+          ) : (
+            <Botao tipo="primario" className="w-full py-4 text-base" onClick={() => setConfirmarFim(true)}>
               Concluir treino
             </Botao>
-          )
+          ))
         )}
       </div>
 
