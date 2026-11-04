@@ -209,6 +209,7 @@ test('coach edita o treino do dia: troca, método, adiciona, tira e volta ao pla
   }, { timeout: 15_000 }).toEqual(['Série específica', 1])
   await page.mouse.click(5, 5) // toque fora fecha
   await expect(cartao('Barra Fixa Aberta').getByText('Dropset [S1]')).toBeVisible()
+  await cartao('Barra Fixa Aberta').getByRole('button', { name: 'Drop da S1' }).click() // drop começa fechado na chavinha, agora na S1
   await expect(cartao('Barra Fixa Aberta').getByText('D1')).toBeVisible()
 
   await tela.getByRole('button', { name: '+ Adicionar exercício' }).click()
