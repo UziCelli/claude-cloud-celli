@@ -1,19 +1,9 @@
 import { useMemo, useState } from 'react'
-import { padraoMetodo, type AplicacaoMetodo, type Escopo, type Meso, type Metodo } from '../../../engine'
+import { ESCOPOS, padraoMetodo, type AplicacaoMetodo, type Escopo, type Meso, type Metodo } from '../../../engine'
 import { Aviso, Botao, Campo, campoBase, Cartao } from '../../../ui'
 import { filtrarMetodos, seriesDaPosicao, type FiltroMetodos } from './util'
 
 const METODOS: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
-const ESCOPOS: Escopo[] = [
-  'Todas as séries',
-  'Série específica',
-  'Primeiras 2 séries',
-  'Últimas 2 séries',
-  'Primeiras 3 séries',
-  'Últimas 3 séries',
-  'Primeiras 4 séries',
-  'Últimas 4 séries',
-]
 const TAMANHO_GRUPO: Partial<Record<Metodo, number>> = { Biset: 2, Triset: 3, Superset: 4 }
 
 const padrao = (metodo: Metodo, meso: Meso, semana: number, treino: number, exercicio: number) =>

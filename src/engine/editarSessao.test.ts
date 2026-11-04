@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   adicionarExercicio,
   adicionarMetodo,
+  escoposPara,
   iniciarEdicao,
+  mudarSeries,
   removerExercicio,
   removerMetodo,
   trocarExercicio,
@@ -151,5 +153,39 @@ describe('adicionarMetodo / removerMetodo', () => {
     s = adicionarMetodo(s, 2, 'Dropset', 3)
     s = removerMetodo(s, 3, 'Triset')
     expect(s.metodos.map((m) => m.metodo)).toEqual(['Dropset'])
+  })
+})
+
+describe('escoposPara', () => {
+  it('só as opções que cabem nas séries do exercício', () => {
+    expect(escoposPara(3)).toEqual(['Todas as séries', 'Série específica', 'Primeiras 2 séries', 'Últimas 2 séries'])
+    expect(escoposPara(1)).toEqual(['Todas as séries', 'Série específica'])
+    expect(escoposPara(5)).toHaveLength(8)
+  })
+})
+
+describe('mudarSeries', () => {
+  const limpo = () => iniciarEdicao({ ...base, metodos: [] }, 1, 1)
+
+  it('dropset da última série para a S1, e de volta para todas (sem `serie`)', () => {
+    let s = mudarSeries(adicionarMetodo(limpo(), 1, 'Dropset', 3), 1, 'Dropset', 'Série específica', 1)
+    expect(s.metodos[0]).toMatchObject({ escopo: 'Série específica', serie: 1 })
+    expect(prescreverSessao(editado(s), 1, 1)!.exercicios[0].rotulo).toBe('Dropset [S1]')
+    s = mudarSeries(s, 1, 'Dropset', 'Últimas 2 séries')
+    expect(s.metodos[0].escopo).toBe('Últimas 2 séries')
+    expect(s.metodos[0]).not.toHaveProperty('serie')
+  })
+
+  it('método de grupo muda as séries do grupo inteiro, sem tocar nos outros', () => {
+    let s = adicionarMetodo(limpo(), 1, 'Biset', 3, [2])
+    s = adicionarMetodo(s, 3, 'Rest-pause', 4)
+    s = mudarSeries(s, 2, 'Biset', 'Primeiras 2 séries')
+    expect(s.metodos.map((m) => m.escopo)).toEqual(['Primeiras 2 séries', 'Primeiras 2 séries', 'Série específica'])
+  })
+
+  it('sem mudança devolve o mesmo objeto', () => {
+    const s = adicionarMetodo(limpo(), 1, 'Dropset', 3)
+    expect(mudarSeries(s, 1, 'Dropset', 'Série específica', 3)).toBe(s)
+    expect(mudarSeries(s, 2, 'Dropset', 'Todas as séries')).toBe(s)
   })
 })

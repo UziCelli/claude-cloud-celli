@@ -1,9 +1,23 @@
 // Edição de um treino do dia (presencial), sem mexer no planejamento. Funções puras: devolvem uma SessaoEditada
 // nova, gravada em `meso.sessoes[`${semana}-${treino}`]`. Cargas nunca são apagadas: ficam no slotId antigo.
 import { metodosDaSessao, slotsDaSessao } from './sessao'
-import type { AplicacaoMetodo, Meso, Metodo, SessaoEditada } from './tipos'
+import type { AplicacaoMetodo, Escopo, Meso, Metodo, SessaoEditada } from './tipos'
 
 const SEQUENCIA: Metodo[] = ['Biset', 'Triset', 'Superset', 'Circuito']
+
+// Séries que um método cobre (mesma lista do editor de métodos).
+export const ESCOPOS: Escopo[] = [
+  'Todas as séries',
+  'Série específica',
+  'Primeiras 2 séries',
+  'Últimas 2 séries',
+  'Primeiras 3 séries',
+  'Últimas 3 séries',
+  'Primeiras 4 séries',
+  'Últimas 4 séries',
+]
+// Só as que fazem sentido para `n` séries ("Primeiras 3" com 3 séries = todas).
+export const escoposPara = (n: number) => ESCOPOS.filter((e) => !/\d/.test(e) || Number(e.split(' ')[1]) < n)
 
 // Valores iniciais de cada método (os mesmos do editor de métodos). `n` = séries do exercício.
 export function padraoMetodo(metodo: Metodo, semana: number, treino: number, exercicio: number, n: number): AplicacaoMetodo {
@@ -77,4 +91,21 @@ export function removerMetodo(s: SessaoEditada, pos: number, metodo: Metodo): Se
   const sai = (m: AplicacaoMetodo) =>
     alvo.includes(m) || (SEQUENCIA.includes(metodo) && m.metodo === metodo && alvo.some((a) => a.grupo === m.grupo))
   return { ...s, metodos: s.metodos.filter((m) => !sai(m)) }
+}
+
+// Troca as séries que o método cobre no exercício (no grupo inteiro, se for Biset…). `serie` só em "Série específica".
+export function mudarSeries(s: SessaoEditada, pos: number, metodo: Metodo, escopo: Escopo, serie?: number): SessaoEditada {
+  const alvo = s.metodos.filter((m) => m.exercicio === pos && m.metodo === metodo)
+  const muda = (m: AplicacaoMetodo) =>
+    alvo.includes(m) || (SEQUENCIA.includes(metodo) && m.metodo === metodo && alvo.some((a) => a.grupo === m.grupo))
+  const nova = escopo === 'Série específica' ? serie : undefined
+  if (!alvo.length || s.metodos.every((m) => !muda(m) || (m.escopo === escopo && m.serie === nova))) return s
+  return {
+    ...s,
+    metodos: s.metodos.map((m) => {
+      if (!muda(m)) return m
+      const { serie: _s, ...resto } = m
+      return nova != null ? { ...resto, escopo, serie: nova } : { ...resto, escopo }
+    }),
+  }
 }
