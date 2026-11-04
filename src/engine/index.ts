@@ -1,6 +1,6 @@
 export * from './tipos'
 export { prescreverSessao, linhaPrescrita, metodosDaSessao, slotsDaSessao } from './sessao'
-export { adicionarExercicio, adicionarMetodo, iniciarEdicao, padraoMetodo, removerExercicio, removerMetodo, trocarExercicio } from './editarSessao'
+export { adicionarExercicio, adicionarMetodo, alternarSerieDropset, ESCOPOS, escoposPara, iniciarEdicao, mudarSeries, padraoMetodo, removerExercicio, removerMetodo, serieDoDrop, trocarExercicio } from './editarSessao'
 export { ajustarSeries, limiteDe, progressaoAutomatica, reduzirVolume, tempoPorSemana } from './volume'
 export { metricasExercicio, metricasSessao, metricasSemana, evolucaoExercicio, repsEfetivas } from './metricas'
 export { metaRobusta, metaCiclo } from './meta'
