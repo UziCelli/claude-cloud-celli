@@ -92,6 +92,7 @@ export interface ExercicioPrescrito {
   rotulo: string // '' sem método
   cargaSugerida: (number | null)[] // null nas séries; carga da etapa nas etapas do dropset
   pausaS: number // pausa resolvida: slot > principais (pos 1–2) > meso
+  drops: { serie: number; etapa: number }[] // coluna n + j = etapa `etapa` do drop da série `serie` (1-based)
 }
 
 export interface Sessao {
