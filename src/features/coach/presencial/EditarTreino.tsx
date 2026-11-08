@@ -1,20 +1,20 @@
 // Edição do treino do dia no presencial (só o coach). Cada toque grava na hora; o motor é `engine/editarSessao`.
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState } from 'react'
 import { adicionarExercicio, adicionarMetodo, alternarSerieDropset, iniciarEdicao, removerExercicio, escoposPara, mudarSeries, removerMetodo, serieDoDrop, trocarExercicio } from '../../../engine'
 import type { Escopo, Meso, Metodo, SessaoEditada } from '../../../engine'
 import { COR_METODO } from '../../../data/metodos'
 import { salvarSessaoEditada, voltarAoPlanejado } from '../../../lib/acoes'
 import { IcLapis } from '../../../icones'
-import { Botao } from '../../../ui'
+import { Botao, Folha } from '../../../ui'
 import IconeMetodo from '../../metodos/IconeMetodo'
 import CampoExercicio from '../meso/CampoExercicio'
 
 export const MAX_EXERCICIOS = 10
-const DIRETOS: Metodo[] = ['Dropset', 'Rest-pause', 'Clusterset']
-const SEQUENCIA: Metodo[] = ['Biset', 'Triset', 'Superset', 'Circuito']
-const totalCerto = (m: Metodo, total: number) => (m === 'Biset' ? total === 2 : m === 'Triset' ? total === 3 : m === 'Superset' ? total >= 4 : total >= 2)
+export const DIRETOS: Metodo[] = ['Dropset', 'Rest-pause', 'Clusterset']
+export const SEQUENCIA: Metodo[] = ['Biset', 'Triset', 'Superset', 'Circuito']
+export const totalCerto = (m: Metodo, total: number) => (m === 'Biset' ? total === 2 : m === 'Triset' ? total === 3 : m === 'Superset' ? total >= 4 : total >= 2)
 
-const opcoesSeries = (n: number): [string, Escopo, number?][] => [
+export const opcoesSeries = (n: number): [string, Escopo, number?][] => [
   ['Todas', 'Todas as séries'],
   ...Array.from({ length: n }, (_, k): [string, Escopo, number] => [`S${k + 1}`, 'Série específica', k + 1]),
   ...escoposPara(n).filter((e) => e !== 'Todas as séries' && e !== 'Série específica').map((e): [string, Escopo] => [e.replace(' séries', ''), e]),
@@ -22,17 +22,6 @@ const opcoesSeries = (n: number): [string, Escopo, number?][] => [
 
 type Base = { meso: Meso; mesoId: string; semana: number; treino: number }
 const grava = (mesoId: string, s: SessaoEditada) => salvarSessaoEditada(mesoId, s).catch(() => window.alert('Não foi possível salvar o ajuste. Tente de novo.'))
-
-function Folha({ titulo, onFechar, children }: { titulo: string; onFechar: () => void; children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-40 flex items-end bg-black/60" onClick={onFechar}>
-      <div role="dialog" aria-label={titulo} className="mx-auto max-h-[80dvh] w-full max-w-md space-y-4 overflow-y-auto rounded-t-3xl bg-slate-900 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-base font-bold">{titulo}</h2>
-        {children}
-      </div>
-    </div>
-  )
-}
 
 export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, temCarga }: Base & { pos: number; nome: string; n: number; temCarga: boolean }) {
   const [aberto, setAberto] = useState(false)
