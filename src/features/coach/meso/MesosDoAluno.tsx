@@ -10,6 +10,7 @@ import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../l
 import { ir } from '../../../rota'
 import { IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagina, Painel } from '../../../ui'
+import { BotaoVoltar } from '../../../voltar'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { cicloTerminou } from '../../../lib/relatorio'
 import ImportarPlanilha from './ImportarPlanilha'
@@ -57,6 +58,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
 
   return (
     <Pagina
+      voltar={<BotaoVoltar para="/alunos" />}
       titulo={`Mesociclos de ${aluno.dados?.nome ?? '…'}`}
       acoes={
         <>

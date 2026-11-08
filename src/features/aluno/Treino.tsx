@@ -23,8 +23,9 @@ import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
-import { ir } from '../../rota'
+import { ir, voltar } from '../../rota'
 import { Botao, cascata, Centro, item, Painel } from '../../ui'
+import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
@@ -364,6 +365,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', uid))
+  // Presencial: sempre à lista do aluno (a pilha mistura alunos do grupo). Aluno: à tela de onde veio (Início ou Treino).
+  const sair = () => (coach ? ir(base) : voltar('/treino'))
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const descanso = useDescanso()
@@ -394,7 +397,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     <Centro>
       <div className="flex flex-col items-center gap-3 text-center">
         <p className="text-lg font-semibold">{semInternet ? TEXTO_SEM_INTERNET : 'Treino não encontrado.'}</p>
-        <button onClick={() => ir(base || '/')} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">← Hoje</button>
+        <button onClick={sair} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">Voltar</button>
       </div>
     </Centro>
   )
@@ -447,7 +450,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         <div className="flex flex-col items-center gap-3 text-center">
           <IcCadeado className="size-10 text-slate-400" />
           <p className="text-lg font-semibold">Semana {semana} já passou.</p>
-          <button onClick={() => ir(base || '/')} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">← Hoje</button>
+          <button onClick={sair} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">Voltar</button>
         </div>
       </Centro>
     )
@@ -518,7 +521,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         feitosSemana={new Set(docsRegistros.filter((r) => r.semana === semana && r.realizado).map((r) => r.treino)).size}
         frequencia={meso.frequencia}
         quieto={quieto}
-        voltar={() => ir(base || '/')}
+        voltar={sair}
         verTreino={() => setVerResumo(false)}
       />
     )
@@ -526,9 +529,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   return (
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
       <AvisoNotificacoes />
-      <button onClick={() => ir(base || '/')} className="mb-2 inline-flex min-h-11 items-center pr-4 text-sm text-slate-400">
-        ← Hoje
-      </button>
+      <BotaoVoltar aoVoltar={sair} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-lg font-bold">Treino {treino}</h1>

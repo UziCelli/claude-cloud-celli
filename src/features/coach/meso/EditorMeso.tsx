@@ -13,6 +13,7 @@ import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../l
 import { ir, protegerSaida } from '../../../rota'
 import { DIAS_AUTO } from '../../../lib/agenda'
 import { Aviso, Botao, Campo, CampoNumero, Msg, Pagina } from '../../../ui'
+import { BotaoVoltar } from '../../../voltar'
 import Preview from './Preview'
 import { LinhaAcima, treinosAcima } from './SugestaoTempo'
 import TabDivisao from './TabDivisao'
@@ -156,6 +157,7 @@ export default function EditorMeso({ id }: { id: string }) {
 
   return (
     <Pagina
+      voltar={<BotaoVoltar para={alunoId ? `/aluno/${alunoId}` : '/alunos'} />}
       titulo={
         <input
           value={nome}

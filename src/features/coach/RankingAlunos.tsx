@@ -6,6 +6,7 @@ import { rankingAlunos, type LinhaRanking, type RegistroEvolucao } from '../../l
 import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../lib/hooks'
 import { Cartao, Pagina } from '../../ui'
+import { BotaoVoltar } from '../../voltar'
 import { IcMedalha } from '../../icones'
 
 type Aba = 'evoluiu' | 'frequentes' | 'risco'
@@ -71,7 +72,7 @@ export default function RankingAlunos() {
 
   const vazio = aba === 'risco' ? 'Nenhum aluno com treino previsto.' : 'Nenhum aluno ainda.'
   return (
-    <Pagina titulo="Ranking de evolução">
+    <Pagina titulo="Ranking de evolução" voltar={<BotaoVoltar para="/" />}>
       <div role="tablist" className="mb-3 flex gap-2 overflow-x-auto">
         {ABAS.map(([k, t]) => (
           <button

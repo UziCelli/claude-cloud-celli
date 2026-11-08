@@ -252,3 +252,13 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Campo Frequência saiu: frequência = dias de treino marcados.
 - Divisão: cartão "Trocas e adições" — trocar ou acrescentar exercício num intervalo de semanas (`meso.adicoes`).
 - Pendência: a aba Métodos nova (PR #113) ainda não oferece as posições adicionadas.
+
+## 08/11/2026 — Navegação: "Voltar" em todas as telas e presencial em 2 toques
+- Pedido do Victor: botão voltar faltando e o caminho até o presencial era longo.
+- **Como ficou:**
+  - "← Voltar" igual (topo à esquerda) em toda tela que não é aba: mesociclos do aluno, editor, semanas, novo aluno, ranking, evolução, relatórios, métodos, treino;
+  - ele volta para a tela de onde a pessoa veio; se o app abriu direto ali, vai para um lugar seguro;
+  - Início do coach: botão **"Treino presencial"** → escolher aluno (busca + recentes) → já cai no treino de hoje;
+  - presencial: "Sair" virou "Encerrar" (volta para onde estava antes); no grupo, "Tirar";
+  - aluno: o Voltar do treino respeita de onde veio (Início ou aba Treino); saiu o "← Hoje" da aba Evolução.
+- Vale para as duas marcas. Nada muda nos dados.

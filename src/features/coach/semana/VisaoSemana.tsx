@@ -10,6 +10,7 @@ import { db } from '../../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir } from '../../../rota'
 import { Botao, Centro, Deslizar, Msg, Pagina } from '../../../ui'
+import { BotaoVoltar } from '../../../voltar'
 import EvolucaoCoach from './EvolucaoCoach'
 import { fmtData } from './format'
 import Monitoramento from './Monitoramento'
@@ -58,6 +59,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
 
   return (
     <Pagina
+      voltar={<BotaoVoltar para={'/aluno/' + dados.alunoId} />}
       titulo={
         <div>
           <div>{dados.nome}</div>

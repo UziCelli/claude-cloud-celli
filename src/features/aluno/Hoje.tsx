@@ -21,7 +21,8 @@ import type { MesoSalvo } from '../../lib/conversores'
 
 const Msg = ({ children }: { children: ReactNode }) => <p className="mt-10 text-center text-slate-400">{children}</p>
 
-export default function Hoje({ uid, base = '', coach }: { uid: string; base?: string; coach?: boolean }) {
+// `abrirHoje` (presencial): recebe a rota do treino de hoje, se houver, para abrir direto.
+export default function Hoje({ uid, base = '', coach, abrirHoje }: { uid: string; base?: string; coach?: boolean; abrirHoje?: (rota: string) => void }) {
   const { dados: mesos, carregando } = useLista<MesoSalvo>(query(collection(db, 'mesos'), where('alunoId', '==', uid)))
   const hoje = useHoje()
   const semInternet = useSemInternet()
@@ -36,19 +37,19 @@ export default function Hoje({ uid, base = '', coach }: { uid: string; base?: st
       <AvisoNotificacoes />
       {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
-      {estado.estado === 'durante' && <Semana uid={uid} base={base} coach={coach} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={hoje} />}
+      {estado.estado === 'durante' && <Semana uid={uid} base={base} coach={coach} abrirHoje={abrirHoje} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={hoje} />}
     </main>
   )
 }
 
 type RegistroFlag = RegistroAlerta
 
-function Semana({ uid, base, coach, mesoId, nome, meso, hoje }: { uid: string; base: string; coach?: boolean; mesoId: string; nome: string; meso: Meso; hoje: Date }) {
+function Semana({ uid, base, coach, abrirHoje, mesoId, nome, meso, hoje }: { uid: string; base: string; coach?: boolean; abrirHoje?: (rota: string) => void; mesoId: string; nome: string; meso: Meso; hoje: Date }) {
   const { dados: registros, carregando } = useLista<RegistroFlag>(
     query(collection(db, 'registros'), where('alunoId', '==', uid), where('mesoId', '==', mesoId)),
   )
   if (carregando) return <Centro>Carregando…</Centro>
-  return <SemanaCarregada key={mesoId} base={base} coach={coach} mesoId={mesoId} nome={nome} meso={meso} registros={registros} hoje={hoje} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
+  return <SemanaCarregada key={mesoId} base={base} coach={coach} abrirHoje={abrirHoje} mesoId={mesoId} nome={nome} meso={meso} registros={registros} hoje={hoje} semanaInicial={semanaParaAbrir(meso, registros, hoje)} />
 }
 
 // Aviso de reps abaixo da meta nos últimos 7 dias; "Entendi" guarda no aparelho (sem armazenamento, volta no próximo acesso).
@@ -74,7 +75,7 @@ function AvisoReps({ meso, mesoId, registros }: { meso: Meso; mesoId: string; re
   )
 }
 
-function SemanaCarregada({ base, coach, meso, mesoId, nome, registros, hoje, semanaInicial }: { base: string; coach?: boolean; mesoId: string; nome: string; meso: Meso; registros: RegistroFlag[]; hoje: Date; semanaInicial: number }) {
+function SemanaCarregada({ base, coach, abrirHoje, meso, mesoId, nome, registros, hoje, semanaInicial }: { base: string; coach?: boolean; abrirHoje?: (rota: string) => void; mesoId: string; nome: string; meso: Meso; registros: RegistroFlag[]; hoje: Date; semanaInicial: number }) {
   const [semana, setSemana] = useState(semanaInicial)
   const [aviso, setAviso] = useState<number | null>(null) // semana travada tocada
   const tremer = useAnimationControls()
@@ -103,6 +104,8 @@ function SemanaCarregada({ base, coach, meso, mesoId, nome, registros, hoje, sem
   const hojeTreino = proximo && proximo.dataTreino <= hojeISO ? proximo.treino : null
   const datas = Object.fromEntries(meso.dias?.length ? diasDaSemana(meso, semana).filter((d) => d.treino).map((d) => [d.treino, d.data]) : [])
   const travada = (w: number, t?: number) => !coach && travado(meso, registros, hoje, w, t)
+  const rotaHoje = hojeTreino != null ? `${base}/treino/${mesoId}/${semana}/${hojeTreino}` : null
+  useEffect(() => { if (abrirHoje && rotaHoje) abrirHoje(rotaHoje) }, [!!abrirHoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

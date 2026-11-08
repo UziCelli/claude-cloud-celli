@@ -387,7 +387,7 @@ test('treino que não existe tem saída para o Início', async ({ page }) => {
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   await page.goto(`/#/treino/${mesoId}/99/1`)
   await expect(page.getByText('Treino não encontrado.')).toBeVisible()
-  await page.getByRole('button', { name: '← Hoje' }).click()
+  await page.getByRole('button', { name: 'Voltar', exact: true }).click()
   await expect(page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Início' })).toBeVisible()
 })
 

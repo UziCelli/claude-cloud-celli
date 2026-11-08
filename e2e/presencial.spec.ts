@@ -55,8 +55,7 @@ for (const presencial of [false, true]) {
     await expect(page.getByRole('region', { name: 'Presencial' }).getByText(ALUNO.nome)).toBeVisible()
     await page.screenshot({ path: '/tmp/claude-0/-home-user-claude-cloud-celli/7bb1957b-62c0-5c39-98cc-434448e8e65a/scratchpad/presencial-hoje.png' })
 
-    await page.getByRole('button', { name: /Treino 1/ }).click()
-    await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible() // abre sozinho no treino de hoje
     await expect(page.getByRole('region', { name: 'Presencial' }).getByText(ALUNO.nome)).toBeVisible()
 
     const tela = page.getByRole('region', { name: `Treino de ${ALUNO.nome}` })
@@ -79,6 +78,12 @@ for (const presencial of [false, true]) {
     await expect(page.getByRole('region', { name: 'Presencial' }).getByText(ALUNO.nome)).toBeVisible()
     await expect(page.getByRole('button', { name: /Treino 2.*Próximo ·/ })).toBeVisible() // não é "Hoje" no presencial
     await expect(page.getByText('Hoje', { exact: true })).toHaveCount(0)
+
+    // Encerrar volta à tela de antes do presencial; o Voltar dela não passa de novo pelo presencial.
+    await page.getByRole('region', { name: 'Presencial' }).getByRole('button', { name: 'Encerrar' }).click()
+    await expect(page).toHaveURL(new RegExp(`#/aluno/${alunoId}$`))
+    await page.getByRole('button', { name: 'Voltar', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
 
     await expect.poll(async () => {
       const c = await campos()
@@ -131,7 +136,6 @@ test('grupo: troca de aluno mantém treino e carga do outro', async ({ page }) =
   await page.getByRole('dialog').getByRole('button', { name: /Caio Grupo/ }).click()
   await expect(bar.getByText('Caio Grupo')).toBeVisible()
   const b = page.getByRole('region', { name: 'Treino de Caio Grupo' })
-  await b.getByRole('button', { name: /Treino 1/ }).click()
   await b.getByRole('button', { name: 'Iniciar treino' }).click()
   const kgB = b.locator('input[inputmode="decimal"]').first()
   await kgB.fill('40')
@@ -142,7 +146,6 @@ test('grupo: troca de aluno mantém treino e carga do outro', async ({ page }) =
   await expect(bar.getByText(ALUNO.nome)).toBeVisible()
   await expect(seletor.getByRole('button', { name: 'Bia' })).toHaveAttribute('aria-current', 'true')
   const a = page.getByRole('region', { name: `Treino de ${ALUNO.nome}` })
-  await a.getByRole('button', { name: /Treino 1/ }).click()
   await a.getByRole('button', { name: 'Iniciar treino' }).click()
 
   await seletor.getByRole('button', { name: 'Caio' }).click()
@@ -170,7 +173,7 @@ test('grupo de 3: Sair no primeiro mantém os outros dois', async ({ page }) => 
   await seletor.getByRole('button', { name: 'Bia' }).click()
   await expect(seletor.getByRole('button', { name: 'Bia' })).toHaveAttribute('aria-current', 'true')
 
-  await bar.getByRole('button', { name: 'Sair' }).click()
+  await bar.getByRole('button', { name: /^Tirar Bia/ }).click()
   await expect(seletor.getByRole('button', { name: 'Bia' })).toHaveCount(0)
   await expect(seletor.getByRole('button', { name: 'Caio' })).toBeVisible()
   await expect(seletor.getByRole('button', { name: 'Dani' })).toBeVisible()
@@ -240,4 +243,20 @@ test('coach edita o treino do dia: troca, método, adiciona, tira e volta ao pla
   await expect(cartao('Desenvolvimento Militar Barra')).toBeVisible()
   await expect(cartao('Remada Curvada Barra')).toHaveCount(0)
   await expect(tela.getByText('Treino ajustado só hoje')).toHaveCount(0)
+})
+
+test('Início: Treino presencial em 2 toques, com Voltar para a lista e recentes', async ({ page }) => {
+  const { alunoId } = await semear(false)
+  await entrar(page, COACH.email, COACH.senha)
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.getByRole('button', { name: 'Treino presencial' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: new RegExp(ALUNO.nome) }).click()
+  await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible() // direto no treino de hoje
+  await page.getByRole('button', { name: 'Voltar', exact: true }).click()
+  await expect(page.getByRole('button', { name: /Treino 1/ })).toBeVisible() // lista do aluno, sem reabrir sozinho
+  await expect(page).toHaveURL(new RegExp(`#/aluno/${alunoId}/presencial$`))
+  await page.getByRole('region', { name: 'Presencial' }).getByRole('button', { name: 'Encerrar' }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible() // volta para onde estava
+  await page.getByRole('button', { name: 'Treino presencial' }).click()
+  await expect(page.getByRole('dialog').getByText('Recentes')).toBeVisible()
 })
