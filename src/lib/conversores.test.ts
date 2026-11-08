@@ -98,6 +98,16 @@ describe('meso <-> documento', () => {
     expect(docParaMeso(antigo)).not.toHaveProperty('dias')
   })
 
+  it('adições: ida e volta; sem adições o documento leva {} (limpa no updateDoc) e o meso volta sem o campo', () => {
+    const adicoes = { '2-1': [{ slotId: 'n', nome: 'Panturrilha' }] }
+    const doc = mesoParaDoc({ ...meso, adicoes })
+    expect(doc.adicoes).toEqual(adicoes)
+    expect(temArrayDeArray(doc)).toBe(false)
+    expect(docParaMeso(doc)).toEqual({ ...meso, adicoes })
+    expect(mesoParaDoc(meso).adicoes).toEqual({})
+    expect(docParaMeso(mesoParaDoc(meso))).not.toHaveProperty('adicoes')
+  })
+
   it('sessões editadas no presencial: lidas do documento, nunca gravadas pelo editor', () => {
     const sessoes = { '1-1': { semana: 1, treino: 1, exercicios: [{ slotId: 'x', nome: 'X' }], metodos: [] } }
     expect(mesoParaDoc({ ...meso, sessoes })).not.toHaveProperty('sessoes')
