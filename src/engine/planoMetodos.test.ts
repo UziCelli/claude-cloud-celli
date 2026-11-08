@@ -137,6 +137,12 @@ describe('salvarLinha', () => {
       const r = salvarLinha(antes, bis({ semanas: [1] }), [1, 2])
       expect(r.map((x) => [x.semana, x.exercicio])).toEqual([[1, 2], [1, 3]])
     })
+
+    it('dado antigo sem número de grupo: só sai o do exercício e dos parceiros, nunca o de outros exercícios', () => {
+      const antes = [m({ ...b, exercicio: 2 }), m({ ...b, exercicio: 3 }), m({ ...b, exercicio: 5 }), m({ ...b, exercicio: 6 })]
+      const r = salvarLinha(antes, bis({ semanas: [1] }), [1])
+      expect(r.map((x) => [x.exercicio, x.grupo])).toEqual([[2, 1], [3, 1], [5, undefined], [6, undefined]])
+    })
   })
 
   it('removerLinha tira só as semanas da linha (e o grupo inteiro)', () => {

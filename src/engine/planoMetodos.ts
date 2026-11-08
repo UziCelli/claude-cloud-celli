@@ -63,12 +63,11 @@ export function salvarLinha(metodos: AplicacaoMetodo[], l: LinhaSalva, semanasAn
   const seq = emGrupo(metodo)
   const membros = seq ? [pos, ...l.parceiros.filter((p) => p !== pos)] : [pos]
   const doMetodo = (m: AplicacaoMetodo) => m.treino === treino && m.metodo === metodo && mexe.has(m.semana)
-  const gruposFora = new Set(
-    metodos
-      .filter((m) => doMetodo(m) && (m.exercicio === pos || (l.semanas.includes(m.semana) && membros.includes(m.exercicio))))
-      .map((m) => `${m.semana}-${m.grupo}`),
-  )
-  const sai = (m: AplicacaoMetodo) => doMetodo(m) && (seq ? gruposFora.has(`${m.semana}-${m.grupo}`) : m.exercicio === pos)
+  const daLinha = (m: AplicacaoMetodo) => m.exercicio === pos || (l.semanas.includes(m.semana) && membros.includes(m.exercicio))
+  // Dado antigo sem número de grupo não forma grupo: sai só o do exercício e dos parceiros.
+  const comGrupo = (m: AplicacaoMetodo) => seq && m.grupo != null
+  const gruposFora = new Set(metodos.filter((m) => doMetodo(m) && comGrupo(m) && daLinha(m)).map((m) => `${m.semana}-${m.grupo}`))
+  const sai = (m: AplicacaoMetodo) => doMetodo(m) && (comGrupo(m) ? gruposFora.has(`${m.semana}-${m.grupo}`) : daLinha(m))
   const i = metodos.findIndex(sai)
   const resto = metodos.filter((m) => !sai(m))
 
