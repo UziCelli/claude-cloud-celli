@@ -7,6 +7,7 @@ import { Brilho } from '../../vidro'
 import Logo from '@marca/Logo'
 import { campo, rotulo } from './EsqueciSenha'
 import { SENHA_FRACA } from './Entrar'
+import { problemaSenha, REGRA_SENHA } from '../../lib/senha'
 
 const VENCIDO = "Este link venceu ou já foi usado. Peça um novo em 'Esqueci minha senha'."
 const ACOES: Record<string, string> = {
@@ -25,7 +26,7 @@ const mensagem = (e: unknown) => {
   const code = e instanceof FirebaseError ? e.code : ''
   if (code === 'auth/expired-action-code' || code === 'auth/invalid-action-code') return VENCIDO
   if (code === 'auth/network-request-failed') return 'Sem internet. Verifique sua conexão e tente de novo.'
-  if (code === 'auth/weak-password') return SENHA_FRACA
+  if (code === 'auth/weak-password' || code === 'auth/password-does-not-meet-requirements') return SENHA_FRACA
   registrarErro('erro', `acao: ${code || 'desconhecido'}`)
   return 'Não deu para concluir agora. Tente de novo em instantes.'
 }
@@ -56,6 +57,7 @@ export default function AcaoEmail() {
 
   async function salvar() {
     if (ocupado.current) return
+    if (problemaSenha(senha)) return setErro(problemaSenha(senha))
     if (senha !== repete) return setErro('As senhas não são iguais.')
     ocupado.current = true
     setEnviando(true)
@@ -92,6 +94,7 @@ export default function AcaoEmail() {
             <div>
               <label htmlFor="senha" className={rotulo}>Nova senha</label>
               <input id="senha" name="password" type="password" autoComplete="new-password" className={`${campo} mt-1.5`} value={senha} onChange={(e) => { setSenha(e.target.value); setErro('') }} required />
+              <p className="mt-1.5 text-sm text-slate-300">{REGRA_SENHA}</p>
             </div>
             <div>
               <label htmlFor="repete" className={rotulo}>Repetir senha</label>
