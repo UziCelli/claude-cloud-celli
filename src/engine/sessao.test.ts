@@ -69,6 +69,26 @@ describe('prescreverSessao — estrutura', () => {
     expect(prescreverSessao(meso, 2, 1)!.exercicios[2].slot.slotId).toBe('C')
   })
 
+  it('adição entra no fim do treino só nas semanas marcadas, como exercício novo (progressão padrão e pausa do meso)', () => {
+    const add = { ...slot('N', 'Panturrilha'), pausaS: 30 }
+    const meso = { ...base, pausaPrincipaisS: 120, adicoes: { '2-1': [add] } }
+    const s2 = prescreverSessao(meso, 2, 1)!
+    expect(s2.exercicios.map((e) => [e.pos, e.slot.slotId])).toEqual([[1, 'A'], [2, 'B'], [3, 'C'], [4, 'N']])
+    expect(s2.exercicios[3].reps).toEqual([20, 18, 16]) // sem `padrao`: auxiliares
+    expect(s2.exercicios[3].pausaS).toBe(30)
+    expect(prescreverSessao(meso, 1, 1)!.exercicios).toHaveLength(3)
+    expect(prescreverSessao(meso, 2, 2)!.exercicios).toHaveLength(1)
+  })
+
+  it('sessão editada no presencial manda sobre trocas e adições', () => {
+    const meso: Meso = {
+      ...base,
+      adicoes: { '1-1': [slot('N')] },
+      sessoes: { '1-1': { semana: 1, treino: 1, exercicios: [{ ...slot('Z'), de: 1 }], metodos: [] } },
+    }
+    expect(prescreverSessao(meso, 1, 1)!.exercicios.map((e) => e.slot.slotId)).toEqual(['Z'])
+  })
+
   it('series = maior n entre os exercícios (não só o 1º)', () => {
     // principais s1 com 3 séries, auxiliares s1 com 5 → series = 5
     const meso = com([], {

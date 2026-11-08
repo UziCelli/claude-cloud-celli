@@ -83,7 +83,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
 
     await page.screenshot({ path: 'test-results/prints/02-editor-divisao.png' })
 
-    await page.getByRole('button', { name: 'Salvar' }).click()
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
   })
 
@@ -100,7 +100,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Aplicar alterações' })).toBeDisabled()
     await expect(page.getByRole('heading', { name: 'Progressão padrão' })).toBeVisible()
     expect(await page.locator('input[type="number"][value]').count()).toBeGreaterThan(0)
-    await page.getByRole('button', { name: 'Salvar' }).click()
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
   })
 
@@ -227,7 +227,7 @@ test('aluno presencial vira aluno com app sem perder o meso; e cria aluno com ap
     await input.fill(NOMES[0])
     await input.press('Tab')
   }
-  await page.getByRole('button', { name: 'Salvar' }).click()
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click()
   await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
   await page.getByRole('button', { name: 'Ver semanas' }).click()
   await page.waitForURL(/#\/meso\/.+\/semana\/1/)
@@ -290,8 +290,9 @@ test('treino acima do tempo: aviso, sugestão de biset e progressão por exercí
 
   await page.goto(`/#/meso/${id}`)
   await page.getByLabel(/Tempo limite do aluno/).fill('25')
+  await page.getByLabel(/Tempo limite do aluno/).press('Tab')
   await expect(page.getByText('Treinos acima do tempo')).toBeVisible()
-  await page.getByRole('button', { name: 'Salvar' }).click()
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click()
   await expect(page.getByText('Salvo', { exact: true })).toBeVisible({ timeout: 10_000 })
 
   await page.getByRole('button', { name: 'Progressão', exact: true }).click()

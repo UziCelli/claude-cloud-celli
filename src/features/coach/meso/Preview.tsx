@@ -1,14 +1,33 @@
 import type { Meso } from '../../../engine'
 import { prescreverSessao } from '../../../engine'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
+import { IcSeta } from '../../../icones'
 import { campoBase, Cartao, Deslizar } from '../../../ui'
 
 // Painel de pré-visualização: mostra o que o aluno vai ver numa semana, em todos os treinos.
-export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana: number; onSemana: (w: number) => void }) {
+export default function Preview({
+  meso,
+  semana,
+  onSemana,
+  aberta,
+  onAlternar,
+}: {
+  meso: Meso
+  semana: number
+  onSemana: (w: number) => void
+  aberta: boolean
+  onAlternar: () => void
+}) {
   return (
     <Cartao className="space-y-3">
+      <button type="button" aria-expanded={aberta} onClick={onAlternar} className="flex min-h-11 w-full items-center gap-2 text-left font-semibold">
+        <IcSeta className={`size-4 transition-transform ${aberta ? 'rotate-90' : ''}`} />
+        Pré-visualização
+      </button>
+      {aberta && (
+        <>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-slate-400">Pré-visualização — semana</span>
+        <span className="text-slate-400">Semana</span>
         <select
           value={semana}
           onChange={(e) => onSemana(Number(e.target.value))}
@@ -53,6 +72,8 @@ export default function Preview({ meso, semana, onSemana }: { meso: Meso; semana
         })}
       </div>
       </Deslizar>
+        </>
+      )}
     </Cartao>
   )
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import CampoExercicio from './CampoExercicio'
-import { copiarTreino, semanasComHistorico } from './util'
+import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, type GrupoTroca } from './util'
 
 
 export default function TabDivisao({
@@ -199,84 +199,123 @@ export default function TabDivisao({
         <p className="mt-3 text-xs text-slate-400">Tab: próximo exercício · Enter no campo vazio: próximo treino · Pausa em branco = pausa do mesociclo.</p>
       </Cartao>
       <Msg>{hint && <Aviso>{hint}</Aviso>}</Msg>
-      <TrocasPontuais meso={meso} onAtualizar={onAtualizar} />
+      <TrocasEAdicoes meso={meso} registros={registros} onAtualizar={onAtualizar} />
     </div>
   )
 }
 
-function TrocasPontuais({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
-  const [semana, setSemana] = useState(1)
+function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registros: Registros; onAtualizar: (patch: Partial<Meso>) => void }) {
+  const [tipo, setTipo] = useState<'troca' | 'adicao'>('troca')
   const [treino, setTreino] = useState(1)
   const [pos, setPos] = useState(1)
+  const [de, setDe] = useState(1)
+  const [ate, setAte] = useState(1)
   const [nome, setNome] = useState('')
   const [chaveCampo, setChaveCampo] = useState(0)
-  const trocas = meso.trocas ?? {}
+  const divisaoTreino = meso.divisao[treino - 1] ?? []
+  const semPosicao = tipo === 'troca' && divisaoTreino.length === 0 // treino vazio: nada para trocar
 
-  function adicionar() {
-    if (!nome.trim()) return
-    const chave = `${semana}-${treino}-${pos}`
-    onAtualizar({ trocas: { ...trocas, [chave]: { slotId: crypto.randomUUID(), nome: nome.trim() } } })
+  function mudarDe(v: number) {
+    setDe(v)
+    if (ate < v) setAte(v)
+  }
+
+  function salvar() {
+    if (!nome.trim() || semPosicao) return
+    // Semanas ou dias podem ter diminuído depois da escolha: grava só dentro do meso.
+    const t = Math.min(treino, meso.frequencia)
+    const a = Math.min(ate, meso.semanas)
+    const d = Math.min(de, a)
+    const slot = { slotId: crypto.randomUUID(), nome: nome.trim() }
+    if (tipo === 'troca') {
+      const escondeCarga = Array.from({ length: a - d + 1 }, (_, i) => d + i).some((w) => {
+        const antiga = meso.trocas?.[`${w}-${t}-${pos}`]
+        return antiga && registros[`${w}-${t}`]?.[antiga.slotId]?.some((c) => c != null)
+      })
+      if (escondeCarga && !confirm('Uma troca anterior nessas semanas já tem cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?')) return
+      onAtualizar({ trocas: aplicarTroca(meso, t, pos, d, a, slot) })
+    } else onAtualizar({ adicoes: aplicarAdicao(meso, t, d, a, slot) })
     setNome('')
     setChaveCampo((k) => k + 1)
   }
 
-  function remover(chave: string) {
-    const copia = { ...trocas }
-    delete copia[chave]
-    onAtualizar({ trocas: copia })
+  function remover(g: GrupoTroca) {
+    if (grupoTemCarga(g, registros) && !confirm('Este exercício já tem cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?')) return
+    onAtualizar(removerGrupo(meso, g))
   }
 
-  const tamanhoTreino = meso.divisao[treino - 1]?.length ?? 0
+  const grupos = agruparTrocas(meso)
+  const botaoTipo = (v: 'troca' | 'adicao', texto: string) => (
+    <Botao tipo={tipo === v ? 'primario' : 'secundario'} className="min-h-11 flex-1" aria-pressed={tipo === v} onClick={() => setTipo(v)}>
+      {texto}
+    </Botao>
+  )
 
   return (
     <Cartao className="space-y-3">
-      <h3 className="font-semibold">Trocas pontuais</h3>
-      <p className="text-sm text-slate-400">Troca o exercício de uma posição só numa semana específica.</p>
+      <h3 className="font-semibold">Trocas e adições</h3>
+      <p className="text-sm text-slate-400">Troque ou acrescente um exercício só em algumas semanas. Os acrescentados entram no fim do treino.</p>
       <ul className="space-y-1 text-sm">
-        {Object.entries(trocas).map(([chave, slot]) => {
-          const [w, t, p] = chave.split('-')
+        {grupos.map((g) => {
+          const semanas = g.de === g.ate ? `Semana ${g.de}` : `Semanas ${g.de}–${g.ate}`
+          const antes = meso.divisao[g.t - 1]?.[g.p - 1]?.nome ?? '?'
           return (
-            <li key={chave} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-950 px-3 py-2">
+            <li key={`${g.tipo}-${g.t}-${g.p}-${g.slot.slotId}-${g.de}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-950 px-3 py-2">
               <span className="min-w-0">
-                Semana {w} · Treino {t} · Pos. {p}
-                <b className="block text-base">{slot.nome}</b>
+                {g.tipo === 'troca' ? `Treino ${g.t} · Pos. ${g.p}: ${antes} → ` : `Treino ${g.t} · + `}
+                <b className="text-base">{g.slot.nome}</b>
+                <span className="block text-slate-400">{semanas}</span>
               </span>
-              <Botao tipo="perigo" onClick={() => remover(chave)}>
+              <Botao tipo="perigo" className="min-h-11" onClick={() => remover(g)}>
                 Remover
               </Botao>
             </li>
           )
         })}
-        {Object.keys(trocas).length === 0 && <li className="text-slate-500">Nenhuma troca pontual.</li>}
+        {grupos.length === 0 && <li className="text-slate-500">Nenhuma troca ou adição.</li>}
       </ul>
+      <div className="flex gap-2">
+        {botaoTipo('troca', 'Trocar exercício')}
+        {botaoTipo('adicao', 'Adicionar exercício')}
+      </div>
       <div className="flex flex-wrap items-end gap-2">
-        <Seletor rotulo="Semana" valor={semana} max={meso.semanas} onChange={setSemana} />
         <Seletor rotulo="Treino" valor={treino} max={meso.frequencia} onChange={(v) => { setTreino(v); setPos(1) }} />
-        <Seletor rotulo="Posição" valor={pos} max={Math.max(1, tamanhoTreino)} onChange={setPos} />
+        {tipo === 'troca' && (
+          <Seletor
+            rotulo="Posição"
+            valor={pos}
+            max={Math.max(1, divisaoTreino.length)}
+            texto={(n) => (divisaoTreino[n - 1] ? `${n} · ${divisaoTreino[n - 1].nome}` : String(n))}
+            onChange={setPos}
+          />
+        )}
         <label className="flex w-full flex-col gap-1 text-sm md:w-auto">
-          <span className="text-slate-400">Exercício</span>
+          <span className="text-slate-400">{tipo === 'troca' ? 'Exercício novo' : 'Exercício'}</span>
           <CampoExercicio key={chaveCampo} onTexto={setNome} className="w-full md:w-72" />
         </label>
-        <Botao tipo="primario" onClick={adicionar}>
-          Adicionar
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <Seletor rotulo="Semana de" valor={de} max={meso.semanas} onChange={mudarDe} />
+        <Seletor rotulo="até" valor={ate} max={meso.semanas} onChange={(v) => setAte(Math.max(v, de))} />
+        <Botao className="min-h-11" onClick={() => setAte(meso.semanas)}>
+          Até o fim
+        </Botao>
+        <Botao tipo="primario" className="min-h-11" disabled={semPosicao} onClick={salvar}>
+          {tipo === 'troca' ? 'Salvar troca' : 'Adicionar'}
         </Botao>
       </div>
     </Cartao>
   )
 }
 
-function Seletor({ rotulo, valor, max, onChange }: { rotulo: string; valor: number; max: number; onChange: (v: number) => void }) {
+function Seletor({ rotulo, valor, max, onChange, texto }: { rotulo: string; valor: number; max: number; onChange: (v: number) => void; texto?: (n: number) => string }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex min-w-0 flex-col gap-1 text-sm">
       <span className="text-slate-400">{rotulo}</span>
-      <select
-        value={valor}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={`${campoBase} px-2 py-2`}
-      >
+      <select value={valor} onChange={(e) => onChange(Number(e.target.value))} className={`${campoBase} min-h-11 max-w-full px-2 py-2`}>
         {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
           <option key={n} value={n}>
-            {n}
+            {texto ? texto(n) : n}
           </option>
         ))}
       </select>
