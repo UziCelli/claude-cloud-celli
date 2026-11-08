@@ -227,3 +227,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Concluir treino:** pede um 2º toque ("Concluir o treino?" → Sim, concluir / Continuar treinando).
 - **Desfazer:** logo depois de concluir (até 3 h do início), o treino volta a correr com o tempo do início original; cargas ficam.
 - Vale para as duas marcas (mesmo código).
+
+## 08/11/2026 — Prescrição mais fácil (PR #114)
+- Pré-visualização do editor abre/fecha (começa fechada, lembra a escolha).
+- Campos numéricos (semanas, pausas, tempo limite, progressão) deixam apagar e digitar; o limite só vale ao sair do campo.
+- Ícone do calendário do "Início" visível; clicar no campo abre o calendário.
+- Campo Frequência saiu: frequência = dias de treino marcados.
+- Divisão: cartão "Trocas e adições" — trocar ou acrescentar exercício num intervalo de semanas (`meso.adicoes`).
+- Pendência: aba Métodos (outra sessão) ainda não oferece as posições adicionadas, e o campo numérico dela ainda trava a cada tecla.

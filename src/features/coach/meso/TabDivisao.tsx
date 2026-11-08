@@ -213,6 +213,7 @@ function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registro
   const [nome, setNome] = useState('')
   const [chaveCampo, setChaveCampo] = useState(0)
   const divisaoTreino = meso.divisao[treino - 1] ?? []
+  const semPosicao = tipo === 'troca' && divisaoTreino.length === 0 // treino vazio: nada para trocar
 
   function mudarDe(v: number) {
     setDe(v)
@@ -220,10 +221,20 @@ function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registro
   }
 
   function salvar() {
-    if (!nome.trim()) return
+    if (!nome.trim() || semPosicao) return
+    // Semanas ou dias podem ter diminuído depois da escolha: grava só dentro do meso.
+    const t = Math.min(treino, meso.frequencia)
+    const a = Math.min(ate, meso.semanas)
+    const d = Math.min(de, a)
     const slot = { slotId: crypto.randomUUID(), nome: nome.trim() }
-    if (tipo === 'troca') onAtualizar({ trocas: aplicarTroca(meso, treino, pos, de, ate, slot) })
-    else onAtualizar({ adicoes: aplicarAdicao(meso, treino, de, ate, slot) })
+    if (tipo === 'troca') {
+      const escondeCarga = Array.from({ length: a - d + 1 }, (_, i) => d + i).some((w) => {
+        const antiga = meso.trocas?.[`${w}-${t}-${pos}`]
+        return antiga && registros[`${w}-${t}`]?.[antiga.slotId]?.some((c) => c != null)
+      })
+      if (escondeCarga && !confirm('Uma troca anterior nessas semanas já tem cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?')) return
+      onAtualizar({ trocas: aplicarTroca(meso, t, pos, d, a, slot) })
+    } else onAtualizar({ adicoes: aplicarAdicao(meso, t, d, a, slot) })
     setNome('')
     setChaveCampo((k) => k + 1)
   }
@@ -289,7 +300,7 @@ function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registro
         <Botao className="min-h-11" onClick={() => setAte(meso.semanas)}>
           Até o fim
         </Botao>
-        <Botao tipo="primario" className="min-h-11" onClick={salvar}>
+        <Botao tipo="primario" className="min-h-11" disabled={semPosicao} onClick={salvar}>
           {tipo === 'troca' ? 'Salvar troca' : 'Adicionar'}
         </Botao>
       </div>

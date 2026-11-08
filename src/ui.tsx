@@ -67,10 +67,69 @@ export const Campo = ({ rotulo, className = '', ...p }: InputHTMLAttributes<HTML
     <span className="text-slate-400 transition-colors group-focus-within:text-marca-300">{rotulo}</span>
     <input
       {...p}
+      onClick={(e) => {
+        p.onClick?.(e)
+        if (p.type === 'date')
+          try {
+            e.currentTarget.showPicker?.()
+          } catch {
+            /* navegador sem showPicker */
+          }
+      }}
       className={`${campoBase} px-3 py-2 outline-none transition-[border-color,box-shadow] focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]`}
     />
   </label>
 )
+
+// Texto digitado -> número dentro de [min, max]. Vazio: undefined se `vazio`, senão `anterior`.
+export function confirmarNumero(texto: string, min: number, max: number | undefined, vazio: boolean, anterior: number | undefined) {
+  const t = texto.trim()
+  if (t === '') return vazio ? undefined : anterior
+  const n = Number(t.replace(',', '.'))
+  if (!Number.isFinite(n)) return anterior
+  return Math.min(max ?? Infinity, Math.max(min, Math.round(n)))
+}
+
+// Número que só vale ao sair do campo (ou Enter): dá para apagar tudo e digitar de novo.
+export function CampoNumero({
+  rotulo,
+  valor,
+  min,
+  max,
+  vazio,
+  onConfirmar,
+}: {
+  rotulo: string
+  valor: number | undefined
+  min: number
+  max?: number
+  vazio?: 'undefined'
+  onConfirmar: (n: number) => boolean | void // com `vazio`, pode chegar undefined; false = recusou (o texto volta)
+}) {
+  const [texto, setTexto] = useState(valor === undefined ? '' : String(valor))
+  useEffect(() => setTexto(valor === undefined ? '' : String(valor)), [valor])
+  const confirmar = () => {
+    const n = confirmarNumero(texto, min, max, vazio === 'undefined', valor)
+    const recusou = n !== valor && onConfirmar(n as number) === false
+    const fica = recusou ? valor : n
+    setTexto(fica === undefined ? '' : String(fica))
+  }
+  return (
+    <label className="group flex min-w-0 flex-col gap-1 text-sm">
+      <span className="text-slate-400 transition-colors group-focus-within:text-marca-300">{rotulo}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        onFocus={(e) => e.currentTarget.select()}
+        onBlur={confirmar}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        className={`${campoBase} px-3 py-2 outline-none transition-[border-color,box-shadow] focus:border-marca-500 focus:shadow-[0_0_0_3px_rgba(63,114,166,0.3)]`}
+      />
+    </label>
+  )
+}
 
 export const Aviso = ({ children }: { children: ReactNode }) => (
   <m.div

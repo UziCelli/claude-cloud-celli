@@ -25,8 +25,9 @@ test('adiciona um exercício nas semanas 2 a 3 e remove', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Adicionar exercício' }).click()
   await page.getByLabel('Semana de').selectOption('2')
-  await page.getByLabel('até', { exact: true }).selectOption('3')
+  await page.getByRole('combobox', { name: 'até', exact: true }).selectOption('3')
   await page.getByLabel('Exercício', { exact: true }).fill('Agachamento Frontal Halter')
+  await page.getByRole('option', { name: /Agachamento Frontal Halter/ }).click()
   await page.getByRole('button', { name: 'Adicionar', exact: true }).click()
   await expect(page.getByText('Treino 1 · +')).toBeVisible()
   await expect(page.getByText('Semanas 2–3')).toBeVisible()
