@@ -75,8 +75,7 @@ test('coach presencial: iniciar, relógio andando, concluir', async ({ page }) =
   await entrar(page, COACH.email, COACH.senha)
   await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
   await page.goto(`/#/aluno/${alunoId}`)
-  await page.getByRole('button', { name: 'Treino presencial' }).click()
-  await page.getByRole('button', { name: /Treino 1/ }).click()
+  await page.getByRole('button', { name: 'Treino presencial' }).click() // abre sozinho no treino de hoje
   await iniciarEConcluir(page)
 })
 
