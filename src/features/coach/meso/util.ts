@@ -1,5 +1,5 @@
 import catalogo from '../../../data/exercicios.json'
-import type { Meso } from '../../../engine'
+import type { Meso, Slot } from '../../../engine'
 
 // Cresce/encolhe um array preservando os itens existentes.
 export function redimensionar<T>(arr: T[], n: number, fabrica: () => T): T[] {
@@ -69,4 +69,73 @@ export function filtrarMetodos(metodos: Meso['metodos'], f: FiltroMetodos) {
 export function nomeImportado(aba: string, qtdMesos: number): string {
   const n = /^M\s*\(?\s*(\d+)\s*\)?$/i.exec(aba.trim())?.[1]
   return `Mesociclo ${n ?? qtdMesos + 1}`
+}
+
+export interface GrupoTroca {
+  tipo: 'troca' | 'adicao'
+  t: number
+  p: number // 0 em adição
+  slot: Slot
+  de: number
+  ate: number
+}
+
+const semanasDe = (de: number, ate: number) => Array.from({ length: Math.max(0, ate - de + 1) }, (_, i) => de + i)
+
+// Mesmo slot novo em todas as semanas do intervalo (cópia nova, sem mutar).
+export function aplicarTroca(meso: Meso, t: number, p: number, de: number, ate: number, slot: Slot) {
+  const trocas = { ...meso.trocas }
+  for (const w of semanasDe(de, ate)) trocas[`${w}-${t}-${p}`] = slot
+  return trocas
+}
+
+// Acrescenta o slot no fim da lista de cada semana do intervalo.
+export function aplicarAdicao(meso: Meso, t: number, de: number, ate: number, slot: Slot) {
+  const adicoes = { ...meso.adicoes }
+  for (const w of semanasDe(de, ate)) adicoes[`${w}-${t}`] = [...(adicoes[`${w}-${t}`] ?? []), slot]
+  return adicoes
+}
+
+// Junta entradas com o mesmo slot (e mesmo treino/pos) em semanas consecutivas.
+export function agruparTrocas(meso: Meso): GrupoTroca[] {
+  const itens: (Omit<GrupoTroca, 'de' | 'ate'> & { w: number })[] = []
+  for (const [chave, slot] of Object.entries(meso.trocas ?? {})) {
+    const [w, t, p] = chave.split('-').map(Number)
+    itens.push({ tipo: 'troca', t, p, slot, w })
+  }
+  for (const [chave, lista] of Object.entries(meso.adicoes ?? {})) {
+    const [w, t] = chave.split('-').map(Number)
+    for (const slot of lista) itens.push({ tipo: 'adicao', t, p: 0, slot, w })
+  }
+  itens.sort((a, b) => a.t - b.t || a.tipo.localeCompare(b.tipo) || a.p - b.p || a.slot.slotId.localeCompare(b.slot.slotId) || a.w - b.w)
+  const grupos: GrupoTroca[] = []
+  for (const { w, ...i } of itens) {
+    const g = grupos[grupos.length - 1]
+    if (g && g.tipo === i.tipo && g.t === i.t && g.p === i.p && g.slot.slotId === i.slot.slotId && g.ate === w - 1) g.ate = w
+    else grupos.push({ ...i, de: w, ate: w })
+  }
+  // Troca antes de adição; adição pelo início.
+  return grupos.sort((a, b) => a.t - b.t || (a.tipo === b.tipo ? 0 : a.tipo === 'troca' ? -1 : 1) || a.p - b.p || a.de - b.de)
+}
+
+// Remove o grupo todo; em adição, apaga a chave da semana que ficar vazia.
+export function removerGrupo(meso: Meso, g: GrupoTroca): Partial<Meso> {
+  if (g.tipo === 'troca') {
+    const trocas = { ...meso.trocas }
+    for (const w of semanasDe(g.de, g.ate)) delete trocas[`${w}-${g.t}-${g.p}`]
+    return { trocas }
+  }
+  const adicoes = { ...meso.adicoes }
+  for (const w of semanasDe(g.de, g.ate)) {
+    const chave = `${w}-${g.t}`
+    const resto = (adicoes[chave] ?? []).filter((s) => s.slotId !== g.slot.slotId)
+    if (resto.length) adicoes[chave] = resto
+    else delete adicoes[chave]
+  }
+  return { adicoes }
+}
+
+// Alguma semana do grupo já tem carga desse slot?
+export function grupoTemCarga(g: GrupoTroca, registros: Record<string, Record<string, (number | null)[]>>): boolean {
+  return semanasDe(g.de, g.ate).some((w) => registros[`${w}-${g.t}`]?.[g.slot.slotId]?.some((c) => c != null))
 }
