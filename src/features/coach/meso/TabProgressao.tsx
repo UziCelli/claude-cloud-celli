@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
-import { prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
+import { polimento, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
 import { Botao, campoBase, Cartao, CampoNumero } from '../../../ui'
 
 type Previa = { mov: number; tempo: number }[]
+type Modo = 'prog' | 'red' | 'pol'
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',')
 
@@ -73,8 +74,11 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
 }
 
 function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
-  const [modo, setModo] = useState<'prog' | 'red'>('prog')
+  const [modo, setModo] = useState<Modo>('prog')
   const [reducao, setReducao] = useState('5')
+  const [reducaoPol, setReducaoPol] = useState('40')
+  const [pausas, setPausas] = useState<number[]>([])
+  const [semPol, setSemPol] = useState<number[]>([meso.semanas])
   const [de, setDe] = useState('2')
   const [ate, setAte] = useState(String(meso.semanas))
   const [retorno, setRetorno] = useState('2')
@@ -89,10 +93,27 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
   // Prévia sempre atual: recalcula quando o meso ou algum parâmetro muda.
   const previa = useMemo(() => {
     const alvo: AlvoVolume = onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
-    const args = { pct: modo === 'prog' ? pctSemana : Number(reducao) || 0, de: +de, ate: +ate, alvo }
-    const novo = modo === 'prog' ? progressaoAutomatica(meso, args) : reduzirVolume(meso, { ...args, retorno: +retorno })
+    const novo =
+      modo === 'prog'
+        ? progressaoAutomatica(meso, { pct: pctSemana, de: +de, ate: +ate, alvo, pausas })
+        : modo === 'red'
+          ? reduzirVolume(meso, { pct: Number(reducao) || 0, de: +de, ate: +ate, retorno: +retorno, alvo })
+          : polimento(meso, { pct: Number(reducaoPol) || 0, semanas: semPol, alvo })
     return { antes: resumo(meso), depois: resumo(novo), novo, igual: JSON.stringify(novo) === JSON.stringify(meso) }
-  }, [meso, modo, pctSemana, reducao, de, ate, retorno, onde, treino, slotId])
+  }, [meso, modo, pctSemana, reducao, reducaoPol, pausas, semPol, de, ate, retorno, onde, treino, slotId])
+
+  // Chips de semana (como o seletor de séries do drop set): um clique liga/desliga.
+  const alternar = (lista: number[], w: number) => (lista.includes(w) ? lista.filter((x) => x !== w) : [...lista, w].sort((a, b) => a - b))
+  const chipsSemana = (semanas: number[], marcadas: number[], onClick: (w: number) => void) => (
+    <div className="flex flex-wrap gap-1.5">
+      {semanas.map((w) => (
+        <Botao key={w} aria-pressed={marcadas.includes(w)} tipo={marcadas.includes(w) ? 'primario' : undefined} className="min-h-11" onClick={() => onClick(w)}>
+          S{w}
+        </Botao>
+      ))}
+    </div>
+  )
+  const semanasProg = Array.from({ length: meso.semanas }, (_, i) => i + 1).filter((w) => w >= Math.max(+de, 2) && w <= +ate)
 
   function aplicar() {
     const limite = meso.tempoLimiteMin
@@ -112,9 +133,10 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
       <div className="grid grid-cols-2 gap-3">
         <label className={`${rot} col-span-2`}>
           Modo
-          <select value={modo} onChange={(e) => setModo(e.target.value as 'prog' | 'red')} className={sel}>
+          <select value={modo} onChange={(e) => setModo(e.target.value as Modo)} className={sel}>
             <option value="prog">Progressão</option>
             <option value="red">Reduzir com volta gradual</option>
+            <option value="pol">Polimento (semana leve)</option>
           </select>
         </label>
         <CampoNumero rotulo="% por semana" min={0} valor={pctSemana} onConfirmar={(n) => onAtualizar({ progressaoPct: n })} />
@@ -125,8 +147,29 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
             <CampoNumero rotulo="Semanas de volta" min={0} max={meso.semanas} valor={+retorno} onConfirmar={(n) => setRetorno(String(n))} />
           </>
         )}
-        <CampoNumero rotulo="Da semana" min={1} max={meso.semanas} valor={+de} onConfirmar={(n) => setDe(String(n))} />
-        <CampoNumero rotulo="Até a semana" min={1} max={meso.semanas} valor={+ate} onConfirmar={(n) => setAte(String(n))} />
+        {modo === 'pol' && (
+          <>
+            <CampoNumero rotulo="% de redução do volume" min={0} max={90} valor={+reducaoPol || 0} onConfirmar={(n) => setReducaoPol(String(n))} />
+            <div className={`${rot} col-span-2`}>
+              Semanas de polimento
+              {chipsSemana(Array.from({ length: meso.semanas - 1 }, (_, i) => i + 2), semPol, (w) => setSemPol(alternar(semPol, w)))}
+              <span className="text-xs text-slate-500">O volume cai em relação à semana anterior ao polimento. As cargas continuam as mesmas.</span>
+            </div>
+          </>
+        )}
+        {modo !== 'pol' && (
+          <>
+            <CampoNumero rotulo="Da semana" min={1} max={meso.semanas} valor={+de} onConfirmar={(n) => setDe(String(n))} />
+            <CampoNumero rotulo="Até a semana" min={1} max={meso.semanas} valor={+ate} onConfirmar={(n) => setAte(String(n))} />
+          </>
+        )}
+        {modo === 'prog' && semanasProg.length > 0 && (
+          <div className={`${rot} col-span-2`}>
+            Pausar a progressão nas semanas
+            {chipsSemana(semanasProg, pausas, (w) => setPausas(alternar(pausas, w)))}
+            <span className="text-xs text-slate-500">A semana pausada repete o volume da anterior; depois a progressão continua dali.</span>
+          </div>
+        )}
         <label className={`${rot} col-span-2`}>
           Onde
           <select value={onde} onChange={(e) => setOnde(e.target.value as typeof onde)} className={sel}>

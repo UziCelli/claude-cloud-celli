@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ajustarSeries, progressaoAutomatica, reduzirVolume, tempoPorSemana } from './volume'
+import { ajustarSeries, polimento, progressaoAutomatica, reduzirVolume, tempoPorSemana } from './volume'
 import { prescreverSessao } from './sessao'
 import type { Meso, Slot } from './tipos'
 
@@ -240,5 +240,59 @@ describe('tempoPorSemana', () => {
     const antes = tempoPorSemana(meso)[1]
     const depois = tempoPorSemana(progressaoAutomatica(meso, { pct: 50, de: 2, ate: 2, alvo: { tipo: 'todos' } }))[1]
     expect(depois).toBeGreaterThan(antes)
+  })
+})
+
+describe('progressaoAutomatica — pausas', () => {
+  it('semana pausada repete a anterior e a seguinte progride a partir dela', () => {
+    const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 4, alvo: { tipo: 'todos' }, pausas: [3] })
+    expect(m.progressao.principais.slice(0, 4).map(movs)).toEqual([24, 26, 26, 28])
+  })
+
+  it('várias pausas, inclusive seguidas', () => {
+    const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 5, alvo: { tipo: 'todos' }, pausas: [2, 3] })
+    expect(m.progressao.principais.slice(0, 5).map(movs)).toEqual([24, 24, 24, 26, 28])
+  })
+
+  it('pausa fora do intervalo de..ate é ignorada', () => {
+    const m = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 3, alvo: { tipo: 'todos' }, pausas: [6] })
+    expect(m.progressao.principais[5]).toEqual(linha8())
+  })
+})
+
+describe('polimento', () => {
+  it('última semana: cai pct% sobre a semana anterior, o resto fica igual', () => {
+    const base = progressaoAutomatica(mesoBase(), { pct: 5, de: 2, ate: 8, alvo: { tipo: 'todos' } })
+    const m = polimento(base, { pct: 40, semanas: [8], alvo: { tipo: 'todos' } })
+    const antes = base.progressao.principais.map(movs)
+    const depois = m.progressao.principais.map(movs)
+    expect(depois.slice(0, 7)).toEqual(antes.slice(0, 7))
+    expect(depois[7]).toBe(Math.floor(antes[6] * 0.6))
+  })
+
+  it('semanas seguidas usam a mesma referência (a última semana normal)', () => {
+    const m = polimento(mesoBase(), { pct: 50, semanas: [7, 8], alvo: { tipo: 'todos' } })
+    expect(m.progressao.principais.map(movs).slice(5)).toEqual([24, 12, 12])
+  })
+
+  it('aplicar duas vezes dá o mesmo resultado', () => {
+    const uma = polimento(mesoBase(), { pct: 40, semanas: [8], alvo: { tipo: 'todos' } })
+    expect(polimento(uma, { pct: 40, semanas: [8], alvo: { tipo: 'todos' } })).toEqual(uma)
+  })
+
+  it('alvo exercício: só ele muda', () => {
+    const m = polimento(mesoBase(), { pct: 40, semanas: [8], alvo: { tipo: 'exercicio', slotId: 'B' } })
+    expect(Object.keys(m.progressaoExercicio!)).toEqual(['B'])
+    expect(movs(m.progressaoExercicio!.B[7])).toBe(14) // 24 · 0,6 = 14,4 -> 14
+    expect(m.progressao).toEqual(mesoBase().progressao)
+  })
+
+  it('semana 1 não tem anterior: fica de fora', () => {
+    const m = polimento(mesoBase(), { pct: 40, semanas: [1, 2], alvo: { tipo: 'todos' } })
+    expect(m.progressao.principais.map(movs).slice(0, 3)).toEqual([24, 14, 24])
+  })
+
+  it('sem semanas escolhidas não muda nada', () => {
+    expect(polimento(mesoBase(), { pct: 40, semanas: [], alvo: { tipo: 'todos' } })).toEqual(mesoBase())
   })
 })
