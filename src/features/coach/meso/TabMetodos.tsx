@@ -72,7 +72,7 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
                     <IconeMetodo metodo={l.metodo} tamanho={16} />
                     <span className="min-w-0 break-words">{texto}</span>
                   </button>
-                  <Botao aria-label={`Tirar ${l.metodo} de ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => onAtualizar({ metodos: removerLinha(metodos, sel, pos, l) })}>
+                  <Botao aria-label={`Tirar ${l.metodo} de ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => window.confirm(`Tirar ${l.metodo} de ${nome(pos)}?${emGrupo(l.metodo) ? ' O grupo inteiro sai.' : ''}`) && onAtualizar({ metodos: removerLinha(metodos, sel, pos, l) })}>
                     ✕
                   </Botao>
                 </div>
