@@ -41,3 +41,37 @@ test('ajustar volume: prévia automática, Total e pausa dos principais muda o t
   await page.getByRole('button', { name: 'Progressão', exact: true }).click()
   expect(await tempo()).not.toBe(antes)
 })
+
+test('pausar a progressão e polimento: seletor de semanas', async ({ page }) => {
+  const alunoId = await criarAluno('Caio Pol', 'caio.pol@teste.com', 'senha123')
+  const l = [10, 10, 10, null, null, null]
+  const linha = { w1: l, w2: l, w3: l, w4: l }
+  const slots = ['Supino Reto Barra', 'Remada Curvada com Barra'].map((nome, i) => ({ slotId: `p${i}`, nome }))
+  const id = await criarMeso({
+    alunoId, nome: 'Meso Pol', frequencia: 1, semanas: 4, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: { t1: slots }, progressao: { principais: linha, auxiliares: linha },
+  })
+
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill(COACH.email)
+  await page.getByLabel('Senha').fill(COACH.senha)
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+  await page.goto(`/#/meso/${id}`)
+  await page.getByRole('button', { name: 'Progressão', exact: true }).click()
+
+  const linhaSem = (w: number) => page.locator('table', { hasText: 'Variação' }).locator('tbody tr').nth(w - 1)
+  // Progressão: 60 -> 64 -> (pausa) 64 -> 68
+  await page.getByRole('button', { name: 'S3', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'S3', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(linhaSem(3).locator('td').nth(1)).toHaveText('64')
+  await expect(linhaSem(3).locator('td').nth(2)).toHaveText('0,0%')
+  await expect(linhaSem(4).locator('td').nth(1)).toHaveText('68')
+
+  // Polimento: a última semana já vem marcada; -40% sobre a semana 3 (60 -> 36).
+  await page.getByLabel('Modo').selectOption('pol')
+  await expect(page.getByRole('button', { name: 'S4', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(linhaSem(4).locator('td').nth(1)).toHaveText('36')
+  await page.getByRole('button', { name: 'Aplicar alterações' }).click()
+  await expect(page.getByRole('button', { name: 'Aplicar alterações' })).toBeDisabled()
+})
