@@ -2,12 +2,11 @@ import { useMemo, useState } from 'react'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso } from '../../../engine'
-import { Botao, campoBase, Cartao } from '../../../ui'
+import { Botao, campoBase, Cartao, CampoNumero } from '../../../ui'
 
 type Previa = { mov: number; tempo: number }[]
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',')
-const num = (v: string, min: number, max: number) => Math.min(max, Math.max(min, Number(v) || min))
 
 // Movimentos (reps prescritas) e tempo (maior treino) de cada semana.
 function resumo(meso: Meso): Previa {
@@ -42,7 +41,7 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
         acao={{ rotulo: 'Aplicar semana 1 em todas', fazer: () => confirm('Isso apaga as diferenças entre as semanas da progressão padrão. Continuar?') && setPadrao(padrao.map(() => [...(padrao[0] ?? vazia())])) }}
       />
       <p className="text-sm text-slate-400">Todo exercício segue a padrão, a menos que você personalize.</p>
-      {meso.divisao.map((slots, t) => (
+      {meso.divisao.slice(0, meso.frequencia).map((slots, t) => (
         <Cartao key={t} className="space-y-2">
           <h3 className="font-semibold">Treino {t + 1}</h3>
           {slots.length === 0 && <p className="text-sm text-slate-500">Sem exercícios.</p>}
@@ -104,7 +103,6 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
 
   const sel = `${campoBase} w-full px-2 py-1.5`
   const rot = 'grid gap-1 text-sm text-slate-400'
-  const centro = `${sel} text-center`
   const totalMov = previa.depois.reduce((s, x) => s + x.mov, 0)
   const totalAntes = previa.antes.reduce((s, x) => s + x.mov, 0)
 
@@ -119,34 +117,16 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
             <option value="red">Reduzir com volta gradual</option>
           </select>
         </label>
-        <label className={rot}>
-          % por semana
-          <input type="number" min={0} value={pctSemana} onChange={(e) => onAtualizar({ progressaoPct: Math.max(0, Number(e.target.value) || 0) })} className={centro} />
-        </label>
-        <label className={rot}>
-          Limite de reps por série
-          <input type="number" min={1} value={meso.limiteReps ?? 15} onChange={(e) => onAtualizar({ limiteReps: Math.max(1, Number(e.target.value) || 1) })} className={centro} />
-        </label>
+        <CampoNumero rotulo="% por semana" min={0} valor={pctSemana} onConfirmar={(n) => onAtualizar({ progressaoPct: n })} />
+        <CampoNumero rotulo="Limite de reps por série" min={1} valor={meso.limiteReps ?? 15} onConfirmar={(n) => onAtualizar({ limiteReps: n })} />
         {modo === 'red' && (
           <>
-            <label className={rot}>
-              % de redução
-              <input type="number" min={0} value={reducao} onChange={(e) => setReducao(e.target.value)} className={centro} />
-            </label>
-            <label className={rot}>
-              Semanas de volta
-              <input type="number" min={0} max={meso.semanas} value={retorno} onChange={(e) => setRetorno(String(num(e.target.value, 0, meso.semanas)))} className={centro} />
-            </label>
+            <CampoNumero rotulo="% de redução" min={0} valor={+reducao || 0} onConfirmar={(n) => setReducao(String(n))} />
+            <CampoNumero rotulo="Semanas de volta" min={0} max={meso.semanas} valor={+retorno} onConfirmar={(n) => setRetorno(String(n))} />
           </>
         )}
-        <label className={rot}>
-          Da semana
-          <input type="number" min={1} max={meso.semanas} value={de} onChange={(e) => setDe(String(num(e.target.value, 1, meso.semanas)))} className={centro} />
-        </label>
-        <label className={rot}>
-          Até a semana
-          <input type="number" min={1} max={meso.semanas} value={ate} onChange={(e) => setAte(String(num(e.target.value, 1, meso.semanas)))} className={centro} />
-        </label>
+        <CampoNumero rotulo="Da semana" min={1} max={meso.semanas} valor={+de} onConfirmar={(n) => setDe(String(n))} />
+        <CampoNumero rotulo="Até a semana" min={1} max={meso.semanas} valor={+ate} onConfirmar={(n) => setAte(String(n))} />
         <label className={`${rot} col-span-2`}>
           Onde
           <select value={onde} onChange={(e) => setOnde(e.target.value as typeof onde)} className={sel}>

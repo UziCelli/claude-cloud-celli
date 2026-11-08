@@ -244,3 +244,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Novo: nos **5 dias antes** do vencimento, o Início do aluno mostra o cartão "Mensalidade vence em N dias" com QR, "Copiar código Pix" e "Já paguei", sem bloquear o acesso.
 - Quem toca na notificação cai na Conta com o Pix já aberto.
 - Escolha do Victor: 5 dias. Detalhes: `docs/mapa.md`, linha "Pix antes do vencimento".
+
+## 08/11/2026 — Prescrição mais fácil (PR #114)
+- Pré-visualização do editor abre/fecha (começa fechada, lembra a escolha).
+- Campos numéricos (semanas, pausas, tempo limite, progressão) deixam apagar e digitar; o limite só vale ao sair do campo.
+- Ícone do calendário do "Início" visível; clicar no campo abre o calendário.
+- Campo Frequência saiu: frequência = dias de treino marcados.
+- Divisão: cartão "Trocas e adições" — trocar ou acrescentar exercício num intervalo de semanas (`meso.adicoes`).
+- Pendência: a aba Métodos nova (PR #113) ainda não oferece as posições adicionadas.

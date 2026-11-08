@@ -140,3 +140,12 @@ button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer
 
 /* Selo do reCAPTCHA tapa botões no celular; o aviso legal fica na tela de login. */
 .grecaptcha-badge { visibility: hidden; }
+
+input[type='date'] { color-scheme: dark; }
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 1;
+  cursor: pointer;
+  width: 1.5rem;
+  height: 1.5rem;
+}
