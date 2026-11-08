@@ -53,6 +53,15 @@ export const inicioDoDiaSP = (dia: number) => dia * DIA - SP
 export const diasParaVencer = (pagoAte: Timestamp, agora: Date) =>
   diaSP(pagoAte.toMillis()) - diaSP(agora.getTime())
 
+// Mensalidade perto de vencer (0..dias, calendário de São Paulo): o app já mostra o Pix antes do bloqueio.
+// Só aluno ativo com app (presencial não tem login). null = longe, vencido ou não se aplica.
+export function vencePerto(u: Usuario | null, agora: Date, dias = 5) {
+  if (!u || u.papel !== 'aluno' || u.status !== 'ativo' || u.presencial || !u.pagoAte) return null
+  if (agora.getTime() >= u.pagoAte.toMillis()) return null
+  const faltam = diasParaVencer(u.pagoAte, agora)
+  return faltam >= 0 && faltam <= dias ? faltam : null
+}
+
 // YYYY-MM-DD no calendário de São Paulo, daqui a `dias` (toISOString seria UTC: +1 dia depois das 21h).
 export const hojeMaisDias = (dias: number) =>
   new Date(Date.now() + dias * DIA).toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' })

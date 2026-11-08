@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
-import { diasParaVencer, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, proximoVencimento, type Usuario } from './acesso'
+import { diasParaVencer, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, proximoVencimento, vencePerto, type Usuario } from './acesso'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const ts = (d: Date) => Timestamp.fromDate(d)
@@ -41,6 +41,27 @@ describe('diasParaVencer (dias de calendário em São Paulo)', () => {
   it('positivo antes, negativo depois', () => {
     expect(diasParaVencer(pagoAte, sp('2026-09-28T10:00'))).toBe(12)
     expect(diasParaVencer(pagoAte, sp('2026-10-11T00:10'))).toBe(-1)
+  })
+})
+
+describe('vencePerto (Pix aparece 5 dias antes)', () => {
+  const aluno: Usuario = { papel: 'aluno', nome: 'Ana', email: 'a@x.com', status: 'ativo', pagoAte: ts(fimDoDiaSaoPaulo('2026-10-10')) }
+  it('de 5 dias até o dia', () => {
+    expect(vencePerto(aluno, sp('2026-10-04T12:00'))).toBeNull() // 6 dias
+    expect(vencePerto(aluno, sp('2026-10-05T00:00'))).toBe(5)
+    expect(vencePerto(aluno, sp('2026-10-09T23:30'))).toBe(1) // já é dia 10 em UTC
+    expect(vencePerto(aluno, sp('2026-10-10T23:59'))).toBe(0)
+  })
+  it('vencido não conta (a tela de bloqueio mostra o Pix)', () => {
+    expect(vencePerto(aluno, sp('2026-10-11T00:00'))).toBeNull()
+  })
+  it('presencial, bloqueado, coach, sem pagoAte ou sem perfil: nada', () => {
+    const agora = sp('2026-10-08T12:00')
+    expect(vencePerto({ ...aluno, presencial: true }, agora)).toBeNull()
+    expect(vencePerto({ ...aluno, status: 'bloqueado' }, agora)).toBeNull()
+    expect(vencePerto({ ...aluno, papel: 'coach' }, agora)).toBeNull()
+    expect(vencePerto({ ...aluno, pagoAte: undefined }, agora)).toBeNull()
+    expect(vencePerto(null, agora)).toBeNull()
   })
 })
 
