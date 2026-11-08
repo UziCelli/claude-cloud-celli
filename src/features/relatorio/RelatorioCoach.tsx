@@ -8,6 +8,7 @@ import { db } from '../../lib/firebase'
 import { useDoc } from '../../lib/hooks'
 import { relatorioCiclo, type RelatorioCiclo } from '../../lib/relatorio'
 import { Botao, Centro } from '../../ui'
+import { BotaoVoltar } from '../../voltar'
 import type { RelatorioDoc } from './RelatorioAluno'
 import Relatorio, { BotaoPdf } from './Relatorio'
 import { useDadosAluno } from './useDadosAluno'
@@ -19,11 +20,11 @@ export default function RelatorioCoach({ mesoId }: { mesoId: string }) {
   const aluno = useDoc<Usuario>(useMemo(() => (meso.dados ? doc(db, 'usuarios', meso.dados.alunoId) : null), [meso.dados]))
   const rel = useDoc<RelatorioDoc>(useMemo(() => doc(db, 'relatorios', mesoId), [mesoId]))
   const dados = useDadosAluno(meso.dados?.alunoId)
-  const voltar = meso.dados ? `#/aluno/${meso.dados.alunoId}` : '#/alunos'
+  const voltar = meso.dados ? `/aluno/${meso.dados.alunoId}` : '/alunos'
   const r = dados.carregando ? null : relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date())
   return (
     <main className="mx-auto max-w-md px-4 py-4 lg:max-w-3xl">
-      <a href={voltar} className="mb-3 inline-block text-sm text-slate-400">← Mesociclos do aluno</a>
+      <BotaoVoltar para={voltar} />
       {meso.carregando || aluno.carregando || rel.carregando || dados.carregando ? (
         <Centro>Carregando…</Centro>
       ) : !r || !meso.dados || !aluno.dados ? (

@@ -6,6 +6,7 @@ import { registrarErro } from '../../../lib/log'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { ir } from '../../../rota'
 import { Aviso, Botao, Campo, Cartao, flash, Msg, Pagina, Painel } from '../../../ui'
+import { BotaoVoltar } from '../../../voltar'
 
 export default function NovoAluno() {
   const [app, setApp] = useState(true)
@@ -46,7 +47,7 @@ export default function NovoAluno() {
   const aba = (ativo: boolean) => `relative flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${ativo ? 'text-white' : ''}`
   const pilula = <m.span layoutId="novo-aba" className="absolute inset-0 z-0 rounded-lg bg-marca-500" transition={agil} />
   return (
-    <Pagina titulo="Novo aluno">
+    <Pagina titulo="Novo aluno" voltar={<BotaoVoltar para="/alunos" />}>
       <Cartao className="max-w-md">
         <form onSubmit={enviar} className="space-y-3">
           <div className="flex gap-1 rounded-xl bg-slate-800 p-1">

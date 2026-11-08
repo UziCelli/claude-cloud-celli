@@ -341,6 +341,12 @@ test('editor com mudanças não salvas avisa ao sair pelo menu', async ({ page }
   await recusado
   await expect(page).toHaveURL(new RegExp(`#/meso/${id}$`))
   await expect(campo).toHaveValue('Meso Renomeado')
+  // Voltar recusado: desfaz o passo atrás e continua no editor
+  const recusado2 = new Promise<void>((ok) => page.once('dialog', (d) => void d.dismiss().then(() => ok())))
+  await page.getByRole('button', { name: 'Voltar', exact: true }).click()
+  await recusado2
+  await expect(page).toHaveURL(new RegExp(`#/meso/${id}$`))
+  await expect(campo).toHaveValue('Meso Renomeado')
   // Aceitar: vai para a lista
   const aceito = new Promise<void>((ok) => page.once('dialog', (d) => void d.accept().then(() => ok())))
   await page.getByRole('link', { name: 'Alunos', exact: true }).click()

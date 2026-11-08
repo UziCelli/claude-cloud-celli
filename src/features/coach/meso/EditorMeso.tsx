@@ -12,6 +12,7 @@ import { db } from '../../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir, protegerSaida } from '../../../rota'
 import { Aviso, Botao, Campo, Msg, Pagina } from '../../../ui'
+import { BotaoVoltar } from '../../../voltar'
 import Preview from './Preview'
 import { LinhaAcima, treinosAcima } from './SugestaoTempo'
 import TabDivisao from './TabDivisao'
@@ -148,6 +149,7 @@ export default function EditorMeso({ id }: { id: string }) {
 
   return (
     <Pagina
+      voltar={<BotaoVoltar para={alunoId ? `/aluno/${alunoId}` : '/alunos'} />}
       titulo={
         <input
           value={nome}

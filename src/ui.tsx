@@ -12,8 +12,10 @@ export const flash = { texto: '' }
 // Parte comum dos campos de formulário; cada campo soma padding/largura/foco.
 export const campoBase = 'rounded-lg border border-slate-700 bg-slate-950 text-base text-slate-100'
 
-export const Pagina = ({ titulo, acoes, children }: { titulo: ReactNode; acoes?: ReactNode; children: ReactNode }) => (
+// `voltar`: o <BotaoVoltar> da tela (src/voltar.tsx); aba não tem.
+export const Pagina = ({ titulo, acoes, voltar, children }: { titulo: ReactNode; acoes?: ReactNode; voltar?: ReactNode; children: ReactNode }) => (
   <main className="mx-auto max-w-6xl px-4 py-6">
+    {voltar && <div className="-mt-3">{voltar}</div>}
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 className="text-2xl font-bold">{titulo}</h1>
       {acoes && <div className="flex flex-wrap gap-2">{acoes}</div>}
