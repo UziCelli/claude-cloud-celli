@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { aplicarSugestao, prescreverSessao, sugerirMetodos } from '../../../engine'
+import { aplicarSugestao, prescreverSessao, slotsDaSessao, sugerirMetodos } from '../../../engine'
 import type { Meso } from '../../../engine'
 import { fmtMin } from '../../../lib/tempo'
 import { Botao, Painel } from '../../../ui'
@@ -55,7 +55,7 @@ function PainelSugestao({ meso, acima, onAplicar, onCancelar }: { meso: Meso; ac
   const [fora, setFora] = useState<number[]>([])
   const [semanas, setSemanas] = useState<number[]>(acima.semanas)
   const troca = (l: number[], n: number) => (l.includes(n) ? l.filter((x) => x !== n) : [...l, n].sort((a, b) => a - b))
-  const nome = (pos: number) => meso.trocas?.[`${acima.semana}-${acima.treino}-${pos}`]?.nome ?? meso.divisao[acima.treino - 1]?.[pos - 1]?.nome ?? `Posição ${pos}`
+  const nome = (pos: number) => slotsDaSessao(meso, acima.semana, acima.treino)[pos - 1]?.nome ?? `Posição ${pos}`
 
   const escolhidas = propostas.filter((_, i) => !fora.includes(i))
   const aplicado = (semanasAlvo: number[]) => escolhidas.reduce((mm, p) => aplicarSugestao(mm, p, semanasAlvo), meso)

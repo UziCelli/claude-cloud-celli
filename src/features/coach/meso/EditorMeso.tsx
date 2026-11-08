@@ -11,7 +11,8 @@ import { docParaMeso, type MesoSalvo, type RegistroDoc, docsParaRegistros } from
 import { db } from '../../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir, protegerSaida } from '../../../rota'
-import { Aviso, Botao, Campo, Msg, Pagina } from '../../../ui'
+import { DIAS_AUTO } from '../../../lib/agenda'
+import { Aviso, Botao, Campo, CampoNumero, Msg, Pagina } from '../../../ui'
 import { BotaoVoltar } from '../../../voltar'
 import Preview from './Preview'
 import { LinhaAcima, treinosAcima } from './SugestaoTempo'
@@ -50,6 +51,7 @@ export default function EditorMeso({ id }: { id: string }) {
   const [semana, setSemana] = useState(1)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState('')
+  const [previaAberta, setPreviaAberta] = useState(() => localStorage.getItem('preview-aberta') === '1')
 
   // Acompanha o documento remoto: sem edições locais, recarrega; com edições, avisa do conflito
   // (evita que uma aba antiga sobrescreva mudanças feitas em outra aba/aparelho).
@@ -89,8 +91,13 @@ export default function EditorMeso({ id }: { id: string }) {
     setDirty(true)
   }
 
-  function salvar(novo = meso, adaptou = false) {
-    if (!novo || diasInvalidos(novo)) return
+  function salvar(entrada = meso, adaptou = false) {
+    if (!entrada) return
+    let novo: Meso = entrada
+    if (novo.divisao.length > novo.frequencia) {
+      if (temCargas((_, t) => t > entrada.frequencia) && !confirm(`Os treinos removidos ${AVISO_CORTE}`)) return
+      novo = { ...novo, divisao: novo.divisao.slice(0, novo.frequencia) }
+    }
     if (novo !== meso) setMeso(novo)
     setDirty(false)
     setErro(null)
@@ -113,23 +120,24 @@ export default function EditorMeso({ id }: { id: string }) {
     })
   const AVISO_CORTE = 'já têm cargas registradas. Elas ficam guardadas, mas deixam de aparecer. Continuar?'
 
-  // "Dias de treino" é opcional; se usado, tem de ter exatamente `frequencia` dias.
-  const diasInvalidos = (x: Meso) => !!x.dias?.length && x.dias.length !== x.frequencia
-  const alternarDia = (d: number) => {
-    const atual = meso!.dias ?? []
-    const novo = (atual.includes(d) ? atual.filter((x) => x !== d) : [...atual, d]).sort((a, b) => a - b)
-    atualizar({ dias: novo.length ? novo : undefined })
+  // Dias marcados; meso antigo sem `dias` mostra o calendário automático da frequência.
+  const diasAtuais = (x: Meso) => {
+    if (x.dias?.length) return x.dias
+    const [a, m, d] = x.inicio.slice(0, 10).split('-').map(Number)
+    const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay() || 0 // sem início válido: a partir de domingo
+    return DIAS_AUTO[x.frequencia - 1].map((o) => (dow + o) % 7).sort((p, q) => p - q)
   }
-
-  function setFrequencia(n: number) {
-    if (n < meso!.frequencia && temCargas((_, t) => t > n) && !confirm(`Os treinos removidos ${AVISO_CORTE}`)) return
-    atualizar({ frequencia: n, dias: undefined, divisao: redimensionar(meso!.divisao, n, () => []) })
+  const alternarDia = (d: number) => {
+    const atual = diasAtuais(meso!)
+    const novo = (atual.includes(d) ? atual.filter((x) => x !== d) : [...atual, d]).sort((p, q) => p - q)
+    if (!novo.length) return
+    atualizar({ dias: novo, frequencia: novo.length, divisao: redimensionar(meso!.divisao, Math.max(novo.length, meso!.divisao.length), () => []) })
   }
 
   const linhas = (l: (number | null)[][], n: number) => redimensionar(l, n, () => Array(6).fill(null))
 
   function setSemanas(n: number) {
-    if (n < meso!.semanas && temCargas((w) => w > n) && !confirm(`As semanas removidas ${AVISO_CORTE}`)) return
+    if (n < meso!.semanas && temCargas((w) => w > n) && !confirm(`As semanas removidas ${AVISO_CORTE}`)) return false
     atualizar({
       semanas: n,
       progressao: {
@@ -163,7 +171,7 @@ export default function EditorMeso({ id }: { id: string }) {
       acoes={
         <>
           <span className="self-center text-sm text-slate-400">{status}</span>
-          <Botao tipo="primario" disabled={!dirty || diasInvalidos(meso) || !nome.trim() || !meso.inicio} onClick={() => salvar()}>
+          <Botao tipo="primario" disabled={!dirty || !nome.trim() || !meso.inicio} onClick={() => salvar()}>
             Salvar
           </Botao>
           <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>
@@ -228,7 +236,16 @@ export default function EditorMeso({ id }: { id: string }) {
       </div>
 
       <div className="mb-4">
-        <Preview meso={meso} semana={semana} onSemana={setSemana} />
+        <Preview
+          meso={meso}
+          semana={semana}
+          onSemana={setSemana}
+          aberta={previaAberta}
+          onAlternar={() => {
+            localStorage.setItem('preview-aberta', previaAberta ? '0' : '1')
+            setPreviaAberta(!previaAberta)
+          }}
+        />
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
@@ -240,19 +257,11 @@ export default function EditorMeso({ id }: { id: string }) {
         >
       {aba === 'config' && (
         <div className="grid max-w-md gap-3">
-          <Campo
-            rotulo="Frequência (treinos/semana)"
-            type="number"
-            min={2}
-            max={7}
-            value={meso.frequencia}
-            onChange={(e) => setFrequencia(Math.min(7, Math.max(2, Number(e.target.value) || 2)))}
-          />
           <fieldset>
-            <legend className="mb-1 text-sm text-slate-300">Dias de treino (opcional)</legend>
+            <legend className="mb-1 text-sm text-slate-300">Dias de treino</legend>
             <div className="grid grid-cols-7 gap-1.5">
               {DIAS_SEMANA.map((n, d) => {
-                const on = !!meso.dias?.includes(d)
+                const on = diasAtuais(meso).includes(d)
                 return (
                   <button
                     key={d}
@@ -266,46 +275,28 @@ export default function EditorMeso({ id }: { id: string }) {
                 )
               })}
             </div>
-            {diasInvalidos(meso) && (
-              <p className="mt-1 text-sm text-red-400">
-                Escolha exatamente {meso.frequencia} dias (um por treino). Hoje: {meso.dias!.length}.
-              </p>
-            )}
+            <p className="mt-1 text-sm text-slate-400">{meso.frequencia} {meso.frequencia === 1 ? 'treino' : 'treinos'} por semana</p>
           </fieldset>
-          <Campo
-            rotulo="Semanas"
-            type="number"
-            min={1}
-            max={12}
-            value={meso.semanas}
-            onChange={(e) => setSemanas(Math.min(12, Math.max(1, Number(e.target.value) || 1)))}
-          />
+          <CampoNumero rotulo="Semanas" min={1} max={12} valor={meso.semanas} onConfirmar={setSemanas} />
           <Campo rotulo="Início" type="date" value={meso.inicio} onChange={(e) => atualizar({ inicio: e.target.value })} />
-          <Campo
+          <CampoNumero
             rotulo="Pausa dos principais (exercícios 1 e 2), s"
-            type="number"
             min={0}
-            value={meso.pausaPrincipaisS ?? meso.pausaS}
-            onChange={(e) => atualizar({ pausaPrincipaisS: Math.max(0, Number(e.target.value) || 0) })}
+            valor={meso.pausaPrincipaisS ?? meso.pausaS}
+            onConfirmar={(n) => atualizar({ pausaPrincipaisS: n })}
           />
-          <Campo
+          <CampoNumero
             rotulo="Pausa dos auxiliares (exercício 3 em diante), s"
-            type="number"
             min={0}
-            value={meso.pausaS}
-            onChange={(e) =>
-              atualizar({
-                pausaS: Math.max(0, Number(e.target.value) || 0),
-                ...(meso.pausaPrincipaisS === undefined && { pausaPrincipaisS: meso.pausaS }),
-              })
-            }
+            valor={meso.pausaS}
+            onConfirmar={(n) => atualizar({ pausaS: n, ...(meso.pausaPrincipaisS === undefined && { pausaPrincipaisS: meso.pausaS }) })}
           />
-          <Campo
+          <CampoNumero
             rotulo="Tempo limite do aluno (min) — vazio = sem aviso"
-            type="number"
             min={1}
-            value={meso.tempoLimiteMin ?? ''}
-            onChange={(e) => atualizar({ tempoLimiteMin: e.target.value === '' ? undefined : Number(e.target.value) })}
+            vazio="undefined"
+            valor={meso.tempoLimiteMin}
+            onConfirmar={(n) => atualizar({ tempoLimiteMin: n })}
           />
         </div>
       )}

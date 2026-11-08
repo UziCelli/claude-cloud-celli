@@ -47,11 +47,15 @@ export function linhaPrescrita(meso: Meso, semana: number, treino: number, pos: 
   )
 }
 
-// Exercícios do dia: a sessão editada no presencial, senão a divisão com as trocas pontuais (de = posição).
+// Exercícios do dia: a sessão editada no presencial, senão a divisão com as trocas pontuais (de = posição)
+// e, no fim, as adições daquela semana (sem `de`: exercício novo).
 export function slotsDaSessao(meso: Meso, semana: number, treino: number): SlotSessao[] {
   const editada = meso.sessoes?.[`${semana}-${treino}`]
   if (editada) return editada.exercicios
-  return (meso.divisao[treino - 1] ?? []).map((original, i) => ({ ...(meso.trocas?.[`${semana}-${treino}-${i + 1}`] ?? original), de: i + 1 }))
+  return [
+    ...(meso.divisao[treino - 1] ?? []).map((original, i) => ({ ...(meso.trocas?.[`${semana}-${treino}-${i + 1}`] ?? original), de: i + 1 })),
+    ...(meso.adicoes?.[`${semana}-${treino}`] ?? []),
+  ]
 }
 
 // Linhas de método do dia (ativas ou não): as da sessão editada, senão as do plano.
