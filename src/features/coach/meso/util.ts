@@ -10,12 +10,6 @@ export function redimensionar<T>(arr: T[], n: number, fabrica: () => T): T[] {
 
 export const nomesCatalogo: string[] = catalogo.flatMap((g) => g.exercicios.map((e) => e.nome))
 
-// Número de séries preenchidas na progressão de uma posição, numa semana.
-export function seriesDaPosicao(meso: Meso, semana: number, pos: number): number {
-  const linha = (pos <= 2 ? meso.progressao.principais : meso.progressao.auxiliares)[semana - 1] ?? []
-  return linha.filter((r) => typeof r === 'number').length
-}
-
 // Semanas (1..meso.semanas) em que a posição `pos` do treino `t` tem alguma carga registrada,
 // considerando o slotId vigente naquela semana (troca pontual, se houver).
 export function semanasComHistorico(
@@ -50,19 +44,6 @@ export function copiarTreino(meso: Meso, de: number, para: number) {
     ...meso.metodos.filter((m) => m.treino === de).map((m) => ({ ...structuredClone(m), treino: para })),
   ]
   return { divisao, metodos, progressaoExercicio }
-}
-
-export interface FiltroMetodos {
-  semana?: number
-  treino?: number
-  exercicio?: number
-}
-
-// Só para exibir: devolve os métodos que batem com o filtro, com o índice original no array.
-export function filtrarMetodos(metodos: Meso['metodos'], f: FiltroMetodos) {
-  return metodos
-    .map((m, idx) => ({ m, idx }))
-    .filter(({ m }) => (!f.semana || m.semana === f.semana) && (!f.treino || m.treino === f.treino) && (!f.exercicio || m.exercicio === f.exercicio))
 }
 
 // Nome sugerido ao importar: aba "M7" / "M (6)" / "M 3" vira "Mesociclo N"; outra aba, o próximo número.

@@ -319,3 +319,14 @@ export const Contar = ({ n }: { n: number }) => {
   }, [n])
   return <>{v}</>
 }
+
+export function Folha({ titulo, onFechar, children }: { titulo: string; onFechar: () => void; children: ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-end bg-black/60" onClick={onFechar}>
+      <div role="dialog" aria-label={titulo} className="mx-auto max-h-[80dvh] w-full max-w-md space-y-4 overflow-y-auto rounded-t-3xl bg-slate-900 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-base font-bold">{titulo}</h2>
+        {children}
+      </div>
+    </div>
+  )
+}

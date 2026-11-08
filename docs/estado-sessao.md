@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 13/10/2026
+# Estado da sessão (retomada) — atualizado em 08/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #77 estão juntados e publicados.
 
@@ -228,10 +228,21 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Desfazer:** logo depois de concluir (até 3 h do início), o treino volta a correr com o tempo do início original; cargas ficam.
 - Vale para as duas marcas (mesmo código).
 
+## 08/11/2026 — Aba Métodos mais simples (editor do meso)
+- Pedido do Victor: pôr métodos mais rápido, no exercício e nas semanas que ele quer.
+- **Como ficou:**
+  - um treino por vez (abas), com a lista de exercícios e os métodos embaixo de cada um;
+  - cada método é **uma linha com as semanas** ("Dropset · S3 · todas as semanas"), não um cartão por semana;
+  - "+ Método" abre uma folha: método, semanas (chips + "Todas"), séries, drop (etapas e carga) e "Juntar com" (Biset…);
+  - o resto fica em "Mais ajustes", fechado.
+- Sem filtro, sem "Copiar para todas" e sem campo "Grupo" (o número do grupo é automático).
+- O formato dos dados não mudou (sem migração). Lógica em `src/engine/planoMetodos.ts`.
+- **Pendência do Victor:** montar um meso real no PC e no celular e dizer o que ainda incomoda.
+
 ## 08/11/2026 — Prescrição mais fácil (PR #114)
 - Pré-visualização do editor abre/fecha (começa fechada, lembra a escolha).
 - Campos numéricos (semanas, pausas, tempo limite, progressão) deixam apagar e digitar; o limite só vale ao sair do campo.
 - Ícone do calendário do "Início" visível; clicar no campo abre o calendário.
 - Campo Frequência saiu: frequência = dias de treino marcados.
 - Divisão: cartão "Trocas e adições" — trocar ou acrescentar exercício num intervalo de semanas (`meso.adicoes`).
-- Pendência: aba Métodos (outra sessão) ainda não oferece as posições adicionadas, e o campo numérico dela ainda trava a cada tecla.
+- Pendência: a aba Métodos nova (PR #113) ainda não oferece as posições adicionadas.

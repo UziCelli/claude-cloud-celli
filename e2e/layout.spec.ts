@@ -309,7 +309,7 @@ for (const vp of [
     await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
     await page.goto(`/#/meso/${id}`)
     await page.getByRole('button', { name: 'Métodos', exact: true }).click()
-    await expect(page.getByText('Mostrando 3 de 3 métodos')).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Dropset/ })).toBeVisible()
     if (process.env.PRINT_PREFIX) await page.screenshot({ path: `${process.env.PRINT_PREFIX}-${vp.width}.png`, fullPage: true })
     const r = await page.evaluate(() => ({
       sw: document.documentElement.scrollWidth,
@@ -318,6 +318,11 @@ for (const vp of [
     }))
     expect(r.sw).toBeLessThanOrEqual(r.iw)
     expect(r.fora).toBe(0)
+    await page.getByRole('button', { name: /^Dropset/ }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    if (process.env.PRINT_PREFIX) await page.screenshot({ path: `${process.env.PRINT_PREFIX}-folha-${vp.width}.png` })
+    const rf = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth }))
+    expect(rf.sw).toBeLessThanOrEqual(rf.iw)
     await confere(page)
     await ctx.close()
   })
