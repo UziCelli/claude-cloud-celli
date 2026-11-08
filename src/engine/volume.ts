@@ -68,15 +68,16 @@ function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[]) => Linha[]):
 }
 
 // Semanas de..ate (1-based) cada uma a partir da anterior: linha(w) = ajustarSeries(linha(w-1)).
+// Semana em `pausas` repete a anterior (progressão pausada); a seguinte progride a partir dela.
 export function progressaoAutomatica(
   meso: Meso,
-  { pct, de, ate, alvo }: { pct: number; de: number; ate: number; alvo: AlvoVolume },
+  { pct, de, ate, alvo, pausas = [] }: { pct: number; de: number; ate: number; alvo: AlvoVolume; pausas?: number[] },
 ): Meso {
   const limite = limiteDe(meso)
   return aplicar(meso, alvo, (linhas) => {
     const novas = [...linhas]
     for (let w = Math.max(de, 2); w <= Math.min(ate, meso.semanas); w++) {
-      novas[w - 1] = ajustarSeries(novas[w - 2], pct, limite)
+      novas[w - 1] = pausas.includes(w) ? [...novas[w - 2]] : ajustarSeries(novas[w - 2], pct, limite)
     }
     return novas
   })
@@ -104,6 +105,21 @@ export function reduzirVolume(
     }
     return novas
   })
+}
+
+// Polimento: cada semana escolhida (2 em diante) cai `pct`% sobre a última semana normal antes dela.
+// A semana 1 não tem anterior e fica de fora. As outras não mudam; aplicar de novo dá o mesmo resultado.
+export function polimento(meso: Meso, { pct, semanas, alvo }: { pct: number; semanas: number[]; alvo: AlvoVolume }): Meso {
+  if (!semanas.length) return meso
+  const limite = limiteDe(meso)
+  return aplicar(meso, alvo, (linhas) =>
+    linhas.map((l, i) => {
+      if (i === 0 || !semanas.includes(i + 1)) return l
+      let r = i
+      while (r > 1 && semanas.includes(r)) r--
+      return ajustarSeries(linhas[r - 1], -pct, limite)
+    }),
+  )
 }
 
 // Maior tempoMin entre os treinos de cada semana (índice 0 = semana 1).

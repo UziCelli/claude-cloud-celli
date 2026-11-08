@@ -30,6 +30,8 @@ Aprovado pelo Victor. Todos os textos da interface em pt-BR. Ponytail: o mínimo
   - Volta em `retorno` semanas: a k-ésima semana usa `-pct·(retorno+1-k)/(retorno+1)` sobre `ref`. Ex.: −20% vira −13% e depois −7%.
   - Depois da volta, a progressão recomeça de `ref` com `+progressaoPct` por semana até o fim do meso.
   - Ou seja, a progressão fica **pausada** durante a redução e não "pula" para onde estaria. Evita o rebote.
+- **Pausar a progressão** (08/11/2026): `progressaoAutomatica(..., { pausas })` — a semana pausada repete a anterior e a seguinte progride a partir dela. Na tela: chips "Pausar a progressão nas semanas".
+- **Polimento** (08/11/2026): `polimento(meso, { pct, semanas, alvo })` — cada semana escolhida cai `pct`% (padrão 40) sobre a última semana normal antes dela; as outras não mudam e reaplicar dá o mesmo. Na tela: modo "Polimento (semana leve)" com chips de semanas, a última já marcada. As cargas não mudam.
 - `tempoPorSemana(meso)`: o maior `tempoMin` entre os treinos de cada semana, via `prescreverSessao`. A tela usa para o aviso de tempo limite.
 - **Meso novo** (`mesoPadrao`): as semanas 2..N já vêm com +5%/semana.
 
