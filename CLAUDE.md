@@ -40,6 +40,8 @@ Três níveis. Cada um faz só o seu papel:
 | Executor | **Sonnet** | `dev`, `revisor` | **Executa** o que o arquiteto desenhou: telas, formulários, integração, testes, revisão do diff. |
 | Operacional | **Haiku** | `auxiliar`, `explorador` | **Ações básicas:** commit/push/PR/merge, acompanhar CI e deploy, rodar testes, achar arquivos, docs e dados mecânicos. |
 
+> Neste repo vale **só** esta hierarquia. Ignore a tabela "Model routing" do `~/.claude/CLAUDE.md` e os agentes globais (`code-searcher`, `implementer`, `test-runner`, `reviewer`).
+
 Regras:
 - **Decisão ou questão difícil passa pelo `arquiteto` (Opus) antes de implementar.** Vale para: motor de cálculo, regras do Firestore/segurança, modelo de dados, sync offline, migração de dados, LGPD, bug que resiste, e qualquer escolha de design com mais de um caminho.
 - O executor (Sonnet) que esbarrar numa decisão dessas **para e devolve a pergunta**; não decide sozinho. O operacional (Haiku) nunca decide: segue o pedido.
