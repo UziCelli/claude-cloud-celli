@@ -60,3 +60,16 @@ test('senhas diferentes bloqueiam o envio', async ({ page }) => {
   await expect(page.getByText('As senhas não são iguais.')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Senha criada' })).toHaveCount(0)
 })
+
+test('senha nova fraca bloqueia o envio', async ({ page }) => {
+  const email = 'acao.fraca@teste.com'
+  await criarAluno('Acao Fraca', email, 'senha-antiga1')
+  const oobCode = await codigoDeReset(email)
+  await page.goto(`/acao?mode=resetPassword&oobCode=${oobCode}`)
+  await expect(page.getByText('Mínimo 8 caracteres, com letra e número.')).toBeVisible()
+  await page.getByLabel('Nova senha').fill('12345678')
+  await page.getByLabel('Repetir senha').fill('12345678')
+  await page.getByRole('button', { name: 'Salvar senha' }).click()
+  await expect(page.getByText('A senha precisa ter pelo menos uma letra.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Senha criada' })).toHaveCount(0)
+})

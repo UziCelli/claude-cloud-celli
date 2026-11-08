@@ -18,10 +18,11 @@ import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
 import { atualizarNaEntrada } from '../../lib/atualizar'
 import marca from '@marca/marca.json'
+import { problemaSenha, REGRA_SENHA } from '../../lib/senha'
 
 const SENHA_ERRADA = 'E-mail ou senha incorretos. Primeiro acesso ou esqueceu a senha? Toque em Esqueci minha senha.'
 
-export const SENHA_FRACA = 'Senha muito fraca (mínimo 6 caracteres)'
+export const SENHA_FRACA = `Senha muito fraca. ${REGRA_SENHA}`
 
 const erros: Record<string, string> = {
   'auth/wrong-password': SENHA_ERRADA,
@@ -32,6 +33,7 @@ const erros: Record<string, string> = {
   'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos ou use Esqueci minha senha.',
   'auth/email-already-in-use': 'Esse e-mail já tem conta. Toque em Já tenho conta e depois em Esqueci minha senha.',
   'auth/weak-password': SENHA_FRACA,
+  'auth/password-does-not-meet-requirements': SENHA_FRACA,
   'auth/invalid-email': 'E-mail inválido',
   'auth/network-request-failed': 'Sem internet. Verifique sua conexão e tente de novo.',
 }
@@ -91,6 +93,7 @@ export default function Entrar() {
 
   async function enviar() {
     if (!cadastro && restanteSeg() > 0) return setEspera(restanteSeg())
+    if (cadastro && !resolver && problemaSenha(senha)) return setErro(problemaSenha(senha))
     setErro('')
     setEnviando(true)
     marcar() // quem está entrando está usando o app
@@ -231,6 +234,7 @@ export default function Entrar() {
                       </svg>
                     </button>
                   </span>
+                  {cadastro && <p className="mt-1.5 text-sm text-slate-300">{REGRA_SENHA}</p>}
                 </div>
               </>
             )}

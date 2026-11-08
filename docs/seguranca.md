@@ -8,6 +8,11 @@ Tudo grátis (plano Spark). Faça na ordem. Peça ao Claude para guiar qualquer 
 3. No app: **Minha conta → Verificação em 2 etapas → Ativar** (só aparece para o coach). Escaneie o QR no Google Authenticator e confirme com o código.
 4. Saia e entre de novo para testar o código. **Guarde o celular com o autenticador**; se perder, use o workflow de emergência (desativar).
 
+## 1b. Senha mínima no servidor (08/11/2026)
+- O app já pede senha nova com 8+ caracteres, letra e número (cadastro e "Esqueci minha senha").
+- Para o servidor também recusar (quem tentar criar conta fora do app): no GitHub, rode o workflow **"2 etapas do coach"** com a ação `senha-minima`, uma vez na marca `vfit` e uma vez na `gislane`.
+- Quem já tem senha mais curta continua entrando normalmente.
+
 ## 2. Proteção contra enumeração de e-mail (feito)
 - Authentication → Configurações → **Proteção contra enumeração de e-mail** → ligar.
 
