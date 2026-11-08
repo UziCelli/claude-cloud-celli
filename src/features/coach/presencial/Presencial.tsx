@@ -6,12 +6,14 @@ import type { Usuario } from '../../../lib/acesso'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { IcMais, IcSair } from '../../../icones'
-import { casar, ir } from '../../../rota'
+import { Campo } from '../../../ui'
+import { casar, ir, posicaoNaPilha, rotaAnterior, trocarRota, voltarAte } from '../../../rota'
 import { agil } from '../../../movimento'
 import Hoje from '../../aluno/Hoje'
 import Treino from '../../aluno/Treino'
 
 const CHAVE = 'forca-presencial-grupo'
+const RECENTES = 'forca-presencial-recentes' // últimos alunos do presencial neste aparelho (só ids)
 const padrao = (uid: string) => `/aluno/${uid}/presencial`
 const useNome = (uid: string) => useDoc<Usuario>(doc(db, 'usuarios', uid)).dados?.nome ?? ''
 const primeiro = (nome: string) => nome.split(' ')[0]
@@ -23,6 +25,16 @@ function lerGrupo(): string[] {
   } catch { return [] }
 }
 
+export function lerRecentes(): string[] {
+  try {
+    const r = JSON.parse(localStorage.getItem(RECENTES) ?? '[]')
+    return Array.isArray(r) ? r.filter((x) => typeof x === 'string') : []
+  } catch { return [] }
+}
+const guardarRecente = (uid: string) => {
+  try { localStorage.setItem(RECENTES, JSON.stringify([uid, ...lerRecentes().filter((x) => x !== uid)].slice(0, 4))) } catch { /* sem armazenamento */ }
+}
+
 // Coach no celular, com o aluno: as mesmas telas do aluno, gravando no registro do ALUNO.
 // Os alunos do grupo ficam montados (escondidos): treino iniciado, cronômetro e cargas pendentes continuam vivos.
 export default function Grupo({ rota }: { rota: string }) {
@@ -32,6 +44,9 @@ export default function Grupo({ rota }: { rota: string }) {
   const [folha, setFolha] = useState(false)
   const rolagem = useRef<Record<string, number>>({})
   const saiu = useRef('') // quem acabou de sair: enquanto for o ativo, o grupo já restante vale como está
+  const abertos = useRef(new Set<string>()) // alunos que já abriram sozinhos no treino de hoje (só 1x por presencial)
+  // Posição na pilha da tela de antes do presencial: "Encerrar" volta para ela (-1: abriu direto no presencial).
+  const [antes] = useState(() => (rotaAnterior() && !rotaAnterior().includes('/presencial') ? posicaoNaPilha() - 1 : -1))
   if (saiu.current && saiu.current !== ativo) saiu.current = ''
   const membros = grupo.includes(ativo) || saiu.current === ativo ? grupo : [ativo]
 
@@ -41,6 +56,7 @@ export default function Grupo({ rota }: { rota: string }) {
   }, [membros.join()]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { try { sessionStorage.removeItem(CHAVE) } catch { /* ok */ } }, []) // saiu do presencial: grupo acaba
   useEffect(() => { setRotas((r) => ({ ...r, [ativo]: rota })) }, [ativo, rota])
+  useEffect(() => { if (ativo) guardarRecente(ativo) }, [ativo])
   useEffect(() => { window.scrollTo(0, rolagem.current[ativo] ?? 0) }, [ativo])
 
   const rotaDe = (u: string) => (u === ativo ? rota : rotas[u] ?? padrao(u))
@@ -50,10 +66,16 @@ export default function Grupo({ rota }: { rota: string }) {
   }
   const sair = () => {
     const resto = membros.filter((u) => u !== ativo)
-    if (!resto.length) return ir(`/aluno/${ativo}`)
+    if (!resto.length) return voltarAte(antes, `/aluno/${ativo}`)
     saiu.current = ativo
     setGrupo(resto)
     ir(rotaDe(resto[0]))
+  }
+  // Na 1ª vez de cada aluno, a lista de treinos já abre no treino de hoje (sem criar tela a mais no Voltar).
+  const abrirHoje = (u: string) => (destino: string) => {
+    if (abertos.current.has(u) || location.hash !== '#' + padrao(u)) return
+    abertos.current.add(u)
+    trocarRota(destino)
   }
   const adicionar = (b: string) => {
     setGrupo([...membros, b])
@@ -63,8 +85,8 @@ export default function Grupo({ rota }: { rota: string }) {
 
   return (
     <>
-      <Barra uid={ativo} onAdicionar={() => setFolha(true)} onSair={sair} />
-      {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} />)}
+      <Barra uid={ativo} grupo={membros.length > 1} onAdicionar={() => setFolha(true)} onSair={sair} />
+      {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} abrirHoje={abrirHoje(u)} />)}
       {membros.length > 1 && (
         <nav aria-label="Alunos do grupo" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4">
           <div className="vidro !bg-slate-900/85 mx-auto max-w-[400px] rounded-full p-1">
@@ -84,12 +106,12 @@ export default function Grupo({ rota }: { rota: string }) {
           </div>
         </nav>
       )}
-      {folha && <Folha excluir={membros} onEscolher={adicionar} onFechar={() => setFolha(false)} />}
+      {folha && <EscolherAluno excluir={membros} onEscolher={adicionar} onFechar={() => setFolha(false)} />}
     </>
   )
 }
 
-function Barra({ uid, onAdicionar, onSair }: { uid: string; onAdicionar: () => void; onSair: () => void }) {
+function Barra({ uid, grupo, onAdicionar, onSair }: { uid: string; grupo: boolean; onAdicionar: () => void; onSair: () => void }) {
   const nome = useNome(uid)
   return (
     <div role="region" aria-label="Presencial" className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/90 pt-topo backdrop-blur-md">
@@ -102,15 +124,15 @@ function Barra({ uid, onAdicionar, onSair }: { uid: string; onAdicionar: () => v
         <button onClick={onAdicionar} aria-label="Adicionar aluno" className="flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm text-slate-200 ring-1 ring-white/15">
           <IcMais className="size-4" /> Aluno
         </button>
-        <button onClick={onSair} className="flex h-11 shrink-0 items-center gap-1 text-sm text-slate-400">
-          <IcSair className="size-4" /> Sair
+        <button onClick={onSair} aria-label={grupo ? `Tirar ${nome} do grupo` : undefined} className="flex h-11 shrink-0 items-center gap-1 text-sm text-slate-400">
+          <IcSair className="size-4" /> {grupo ? 'Tirar' : 'Encerrar'}
         </button>
       </div>
     </div>
   )
 }
 
-function Membro({ uid, ativo, rota }: { uid: string; ativo: boolean; rota: string }) {
+function Membro({ uid, ativo, rota, abrirHoje }: { uid: string; ativo: boolean; rota: string; abrirHoje: (destino: string) => void }) {
   const nome = useNome(uid)
   const base = padrao(uid)
   const p = casar('/aluno/:uid/presencial/treino/:mesoId/:semana/:treino', rota)
@@ -118,7 +140,7 @@ function Membro({ uid, ativo, rota }: { uid: string; ativo: boolean; rota: strin
     <section aria-label={`Treino de ${nome}`} hidden={!ativo} className="pb-36">
       {p
         ? <Treino uid={uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} base={base} coach />
-        : <Hoje uid={uid} base={base} coach />}
+        : <Hoje uid={uid} base={base} coach abrirHoje={ativo ? abrirHoje : undefined} />}
     </section>
   )
 }
@@ -132,19 +154,37 @@ function Aluno({ uid, ativo, onClick }: { uid: string; ativo: boolean; onClick: 
   )
 }
 
-function Folha({ excluir, onEscolher, onFechar }: { excluir: string[]; onEscolher: (uid: string) => void; onFechar: () => void }) {
+const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+// Folha embaixo para escolher aluno: busca + recentes no topo. Usada no "+ Aluno" do presencial e no Início do coach.
+export function EscolherAluno({ titulo = 'Adicionar aluno', excluir = [], onEscolher, onFechar }: { titulo?: string; excluir?: string[]; onEscolher: (uid: string) => void; onFechar: () => void }) {
   const { dados } = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
-  const lista = dados.filter((a) => a.status !== 'arquivado' && !excluir.includes(a.id)).sort((a, b) => a.nome.localeCompare(b.nome))
+  const [busca, setBusca] = useState('')
+  const [recentes] = useState(lerRecentes)
+  const termo = semAcento(busca.trim())
+  const lista = dados
+    .filter((a) => a.status !== 'arquivado' && !excluir.includes(a.id) && (!termo || semAcento(a.nome).includes(termo)))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
+  const topo = termo ? [] : recentes.map((id) => lista.find((a) => a.id === id)).filter((a) => !!a)
+  const linha = (a: Usuario & { id: string }) => (
+    <button key={a.id} onClick={() => onEscolher(a.id)} className="flex h-14 w-full items-center gap-3 text-left text-base">
+      <Avatar nome={a.nome} tamanho={36} /> <span className="truncate">{a.nome}</span>
+    </button>
+  )
   return (
     <div className="fixed inset-0 z-40 flex items-end bg-black/60" onClick={onFechar}>
-      <div role="dialog" aria-label="Escolher aluno" className="mx-auto max-h-[70dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-slate-900 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
-        <h2 className="mb-2 text-base font-bold">Adicionar aluno</h2>
-        {lista.length === 0 && <p className="py-4 text-sm text-slate-400">Nenhum outro aluno.</p>}
-        {lista.map((a) => (
-          <button key={a.id} onClick={() => onEscolher(a.id)} className="flex h-14 w-full items-center gap-3 text-left text-base">
-            <Avatar nome={a.nome} tamanho={36} /> <span className="truncate">{a.nome}</span>
-          </button>
-        ))}
+      <div role="dialog" aria-label="Escolher aluno" className="mx-auto max-h-[80dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-slate-900 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+        <h2 className="mb-2 text-base font-bold">{titulo}</h2>
+        {dados.length > 5 && <Campo rotulo="Buscar" placeholder="Nome do aluno" value={busca} onChange={(e) => setBusca(e.target.value)} />}
+        {topo.length > 0 && (
+          <>
+            <h3 className="mt-3 text-xs uppercase tracking-wider text-slate-400">Recentes</h3>
+            {topo.map(linha)}
+            <h3 className="mt-2 text-xs uppercase tracking-wider text-slate-400">Todos</h3>
+          </>
+        )}
+        {lista.length === 0 && <p className="py-4 text-sm text-slate-400">{termo ? 'Nenhum aluno com esse nome.' : 'Nenhum outro aluno.'}</p>}
+        {lista.map(linha)}
       </div>
     </div>
   )

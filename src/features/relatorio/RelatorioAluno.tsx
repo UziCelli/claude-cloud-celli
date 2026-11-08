@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { Centro } from '../../ui'
+import { BotaoVoltar } from '../../voltar'
 import Relatorio, { BotaoPdf } from './Relatorio'
 import { useDadosAluno } from './useDadosAluno'
 
@@ -22,7 +23,7 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
   const r = doc ? relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date()) : null
   return (
     <main className="mx-auto max-w-md px-4 py-4">
-      <a href="#/" className="mb-3 inline-block text-sm text-slate-400">← Início</a>
+      <BotaoVoltar para="/" />
       {rels.carregando || dados.carregando ? (
         <Centro>Carregando…</Centro>
       ) : !doc || !r ? (

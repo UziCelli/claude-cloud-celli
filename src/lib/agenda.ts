@@ -12,7 +12,7 @@ type Proximo = { semana: number; treino: number; dataTreino: string }
 const DIA_MS = 86400_000
 const PCT_VOLTA = -5
 // Sem `dias`: dias do bloco (contados do início dele) em que cada treino cai, por frequência (índice = frequência − 1).
-const DIAS_AUTO = [[0], [0, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6]]
+export const DIAS_AUTO = [[0], [0, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6]]
 
 // `dia` = número de diaSP: à meia-noite UTC do número cai a data do calendário de São Paulo.
 const dataDe = (dia: number) => new Date(dia * DIA_MS).toISOString().slice(0, 10)

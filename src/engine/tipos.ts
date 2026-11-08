@@ -57,6 +57,9 @@ export interface Meso {
   pausaPrincipaisS?: number // pausa das posições 1–2; sem valor = pausaS
   divisao: Slot[][] // [treino-1][pos-1]
   trocas?: Record<string, Slot> // chave `${semana}-${treino}-${pos}`
+  // Exercícios a mais só em certas semanas, no fim do treino (sem `de`: progressão padrão). Chave `${semana}-${treino}`;
+  // o mesmo slotId em todas as semanas da adição.
+  adicoes?: Record<string, Slot[]>
   // [semana-1][serie-1]. `padrao` é a progressão do exercício sem linha própria; sem ele vale o legado
   // (posições 1–2 = principais, 3–10 = auxiliares).
   progressao: { principais: (number | null)[][]; auxiliares: (number | null)[][]; padrao?: (number | null)[][] }

@@ -12,12 +12,12 @@ import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { ir } from '../../rota'
 import { campoBase, Cartao, cascata, Centro, Contar, item } from '../../ui'
+import { BotaoVoltar } from '../../voltar'
 import { mesoAtual } from '../aluno/mesoAtual'
 import { fmt } from '../coach/semana/format'
 import BotaoCompartilhar from './BotaoCompartilhar'
 import { IcMedalha } from '../../icones'
 
-type Voltar = { href: string; texto: string }
 
 const segunda = (dia: number) => dia - ((dia + 3) % 7)
 const dataCurta = (dia: number) => new Date(dia * 86_400_000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })
@@ -40,7 +40,7 @@ function Faixa({ frac, className = 'bg-marca-500' }: { frac: number; className?:
 
 const Titulo = ({ children }: { children: string }) => <h2 className="mb-3 font-semibold">{children}</h2>
 
-export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: string; nome: string; voltar: Voltar; compartilhar?: boolean }) {
+export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: string; nome: string; voltar?: string; compartilhar?: boolean }) {
   const mesosL = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid]))
   const regsL = useLista<RegistroEvolucao>(useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid]))
   const cardiosL = useLista<CardioDoc>(useMemo(() => query(collection(db, 'cardios'), where('alunoId', '==', uid)), [uid]))
@@ -57,9 +57,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
 
   const cabeca = (
     <>
-      <a href={voltar.href} className="mb-2 inline-block text-sm text-slate-400">
-        {voltar.texto}
-      </a>
+      {voltar && <BotaoVoltar para={voltar} />}
       <h1 className="mb-3 text-lg font-bold">Evolução</h1>
     </>
   )
@@ -304,10 +302,10 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
 }
 
 export default function EvolucaoAluno({ uid, nome }: { uid: string; nome: string }) {
-  return <Painel uid={uid} nome={nome} voltar={{ href: '#/', texto: '← Hoje' }} compartilhar />
+  return <Painel uid={uid} nome={nome} compartilhar />
 }
 
 export function EvolucaoCoach({ uid }: { uid: string }) {
   const aluno = useDoc<Usuario>(useMemo(() => doc(db, 'usuarios', uid), [uid]))
-  return <Painel uid={uid} nome={aluno.dados?.nome ?? ''} voltar={{ href: `#/aluno/${uid}`, texto: '← Voltar ao aluno' }} />
+  return <Painel uid={uid} nome={aluno.dados?.nome ?? ''} voltar={`/aluno/${uid}`} />
 }

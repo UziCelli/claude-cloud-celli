@@ -2,16 +2,14 @@ import { useState } from 'react'
 import { COR_METODO, METODOS, ORDEM } from '../../data/metodos'
 import { mostrarNotasDeNovo } from '../../lib/notasMetodo'
 import { Botao, Cartao } from '../../ui'
+import { BotaoVoltar } from '../../voltar'
 import IconeMetodo from './IconeMetodo'
-import { voltar } from '../../rota'
 
 export default function GuiaMetodos() {
   const [feito, setFeito] = useState(false)
   return (
     <main className="mx-auto max-w-md px-4 py-4">
-      <button onClick={() => voltar('/')} className="mb-2 inline-flex min-h-11 items-center pr-4 text-sm text-slate-400">
-        ← Voltar
-      </button>
+      <BotaoVoltar para="/" />
       <h1 className="mb-3 text-lg font-bold">Guia de métodos</h1>
       <div className="space-y-3">
         {ORDEM.map((nome) => {

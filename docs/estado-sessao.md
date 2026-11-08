@@ -238,3 +238,27 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Sem filtro, sem "Copiar para todas" e sem campo "Grupo" (o número do grupo é automático).
 - O formato dos dados não mudou (sem migração). Lógica em `src/engine/planoMetodos.ts`.
 - **Pendência do Victor:** montar um meso real no PC e no celular e dizer o que ainda incomoda.
+
+## 08/11/2026 — Pix aparece antes de vencer
+- Conferido: o Pix já podia ser pago a qualquer hora (Conta → Mensalidade) e as notificações de 3 dias e do dia funcionam (workflow diário verde).
+- Novo: nos **5 dias antes** do vencimento, o Início do aluno mostra o cartão "Mensalidade vence em N dias" com QR, "Copiar código Pix" e "Já paguei", sem bloquear o acesso.
+- Quem toca na notificação cai na Conta com o Pix já aberto.
+- Escolha do Victor: 5 dias. Detalhes: `docs/mapa.md`, linha "Pix antes do vencimento".
+
+## 08/11/2026 — Prescrição mais fácil (PR #114)
+- Pré-visualização do editor abre/fecha (começa fechada, lembra a escolha).
+- Campos numéricos (semanas, pausas, tempo limite, progressão) deixam apagar e digitar; o limite só vale ao sair do campo.
+- Ícone do calendário do "Início" visível; clicar no campo abre o calendário.
+- Campo Frequência saiu: frequência = dias de treino marcados.
+- Divisão: cartão "Trocas e adições" — trocar ou acrescentar exercício num intervalo de semanas (`meso.adicoes`).
+- Pendência: a aba Métodos nova (PR #113) ainda não oferece as posições adicionadas.
+
+## 08/11/2026 — Navegação: "Voltar" em todas as telas e presencial em 2 toques
+- Pedido do Victor: botão voltar faltando e o caminho até o presencial era longo.
+- **Como ficou:**
+  - "← Voltar" igual (topo à esquerda) em toda tela que não é aba: mesociclos do aluno, editor, semanas, novo aluno, ranking, evolução, relatórios, métodos, treino;
+  - ele volta para a tela de onde a pessoa veio; se o app abriu direto ali, vai para um lugar seguro;
+  - Início do coach: botão **"Treino presencial"** → escolher aluno (busca + recentes) → já cai no treino de hoje;
+  - presencial: "Sair" virou "Encerrar" (volta para onde estava antes); no grupo, "Tirar";
+  - aluno: o Voltar do treino respeita de onde veio (Início ou aba Treino); saiu o "← Hoje" da aba Evolução.
+- Vale para as duas marcas. Nada muda nos dados.

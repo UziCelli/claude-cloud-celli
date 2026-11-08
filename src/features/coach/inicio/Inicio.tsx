@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { docParaMeso } from '../../../lib/conversores'
 import { relatoriosParaRevisar } from '../../../lib/relatorio'
@@ -13,7 +13,8 @@ import { m } from 'motion/react'
 import { calcularAlertas, useArquivados, type Reg } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 import { PIX } from '../../aluno/PagarPix'
-import { IcMais } from '../../../icones'
+import { IcMais, IcPlay } from '../../../icones'
+import { EscolherAluno } from '../presencial/Presencial'
 import { Quadro } from '../../../vidro'
 
 const saudacao = (d: Date) => {
@@ -22,6 +23,7 @@ const saudacao = (d: Date) => {
 }
 
 export default function Inicio({ nome }: { nome: string }) {
+  const [escolher, setEscolher] = useState(false)
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
   const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
   const agora = new Date()
@@ -76,6 +78,11 @@ export default function Inicio({ nome }: { nome: string }) {
           </Quadro>
         ))}
       </div>
+      {/* Atalho do dia a dia: escolher o aluno e cair no treino de hoje (2 toques). */}
+      <Botao tipo="destaque" className="mb-3 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold lg:max-w-md" onClick={() => setEscolher(true)}>
+        <IcPlay className="size-5" /> Treino presencial
+      </Botao>
+      {escolher && <EscolherAluno titulo="Treino presencial: qual aluno?" onEscolher={(uid) => ir(`/aluno/${uid}/presencial`)} onFechar={() => setEscolher(false)} />}
       <div className="mb-3 grid grid-cols-2 gap-3 lg:max-w-md">
         <Botao tipo="primario" className="flex h-12 min-w-0 items-center justify-center gap-2 rounded-2xl text-base font-bold" onClick={() => ir('/alunos/novo')}>
           <IcMais className="size-5" /> Novo aluno
