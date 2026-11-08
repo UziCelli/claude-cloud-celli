@@ -227,3 +227,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - **Concluir treino:** pede um 2º toque ("Concluir o treino?" → Sim, concluir / Continuar treinando).
 - **Desfazer:** logo depois de concluir (até 3 h do início), o treino volta a correr com o tempo do início original; cargas ficam.
 - Vale para as duas marcas (mesmo código).
+
+## 08/11/2026 — Pix aparece antes de vencer
+- Conferido: o Pix já podia ser pago a qualquer hora (Conta → Mensalidade) e as notificações de 3 dias e do dia funcionam (workflow diário verde).
+- Novo: nos **5 dias antes** do vencimento, o Início do aluno mostra o cartão "Mensalidade vence em N dias" com QR, "Copiar código Pix" e "Já paguei", sem bloquear o acesso.
+- Quem toca na notificação cai na Conta com o Pix já aberto.
+- Escolha do Victor: 5 dias. Detalhes: `docs/mapa.md`, linha "Pix antes do vencimento".

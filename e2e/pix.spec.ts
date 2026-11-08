@@ -1,6 +1,6 @@
 import { expect, test, devices } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { criarAluno, criarCoach, gravarDoc, limparEmuladores } from './seed'
+import { criarAluno, criarCoach, definirPagoAte, gravarDoc, limparEmuladores } from './seed'
 import { VERSAO_PRIVACIDADE } from '../src/lib/privacidade'
 
 const marca = JSON.parse(readFileSync(`marcas/${process.env.MARCA ?? 'vfit'}/marca.json`, 'utf8'))
@@ -67,4 +67,33 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
     await expect(page.getByRole('heading', { name: /Olá, Bia/ })).toBeVisible({ timeout: 15_000 })
   })
   await ctx.close()
+})
+
+test('Pix no Início: aparece 5 dias antes do vencimento, sem bloquear; longe do vencimento, não', async ({ page }) => {
+  await limparEmuladores()
+  await criarCoach(COACH.nome, COACH.email, COACH.senha)
+  const uid = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  await gravarDoc(`usuarios/${uid}`, {
+    papel: 'aluno', status: 'ativo', nome: ALUNO.nome, email: ALUNO.email, mensalidade: 150,
+    pagoAte: new Date(Date.now() + 3 * 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
+  })
+
+  await entrar(page, ALUNO.email, ALUNO.senha)
+  await expect(page.getByRole('heading', { name: /Olá, Bia/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Mensalidade vence em \d dias/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'QR Code Pix' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Copiar código Pix' })).toBeVisible()
+
+  await test.step('na Conta (onde a notificação abre), o Pix já vem aberto', async () => {
+    await page.goto('/#/conta')
+    await expect(page.getByRole('button', { name: 'Pagar com Pix' })).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  await test.step('com 20 dias, o Início não mostra o Pix', async () => {
+    await definirPagoAte(uid, new Date(Date.now() + 20 * 86_400_000))
+    await page.goto('/#/')
+    await expect(page.getByRole('heading', { name: /Olá, Bia/ })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Mensalidade vence/ })).toHaveCount(0)
+    await expect(page.getByRole('img', { name: 'QR Code Pix' })).toHaveCount(0)
+  })
 })
