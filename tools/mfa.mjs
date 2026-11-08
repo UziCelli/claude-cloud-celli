@@ -3,6 +3,8 @@
 //   (console do Firebase -> Authentication -> Configurações -> "Fazer upgrade").
 // - desativar-coach: EMERGÊNCIA (o coach perdeu o celular e não consegue o código). Remove os fatores do coach
 //   pelo e-mail e encerra todas as sessões dele; no próximo login ele entra só com a senha e ativa de novo em "Minha conta".
+// - senha-minima: o servidor passa a recusar senha nova com menos de 8 caracteres ou sem número (o app pede também letra).
+//   Senhas antigas continuam entrando (forceUpgradeOnSignin: false). Também exige o Identity Platform.
 // Uso local: PROJETO=forca--app (ou gislane-personal-trainer) ACAO=ativar-totp GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
 //            ACAO=desativar-coach EMAIL=coach@x.com GOOGLE_APPLICATION_CREDENTIALS=sa.json node mfa.mjs
 import { appendFileSync } from 'node:fs'
@@ -29,7 +31,7 @@ const avisar = (texto) => {
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${texto}\n\n`)
 }
 
-if (acao !== 'ativar-totp' && acao !== 'desativar-coach') throw new Error('Informe ACAO: ativar-totp ou desativar-coach')
+if (!['ativar-totp', 'desativar-coach', 'senha-minima'].includes(acao)) throw new Error('Informe ACAO: ativar-totp, desativar-coach ou senha-minima')
 
 initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: projeto })
 
@@ -50,6 +52,16 @@ if (acao === 'ativar-totp') {
     )
     process.exitCode = 1
   }
+} else if (acao === 'senha-minima') {
+  // Mesmo mínimo de src/lib/senha.ts (SENHA_MIN).
+  await getAuth().projectConfigManager().updateProjectConfig({
+    passwordPolicyConfig: {
+      enforcementState: 'ENFORCE',
+      forceUpgradeOnSignin: false,
+      constraints: { minLength: 8, requireNumeric: true },
+    },
+  })
+  avisar(`Senha mínima ligada no projeto ${marca}: 8 caracteres com número. Quem já tem senha continua entrando.`)
 } else {
   if (!email) throw new Error('Informe EMAIL do coach')
   const user = await getAuth().getUserByEmail(email)

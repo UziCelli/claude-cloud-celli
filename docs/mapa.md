@@ -19,6 +19,7 @@ Comece por aqui para achar onde mexer.
 | Cabeçalhos HTTP, CSP, PWA | `firebase.json` |
 | Importar mesociclo de planilha | Botão "Importar da planilha" no perfil do aluno: `meso/ImportarPlanilha.tsx`, `lib/xlsx.ts`, `lib/planilha.ts` (reserva: `tools/planilha_para_meso.py` + `tools/importar-meso.mjs` + workflow `importar-meso.yml`) |
 | Monitoramento de segurança | `tools/vigia.mjs` + `.github/workflows/vigia.yml` + `tests/vigia.test.ts` |
+| Senha mínima (cadastro e nova senha) | `src/lib/senha.ts` + `Entrar.tsx` + `AcaoEmail.tsx` + `tools/mfa.mjs` (`senha-minima`) |
 | Offline/sync Firebase | `src/lib/firebase.ts` + `firestore.rules` |
 | Roteamento (hash, /aluno/123, etc.) | `src/rota.ts` + `src/App.tsx` |
 | Notificação "Descanso acabou" (push, app fechado) | `src/lib/push.ts` + `public/sw-push.js` + `push/` (Worker Cloudflare) — veja `docs/push.md` |
@@ -310,6 +311,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
+| Senha mínima (08/11/2026) | `src/lib/senha.ts`, `Entrar.tsx`, `AcaoEmail.tsx`, `tools/mfa.mjs` | Senha nova: 8+ caracteres, letra e número (`problemaSenha`), no cadastro e no `/acao`. O servidor (Identity Platform, workflow "2 etapas do coach" → `senha-minima`) exige 8 + número; mudou o mínimo? mude nos dois. `forceUpgradeOnSignin: false`: quem tem senha antiga curta continua entrando. | `senha.test.ts`, `acao.spec.ts`, `privacidade.spec.ts` |
 | Links dos e-mails (22/10/2026) | `AcaoEmail.tsx`, `acoes.ts` | O `oobCode` nunca vai para log/`registrarErro` (só o código do erro). `/acao` precisa tratar todos os modos (`resetPassword`, `verifyAndChangeEmail`, `recoverEmail`, `verifyEmail`) enquanto o URL de ação do Firebase apontar para ela, senão a troca de e-mail quebra. | `acao.spec.ts` |
 | Cargas gravadas fora do app (04/11/2026) | `conversores.ts` (`docParaCargas`, `lerPc`), `Treino.tsx`, `VisaoSemana.tsx`, `xlsx.ts` | As regras não conferem os valores dentro de `cargas`/`reps`/`pc`: a leitura ignora coluna fora de s1..s40 (s999999999 travava a tela do coach) e valor que não é número finito até 2000; negativo fica (dado antigo). `pc` fora de 0..300 = desligado. O .xlsx tem teto de 20 MB comprimido e 50 MB descompactado por parte (zip bomba). | `conversores.test.ts`, `xlsx.test.ts` |
 | Dias de treino = frequência (08/11/2026) | `EditorMeso.tsx` (`alternarDia`, `salvar`) | Não há mais campo Frequência: ela é o número de dias marcados. Meso sem `dias` mostra os dias automáticos (`DIAS_AUTO` de `agenda.ts`), para o 1º clique não zerar treinos. Desmarcar um dia **não corta** a divisão (trocar Qua por Qui não perde o Treino 3); o corte acontece só no Salvar, com confirmação se houver cargas. Telas que listam treinos usam `frequencia`, nunca `divisao.length` (`TabProgressao` faz `slice`). | `e2e/coach.spec.ts` |
