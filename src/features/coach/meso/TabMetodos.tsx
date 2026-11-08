@@ -1,41 +1,24 @@
 import { useMemo, useState } from 'react'
-import { ESCOPOS, padraoMetodo, type AplicacaoMetodo, type Escopo, type Meso, type Metodo } from '../../../engine'
-import { Aviso, Botao, Campo, campoBase, Cartao } from '../../../ui'
-import { filtrarMetodos, seriesDaPosicao, type FiltroMetodos } from './util'
+import { emGrupo, linhasDoExercicio, METODOS, padraoMetodo, removerLinha, salvarLinha, semanasTexto, serieDoDrop, alternarSerieDropset, seriesDoExercicio, seriesTexto } from '../../../engine'
+import type { AplicacaoMetodo, LinhaMetodo, Meso, Metodo } from '../../../engine'
+import { COR_METODO } from '../../../data/metodos'
+import { Aviso, Botao, Campo, Folha, Painel } from '../../../ui'
+import IconeMetodo from '../../metodos/IconeMetodo'
+import { opcoesSeries, totalCerto } from '../presencial/EditarTreino'
 
-const METODOS: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
 const TAMANHO_GRUPO: Partial<Record<Metodo, number>> = { Biset: 2, Triset: 3, Superset: 4 }
 
-const padrao = (metodo: Metodo, meso: Meso, semana: number, treino: number, exercicio: number) =>
-  padraoMetodo(metodo, semana, treino, exercicio, seriesDaPosicao(meso, semana, exercicio))
+interface Rascunho { metodo: Metodo | null; semanas: number[]; modelo: AplicacaoMetodo[]; parceiros: number[] }
+type Aberta = { pos: number; linha?: LinhaMetodo }
 
 export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
   const metodos = meso.metodos
-  const [filtro, setFiltro] = useState<FiltroMetodos>({})
-  const visiveis = filtrarMetodos(metodos, filtro)
-  const filtrando = Boolean(filtro.semana || filtro.treino || filtro.exercicio)
-  const exerciciosFiltro = filtro.treino ? (meso.divisao[filtro.treino - 1] ?? []).map((s, i) => `${i + 1}. ${s.nome}`) : Array.from({ length: 10 }, (_, i) => String(i + 1))
-
-  function set(idx: number, patch: Partial<AplicacaoMetodo>) {
-    const lista = metodos.map((m, i) => (i === idx ? { ...m, ...patch } : m))
-    onAtualizar({ metodos: lista })
-  }
-
-  function remover(idx: number) {
-    onAtualizar({ metodos: metodos.filter((_, i) => i !== idx) })
-  }
-
-  function adicionar() {
-    onAtualizar({ metodos: [...metodos, padrao('Dropset', meso, filtro.semana ?? 1, filtro.treino ?? 1, filtro.exercicio ?? 1)] })
-  }
-
-  function copiarParaTodas(idx: number) {
-    const item = metodos[idx]
-    const mesmo = (m: AplicacaoMetodo, w: number) => m.semana === w && m.treino === item.treino && m.exercicio === item.exercicio && m.metodo === item.metodo && m.escopo === item.escopo && m.serie === item.serie && m.grupo === item.grupo
-    const semanas = Array.from({ length: meso.semanas }, (_, i) => i + 1).filter((w) => w !== item.semana)
-    const resto = metodos.filter((m) => !semanas.some((w) => mesmo(m, w)))
-    onAtualizar({ metodos: [...resto, ...semanas.map((w) => ({ ...item, semana: w }))] })
-  }
+  const [treino, setTreino] = useState(1)
+  const [aberta, setAberta] = useState<Aberta | null>(null)
+  const sel = Math.min(treino, meso.frequencia)
+  const exercicios = meso.divisao[sel - 1] ?? []
+  const nome = (p: number) => exercicios[p - 1]?.nome ?? `Posição ${p}`
+  const maxPos = Math.max(exercicios.length, ...metodos.filter((m) => m.treino === sel).map((m) => m.exercicio))
 
   const avisos = useMemo(() => {
     const grupos = new Map<string, Set<number>>()
@@ -61,157 +44,179 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
       {avisos.map((a, i) => (
         <Aviso key={i}>{a}</Aviso>
       ))}
-      <Botao tipo="primario" onClick={adicionar}>
-        Adicionar método
-      </Botao>
-      <div className="flex flex-wrap items-end gap-2">
-        <FiltroSelect rotulo="Semana" valor={filtro.semana} opcoes={Array.from({ length: meso.semanas }, (_, i) => String(i + 1))} onChange={(v) => setFiltro({ ...filtro, semana: v })} />
-        <FiltroSelect rotulo="Treino" valor={filtro.treino} opcoes={Array.from({ length: meso.frequencia }, (_, i) => String(i + 1))} onChange={(v) => setFiltro({ ...filtro, treino: v, exercicio: undefined })} />
-        <FiltroSelect rotulo="Exercício" valor={filtro.exercicio} opcoes={exerciciosFiltro} onChange={(v) => setFiltro({ ...filtro, exercicio: v })} />
-        {filtrando && <Botao onClick={() => setFiltro({})}>Limpar filtro</Botao>}
-      </div>
-      <p className="text-sm text-slate-400">
-        Mostrando {visiveis.length} de {metodos.length} métodos
-      </p>
-      <div className="space-y-3">
-        {visiveis.map(({ m, idx }) => (
-          <LinhaMetodo key={idx} m={m} meso={meso} onSet={(p) => set(idx, p)} onRemover={() => remover(idx)} onCopiar={() => copiarParaTodas(idx)} />
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((t) => (
+          <Botao key={t} aria-pressed={t === sel} tipo={t === sel ? 'primario' : undefined} className="min-h-11" onClick={() => setTreino(t)}>
+            Treino {t}
+          </Botao>
         ))}
-        {metodos.length === 0 && <p className="text-slate-500">Nenhum método avançado.</p>}
-        {metodos.length > 0 && visiveis.length === 0 && <p className="text-slate-500">Nenhum método neste filtro.</p>}
       </div>
+      {exercicios.length === 0 && maxPos === 0 && <p className="text-slate-500">Este treino ainda não tem exercícios. Monte na aba Divisão.</p>}
+      <ul className="space-y-4">
+        {Array.from({ length: maxPos }, (_, i) => i + 1).map((pos) => (
+          <li key={pos} className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 break-words font-semibold">{exercicios[pos - 1] ? `${pos}. ${nome(pos)}` : `Posição ${pos} (sem exercício)`}</span>
+              {exercicios[pos - 1] && (
+                <Botao aria-label={`Adicionar método em ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => setAberta({ pos })}>
+                  + Método
+                </Botao>
+              )}
+            </div>
+            {linhasDoExercicio(metodos, sel, pos).map((l) => {
+              const n = seriesDoExercicio(meso, sel, pos, l.semanas)
+              const texto = `${l.metodo}${l.parceiros.length ? ` com ${l.parceiros.map((p) => `${p}. ${nome(p)}`).join(', ')}` : ''} · ${seriesTexto(l.modelo, n)} · ${semanasTexto(l.semanas, meso.semanas)}${l.modelo[0].ativo ? '' : ' · desligado'}`
+              return (
+                <div key={`${l.metodo}-${l.semanas.join()}-${l.parceiros.join()}-${l.modelo.map((e) => e.serie).join()}`} className="flex items-stretch gap-2">
+                  <button type="button" onClick={() => setAberta({ pos, linha: l })} className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ring-1 ${COR_METODO[l.metodo].selo}`}>
+                    <IconeMetodo metodo={l.metodo} tamanho={16} />
+                    <span className="min-w-0 break-words">{texto}</span>
+                  </button>
+                  <Botao aria-label={`Tirar ${l.metodo} de ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => onAtualizar({ metodos: removerLinha(metodos, sel, pos, l) })}>
+                    ✕
+                  </Botao>
+                </div>
+              )
+            })}
+          </li>
+        ))}
+      </ul>
+      {aberta && (
+        <FolhaMetodo
+          key={`${aberta.pos}-${aberta.linha?.metodo ?? 'novo'}`}
+          meso={meso}
+          treino={sel}
+          aberta={aberta}
+          nome={nome}
+          onFechar={() => setAberta(null)}
+          onAtualizar={onAtualizar}
+        />
+      )}
     </div>
   )
 }
 
-function LinhaMetodo({
-  m,
-  meso,
-  onSet,
-  onRemover,
-  onCopiar,
-}: {
-  m: AplicacaoMetodo
-  meso: Meso
-  onSet: (p: Partial<AplicacaoMetodo>) => void
-  onRemover: () => void
-  onCopiar: () => void
-}) {
-  const exerciciosDoTreino = meso.divisao[m.treino - 1] ?? []
+function FolhaMetodo({ meso, treino, aberta, nome, onFechar, onAtualizar }: { meso: Meso; treino: number; aberta: Aberta; nome: (p: number) => string; onFechar: () => void; onAtualizar: (patch: Partial<Meso>) => void }) {
+  const { pos, linha } = aberta
+  const todas = Array.from({ length: meso.semanas }, (_, i) => i + 1)
+  const [r, setR] = useState<Rascunho>(linha ? { metodo: linha.metodo, semanas: linha.semanas, modelo: linha.modelo, parceiros: linha.parceiros } : { metodo: null, semanas: todas, modelo: [], parceiros: [] })
+  const [mais, setMais] = useState(false)
+  const n = seriesDoExercicio(meso, treino, pos, r.semanas.length ? r.semanas : todas) || 1
+  const { metodo } = r
+  const m0 = r.modelo[0]
+  const todos = (patch: Partial<AplicacaoMetodo>) => setR({ ...r, modelo: r.modelo.map((e) => ({ ...e, ...patch })) })
+  const escolher = (m: Metodo) => setR({ ...r, metodo: m, modelo: [padraoMetodo(m, 1, treino, pos, n)], parceiros: [] })
+  const alternarSemana = (w: number) => setR({ ...r, semanas: r.semanas.includes(w) ? r.semanas.filter((x) => x !== w) : [...r.semanas, w].sort((a, b) => a - b) })
+  const outros = (meso.divisao[treino - 1] ?? []).map((_, i) => i + 1).filter((p) => p !== pos)
+  const etapas = m0?.etapas ?? 1
+  const lista = (v?: (number | null)[]) => [...(v ?? [])]
+  const chip = (ativo: boolean, rotulo: string, onClick: () => void) => (
+    <Botao key={rotulo} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={onClick}>{rotulo}</Botao>
+  )
+  const titulo = linha ? `${linha.metodo} · ${nome(pos)}` : `Novo método · ${nome(pos)}`
+  const pronto = metodo != null && r.semanas.length > 0 && (!emGrupo(metodo) || totalCerto(metodo, r.parceiros.length + 1))
+  const gravar = (novos: AplicacaoMetodo[]) => { onAtualizar({ metodos: novos }); onFechar() }
 
   return (
-    <Cartao className="space-y-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={m.ativo} onChange={(e) => onSet({ ativo: e.target.checked })} />
-          Ativo
-        </label>
-        <Selecao rotulo="Semana" valor={m.semana} opcoes={Array.from({ length: meso.semanas }, (_, i) => i + 1)} onChange={(v) => onSet({ semana: v })} />
-        <Selecao
-          rotulo="Treino"
-          valor={m.treino}
-          opcoes={Array.from({ length: meso.frequencia }, (_, i) => i + 1)}
-          onChange={(v) => onSet({ treino: v, exercicio: 1 })}
-        />
-        <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
-          <span className="text-slate-400">Exercício</span>
-          <select
-            value={m.exercicio}
-            onChange={(e) => onSet({ exercicio: Number(e.target.value) })}
-            className={`${campoBase} w-full max-w-full px-2 py-2`}
-          >
-            {exerciciosDoTreino.map((s, i) => (
-              <option key={s.slotId} value={i + 1}>
-                {i + 1}. {s.nome}
-              </option>
-            ))}
-            {exerciciosDoTreino.length === 0 && <option value={1}>(sem exercícios)</option>}
-          </select>
-        </label>
-        <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
-          <span className="text-slate-400">Método</span>
-          <select
-            value={m.metodo}
-            onChange={(e) => onSet(padrao(e.target.value as Metodo, meso, m.semana, m.treino, m.exercicio))}
-            className={`${campoBase} w-full max-w-full px-2 py-2`}
-          >
-            {METODOS.map((op) => (
-              <option key={op} value={op}>
-                {op}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
-          <span className="text-slate-400">Escopo</span>
-          <select
-            value={m.escopo}
-            onChange={(e) => { const escopo = e.target.value as Escopo; onSet({ escopo, ...(escopo === 'Série específica' && m.serie == null ? { serie: 1 } : {}) }) }}
-            className={`${campoBase} w-full max-w-full px-2 py-2`}
-          >
-            {ESCOPOS.map((op) => (
-              <option key={op} value={op}>
-                {op}
-              </option>
-            ))}
-          </select>
-        </label>
-        {m.escopo === 'Série específica' && (
-          <Selecao rotulo="Série" valor={m.serie ?? 1} opcoes={[1, 2, 3, 4, 5, 6]} onChange={(v) => onSet({ serie: v })} />
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-end gap-2">
-        {m.metodo === 'Dropset' && (
-          <>
-            <Selecao rotulo="Etapas" valor={m.etapas ?? 1} opcoes={[1, 2, 3]} onChange={(v) => onSet({ etapas: v })} />
-            {Array.from({ length: m.etapas ?? 1 }, (_, i) => i + 1).map((e) => (
-              <div key={e} className="flex flex-wrap gap-1">
-                <CampoNum rotulo={`Carga etapa ${e} (kg)`} valor={m.cargaEtapa?.[e - 1] ?? null} onChange={(v) => {
-                  const arr = [...(m.cargaEtapa ?? [])]
-                  arr[e - 1] = v ?? null
-                  onSet({ cargaEtapa: arr })
-                }} />
-                <CampoNum rotulo={`Reps etapa ${e}`} valor={m.repsEtapa?.[e - 1] ?? null} onChange={(v) => {
-                  const arr = [...(m.repsEtapa ?? [])]
-                  arr[e - 1] = v ?? null
-                  onSet({ repsEtapa: arr })
-                }} />
+    <Folha titulo={titulo} onFechar={onFechar}>
+      {!linha && (
+        <section className="space-y-2">
+          <div className="text-sm font-semibold text-slate-300">Método</div>
+          <div className="flex flex-wrap gap-1.5">{METODOS.map((m) => chip(metodo === m, m, () => escolher(m)))}</div>
+        </section>
+      )}
+      {metodo && m0 && (
+        <>
+          <section className="space-y-2">
+            <div className="text-sm font-semibold text-slate-300">Semanas</div>
+            <div className="flex flex-wrap gap-1.5">
+              {chip(r.semanas.length === todas.length, 'Todas', () => setR({ ...r, semanas: todas }))}
+              {todas.map((w) => chip(r.semanas.includes(w), String(w), () => alternarSemana(w)))}
+            </div>
+          </section>
+          <section className="space-y-2">
+            <div className="text-sm font-semibold text-slate-300">Em quais séries</div>
+            {metodo === 'Dropset' ? (
+              <>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: n }, (_, i) => i + 1).map((k) =>
+                    chip(r.modelo.some((e) => serieDoDrop(e, n) === k), `S${k}`, () =>
+                      setR({ ...r, modelo: alternarSerieDropset({ semana: 0, treino, exercicios: [], metodos: r.modelo }, pos, k, n).metodos }),
+                    ),
+                  )}
+                </div>
+                <div className="text-sm text-slate-300">Etapas</div>
+                <div className="flex flex-wrap gap-1.5">{[1, 2, 3].map((e) => chip(etapas === e, String(e), () => todos({ etapas: e })))}</div>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: etapas }, (_, i) => i + 1).map((e) => (
+                    <div key={e} className="flex flex-wrap gap-2">
+                      <CampoNum rotulo={`Carga etapa ${e} (kg)`} valor={m0.cargaEtapa?.[e - 1] ?? null} onChange={(v) => { const a = lista(m0.cargaEtapa); a[e - 1] = v ?? null; todos({ cargaEtapa: a }) }} />
+                      <CampoNum rotulo={`Reps etapa ${e}`} valor={m0.repsEtapa?.[e - 1] ?? null} onChange={(v) => { const a = lista(m0.repsEtapa); a[e - 1] = v ?? null; todos({ repsEtapa: a }) }} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {opcoesSeries(n).map(([rotulo, escopo, serie]) =>
+                  chip(m0.escopo === escopo && (escopo !== 'Série específica' || m0.serie === serie), rotulo, () => {
+                    const { serie: _s, ...resto } = m0
+                    setR({ ...r, modelo: [serie ? { ...resto, escopo, serie } : { ...resto, escopo }] })
+                  }),
+                )}
               </div>
-            ))}
-            <CampoNum rotulo="Pausa interna (s)" valor={m.pausaInternaS ?? null} onChange={(v) => onSet({ pausaInternaS: v ?? undefined })} />
-          </>
-        )}
-        {m.metodo === 'Clusterset' && (
-          <>
-            <CampoNum rotulo="Blocos" valor={m.blocos ?? null} onChange={(v) => onSet({ blocos: v ?? undefined })} />
-            <CampoNum rotulo="Reps por bloco" valor={m.repsPorBloco ?? null} onChange={(v) => onSet({ repsPorBloco: v ?? undefined })} />
-            <CampoNum rotulo="Pausa interna (s)" valor={m.pausaInternaS ?? null} onChange={(v) => onSet({ pausaInternaS: v ?? undefined })} />
-          </>
-        )}
-        {m.metodo === 'Rest-pause' && (
-          <>
-            <CampoNum rotulo="Blocos" valor={m.blocos ?? null} onChange={(v) => onSet({ blocos: v ?? undefined })} />
-            <CampoNum rotulo="Adicional" valor={m.adicional ?? null} onChange={(v) => onSet({ adicional: v ?? undefined })} />
-            <CampoNum rotulo="Pausa interna (s)" valor={m.pausaInternaS ?? null} onChange={(v) => onSet({ pausaInternaS: v ?? undefined })} />
-          </>
-        )}
-        {(m.metodo === 'Biset' || m.metodo === 'Superset' || m.metodo === 'Triset' || m.metodo === 'Circuito') && (
-          <>
-            <CampoNum rotulo="Grupo" valor={m.grupo ?? null} onChange={(v) => onSet({ grupo: v ?? undefined })} />
-            <CampoNum rotulo="Pausa interna (s)" valor={m.pausaInternaS ?? null} onChange={(v) => onSet({ pausaInternaS: v ?? undefined })} />
-          </>
-        )}
-        <CampoNum rotulo="Reps padrão (opcional)" valor={m.repsPadrao ?? null} onChange={(v) => onSet({ repsPadrao: v ?? undefined })} />
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Botao onClick={onCopiar}>Copiar para todas as semanas</Botao>
-        <Botao tipo="perigo" onClick={onRemover}>
-          Remover
+            )}
+          </section>
+          {emGrupo(metodo) && (
+            <section className="space-y-1">
+              <div className="text-sm font-semibold text-slate-300">Juntar com</div>
+              {outros.map((p) => (
+                <label key={p} className="flex min-h-11 items-center gap-2 text-sm">
+                  <input type="checkbox" checked={r.parceiros.includes(p)} onChange={() => setR({ ...r, parceiros: r.parceiros.includes(p) ? r.parceiros.filter((x) => x !== p) : [...r.parceiros, p].sort((a, b) => a - b) })} />
+                  <span className="min-w-0 break-words">{p}. {nome(p)}</span>
+                </label>
+              ))}
+              <p className="text-xs text-slate-400">Biset: 1 parceiro · Triset: 2 · Superset: 3 ou mais · Circuito: 1 ou mais</p>
+            </section>
+          )}
+          <section className="space-y-2">
+            <Botao aria-expanded={mais} className="min-h-11 w-full" onClick={() => setMais(!mais)}>Mais ajustes</Botao>
+            <Painel aberto={mais} className="space-y-3">
+              <label className="flex min-h-11 items-center gap-2 text-sm">
+                <input type="checkbox" checked={m0.ativo} onChange={(e) => todos({ ativo: e.target.checked })} />
+                Ligado
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <CampoNum rotulo="Pausa interna (s)" valor={m0.pausaInternaS ?? null} onChange={(v) => todos({ pausaInternaS: v })} />
+                {metodo === 'Clusterset' && (
+                  <>
+                    <CampoNum rotulo="Blocos" valor={m0.blocos ?? null} onChange={(v) => todos({ blocos: v })} />
+                    <CampoNum rotulo="Reps por bloco" valor={m0.repsPorBloco ?? null} onChange={(v) => todos({ repsPorBloco: v })} />
+                  </>
+                )}
+                {metodo === 'Rest-pause' && (
+                  <>
+                    <CampoNum rotulo="Blocos" valor={m0.blocos ?? null} onChange={(v) => todos({ blocos: v })} />
+                    <CampoNum rotulo="Adicional" valor={m0.adicional ?? null} onChange={(v) => todos({ adicional: v })} />
+                  </>
+                )}
+                <CampoNum rotulo="Reps padrão (opcional)" valor={m0.repsPadrao ?? null} onChange={(v) => todos({ repsPadrao: v })} />
+              </div>
+            </Painel>
+          </section>
+        </>
+      )}
+      <div className="flex gap-2">
+        <Botao tipo="primario" className="min-h-11 flex-1" disabled={!pronto} onClick={() => gravar(salvarLinha(meso.metodos, { treino, pos, metodo: metodo!, semanas: r.semanas, modelo: r.modelo, parceiros: r.parceiros }, linha?.semanas ?? []))}>
+          Pronto
         </Botao>
+        {linha && (
+          <Botao tipo="perigo" className="min-h-11" onClick={() => gravar(removerLinha(meso.metodos, treino, pos, linha))}>
+            Tirar
+          </Botao>
+        )}
       </div>
-    </Cartao>
+    </Folha>
   )
 }
 
@@ -224,40 +229,5 @@ function CampoNum({ rotulo, valor, onChange }: { rotulo: string; valor: number |
       onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
       className="w-32"
     />
-  )
-}
-
-function FiltroSelect({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor?: number; opcoes: string[]; onChange: (v?: number) => void }) {
-  return (
-    <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
-      <span className="text-slate-400">{rotulo}</span>
-      <select aria-label={`Filtrar por ${rotulo.toLowerCase()}`} value={valor ?? ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)} className={`${campoBase} w-full max-w-full px-2 py-2`}>
-        <option value="">{rotulo === 'Semana' ? 'Todas' : 'Todos'}</option>
-        {opcoes.map((o, i) => (
-          <option key={i} value={i + 1}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
-}
-
-function Selecao({ rotulo, valor, opcoes, onChange }: { rotulo: string; valor: number; opcoes: number[]; onChange: (v: number) => void }) {
-  return (
-    <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm">
-      <span className="text-slate-400">{rotulo}</span>
-      <select
-        value={valor}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={`${campoBase} w-full max-w-full px-2 py-2`}
-      >
-        {opcoes.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </label>
   )
 }

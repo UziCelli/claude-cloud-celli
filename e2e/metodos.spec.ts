@@ -8,15 +8,14 @@ test.beforeAll(async () => {
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
 })
 
-test('filtro de métodos por semana, treino e exercício', async ({ page }) => {
+test('adicionar, juntar, editar e tirar métodos por exercício', async ({ page }) => {
   const alunoId = await criarAluno('Bia Met', 'bia.met@teste.com', 'senha123')
-  const linha = { w1: [10, 10, 10, null, null, null], w2: [10, 10, 10, null, null, null] }
+  const linha = { w1: [10, 10, 10, null, null, null], w2: [10, 10, 10, null, null, null], w3: [10, 10, 10, null, null, null] }
   const slots = ['Supino Reto Barra', 'Remada Curvada com Barra', 'Agachamento Livre'].map((nome, i) => ({ slotId: `a${i}`, nome }))
-  const m = (semana: number, treino: number, exercicio: number) => ({ ativo: true, semana, treino, exercicio, metodo: 'Dropset', escopo: 'Todas as séries', etapas: 1 })
   const id = await criarMeso({
-    alunoId, nome: 'Meso Met', frequencia: 2, semanas: 2, inicio: hojeSaoPaulo(), pausaS: 60,
+    alunoId, nome: 'Meso Met', frequencia: 2, semanas: 3, inicio: hojeSaoPaulo(), pausaS: 60,
     divisao: { t1: slots, t2: slots }, progressao: { principais: linha, auxiliares: linha },
-    metodos: [m(1, 1, 1), m(2, 1, 3), m(2, 2, 3)],
+    metodos: [],
   })
 
   await page.goto('/')
@@ -26,14 +25,39 @@ test('filtro de métodos por semana, treino e exercício', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
   await page.goto(`/#/meso/${id}`)
   await page.getByRole('button', { name: 'Métodos', exact: true }).click()
+  const folha = page.getByRole('dialog')
 
-  await expect(page.getByText('Mostrando 3 de 3 métodos')).toBeVisible()
-  await page.getByLabel('Filtrar por semana').selectOption('2')
-  await expect(page.getByText('Mostrando 2 de 3 métodos')).toBeVisible()
-  await page.getByLabel('Filtrar por treino').selectOption('2')
-  await expect(page.getByText('Mostrando 1 de 3 métodos')).toBeVisible()
-  await page.getByLabel('Filtrar por exercício').selectOption('1')
-  await expect(page.getByText('Nenhum método neste filtro.')).toBeVisible()
-  await page.getByRole('button', { name: 'Limpar filtro' }).click()
-  await expect(page.getByText('Mostrando 3 de 3 métodos')).toBeVisible()
+  // 1. Dropset no exercício 2, semanas 1-2, série S3
+  await page.getByRole('button', { name: 'Adicionar método em Remada Curvada com Barra' }).click()
+  await folha.getByRole('button', { name: 'Dropset', exact: true }).click()
+  await folha.getByRole('button', { name: '3', exact: true }).first().click()
+  await folha.getByRole('button', { name: 'S3', exact: true }).click()
+  await folha.getByRole('button', { name: 'Pronto' }).click()
+  await expect(page.getByRole('button', { name: /^Dropset · S3 · semanas 1–2$/ })).toBeVisible()
+
+  // 2. Biset do 1 com o 3: a linha aparece nos dois
+  await page.getByRole('button', { name: 'Adicionar método em Supino Reto Barra' }).click()
+  await folha.getByRole('button', { name: 'Biset', exact: true }).click()
+  await folha.getByRole('checkbox', { name: /3\. Agachamento/ }).check()
+  await folha.getByRole('button', { name: 'Pronto' }).click()
+  await expect(page.getByRole('button', { name: /^Biset com 3\. Agachamento Livre/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Biset com 1\. Supino Reto Barra/ })).toBeVisible()
+
+  // 3. Mudar as semanas do Dropset
+  await page.getByRole('button', { name: /^Dropset/ }).click()
+  await folha.getByRole('button', { name: 'Todas', exact: true }).click()
+  await folha.getByRole('button', { name: 'Pronto' }).click()
+  await expect(page.getByRole('button', { name: /^Dropset.*todas as semanas$/ })).toBeVisible()
+
+  // 4. Tirar o Biset pelo X
+  await page.getByRole('button', { name: 'Tirar Biset de Supino Reto Barra' }).click()
+  await expect(page.getByRole('button', { name: /^Biset/ })).toHaveCount(0)
+
+  // 5. Salvar, recarregar e conferir
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+  await page.waitForTimeout(1500)
+  await page.reload()
+  await page.getByRole('button', { name: 'Métodos', exact: true }).click()
+  await expect(page.getByRole('button', { name: /^Dropset.*todas as semanas$/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Biset/ })).toHaveCount(0)
 })
