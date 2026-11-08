@@ -1,6 +1,6 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { prescreverSessao, type Meso } from '../../engine'
-import type { Foto, Usuario } from '../../lib/acesso'
+import { vencePerto, type Foto, type Usuario } from '../../lib/acesso'
 import { comVolta, diasDaSemana, treinoDeHoje } from '../../lib/agenda'
 import type { RegistroAlerta } from '../../lib/alertas'
 import type { MesoSalvo } from '../../lib/conversores'
@@ -14,7 +14,7 @@ import { Chip, IconeQuadrado, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
 import { Centro } from '../../ui'
-import { PIX } from './PagarPix'
+import PagarPix, { dataCurta, PIX } from './PagarPix'
 import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
 import BotaoSair from '../auth/BotaoSair'
@@ -49,6 +49,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
         </a>
       </div>
+      {perfil && <PixPerto uid={uid} perfil={perfil} hoje={hoje} />}
       {!atual && <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>}
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
@@ -165,6 +166,22 @@ function RelatorioPronto({ relatorios, mesos }: { relatorios: { mesoId: string; 
         <IcSeta className="size-5 text-slate-400" />
       </Quadro>
     </a>
+  )
+}
+
+// Pix pronto no Início nos 5 dias antes do vencimento (some quando o coach confirma: pagoAte vai +1 mês).
+function PixPerto({ uid, perfil, hoje }: { uid: string; perfil: Usuario; hoje: Date }) {
+  const faltam = vencePerto(perfil, hoje)
+  if (!PIX || faltam == null) return null
+  const prazo = faltam === 0 ? 'hoje' : faltam === 1 ? 'amanhã' : `em ${faltam} dias`
+  return (
+    <Quadro className="space-y-3 ring-1 ring-marca-400/40">
+      <div>
+        <h2 className="text-base">Mensalidade vence {prazo}</h2>
+        <p className="text-sm text-slate-400">Pague com Pix até {dataCurta(perfil.pagoAte!.toDate())} e continue treinando sem pausa.</p>
+      </div>
+      <PagarPix uid={uid} perfil={perfil} />
+    </Quadro>
   )
 }
 

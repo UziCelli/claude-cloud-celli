@@ -238,3 +238,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Sem filtro, sem "Copiar para todas" e sem campo "Grupo" (o número do grupo é automático).
 - O formato dos dados não mudou (sem migração). Lógica em `src/engine/planoMetodos.ts`.
 - **Pendência do Victor:** montar um meso real no PC e no celular e dizer o que ainda incomoda.
+
+## 08/11/2026 — Pix aparece antes de vencer
+- Conferido: o Pix já podia ser pago a qualquer hora (Conta → Mensalidade) e as notificações de 3 dias e do dia funcionam (workflow diário verde).
+- Novo: nos **5 dias antes** do vencimento, o Início do aluno mostra o cartão "Mensalidade vence em N dias" com QR, "Copiar código Pix" e "Já paguei", sem bloquear o acesso.
+- Quem toca na notificação cai na Conta com o Pix já aberto.
+- Escolha do Victor: 5 dias. Detalhes: `docs/mapa.md`, linha "Pix antes do vencimento".
