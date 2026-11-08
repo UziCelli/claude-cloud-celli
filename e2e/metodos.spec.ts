@@ -49,7 +49,8 @@ test('adicionar, juntar, editar e tirar métodos por exercício', async ({ page 
   await folha.getByRole('button', { name: 'Pronto' }).click()
   await expect(page.getByRole('button', { name: /^Dropset.*todas as semanas$/ })).toBeVisible()
 
-  // 4. Tirar o Biset pelo X
+  // 4. Tirar o Biset pelo X (pede confirmação)
+  page.once('dialog', (d) => d.accept())
   await page.getByRole('button', { name: 'Tirar Biset de Supino Reto Barra' }).click()
   await expect(page.getByRole('button', { name: /^Biset/ })).toHaveCount(0)
 
