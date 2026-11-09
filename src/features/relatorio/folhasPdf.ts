@@ -90,22 +90,26 @@ export async function criarFolhas() {
       f.texto(sub, M, sans(34), MUDO)
       f.y += 30
     },
+    // Recado longo (até 3000 caracteres) não cabe numa folha: a caixa continua na folha seguinte.
     recado(comentario?: string) {
       if (!comentario?.trim()) return
       f.ctx.font = sans(34)
       const linhas = quebrar(f.ctx, comentario.trim(), LARG - 80)
-      const h = 110 + linhas.length * 48
-      f.espaco(h)
-      f.y += 30
-      f.caixa(M, LARG, h, 28)
-      f.y += 56
-      f.texto('RECADO DO SEU COACH', M + 40, disp(26, 800), C.m600)
-      f.y += 58
-      for (const l of linhas) {
-        f.texto(l, M + 40, sans(34), TEXTO)
-        f.y += 48
+      for (let i = 0; i < linhas.length; ) {
+        f.espaco(30 + 110 + 48)
+        const parte = linhas.slice(i, i + Math.max(1, Math.floor((FIM - f.y - 30 - 110) / 48)))
+        f.y += 30
+        f.caixa(M, LARG, 110 + parte.length * 48, 28)
+        f.y += 56
+        f.texto(i === 0 ? 'RECADO DO SEU COACH' : 'RECADO DO SEU COACH (CONTINUAÇÃO)', M + 40, disp(26, 800), C.m600)
+        f.y += 58
+        for (const l of parte) {
+          f.texto(l, M + 40, sans(34), TEXTO)
+          f.y += 48
+        }
+        f.y -= 10
+        i += parte.length
       }
-      f.y -= 10
     },
     // Caixas lado a lado com um número grande e o rótulo embaixo.
     numeros(itens: { valor: string; rotulo: string }[]) {

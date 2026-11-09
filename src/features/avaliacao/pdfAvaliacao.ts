@@ -24,6 +24,7 @@ export async function gerarPdfAvaliacao({ r, aluno, comentario }: EntradaPdfAval
   const xAnt = M + LARG * 0.62
   const xAtual = M + LARG * 0.81
   for (const g of r.grupos) {
+    f.espaco(120 + 34 + 58) // título, rótulos das colunas e a 1ª linha ficam na mesma folha
     f.titulo(g.titulo)
     f.y += 34
     if (r.anterior) f.texto('anterior', xAnt, sans(24), MUDO, 'right')
