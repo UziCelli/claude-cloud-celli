@@ -49,6 +49,7 @@ export default function App() {
 
 function Principal() {
   const { user, perfil, carregando } = useUsuarioAtual()
+  const [adiouAceite, setAdiouAceite] = useState(false) // sem internet no aceite: vale até fechar o app
   let estagio = 'app'
   let tela: ReactNode
   if (carregando) [estagio, tela] = ['abertura', <Abertura />]
@@ -56,7 +57,8 @@ function Principal() {
   else if (!perfil) [estagio, tela] = ['abertura', <PerfilDemora />]
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso uid={user.uid} perfil={perfil} />]
-  else if (!aceitouPrivacidade(perfil)) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} />]
+  else if (!aceitouPrivacidade(perfil) && !adiouAceite)
+    [estagio, tela] = ['privacidade', <Aceite uid={user.uid} adiar={perfil.privacidadeVersao ? () => setAdiouAceite(true) : undefined} />]
   else tela = <AlunoApp uid={user.uid} perfil={perfil} />
   useEffect(() => {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
