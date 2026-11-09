@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
 import { criarAluno, criarCoach, hojeSaoPaulo, limparEmuladores } from './seed'
 
@@ -74,6 +75,11 @@ test('coach lança, libera e recolhe; o aluno vê a evolução', async ({ browse
   await expect(aluno.getByText('Peso: 80 kg → 78 kg (−2 kg)')).toBeVisible()
   await expect(aluno.getByRole('link', { name: `Avaliação de ${dataBR(hojeSaoPaulo())}` })).toBeVisible()
   expect(await cabeNaTela(aluno)).toBe(true)
+
+  // PDF da avaliação (com comparação): baixa e é um PDF de verdade.
+  const [download] = await Promise.all([aluno.waitForEvent('download'), aluno.getByRole('button', { name: 'Baixar PDF' }).click()])
+  expect(download.suggestedFilename()).toBe('avaliacao-fisica.pdf')
+  expect((await readFile((await download.path())!)).subarray(0, 5).toString()).toBe('%PDF-')
 
   // Coach recolhe a 2ª: o aluno volta a ver só a 1ª.
   await coach.getByRole('button', { name: 'Recolher' }).click()

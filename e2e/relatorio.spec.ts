@@ -58,7 +58,7 @@ test('coach revisa e libera; o aluno só vê depois', async ({ browser }) => {
   // Coach: o ciclo aparece em "Relatórios para revisar".
   await entrar(coach, COACH.email, COACH.senha)
   await expect(coach.getByText('Relatórios para revisar')).toBeVisible()
-  await coach.getByRole('link', { name: 'Carla Aluna · Meso Fim' }).click()
+  await coach.locator('a[href$="/relatorio"]', { hasText: 'Carla Aluna · Meso Fim' }).click() // também há o lembrete "Avaliações a fazer" com o mesmo texto
   await expect(coach.getByText('Aderência')).toBeVisible()
   await expect(coach.getByText(/Desenvolvimento Militar Barra: 20 → 30 kg/)).toBeVisible()
   await coach.getByLabel('Seu comentário para o aluno').fill(COMENTARIO)

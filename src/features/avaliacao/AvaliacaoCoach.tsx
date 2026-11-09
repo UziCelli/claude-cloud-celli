@@ -11,7 +11,7 @@ import { db } from '../../lib/firebase'
 import { useDoc } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { ir, trocarRota } from '../../rota'
-import { Aviso, Botao, campoBase, Centro } from '../../ui'
+import { Aviso, Botao, campoBase, Centro, flash } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
 import { useDadosAluno } from '../relatorio/useDadosAluno'
 import Avaliacao, { BotaoPdfAvaliacao } from './Avaliacao'
@@ -49,8 +49,7 @@ const Num = ({ rotulo, v, onChange, ruim }: { rotulo: string; v: string; onChang
 export default function AvaliacaoCoach({ uid, id: idRota }: { uid: string; id: string }) {
   const [idNovo] = useState(novaAvaliacaoId)
   const aluno = useDoc<Usuario>(useMemo(() => doc(db, 'usuarios', uid), [uid]))
-  // Rota "nova" ou já trocada para o id gerado: o formulário segue montado, sem recarregar do servidor.
-  const criando = idRota === 'nova' || idRota === idNovo
+  const criando = idRota === 'nova'
   const id = criando ? idNovo : idRota
   const atual = useDoc<object>(useMemo(() => (criando ? null : doc(db, 'avaliacoes', idRota)), [criando, idRota]))
   const outras = useAvaliacoesDoAluno(uid)
@@ -88,7 +87,12 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
   }))
   const [existe, setExiste] = useState(!!ficha)
   const [liberado, setLiberado] = useState(!!ficha?.liberado)
-  const [msg, setMsg] = useState('')
+  // Trocar a rota remonta a tela: a mensagem do 1º salvar atravessa pelo `flash`.
+  const [msg, setMsg] = useState(() => {
+    const t = flash.texto
+    flash.texto = ''
+    return t
+  })
   const [apagando, setApagando] = useState(false)
   const set = (k: string) => (s: string) => setV((x) => ({ ...x, [k]: s }))
 
@@ -135,6 +139,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
     setLiberado(lib)
     if (!existe) {
       setExiste(true)
+      flash.texto = ok
       trocarRota(`/aluno/${uid}/avaliacao/${id}`)
     }
   }
