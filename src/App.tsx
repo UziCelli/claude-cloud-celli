@@ -26,6 +26,8 @@ import RankingAlunos from './features/coach/RankingAlunos'
 import Feedbacks from './features/coach/feedbacks/Feedbacks'
 import Grupo from './features/coach/presencial/Presencial'
 import RelatorioCoach from './features/relatorio/RelatorioCoach'
+import AvaliacoesCoach from './features/avaliacao/AvaliacoesCoach'
+import AvaliacaoCoach from './features/avaliacao/AvaliacaoCoach'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
 import TutorialCoach, { tutorialCoachNaoVisto } from './features/coach/TutorialCoach'
@@ -191,6 +193,8 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if (rota === '/alunos/novo') tela = <NovoAluno />
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/avaliacoes', rota))) tela = <AvaliacoesCoach key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/avaliacao/:id', rota))) tela = <AvaliacaoCoach key={p.uid} uid={p.uid} id={p.id} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if (rota === '/feedbacks') tela = <Feedbacks />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />

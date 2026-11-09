@@ -17,6 +17,7 @@ import { Centro } from '../../ui'
 import PagarPix, { dataCurta, PIX } from './PagarPix'
 import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
+import { useAvaliacoesLiberadas } from '../avaliacao/AvaliacaoAluno'
 import { FaixaFeedback } from '../feedback/ConviteFeedback'
 import BotaoSair from '../auth/BotaoSair'
 
@@ -34,6 +35,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
   const semInternet = useSemInternet()
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const relatorios = useRelatoriosLiberados(uid)
+  const avaliacoes = useAvaliacoesLiberadas(uid)
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
@@ -57,6 +59,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
+      <AvaliacaoPronta id={avaliacoes.dados[0]?.id} />
       <Quadros pagoAte={perfil?.pagoAte?.toMillis()} />
       <FaixaFeedback />
     </main>
@@ -164,6 +167,23 @@ function RelatorioPronto({ relatorios, mesos }: { relatorios: { mesoId: string; 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Seu relatório{nome ? ` do ciclo ${nome}` : ''} está pronto</p>
           <p className="text-xs text-slate-400">Veja sua evolução e o recado do coach</p>
+        </div>
+        <IcSeta className="size-5 text-slate-400" />
+      </Quadro>
+    </a>
+  )
+}
+
+// Avaliação física liberada mais recente (a lista já vem da mais nova para a mais antiga).
+function AvaliacaoPronta({ id }: { id?: string }) {
+  if (!id) return null
+  return (
+    <a href={`#/avaliacao/${id}`} className="toque block">
+      <Quadro className="flex items-center gap-3">
+        <IconeQuadrado><IcGrafico className="size-5" /></IconeQuadrado>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Sua avaliação física está pronta</p>
+          <p className="text-xs text-slate-400">Veja suas medidas e a sua evolução</p>
         </div>
         <IcSeta className="size-5 text-slate-400" />
       </Quadro>

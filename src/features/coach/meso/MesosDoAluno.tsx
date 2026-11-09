@@ -63,6 +63,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
       acoes={
         <>
           <Botao onClick={() => ir(`/aluno/${uid}/evolucao`)}>Evolução</Botao>
+          <Botao onClick={() => ir(`/aluno/${uid}/avaliacoes`)}>Avaliação física</Botao>
           <Botao tipo="destaque" className="inline-flex items-center gap-1.5" onClick={() => ir(`/aluno/${uid}/presencial`)}>
             <IcPlay className="size-4" />
             Treino presencial

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { collection, query, where } from 'firebase/firestore'
 import { docParaMeso } from '../../../lib/conversores'
 import { relatoriosParaRevisar } from '../../../lib/relatorio'
+import { avaliacoesParaFazer, corteAvaliacoes } from '../../../lib/avaliacao'
 import type { Usuario } from '../../../lib/acesso'
 import { consultaRegistrosRecentes } from '../../../lib/acoes'
 import type { MesoSalvo } from '../../../lib/conversores'
@@ -36,6 +37,8 @@ export default function Inicio({ nome }: { nome: string }) {
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
   const arquivados = useArquivados()
   const liberados = useLista<{ id: string }>(useMemo(() => query(collection(db, 'relatorios'), where('liberado', '==', true)), []))
+  const corte = corteAvaliacoes(agora)
+  const avaliacoes = useLista<{ alunoId: string; data: string }>(useMemo(() => query(collection(db, 'avaliacoes'), where('data', '>=', corte)), [corte]))
   const fb = useFeedbacks()
   const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves)
   if (!alunos.carregando && alunos.dados.length === 0)
@@ -51,11 +54,9 @@ export default function Inicio({ nome }: { nome: string }) {
     )
 
   const nomeDe = new Map(alunos.dados.filter((a) => a.status !== 'arquivado').map((a) => [a.id, a.nome]))
-  const paraRevisar = relatoriosParaRevisar(
-    mesos.dados.filter((d) => nomeDe.has(d.alunoId)).map((d) => ({ id: d.id, meso: docParaMeso(d), nome: d.nome })),
-    new Set(liberados.dados.map((x) => x.id)),
-    agora,
-  )
+  const mesosAtivos = mesos.dados.filter((d) => nomeDe.has(d.alunoId)).map((d) => ({ id: d.id, alunoId: d.alunoId, meso: docParaMeso(d), nome: d.nome }))
+  const paraRevisar = relatoriosParaRevisar(mesosAtivos, new Set(liberados.dados.map((x) => x.id)), agora)
+  const paraAvaliar = avaliacoesParaFazer(mesosAtivos, avaliacoes.dados, agora)
   const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial).length
   const blocos: [string, AlunoComId[], string][] = [
     ['Aguardando aprovação', r.aguardando, 'Ninguém aguardando.'],
@@ -124,6 +125,22 @@ export default function Inicio({ nome }: { nome: string }) {
                 </li>
               )
             })}
+          </ul>
+        </section>
+      )}
+      {paraAvaliar.length > 0 && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-marca-500/60 bg-marca-900/40 p-4">
+          <h2 className="font-semibold">
+            Avaliações a fazer <span className="font-display text-lg font-bold text-marca-300">{paraAvaliar.length}</span>
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {paraAvaliar.map((x) => (
+              <li key={x.mesoId} className="max-w-full min-w-0">
+                <a href={`#/aluno/${x.alunoId}/avaliacoes`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                  {nomeDe.get(x.alunoId)} · {x.nome}
+                </a>
+              </li>
+            ))}
           </ul>
         </section>
       )}
