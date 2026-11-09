@@ -1106,3 +1106,95 @@ describe('feedbacks (sua opinião)', () => {
     await assertSucceeds(deleteDoc(fb('coach')));
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// Avaliação física: dado de saúde. Só o coach grava; o aluno só lê a própria, liberada.
+describe('avaliacoes (avaliação física)', () => {
+  const av = (uid: string | undefined, id = 'av_bia') => doc(db(uid), 'avaliacoes', id);
+  const nova = (extra: object = {}) => ({ alunoId: 'ana', data: '2026-11-09', pesoKg: 70, comentario: '', liberado: false, liberadoEm: null, ...agora(), ...extra });
+  const semear = (aluno: string, liberado: boolean, id = `av_${aluno}`) =>
+    admin((a) =>
+      setDoc(doc(a, 'avaliacoes', id), {
+        alunoId: aluno, data: '2026-11-09', pesoKg: 70, dobras: { triceps: 12 }, comentario: 'x',
+        liberado, liberadoEm: liberado ? Timestamp.now() : null, atualizadoEm: Timestamp.now(),
+      }),
+    );
+  const consulta = (uid: string, ...filtros: Parameters<typeof query>[1][]) => getDocs(query(collection(db(uid), 'avaliacoes'), ...filtros));
+
+  it('o caminho certo passa (sem isso os negados abaixo não provam nada)', async () => {
+    await semear('ana', true);
+    await assertSucceeds(setDoc(av('coach', 'ok'), nova()));
+    await assertSucceeds(getDoc(av('ana', 'av_ana')));
+    await assertSucceeds(consulta('ana', where('alunoId', '==', 'ana'), where('liberado', '==', true)));
+  });
+
+  it('ler a avaliação de outro aluno: pelo id, pela consulta dele ou listando tudo', async () => {
+    await semear('bia', true);
+    await negar(getDoc(av('ana')));
+    await negar(consulta('ana', where('alunoId', '==', 'bia'), where('liberado', '==', true)));
+    await negar(consulta('ana', where('alunoId', '==', 'bia')));
+    await negar(consulta('ana', where('liberado', '==', true)));
+    await negar(consulta('ana', where('data', '>=', '2026-01-01')));
+    await negar(consulta('ana'));
+  });
+
+  it('ler o próprio rascunho antes de o coach liberar', async () => {
+    await semear('ana', false);
+    await negar(getDoc(av('ana', 'av_ana')));
+    await negar(consulta('ana', where('alunoId', '==', 'ana')));
+    await negar(consulta('ana', where('alunoId', '==', 'ana'), where('liberado', '==', false)));
+  });
+
+  it('aluno liberar, editar, recriar ou apagar a própria avaliação', async () => {
+    await semear('ana', false);
+    await semear('ana', true, 'av_ana2');
+    await negar(updateDoc(av('ana', 'av_ana'), { liberado: true, liberadoEm: serverTimestamp(), ...agora() }));
+    await negar(updateDoc(av('ana', 'av_ana2'), { pesoKg: 55, ...agora() }));
+    await negar(updateDoc(av('ana', 'av_ana2'), { 'dobras.triceps': 5, ...agora() }));
+    await negar(setDoc(av('ana', 'av_ana2'), nova({ liberado: true, liberadoEm: serverTimestamp() })));
+    await negar(setDoc(av('ana', 'minha'), nova()));
+    await negar(deleteDoc(av('ana', 'av_ana2')));
+  });
+
+  it('aluno gravar ou roubar a avaliação de outro (trocar o alunoId para si)', async () => {
+    await semear('bia', true);
+    await negar(setDoc(av('ana', 'x'), nova({ alunoId: 'bia' })));
+    await negar(updateDoc(av('ana'), { alunoId: 'ana', ...agora() }));
+    await negar(deleteDoc(av('ana')));
+  });
+
+  it('sem acesso em dia: nem a própria liberada', async () => {
+    for (const uid of NAO_LIBERADOS) {
+      await semear(uid, true);
+      await negar(getDoc(av(uid, `av_${uid}`)));
+      await negar(consulta(uid, where('alunoId', '==', uid), where('liberado', '==', true)));
+      await negar(setDoc(av(uid, 'x'), nova({ alunoId: uid })));
+    }
+  });
+
+  it('sem login, login anônimo e coach sem 2º fator', async () => {
+    await semear('bia', true);
+    const anon = comoFirestore('anon', { firebase: { sign_in_provider: 'anonymous' } });
+    const semFator = comoFirestore('coach', SEM_FATOR);
+    for (const d of [db(), anon, semFator]) {
+      await negar(getDoc(doc(d, 'avaliacoes', 'av_bia')));
+      await negar(getDocs(collection(d, 'avaliacoes')));
+      await negar(setDoc(doc(d, 'avaliacoes', 'x'), nova()));
+      await negar(deleteDoc(doc(d, 'avaliacoes', 'av_bia')));
+    }
+  });
+
+  it('claim forjado de coach no token não dá poder (o papel vem do perfil)', async () => {
+    await semear('bia', true);
+    const forjado = comoFirestore('ana', { papel: 'coach', ...COM_FATOR });
+    await negar(getDoc(doc(forjado, 'avaliacoes', 'av_bia')));
+    await negar(setDoc(doc(forjado, 'avaliacoes', 'x'), nova()));
+  });
+
+  it('coach: avaliação para quem não é aluno, com foto ou campo fora da lista', async () => {
+    await negar(setDoc(av('coach', 'x'), nova({ alunoId: 'ninguem' })));
+    await negar(setDoc(av('coach', 'x'), nova({ alunoId: 'coach' })));
+    await negar(setDoc(av('coach', 'x'), nova({ foto: 'data:image/jpeg;base64,AAAA' })));
+    await negar(setDoc(av('coach', 'x'), nova({ perimetros: { cintura: 80, foto: 'x'.repeat(1000) } })));
+  });
+});

@@ -1334,3 +1334,150 @@ describe('feedbacks', () => {
     });
   });
 });
+
+// Avaliação física (dado de saúde): avaliacoes/{id automático}. Só o coach grava; o aluno lê a própria liberada.
+describe('avaliacoes', () => {
+  const av = (uid: string | undefined, id = 'av_ana') => doc(db(uid), 'avaliacoes', id);
+  const valida = (extra: object = {}) => ({
+    alunoId: 'ana',
+    data: '2026-11-09',
+    pesoKg: 80.5,
+    comentario: '',
+    liberado: false,
+    liberadoEm: null,
+    atualizadoEm: serverTimestamp(),
+    ...extra,
+  });
+  const completa = () =>
+    valida({
+      alturaCm: 180,
+      sexo: 'M',
+      idade: 30,
+      perimetros: { cintura: 87, quadril: 100, bracoD: 36 },
+      dobras: { peitoral: 10, axilar: 12, triceps: 11, subescapular: 14, abdominal: 20, suprailiaca: 16, coxa: 15 },
+      bio: { gorduraPct: 18.2, massaMuscularKg: 38, visceral: 7 },
+      comentario: 'Boa evolução!',
+    });
+  const existente = (aluno: string, liberado: boolean) =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'avaliacoes', `av_${aluno}`), {
+        alunoId: aluno,
+        data: '2026-11-09',
+        pesoKg: 70,
+        comentario: 'x',
+        liberado,
+        liberadoEm: liberado ? Timestamp.now() : null,
+        atualizadoEm: Timestamp.now(),
+      }),
+    );
+  const liberadas = (uid: string) =>
+    getDocs(query(collection(db(uid), 'avaliacoes'), where('alunoId', '==', uid), where('liberado', '==', true)));
+
+  describe('coach', () => {
+    it('cria rascunho (só o obrigatório e completa), libera, recolhe, lê, lista e apaga', async () => {
+      await assertSucceeds(setDoc(av('coach'), valida()));
+      await assertSucceeds(setDoc(av('coach'), completa()));
+      await assertSucceeds(setDoc(av('coach'), { ...completa(), liberado: true, liberadoEm: serverTimestamp() }));
+      await assertSucceeds(updateDoc(av('coach'), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() }));
+      await assertSucceeds(getDoc(av('coach')));
+      await assertSucceeds(getDocs(collection(db('coach'), 'avaliacoes')));
+      await assertSucceeds(getDocs(query(collection(db('coach'), 'avaliacoes'), where('data', '>=', '2026-10-01'))));
+      await assertSucceeds(deleteDoc(av('coach')));
+    });
+
+    it('troca o alunoId (darAcessoAoApp), mas só com atualizadoEm do servidor', async () => {
+      await existente('ana', true);
+      await assertFails(updateDoc(av('coach'), { alunoId: 'bia' }));
+      await assertSucceeds(updateDoc(av('coach'), { alunoId: 'bia', atualizadoEm: serverTimestamp() }));
+    });
+
+    it('nega aluno que não existe e avaliação do próprio coach', async () => {
+      await assertFails(setDoc(av('coach'), valida({ alunoId: 'fantasma' })));
+      await assertFails(setDoc(av('coach'), valida({ alunoId: 'coach' })));
+      await assertFails(setDoc(av('coach'), valida({ alunoId: 5 })));
+    });
+
+    it('nega campo extra, campo faltando e tipos errados', async () => {
+      await assertFails(setDoc(av('coach'), valida({ foto: 'data:image/jpeg;base64,AAAA' })));
+      await assertFails(setDoc(av('coach'), { alunoId: 'ana', data: '2026-11-09', comentario: '', liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(av('coach'), valida({ data: '09/11/2026' })));
+      await assertFails(setDoc(av('coach'), valida({ data: 20261109 })));
+      await assertFails(setDoc(av('coach'), valida({ comentario: 'x'.repeat(3001) })));
+      await assertSucceeds(setDoc(av('coach'), valida({ comentario: 'x'.repeat(3000) })));
+      await assertFails(setDoc(av('coach'), valida({ liberado: 'sim' })));
+      await assertFails(setDoc(av('coach'), valida({ liberado: true, liberadoEm: null })));
+      await assertFails(setDoc(av('coach'), valida({ liberado: false, liberadoEm: serverTimestamp() })));
+      await assertFails(setDoc(av('coach'), valida({ atualizadoEm: passado })));
+    });
+
+    it('nega peso, altura, idade e sexo fora da faixa', async () => {
+      for (const extra of [
+        { pesoKg: 19 }, { pesoKg: 301 }, { pesoKg: '80' },
+        { alturaCm: 99 }, { alturaCm: 251 }, { alturaCm: '180' },
+        { idade: 9 }, { idade: 101 }, { idade: 30.5 },
+        { sexo: 'X' }, { sexo: 1 },
+      ])
+        await assertFails(setDoc(av('coach'), valida(extra)));
+      await assertSucceeds(setDoc(av('coach'), valida({ pesoKg: 20, alturaCm: 250, idade: 100, sexo: 'F' })));
+    });
+
+    it('nega mapa com chave desconhecida ou que não é mapa', async () => {
+      await assertFails(setDoc(av('coach'), valida({ perimetros: { pescoco: 40 } })));
+      await assertFails(setDoc(av('coach'), valida({ dobras: { biceps: 8 } })));
+      await assertFails(setDoc(av('coach'), valida({ bio: { agua: 55 } })));
+      await assertFails(setDoc(av('coach'), valida({ perimetros: 'cintura 80' })));
+      await assertFails(setDoc(av('coach'), valida({ dobras: [10, 12] })));
+      await assertSucceeds(setDoc(av('coach'), valida({ perimetros: {}, dobras: {}, bio: {} })));
+    });
+
+    it('coach sem 2º fator não lê nem escreve', async () => {
+      await existente('ana', true);
+      const r = doc(contexto('coach', SEM_FATOR).firestore() as unknown as Firestore, 'avaliacoes', 'av_ana');
+      await assertFails(getDoc(r));
+      await assertFails(setDoc(r, valida()));
+      await assertFails(deleteDoc(r));
+    });
+  });
+
+  describe('aluno', () => {
+    it('lê a própria avaliação liberada (doc e consulta)', async () => {
+      await existente('ana', true);
+      await assertSucceeds(getDoc(av('ana')));
+      await assertSucceeds(liberadas('ana'));
+    });
+
+    it('não lê rascunho, nem a de outro aluno, nem lista tudo', async () => {
+      await existente('ana', false);
+      await existente('bia', true);
+      await assertFails(getDoc(av('ana')));
+      await assertFails(getDoc(av('ana', 'av_bia')));
+      await assertFails(getDocs(query(collection(db('ana'), 'avaliacoes'), where('alunoId', '==', 'ana'))));
+      await assertFails(getDocs(query(collection(db('ana'), 'avaliacoes'), where('alunoId', '==', 'bia'), where('liberado', '==', true))));
+      await assertFails(getDocs(query(collection(db('ana'), 'avaliacoes'), where('liberado', '==', true))));
+      await assertFails(getDocs(collection(db('ana'), 'avaliacoes')));
+    });
+
+    it('vencido, bloqueado, aguardando e arquivado não leem nem a liberada', async () => {
+      for (const uid of ['exp', 'blq', 'agu', 'arq']) {
+        await existente(uid, true);
+        await assertFails(getDoc(av(uid, `av_${uid}`)));
+        await assertFails(liberadas(uid));
+      }
+    });
+
+    it('nunca escreve nem apaga, nem a própria', async () => {
+      await existente('ana', true);
+      await assertFails(updateDoc(av('ana'), { pesoKg: 60, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(av('ana'), { comentario: 'eu mesmo', atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(av('ana', 'nova'), valida()));
+      await assertFails(deleteDoc(av('ana')));
+    });
+
+    it('sem login não lê nem escreve', async () => {
+      await existente('ana', true);
+      await assertFails(getDoc(av(undefined)));
+      await assertFails(getDocs(collection(db(), 'avaliacoes')));
+      await assertFails(setDoc(av(undefined, 'nova'), valida()));
+    });
+  });
+});

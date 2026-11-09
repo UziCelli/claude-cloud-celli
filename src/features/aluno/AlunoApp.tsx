@@ -14,6 +14,7 @@ import Hoje from './Hoje'
 import InicioAluno from './InicioAluno'
 import Treino from './Treino'
 import RelatorioAluno from '../relatorio/RelatorioAluno'
+import AvaliacaoAluno from '../avaliacao/AvaliacaoAluno'
 import EnviarFeedback from '../feedback/EnviarFeedback'
 import Tutorial, { tutorialNaoVisto } from './Tutorial'
 
@@ -29,6 +30,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   if ((p = casar('/treino/:mesoId/:semana/:treino', rota)))
     tela = <Treino uid={uid} mesoId={p.mesoId} semana={Number(p.semana)} treino={Number(p.treino)} />
   else if ((p = casar('/relatorio/:mesoId', rota))) tela = <RelatorioAluno uid={uid} nome={nome} mesoId={p.mesoId} />
+  else if ((p = casar('/avaliacao/:id', rota))) tela = <AvaliacaoAluno key={p.id} uid={uid} nome={nome} id={p.id} />
   else if (rota === '/treino') tela = <Hoje uid={uid} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/feedback') tela = <EnviarFeedback uid={uid} nome={nome} />

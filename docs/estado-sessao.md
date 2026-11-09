@@ -1,6 +1,17 @@
-# Estado da sessão (retomada) — atualizado em 08/11/2026
+# Estado da sessão (retomada) — atualizado em 09/11/2026
 
-Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #77 estão juntados e publicados.
+Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
+
+## 09/11/2026 — Avaliação física e relatório escrito (Fase 3)
+- Plano e escolhas do Victor: `docs/plano-avaliacao.md` (perímetros, dobras Pollock 7, bioimpedância; só o coach preenche e libera; lembrete a cada mesociclo; **sem foto**).
+- Coach: perfil do aluno → "Avaliação física" → "Nova avaliação". O app calcula IMC, % de gordura, massa magra e escreve o texto de evolução (compara com a anterior e com a primeira). Recado, Salvar rascunho / Liberar / Recolher, PDF.
+- Aluno: cartão "Sua avaliação física está pronta" no Início; vê só as liberadas e baixa o PDF.
+- Início do coach: "Avaliações a fazer" (ciclo terminou há até 30 dias sem avaliação nova).
+- Segurança/LGPD: coleção `avaliacoes` com regra e testes de ataque; entra no "Apagar de vez" e na Limpeza LGPD; Política atualizada (`VERSAO_PRIVACIDADE` = `2026-11-09b`: todos os alunos aceitam de novo uma vez, com a conferência de senha).
+- Texto do relatório por regras, sem IA (nenhuma medida sai do Firebase). PDF usa as mesmas folhas do relatório do ciclo (`relatorio/folhasPdf.ts`).
+- Vale para as duas marcas.
+- **Pendências do Victor:** fazer uma avaliação real (ele e a Gislane) e conferir o PDF no celular; pedir ao advogado para revisar a Política, agora com medidas do corpo.
+- Ideias para depois (não fazer sem pedido): foto do corpo (Storage exige plano pago), outros protocolos de dobras (3 dobras, Guedes), gráfico da evolução das medidas, aluno online lançar o próprio peso.
 
 ## 09/11/2026 — Sua opinião (feedback)
 - Aluno envia nota, assunto, tipo e texto, com nome ou anônimo (anônimo não guarda quem enviou). Só o personal lê (aba Feedbacks): filtros, marcar lido, apagar.

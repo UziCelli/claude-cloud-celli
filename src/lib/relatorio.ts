@@ -27,7 +27,7 @@ export type RelatorioCiclo = {
 const DIA = 86400_000
 const arred = (x: number) => Math.round(x * 100) / 100
 const soma = (xs: number[]) => xs.reduce((s, x) => s + x, 0)
-const fimISO = (m: Meso) => new Date(Date.parse(`${m.inicio.slice(0, 10)}T12:00Z`) + (7 * m.semanas - 1) * DIA).toISOString().slice(0, 10)
+export const fimISO = (m: Meso) => new Date(Date.parse(`${m.inicio.slice(0, 10)}T12:00Z`) + (7 * m.semanas - 1) * DIA).toISOString().slice(0, 10)
 
 // `mesos` e `registros`: todos os do aluno (os recordes comparam com os ciclos anteriores).
 export function relatorioCiclo(mesos: MesoEvolucao[], registros: RegistroEvolucao[], mesoId: string, agora: Date): RelatorioCiclo | null {
@@ -81,7 +81,7 @@ export const cicloTerminou = (meso: Meso, agora: Date) => semanaAtual(meso, agor
 export const RELATORIO_DIAS = 30
 
 // Dias desde o último dia do ciclo (1 = terminou ontem).
-const diasDesdeFim = (m: Meso, agora: Date) => diaSP(agora.getTime()) - diaSP(Date.parse(`${fimISO(m)}T12:00-03:00`))
+export const diasDesdeFim = (m: Meso, agora: Date) => diaSP(agora.getTime()) - diaSP(Date.parse(`${fimISO(m)}T12:00-03:00`))
 
 // Início do coach: ciclos terminados há até 30 dias sem relatório liberado, o mais recente primeiro.
 // `liberados`: ids (mesoId) dos relatórios com liberado == true. Aluno arquivado: filtrar antes.
