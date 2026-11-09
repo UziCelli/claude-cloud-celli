@@ -1,6 +1,6 @@
 # Estado da sessão (retomada) — atualizado em 09/11/2026
 
-Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #77 estão juntados e publicados.
+Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
 ## 09/11/2026 — Avaliação física e relatório escrito (Fase 3)
 - Plano e escolhas do Victor: `docs/plano-avaliacao.md` (perímetros, dobras Pollock 7, bioimpedância; só o coach preenche e libera; lembrete a cada mesociclo; **sem foto**).

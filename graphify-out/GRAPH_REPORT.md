@@ -1,7 +1,7 @@
 # Graph Report - claude-cloud-celli  (2026-11-09)
 
 ## Corpus Check
-- 306 files · ~288,375 words
+- 306 files · ~288,458 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6aacf68b`
+- Built from commit: `0bb6abaf`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -708,7 +708,7 @@ Nodes (3): atualizarNaEntrada(), deveRecarregar(), versaoDisponivel()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `vitest` connect `vitest` to `push.ts`, `VozTreino.tsx`, `ataques.test.ts`, `Hoje.tsx`, `InicioAluno.tsx`, `AvaliacaoCoach.tsx`, `EditarTreino.tsx`, `src/index.ts`, `inatividade.ts`, `cartaoRelatorio.ts`, `engine/index.ts`, `seriesDoRotulo`, `Alertas.tsx`, `atualizar.ts`, `EnviarFeedback.tsx`, `Aceite.tsx`, `Treino.tsx`, `ui.tsx`, `SessaoCard.tsx`, `jwt.ts`, `notasMetodo.ts`, `Estado da sessão (retomada) — atualizado em 09/11/2026`, `cartaoStory.ts`, `acoes.ts`, `registrarErro`, `alertas.ts`, `webpush.ts`, `sessao.ts`, `CampoExercicio`, `validar.ts`, `Msg`, `Onde fica cada coisa`, `evolucao.ts`, `firebase-admin`, `src/acesso.ts`, `metricas.ts`, `treino.test.ts`, `package.json`, `TabMetodos.tsx`, `avaliacao.ts`, `limpeza-lgpd.test.ts`, `PagarPix.tsx`, `CardioHoje.tsx`, `codigoPix`, `Entrar.tsx`, `ref_node_fs`, `aluno-exemplo.test.ts`, `Meso`, `cartaoDepoimento.ts`, `prescreverSessao`?**
-  _High betweenness centrality (0.105) - this node is a cross-community bridge._
+  _High betweenness centrality (0.102) - this node is a cross-community bridge._
 - **Are the 110 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `nadaPassaDaTela()` and `appCheckOk()`) actually correct?**
   _`Pontos sensíveis (leia antes de auditar ou mexer)` has 110 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `@cloudflare/workers-types`, `@types/react`, `@types/react-dom` to the rest of the system?**
