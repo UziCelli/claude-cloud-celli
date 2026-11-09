@@ -3,7 +3,7 @@ import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import CampoExercicio from './CampoExercicio'
 import VozTreino from './VozTreino'
-import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, type GrupoTroca } from './util'
+import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, trocarExercicio, type GrupoTroca } from './util'
 
 
 export default function TabDivisao({
@@ -67,21 +67,7 @@ export default function TabDivisao({
 
     if (nome === atual.nome) return
 
-    const semanas = semanasComHistorico(meso, registros, t, p)
-    const novoSlot: Slot = { slotId: crypto.randomUUID(), nome }
-    const trocas = { ...meso.trocas }
-    let preservou = false
-    for (const w of semanas) {
-      const chave = `${w}-${t}-${p}`
-      if (!trocas[chave]) {
-        trocas[chave] = atual
-        preservou = true
-      }
-    }
-    const divisao = [...meso.divisao]
-    const novoArr = [...arr]
-    novoArr[p - 1] = novoSlot
-    divisao[t - 1] = novoArr
+    const { divisao, trocas, preservou } = trocarExercicio(meso, registros, t, p, nome)
     onAtualizar({ divisao, trocas })
     if (preservou) {
       setAviso(

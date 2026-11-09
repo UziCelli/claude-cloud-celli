@@ -8,6 +8,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-bra
 - Feito: cadastro da chave em Minha conta; botão "Montar treinos por voz" na aba Divisão (ditado do navegador, grátis → Haiku → prévia → Aplicar); regra + testes; CSP; backup ignora `segredos`.
 - Falta o Victor: criar a chave no console.anthropic.com, **definir limite de gasto lá**, colar em Minha conta (nos dois apps) e testar o microfone num celular real (Android; no iPhone instalado o ditado pode não existir, aí usa o microfone do teclado).
 - Ideia futura: pedir também séries/reps/métodos por voz (hoje só a lista de exercícios por treino).
+- 10/11/2026 (2ª leva, a pedido do Victor): texto apagado não volta mais (mexer no texto desliga o microfone; botão Limpar); a IA entende adicionar (padrão, no fim do treino), trocar X por Y e refazer a lista; ditado continua após silêncio. Em aberto: transcrição melhor que a do navegador exige um serviço pago de voz→texto (a API da Anthropic não transcreve áudio); decisão do Victor.
 
 ## Regras combinadas com o Victor
 - **Linguagem:** respostas curtas, em tópicos, pt-BR (ele tem TDAH e não programa).
