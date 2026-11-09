@@ -44,6 +44,7 @@ import {
 import type { Meso, SessaoEditada } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
 import { arquivadosVencidos } from './alertas'
+import { paraDoc, type AvaliacaoForm } from './avaliacao'
 import { idCardio, type TipoCardio } from './cardio'
 import type { NovoFeedback } from './feedback'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
@@ -124,7 +125,7 @@ export function criarAlunoPresencial(a: { nome: string }) {
 // Presencial -> aluno com app, mantendo o histórico. Ordem pensada para nunca perder dados;
 // se falhar no meio, chamar de novo continua de onde parou:
 // 1. cria a conta (ou reaproveita a anotada em migradoPara) e anota migradoPara no perfil antigo;
-// 2. cria o perfil novo; 3. troca alunoId de mesos, registros e relatórios (lotes de 400; os ids dos
+// 2. cria o perfil novo; 3. troca alunoId de mesos, registros, relatórios e avaliações (lotes de 400; os ids dos
 // registros só têm o mesoId, continuam válidos; relatórios depois dos mesos, que a regra confere o dono
 // do meso); 4. apaga o perfil antigo; 5. e-mail de senha.
 export async function darAcessoAoApp(idPresencial: string, a: { email: string; pagoAte: string /* YYYY-MM-DD */ }) {
@@ -139,11 +140,11 @@ export async function darAcessoAoApp(idPresencial: string, a: { email: string; p
     await updateDoc(antigo, { migradoPara: uid })
   }
   await setDoc(doc(db, 'usuarios', uid), { ...perfilApp(p.nome, a.email, a.pagoAte), criadoEm: p.criadoEm ?? serverTimestamp() })
-  for (const col of ['mesos', 'registros', 'relatorios']) {
+  for (const col of ['mesos', 'registros', 'relatorios', 'avaliacoes']) {
     // Do servidor (nunca do cache): offline dá erro antes de apagar o perfil antigo.
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', idPresencial)))).docs
-    // A regra do relatório exige atualizadoEm da hora do servidor; registros não (atualizadoEm deles é a janela de 14 dias).
-    const campos = col === 'relatorios' ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
+    // As regras do relatório e da avaliação exigem atualizadoEm da hora do servidor; registros não (atualizadoEm deles é a janela de 14 dias).
+    const campos = col === 'relatorios' || col === 'avaliacoes' ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
       for (const d of docs.slice(i, i + 400)) b.update(d.ref, campos)
@@ -215,7 +216,7 @@ export async function excluirMeso(mesoId: string) {
   await deleteDoc(doc(db, 'mesos', mesoId))
 }
 
-// Apaga o aluno de vez: registros, relatórios, mesos, cardios, feedbacks com nome, notas e, por último, o perfil (se cair no meio, o
+// Apaga o aluno de vez: registros, relatórios, mesos, cardios, feedbacks com nome, avaliações físicas, notas e, por último, o perfil (se cair no meio, o
 // perfil arquivado continua na lista e é só apagar de novo). Do servidor: offline dá erro sem apagar.
 // Antes de tudo grava o pedido exclusoes/{uid}: se cair no meio, o workflow diário "Limpeza LGPD"
 // (tools/limpeza-lgpd.mjs) termina o serviço. É ele que apaga o login (Auth), os erros (logs) e os
@@ -223,7 +224,7 @@ export async function excluirMeso(mesoId: string) {
 export async function apagarAluno(uid: string) {
   await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
   await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
-  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks']) {
+  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks', 'avaliacoes']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
@@ -289,6 +290,16 @@ export const liberarRelatorio = (mesoId: string, alunoId: string, comentario: st
 // Volta a rascunho sem mexer no comentário.
 export const recolherRelatorio = (mesoId: string) =>
   setDoc(doc(db, 'relatorios', mesoId), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() }, { merge: true })
+
+// Avaliação física: avaliacoes/{id automático} (dado de saúde; plano em docs/plano-avaliacao.md).
+// Grava o documento INTEIRO (sem merge): só o coach edita, num formulário, e medida apagada precisa sumir.
+// A tela não espera (offline). Rascunho: o aluno não vê. Liberar de novo atualiza o texto e liberadoEm.
+export const novaAvaliacaoId = () => doc(collection(db, 'avaliacoes')).id
+export const salvarAvaliacao = (id: string, f: AvaliacaoForm, liberado: boolean) =>
+  setDoc(doc(db, 'avaliacoes', id), { ...paraDoc(f), liberado, liberadoEm: liberado ? serverTimestamp() : null, atualizadoEm: serverTimestamp() })
+export const recolherAvaliacao = (id: string) =>
+  updateDoc(doc(db, 'avaliacoes', id), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() })
+export const apagarAvaliacao = (id: string) => deleteDoc(doc(db, 'avaliacoes', id))
 
 // ---------- aluno ----------
 

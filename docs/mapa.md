@@ -104,6 +104,14 @@ Comece por aqui para achar onde mexer.
 - `RelatorioCoach.tsx` (`#/meso/:id/relatorio`: comentário, Salvar rascunho/Liberar/Recolher, avisar por WhatsApp/e-mail) · `RelatorioAluno.tsx` (`#/relatorio/:mesoId`, só liberados)
 - `useDadosAluno.ts` — todos os mesos/registros do aluno (recordes comparam com o histórico)
 - `cartaoRelatorio.ts` (+ teste) — imagem story 1080×1920 (usa os helpers de `cartaoStory.ts`)
+- `folhasPdf.ts` — folhas A4 em canvas comuns aos PDFs (cabeçalho, recado, números, título, barra, rodapé, `fechar`)
+
+### `src/features/avaliacao/` — Avaliação física e relatório escrito de evolução (Fase 3; plano em `docs/plano-avaliacao.md`)
+- `Avaliacao.tsx` — visão comum (números, texto de evolução, tabelas, recado do coach) + `BotaoPdfAvaliacao`
+- `AvaliacoesCoach.tsx` (`#/aluno/:uid/avaliacoes`, lista + "Nova avaliação") · `AvaliacaoCoach.tsx` (`#/aluno/:uid/avaliacao/:id`: formulário, prévia, Salvar rascunho/Liberar/Atualizar/Recolher, Apagar)
+- `AvaliacaoAluno.tsx` (`#/avaliacao/:id`, só as liberadas; `useAvaliacoesLiberadas`)
+- `pdfAvaliacao.ts` — PDF da avaliação, com as folhas de `relatorio/folhasPdf.ts`
+- Cálculo em `src/lib/avaliacao.ts` (+ teste): leitura com desconfiança, IMC, % de gordura (Pollock 7 dobras ou bioimpedância), comparação, texto, ciclo de referência e lembrete do coach
 
 ### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
 - `IconeMetodo.tsx` — ícone SVG animado por método
@@ -235,6 +243,8 @@ Comece por aqui para achar onde mexer.
 | `/meso/:id` | EditorMeso | Coach |
 | `/meso/:id/semana/:n` | VisaoSemana | Coach |
 | `/meso/:id/relatorio` | RelatorioCoach | Coach |
+| `/aluno/:uid/avaliacoes` | AvaliacoesCoach (`avaliacao/`) | Coach |
+| `/aluno/:uid/avaliacao/:id` | AvaliacaoCoach (`nova` = criar) | Coach |
 | `/ranking` | RankingAlunos | Coach |
 | `/feedbacks` | Feedbacks (`coach/feedbacks/Feedbacks.tsx`) | Coach |
 | `/conta` | MinhaConta (coach) · ContaAluno (aluno) | Ambos |
@@ -243,6 +253,7 @@ Comece por aqui para achar onde mexer.
 | `/treino` | Hoje (aba Treino) | Aluno |
 | `/treino/:mesoId/:semana/:treino` | Treino | Aluno |
 | `/relatorio/:mesoId` | RelatorioAluno (só liberado) | Aluno |
+| `/avaliacao/:id` | AvaliacaoAluno (só liberada) | Aluno |
 | (padrão) | AlunoApp → InicioAluno | Aluno |
 
 ---
@@ -280,6 +291,10 @@ Comece por aqui para achar onde mexer.
 
 ### `relatorios/{mesoId}`
 - `alunoId`, `mesoId`, `comentario` (≤ 3000), `liberado`, `liberadoEm`, `atualizadoEm`. Os números não são gravados (`relatorioCiclo`). Aluno lê só o próprio liberado, pela consulta.
+
+### `avaliacoes/{id automático}`
+- `alunoId`, `data` (AAAA-MM-DD), `pesoKg`, `alturaCm?`, `sexo?` (M/F), `idade?`, `perimetros?` (cm), `dobras?` (mm, 7 de Pollock), `bio?` (gorduraPct, massaMuscularKg, visceral), `comentario` (≤ 3000), `liberado`, `liberadoEm`, `atualizadoEm`
+- Dado de saúde. Só o coach grava (documento inteiro) e apaga; o aluno lê só a própria liberada, pela consulta. IMC, % de gordura e texto não são gravados (`src/lib/avaliacao.ts`).
 
 ### `exclusoes/{uid}`
 - `em` (hora do servidor)
@@ -325,6 +340,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
+| Avaliação física (09/11/2026) | `firestore.rules` (`avaliacoes`), `src/lib/avaliacao.ts`, `acoes.ts` (`salvarAvaliacao`, `apagarAluno`, `darAcessoAoApp`), `tools/limpeza-lgpd.mjs`, `src/features/avaliacao/`, `Politica.tsx` | **Dado de saúde (LGPD art. 11).** Só o coach com 2º fator grava e apaga, e só para aluno que existe (sem avaliação órfã que o "Apagar de vez" não alcance). O aluno lê só a própria **liberada**, ativo e em dia, pela consulta `alunoId == uid` + `liberado == true` (rascunho ou `getDoc` de id inexistente = negado). Grava o documento **inteiro** (`setDoc` sem merge: medida apagada precisa sumir); a regra "campo a campo" é das cargas. Só as medidas são gravadas: IMC, % de gordura, massas e texto saem na hora. As regras **não conferem os valores dentro dos mapas**: toda leitura passa por `lerAvaliacao` (ignora o que não é número na faixa). Chaves dos mapas duplicadas em `avaliacao.ts` e nas regras (o teste compara). Guarda a **idade**, nunca a data de nascimento (a Política promete). Sem foto (Storage exige plano pago; avisar o Victor antes). Texto sem IA: medida nenhuma sai do Firebase, nem vai para log, alerta ou resumo de robô. % de gordura de métodos diferentes (dobras x bioimpedância) não é comparado. O aluno compara só com avaliações liberadas; o coach, com todas. Mudou o texto da Política: trocar `VERSAO_PRIVACIDADE` (hoje `2026-11-09b`). | `avaliacao.test.ts`, `tests/rules.test.ts` e `tests/ataques.test.ts` (avaliacoes), `tests/limpeza-lgpd.test.ts`, e2e `avaliacao.spec.ts` |
 | Chave da IA (10/11/2026) | `firestore.rules` (`segredos/ia`), `src/lib/ia.ts`, `tools/backup.mjs`, `firebase.json` (CSP + `microphone=(self)`) | A chave da Anthropic fica em `segredos/ia`: só coach com 2º fator lê/grava (formato `sk-ant-…`, `hasOnly`). Nunca no código, no log (`registrarErro`), na tela inteira ou no backup (`backup.mjs` pula `segredos`; o artifact fica 30 dias no GitHub). A chamada sai do aparelho do coach direto para `api.anthropic.com` (header `anthropic-dangerous-direct-browser-access`; `connect-src` liberado). O aluno nunca carrega esse código de tela. A chave também fica no cache offline (IndexedDB) do aparelho do coach (risco aceito). Gasto limitado no console.anthropic.com (Limits). `aplicarAcoes`: adicionar vai só para o FIM do treino (não muda posição de trocas/métodos/progressão); substituir usa `trocarExercicio` (mesma regra do editor, semanas com carga ficam com o antigo); refazer a lista (`definir`) apaga métodos/progressão/trocas/adições do treino e nunca roda em treino com carga. Remover/reordenar não existe (vira aviso da IA). Escuta do microfone: `voz.ts` `cancelar()` ignora tudo que chegar depois; sem isso a fala atrasada reescrevia o texto apagado. A IA só sugere: nada grava sem o coach tocar em "Aplicar" e "Salvar"; resposta da IA é lida com desconfiança (`lerResposta`). | `tests/rules.test.ts` (segredos), `iaTreino.test.ts`, `util.test.ts` (`aplicarAcoes`, `trocarExercicio`), `e2e/voz-ia.spec.ts` |
 | Senha mínima (08/11/2026) | `src/lib/senha.ts`, `Entrar.tsx`, `AcaoEmail.tsx`, `tools/mfa.mjs` | Senha nova: 8+ caracteres, letra e número (`problemaSenha`), no cadastro e no `/acao`. O servidor (Identity Platform, workflow "2 etapas do coach" → `senha-minima`) exige 8 + número; mudou o mínimo? mude nos dois. `forceUpgradeOnSignin: false`: quem tem senha antiga curta continua entrando. Alunos antigos: o aceite da versão 2026-11-09 (`Aceite.tsx` → `confirmarSenha`) confere a senha atual (precisa de internet) e obriga trocar se for fraca; trocar `VERSAO_PRIVACIDADE` de novo repete a conferência (forte passa sem trocar). Coach não passa pelo aceite: troca a própria senha em Minha conta. | `senha.test.ts`, `acao.spec.ts`, `privacidade.spec.ts` |
 | Links dos e-mails (22/10/2026) | `AcaoEmail.tsx`, `acoes.ts` | O `oobCode` nunca vai para log/`registrarErro` (só o código do erro). `/acao` precisa tratar todos os modos (`resetPassword`, `verifyAndChangeEmail`, `recoverEmail`, `verifyEmail`) enquanto o URL de ação do Firebase apontar para ela, senão a troca de e-mail quebra. | `acao.spec.ts` |
@@ -413,7 +429,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Alunos (coach) | `Alunos.tsx` (`acoes`) | Visível no cartão só o do dia a dia: Treino presencial (`Botao tipo="destaque"`), Liberar (aguardando) e Confirmar pagamento. Renovar, Bloquear, Liberar (bloqueado), Arquivar, Reativar e Apagar de vez ficam na engrenagem (`Configurações de <nome>`, um aluno aberto por vez). A lista abre sem animar altura (trepidava no iPhone): ela aparece com opacidade + `y` e os cartões de baixo deslizam por `layout="position"` (`linha`), só transform (12/10/2026). Cartão e tabela usam a mesma `acoes`, os dois no DOM: e2e no celular filtra `visible: true`. | e2e `coach.spec.ts`, `pix.spec.ts` |
 | Alertas (coach) | `Alertas.tsx` | A lista de arquivados abre sem animar altura (trepidava no iPhone): aparece com opacidade + `y`; cartões e grupos deslizam por `layout="position"`, só transform; o cartão arquivado sai com opacidade + x, sem height (13/10/2026). | e2e `alertas.spec.ts` |
 | Barra de abas na mesma altura | `App.tsx` (conteúdo do coach), `AlunoApp.tsx` | Todo conteúdo com `min-h-lvh`: no iPhone a barra fixa embaixo subia nas telas curtas que não rolam (Alertas) (12/10/2026). | e2e `layout.spec.ts` (mesmo `bottom` em todas as abas) |
-| PDF do relatório | `src/lib/pdf.ts` (`montarPdf`), `pdfRelatorio.ts` | Gerado em canvas + `montarPdf`, não por `window.print`. | `pdf.test.ts`, e2e `relatorio.spec.ts` |
+| PDF do relatório | `src/lib/pdf.ts` (`montarPdf`), `relatorio/folhasPdf.ts`, `pdfRelatorio.ts`, `avaliacao/pdfAvaliacao.ts` | Gerado em canvas + `montarPdf`, não por `window.print`. As folhas (`criarFolhas`) são comuns ao relatório do ciclo e à avaliação física: mexeu numa peça, confira os dois PDFs. | `pdf.test.ts`, e2e `relatorio.spec.ts` |
 | Borda nos botões | `src/ui.tsx` (`Botao`, `estilos`) | Todo botão e seletor tem borda, um tom mais claro que o fundo (`Botao` já traz; feito à mão: `border border-slate-600`; vidro: `border-white/20`). Controle segmentado: borda no contêiner. Não vale para abas da barra de vidro, pílulas e botões só de ícone (13/10/2026). | e2e `varredura.spec.ts` |
 | Sem emoji | `src/icones.tsx`, `src/semEmoji.test.ts` | Nada de emoji ou símbolo de teclado no código (ⓘ ↻ ▾ ▸ também); use os ícones de `src/icones.tsx`. | `src/semEmoji.test.ts` |
 | Pausa e volume no editor | `EditorMeso.tsx`, `TabProgressao.tsx`, `sessao.ts` | Pausa resolvida por exercício: `slot.pausaS` > `pausaPrincipaisS` (posições 1–2; sem valor = `pausaS`) > `pausaS`. Ao editar a pausa dos auxiliares com principais sem valor, grava `pausaPrincipaisS` = valor antigo (os principais não mudam junto). `progressaoPct` e `limiteReps` só existem no Ajustar volume (antes havia um % na Config, usado só na volta da redução, e outro solto no Ajustar volume). A prévia recalcula sozinha (`useMemo`) a partir da semana `de−1`, então reaplicar não muda nada e "Aplicar alterações" fica desligado sem mudança. | `sessao.test.ts` (pausa dos principais), e2e `progressao.spec.ts`, `coach.spec.ts` |

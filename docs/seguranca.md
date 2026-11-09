@@ -166,3 +166,12 @@ Plano Spark do Firebase:
   - App Check da Gislane: chave reCAPTCHA criada e registrada no App Check (22/10/2026); a chave do site está no `.env.gislane`. Fica em **Monitorar**; mudar para **Aplicar** depois de alguns dias sem requisições não verificadas;
   - Gislane: conferir se a chave de navegador (API key) está restrita aos domínios dela, como na VFIT (não há registro disso nos docs);
   - as duas marcas usam a mesma conta de serviço (`FIREBASE_SERVICE_ACCOUNT`): se vazar, afeta os dois projetos. Aceitável hoje; separar se a Gislane crescer.
+
+## 9. Avaliação física (09/11/2026, Fase 3)
+- **Dado novo e sensível:** medidas do corpo (peso, altura, idade, sexo, perímetros, dobras, bioimpedância) em `avaliacoes`.
+- **Quem acessa:** o coach (com 2 etapas) grava e apaga; o aluno lê só a própria, depois de liberada, ativo e em dia. Ninguém mais.
+- **Testes:** `tests/rules.test.ts` e `tests/ataques.test.ts` (trocar id, ler rascunho, listar tudo, aluno editar, coach sem 2º fator, anônimo).
+- **LGPD:** entra no "Apagar de vez", na Limpeza LGPD e no backup criptografado (30 dias). Política atualizada (versão `2026-11-09b`): todos aceitam de novo.
+- **O que não fazemos:** foto do corpo, data de nascimento, IA no texto (nenhuma medida sai do Firebase).
+- **Em aberto:** revisão da Política por advogado (passo 6 da auditoria, seção 5), agora com dado de saúde mais sensível.
+
