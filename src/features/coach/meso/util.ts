@@ -143,6 +143,19 @@ export function trocarExercicio(meso: Meso, registros: Registros, t: number, p: 
   return { divisao, trocas, preservou }
 }
 
+// Algum exercício do treino `t` tem carga registrada? Olha a divisão (com as trocas vigentes por semana),
+// toda troca guardada e os exercícios adicionados por semana.
+function treinoTemCarga(meso: Meso, registros: Registros, t: number): boolean {
+  const comCarga = (semanaTreino: string, slot: Slot) => registros[semanaTreino]?.[slot.slotId]?.some((c) => c != null) ?? false
+  const arr = meso.divisao[t - 1] ?? []
+  if (arr.some((_, i) => semanasComHistorico(meso, registros, t, i + 1).length)) return true
+  const trocadas = Object.entries(meso.trocas ?? {}).some(([k, slot]) => {
+    const [w, tr] = k.split('-')
+    return tr === String(t) && comCarga(`${w}-${t}`, slot)
+  })
+  return trocadas || Object.entries(meso.adicoes ?? {}).some(([k, slots]) => k.endsWith(`-${t}`) && slots.some((sl) => comCarga(k, sl)))
+}
+
 // Aplica as ações da IA (assistente de voz) na divisão, na ordem.
 // - adicionar: no fim do treino, nunca apaga nem muda a posição de nada (por isso nada se perde);
 // - substituir: usa `trocarExercicio` (mesma regra do editor);
@@ -176,12 +189,16 @@ export function aplicarAcoes(
         bloqueios.push(`Treino ${t}: "${a.de}" mudou de lugar. Peça de novo.`)
         continue
       }
+      if (arr.some((s) => normalizar(s.nome) === normalizar(a.por.nome))) {
+        bloqueios.push(`Treino ${t}: "${a.por.nome}" já está no treino, então não troquei.`)
+        continue
+      }
       const r = trocarExercicio(m, registros, t, a.pos, a.por.nome)
       m = { ...m, divisao: r.divisao, trocas: r.trocas }
       trocas = r.trocas
       aplicados.push(`Treino ${t}: ${a.de} por ${a.por.nome}`)
     } else {
-      if (arr.some((_, i) => semanasComHistorico(m, registros, t, i + 1).length)) {
+      if (treinoTemCarga(m, registros, t)) {
         bloqueios.push(`Treino ${t}: já tem cargas registradas, então a lista não foi refeita. Peça para adicionar ou trocar.`)
         continue
       }

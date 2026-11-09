@@ -154,12 +154,25 @@ describe('aplicarAcoes', () => {
     expect(Object.keys(r.patch.adicoes!)).toEqual(['2-1'])
   })
 
-  it('definir nunca refaz treino com carga registrada (nem por carga em adição)', () => {
+  it('definir nunca refaz treino com carga registrada (na divisão ou em adição)', () => {
     const r = aplicarAcoes(meso, reg, [{ tipo: 'definir', treino: 1, exercicios: ex('Novo') }])
     expect(r.bloqueios).toHaveLength(1)
     expect(r.patch.divisao![0]).toBe(meso.divisao[0])
     const m = { ...meso, adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }] } } as unknown as Meso
-    expect(aplicarAcoes(m, { '2-3': { ad: [20] } }, [{ tipo: 'definir', treino: 3, exercicios: ex('Novo') }]).aplicados).toEqual(['Treino 3: lista refeita'])
+    expect(aplicarAcoes(m, { '2-3': { ad: [20] } }, [{ tipo: 'definir', treino: 3, exercicios: ex('Novo') }]).aplicados).toEqual([])
+  })
+
+  it('definir também respeita carga em troca guardada e em exercício adicionado', () => {
+    const comTroca = { ...meso, trocas: { '2-3-1': { slotId: 'velho', nome: 'Velho' } } } as unknown as Meso
+    expect(aplicarAcoes(comTroca, { '2-3': { velho: [30] } }, [{ tipo: 'definir', treino: 3, exercicios: ex('Novo') }]).bloqueios).toHaveLength(1)
+    const comAdicao = { ...meso, adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }] } } as unknown as Meso
+    expect(aplicarAcoes(comAdicao, { '2-3': { ad: [20] } }, [{ tipo: 'definir', treino: 3, exercicios: ex('Novo') }]).bloqueios).toHaveLength(1)
+  })
+
+  it('substituir por exercício que já está no treino não faz nada', () => {
+    const r = aplicarAcoes(meso, {}, [{ tipo: 'substituir', treino: 1, pos: 2, de: 'Leg Press', por: { nome: 'agachamento', noCatalogo: true } }])
+    expect(r.aplicados).toEqual([])
+    expect(r.bloqueios).toHaveLength(1)
   })
 
   it('ignora treino fora da frequência', () => {

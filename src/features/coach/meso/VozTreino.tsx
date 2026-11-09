@@ -49,18 +49,19 @@ export default function VozTreino({
     setOuvindo(false)
   }
 
-  function iniciar() {
+  function iniciar(reinicio = false) {
     const base = textoAtual.current.trim()
     const comecou = Date.now()
     escuta.current = ouvir(
       (fala) => mudarTexto((base ? `${base} ${fala}` : fala).slice(0, MAX_TEXTO)),
       (cod) => {
         // Parou de ouvir por silêncio (sem erro) e o coach não desligou: continua de onde parou.
-        if (querOuvir.current && !cod && Date.now() - comecou > 1000) return iniciar()
+        if (querOuvir.current && !cod && Date.now() - comecou > 1000) return iniciar(true)
         querOuvir.current = false
         escuta.current = null
         setOuvindo(false)
-        if (cod && cod !== 'unsupported') setErro(mensagemVoz(cod))
+        // Reinício que não pegou (ex.: iPhone pede toque de novo): só desliga, o texto já está na tela.
+        if (cod && cod !== 'unsupported' && !(reinicio && cod === 'start')) setErro(mensagemVoz(cod))
       },
     )
   }
