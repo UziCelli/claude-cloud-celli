@@ -14,6 +14,7 @@ import Hoje from './Hoje'
 import InicioAluno from './InicioAluno'
 import Treino from './Treino'
 import RelatorioAluno from '../relatorio/RelatorioAluno'
+import EnviarFeedback from '../feedback/EnviarFeedback'
 import Tutorial, { tutorialNaoVisto } from './Tutorial'
 
 export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario }) {
@@ -30,6 +31,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   else if ((p = casar('/relatorio/:mesoId', rota))) tela = <RelatorioAluno uid={uid} nome={nome} mesoId={p.mesoId} />
   else if (rota === '/treino') tela = <Hoje uid={uid} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
+  else if (rota === '/feedback') tela = <EnviarFeedback uid={uid} nome={nome} />
   else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />
   else if (rota === '/conta') tela = <ContaAluno uid={uid} perfil={perfil} abrirTutorial={() => setTutorial(true)} />
 
@@ -39,7 +41,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
     { rotulo: 'Início', href: '#/', Icone: IcCasa, ativo: rota === '/' },
     { rotulo: 'Treino', href: '#/treino', Icone: IcHaltere, ativo: rota === '/treino' },
     { rotulo: 'Evolução', href: '#/evolucao', Icone: IcGrafico, ativo: rota === '/evolucao' },
-    { rotulo: 'Conta', href: '#/conta', Icone: IcPessoa, ativo: rota === '/conta' || rota === '/metodos' },
+    { rotulo: 'Conta', href: '#/conta', Icone: IcPessoa, ativo: rota === '/conta' || rota === '/metodos' || rota === '/feedback' },
   ]
 
   return (

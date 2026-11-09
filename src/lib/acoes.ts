@@ -22,6 +22,7 @@ import {
 import { FirebaseError } from 'firebase/app'
 import { registrarErro } from './log'
 import {
+  addDoc,
   collection,
   deleteDoc,
   deleteField,
@@ -44,6 +45,7 @@ import type { Meso, SessaoEditada } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
 import { arquivadosVencidos } from './alertas'
 import { idCardio, type TipoCardio } from './cardio'
+import type { NovoFeedback } from './feedback'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
 import { auth, authCadastro, db } from './firebase'
 import type { Importado } from './planilha'
@@ -213,7 +215,7 @@ export async function excluirMeso(mesoId: string) {
   await deleteDoc(doc(db, 'mesos', mesoId))
 }
 
-// Apaga o aluno de vez: registros, relatórios, mesos, notas e, por último, o perfil (se cair no meio, o
+// Apaga o aluno de vez: registros, relatórios, mesos, cardios, feedbacks com nome, notas e, por último, o perfil (se cair no meio, o
 // perfil arquivado continua na lista e é só apagar de novo). Do servidor: offline dá erro sem apagar.
 // Antes de tudo grava o pedido exclusoes/{uid}: se cair no meio, o workflow diário "Limpeza LGPD"
 // (tools/limpeza-lgpd.mjs) termina o serviço. É ele que apaga o login (Auth), os erros (logs) e os
@@ -221,7 +223,7 @@ export async function excluirMeso(mesoId: string) {
 export async function apagarAluno(uid: string) {
   await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
   await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
-  for (const col of ['registros', 'relatorios', 'mesos', 'cardios']) {
+  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
@@ -249,6 +251,12 @@ export const desarquivarAlerta = (chave: string) => deleteDoc(doc(db, 'arquivado
 export const registrarCardio = (uid: string, dia: string, c: { tipo?: TipoCardio; min?: number }) =>
   setDoc(doc(db, 'cardios', idCardio(uid, dia)), { alunoId: uid, dia, em: serverTimestamp(), ...(c.tipo ? { tipo: c.tipo } : {}), ...(c.min ? { min: c.min } : {}) })
 export const desfazerCardio = (uid: string, dia: string) => deleteDoc(doc(db, 'cardios', idCardio(uid, dia)))
+
+// Sua opinião (feedbacks/{id automático}). Sem await (offline): o envio fica na fila e sobe sozinho.
+// O aluno nunca lê feedbacks (nem o próprio); só o coach lê, marca como lido e apaga.
+export const enviarFeedback = (f: NovoFeedback) => addDoc(collection(db, 'feedbacks'), { ...f, em: serverTimestamp() })
+export const marcarFeedbackLido = (id: string, lido: boolean) => updateDoc(doc(db, 'feedbacks', id), { lido })
+export const apagarFeedback = (id: string) => deleteDoc(doc(db, 'feedbacks', id))
 
 // Apaga os arquivados com mais de 14 dias que não batem com nenhum alerta atual (chavesAtuais em
 // calcularAlertas.ts). Chamar só com tudo carregado. Erro vai para o log; ninguém espera a promessa.

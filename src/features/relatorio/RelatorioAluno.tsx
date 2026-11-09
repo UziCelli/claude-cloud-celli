@@ -6,6 +6,7 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { Centro } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
+import ConviteFeedback from '../feedback/ConviteFeedback'
 import Relatorio, { BotaoPdf } from './Relatorio'
 import { useDadosAluno } from './useDadosAluno'
 
@@ -32,6 +33,7 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
         <div className="space-y-3">
           <Relatorio r={r} aluno={primeiroNome(nome)} comentario={doc.comentario} compartilhar />
           <BotaoPdf r={r} aluno={nome} comentario={doc.comentario} />
+          <ConviteFeedback />
         </div>
       )}
     </main>

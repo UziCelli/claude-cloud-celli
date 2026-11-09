@@ -1237,3 +1237,100 @@ describe('cardios', () => {
     await assertFails(deleteDoc(card(undefined)));
   });
 });
+
+// Sua opinião: feedbacks/{id automático} = { nota, assunto, em, tipo?, texto?, alunoId?, depoimento? }.
+// Aluno liberado só cria (com nome ou anônimo); só o coach lê, marca como lido e apaga.
+describe('feedbacks', () => {
+  const fb = (uid: string | undefined, id = 'f1') => doc(db(uid), 'feedbacks', id);
+  const novo = (extra: object = {}) => ({ nota: 4, assunto: 'app', em: serverTimestamp(), ...extra });
+  const existente = (extra: object = {}) =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'feedbacks', 'f1'), { nota: 4, assunto: 'app', em: Timestamp.now(), alunoId: 'ana', ...extra }),
+    );
+
+  it('aluno liberado envia com nome, anônimo, com tipo e texto, e depoimento válido', async () => {
+    await assertSucceeds(setDoc(fb('ana', 'a'), novo({ alunoId: 'ana' })));
+    await assertSucceeds(setDoc(fb('ana', 'b'), novo())); // anônimo: sem alunoId
+    await assertSucceeds(setDoc(fb('ana', 'c'), novo({ tipo: 'sugestao', texto: 'Ótimo app' })));
+    await assertSucceeds(setDoc(fb('ana', 'd'), novo({ nota: 5, alunoId: 'ana', texto: 'Amo treinar', depoimento: true })));
+    await assertSucceeds(setDoc(fb('ana', 'e'), novo({ texto: 'x'.repeat(1000) })));
+    for (const assunto of ['treinos', 'atendimento']) await assertSucceeds(setDoc(fb('ana', assunto), novo({ assunto })));
+    for (const tipo of ['elogio', 'critica', 'problema']) await assertSucceeds(setDoc(fb('ana', tipo), novo({ tipo })));
+    for (const nota of [1, 2, 3, 5]) await assertSucceeds(setDoc(fb('ana', `n${nota}`), novo({ nota })));
+  });
+
+  it('nega dados inválidos', async () => {
+    const ruins = [
+      novo({ alunoId: 'bia' }),
+      novo({ depoimento: true, texto: 'ok', nota: 5 }), // sem nome
+      novo({ depoimento: true, alunoId: 'ana', texto: 'ok', nota: 4 }),
+      novo({ depoimento: true, alunoId: 'ana', nota: 5 }), // sem texto
+      novo({ depoimento: false, alunoId: 'ana', nota: 5, texto: 'ok' }),
+      novo({ nota: 0 }), novo({ nota: 6 }), novo({ nota: 3.5 }), novo({ nota: '5' }),
+      novo({ texto: 'x'.repeat(1001) }), novo({ texto: '' }), novo({ texto: 7 }),
+      novo({ assunto: 'outro' }), novo({ tipo: 'outro' }),
+      novo({ extra: 1 }),
+      novo({ lido: true }),
+      novo({ em: passado }),
+      { nota: 4, em: serverTimestamp() }, { nota: 4, assunto: 'app' }, { assunto: 'app', em: serverTimestamp() },
+    ];
+    for (const [i, d] of ruins.entries()) await assertFails(setDoc(fb('ana', `r${i}`), d));
+  });
+
+  it('aluno nunca lê, lista, edita nem apaga (nem o próprio)', async () => {
+    await existente();
+    await assertFails(getDoc(fb('ana')));
+    await assertFails(getDocs(collection(db('ana'), 'feedbacks')));
+    await assertFails(getDocs(query(collection(db('ana'), 'feedbacks'), where('alunoId', '==', 'ana'))));
+    await assertFails(updateDoc(fb('ana'), { lido: true }));
+    await assertFails(deleteDoc(fb('ana')));
+  });
+
+  it('vencido, bloqueado, aguardando e arquivado não enviam', async () => {
+    for (const uid of ['exp', 'blq', 'agu', 'arq']) {
+      await assertFails(setDoc(fb(uid, uid), novo()));
+      await assertFails(setDoc(fb(uid, uid), novo({ alunoId: uid })));
+    }
+  });
+
+  it('sem login e login anônimo do Firebase: nada', async () => {
+    await existente();
+    const anon = contexto('anon1', { firebase: { sign_in_provider: 'anonymous' } }).firestore() as unknown as Firestore;
+    for (const c of [db(), anon]) {
+      await assertFails(setDoc(doc(c, 'feedbacks', 'x'), novo()));
+      await assertFails(getDoc(doc(c, 'feedbacks', 'f1')));
+      await assertFails(getDocs(collection(c, 'feedbacks')));
+    }
+  });
+
+  describe('coach', () => {
+    it('lê, lista, marca lido e apaga', async () => {
+      await existente();
+      await assertSucceeds(getDoc(fb('coach')));
+      await assertSucceeds(getDocs(collection(db('coach'), 'feedbacks')));
+      await assertSucceeds(updateDoc(fb('coach'), { lido: true }));
+      await assertSucceeds(updateDoc(fb('coach'), { lido: false }));
+      await assertSucceeds(deleteDoc(fb('coach')));
+    });
+
+    it('só muda `lido`: nada além, e `lido` tem de ser booleano', async () => {
+      await existente();
+      await assertFails(updateDoc(fb('coach'), { lido: 'sim' }));
+      await assertFails(updateDoc(fb('coach'), { nota: 1 }));
+      await assertFails(updateDoc(fb('coach'), { texto: 'editado' }));
+      await assertFails(updateDoc(fb('coach'), { lido: true, nota: 1 }));
+      await assertFails(updateDoc(fb('coach'), { alunoId: 'bia' }));
+    });
+
+    it('não cria', () => assertFails(setDoc(fb('coach', 'novo'), novo())));
+
+    it('sem 2º fator: não lê, não lista, não edita e não apaga', async () => {
+      await existente();
+      const c = contexto('coach', SEM_FATOR).firestore() as unknown as Firestore;
+      await assertFails(getDoc(doc(c, 'feedbacks', 'f1')));
+      await assertFails(getDocs(collection(c, 'feedbacks')));
+      await assertFails(updateDoc(doc(c, 'feedbacks', 'f1'), { lido: true }));
+      await assertFails(deleteDoc(doc(c, 'feedbacks', 'f1')));
+    });
+  });
+});

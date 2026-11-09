@@ -50,11 +50,16 @@ export default function Politica() {
           <li>Treinos, cargas, repetições e anotações.</li>
           <li>Horários de treino.</li>
           <li>Cardio (dia, tipo e minutos).</li>
+          <li>Sua opinião e depoimentos (nota, assunto e texto).</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
         </Lista>
         <p>
           A foto de perfil é opcional: só você e o seu coach a veem, e ela fica guardada em tamanho pequeno no banco de dados do app.
           Você remove quando quiser (aba Conta) e ela é apagada junto com a conta.
+        </p>
+        <p>
+          Sua opinião: você escolhe enviar com o seu nome ou anônima. A anônima não guarda quem enviou. Só {marca.responsavel.nome} lê. O depoimento só é usado com a autorização que você marca ao enviar, só com o seu primeiro nome, na divulgação de {marca.nome} (Instagram e
+          site). Você pode pedir para retirar a qualquer momento, e ele sai junto no "apagar de vez".
         </p>
         <p>Não pedimos CPF, data de nascimento, endereço nem cartão.</p>
       </Secao>
@@ -84,7 +89,7 @@ export default function Politica() {
         <Lista>
           <li>Enquanto você for aluno.</li>
           <li>
-            Se você pedir a exclusão, apagamos tudo (perfil, login, treinos, cargas, anotações, cardio e registros de erro) em até 24 horas,
+            Se você pedir a exclusão, apagamos tudo (perfil, login, treinos, cargas, anotações, cardio, opiniões enviadas com nome e registros de erro) em até 24 horas,
             inclusive das cópias de segurança.
           </li>
           <li>Registros de erro e cópias de segurança são apagados sozinhos após 30 dias.</li>
