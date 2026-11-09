@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Meso } from '../../../engine'
-import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, nomeImportado, removerGrupo } from './util'
+import { agruparTrocas, aplicarAdicao, aplicarProposta, aplicarTroca, copiarTreino, grupoTemCarga, nomeImportado, removerGrupo } from './util'
 
 const meso = {
   frequencia: 3,
@@ -95,5 +95,44 @@ describe('trocas e adições em intervalo', () => {
     const g = { tipo: 'adicao' as const, t: 1, p: 0, slot: s1, de: 2, ate: 3 }
     expect(grupoTemCarga(g, { '3-1': { n1: [null, 50] } })).toBe(true)
     expect(grupoTemCarga(g, { '1-1': { n1: [50] }, '2-1': { n1: [null] } })).toBe(false)
+  })
+})
+
+describe('aplicarProposta', () => {
+  const prop = (treino: number, ...nomes: string[]) => ({ treino, exercicios: nomes.map((nome) => ({ nome })) })
+
+  it('preenche treino vazio e substitui treino com exercícios (tirando métodos e progressão dele)', () => {
+    const r = aplicarProposta(meso, {}, [prop(3, 'Remada', 'Rosca'), prop(2, 'Crucifixo')])
+    expect(r.aplicados).toEqual([3, 2])
+    expect(r.substituidos).toEqual([2])
+    expect(r.patch.divisao![2].map((s) => s.nome)).toEqual(['Remada', 'Rosca'])
+    expect(r.patch.divisao![1].map((s) => s.nome)).toEqual(['Crucifixo'])
+    expect(r.patch.divisao![0]).toBe(meso.divisao[0])
+    expect(new Set(r.patch.divisao![2].map((s) => s.slotId)).size).toBe(2)
+    expect(r.patch.metodos!.map((m) => m.treino)).toEqual([1])
+    expect(r.patch.progressaoExercicio).toEqual({ a1: [[10, 8]] })
+  })
+
+  it('não toca treino com carga registrada nem treino fora da frequência', () => {
+    const registros = { '1-1': { a2: [50, null] } }
+    const r = aplicarProposta(meso, registros, [prop(1, 'Novo'), prop(9, 'Fora'), prop(3, 'Ok')])
+    expect(r.bloqueados).toEqual([1])
+    expect(r.aplicados).toEqual([3])
+    expect(r.patch.divisao![0]).toBe(meso.divisao[0])
+    expect(r.patch.metodos!.map((m) => m.treino)).toEqual([1, 2])
+  })
+
+  it('apaga trocas e adições do treino aplicado (elas mandam mais que a divisão) e bloqueia adição com carga', () => {
+    const m = {
+      ...meso,
+      trocas: { '1-3-1': { slotId: 'x', nome: 'Troca' }, '1-2-1': { slotId: 'y', nome: 'Outra' } },
+      adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }], '2-2': [{ slotId: 'ad2', nome: 'Extra 2' }] },
+    } as unknown as Meso
+    const r = aplicarProposta(m, {}, [prop(3, 'Remada')])
+    expect(Object.keys(r.patch.trocas!)).toEqual(['1-2-1'])
+    expect(Object.keys(r.patch.adicoes!)).toEqual(['2-2'])
+    const b = aplicarProposta(m, { '2-3': { ad: [20] } }, [prop(3, 'Remada')])
+    expect(b.bloqueados).toEqual([3])
+    expect(b.aplicados).toEqual([])
   })
 })

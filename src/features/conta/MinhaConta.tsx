@@ -10,6 +10,7 @@ import { db } from '../../lib/firebase'
 import { useDoc } from '../../lib/hooks'
 import { Aviso, Botao, Campo, Cartao, Msg, Pagina } from '../../ui'
 import { IcCheck } from '../../icones'
+import AssistenteIA from './AssistenteIA'
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
 const erros: Record<string, string> = {
@@ -216,6 +217,7 @@ export default function MinhaConta({ uid, email, abrirTutorial }: { uid: string;
           </form>
         </Cartao>
         {perfil?.papel === 'coach' && !carregando && <DuasEtapas />}
+        {perfil?.papel === 'coach' && !carregando && <AssistenteIA />}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
         <Msg>{ok && <Aviso>{ok}</Aviso>}</Msg>
         <Botao type="button" className="w-full" onClick={abrirTutorial}>Como usar</Botao>

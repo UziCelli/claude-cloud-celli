@@ -12,6 +12,7 @@ const svg = (d: ReactNode): Icone =>
     )
   }
 
+export const IcMicrofone = svg(<><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" /></>)
 export const IcCasa = svg(<><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" /></>)
 export const IcHaltere = svg(<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />)
 export const IcGrafico = svg(<><path d="M4 4v16h16" /><path d="m7.5 14.5 3.5-3.5 3 3 5-5.5" /></>)
