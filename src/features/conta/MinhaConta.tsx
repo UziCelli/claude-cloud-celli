@@ -11,6 +11,9 @@ import { useDoc } from '../../lib/hooks'
 import { Aviso, Botao, Campo, Cartao, Msg, Pagina } from '../../ui'
 import { IcCheck } from '../../icones'
 import AssistenteIA from './AssistenteIA'
+import ChavesAvisos from './ChavesAvisos'
+import { permissao } from '../aluno/AvisoNotificacoes'
+import { AVISOS_COACH, inscreverAvisos } from '../../lib/push'
 
 const SEM_INTERNET = 'Sem internet. Verifique sua conexão e tente de novo.'
 const erros: Record<string, string> = {
@@ -25,6 +28,33 @@ const mensagemErro = (e: unknown) =>
   (e instanceof FirebaseError && erros[e.code]) || 'Não deu para trocar o e-mail. Tente de novo.'
 
 // Só coach: ativa o 2º fator (Google Authenticator) escaneando um QR code e confirmando com um código.
+// Avisos que os alunos mandam ao coach. Valem para este aparelho.
+function NotificacoesCoach() {
+  const [p, setP] = useState(permissao)
+  const pedir = async () => {
+    try {
+      await Notification.requestPermission()
+    } catch {
+      /* segue com o que o aparelho disser */
+    }
+    setP(permissao())
+    void inscreverAvisos(true)
+  }
+  return (
+    <Cartao className="space-y-2">
+      <h2 className="font-semibold">Notificações</h2>
+      {p === 'default' && (
+        <Botao tipo="primario" className="w-full" onClick={pedir}>
+          Ativar notificações neste aparelho
+        </Botao>
+      )}
+      {p === 'granted' && <ChavesAvisos tipos={AVISOS_COACH} coach />}
+      {p == null && <p className="text-sm text-slate-400">Este aparelho não permite notificações. No iPhone, adicione o app à Tela de Início.</p>}
+      {p === 'denied' && <p className="text-sm text-slate-400">Bloqueado no aparelho — libere nas configurações.</p>}
+    </Cartao>
+  )
+}
+
 function DuasEtapas() {
   const [ativa, setAtiva] = useState(temTotp)
   const [chave, setChave] = useState<{ secret: TotpSecret; uri: string } | null>(null)
@@ -216,6 +246,7 @@ export default function MinhaConta({ uid, email, abrirTutorial }: { uid: string;
             </Botao>
           </form>
         </Cartao>
+        {perfil?.papel === 'coach' && !carregando && <NotificacoesCoach />}
         {perfil?.papel === 'coach' && !carregando && <DuasEtapas />}
         {perfil?.papel === 'coach' && !carregando && <AssistenteIA />}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>

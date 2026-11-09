@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { acessoComCache, appCheckOk, lerPermissao, podeAvisarTreino, registrarAgendamento } from './acesso'
+import { acessoComCache, appCheckOk, lerPermissao, podeAvisarTreino, quemAvisaCoach, ehCoach, registrarAgendamento } from './acesso'
 
 const AGORA = Date.parse('2026-10-01T12:00:00Z')
 const perfil = (campos: Record<string, string>) => ({
@@ -179,5 +179,43 @@ describe('X-Firebase-AppCheck', () => {
     const b = buscaCom(perfil({ papel: 'aluno' }))
     await podeAvisarTreino('forca--app', 'c', 'a1', 't', b, 'ac')
     expect(hdr(b)['X-Firebase-AppCheck']).toBe('ac')
+  })
+})
+
+describe('quemAvisaCoach', () => {
+  const emDia = { papel: 'aluno', status: 'ativo', pagoAte: '2026-10-10T00:00:00Z', nome: 'Ana' }
+  it('aluno ativo e em dia: devolve o nome lido do perfil (com o token dele)', async () => {
+    const b = buscaCom(perfil(emDia))
+    expect(await quemAvisaCoach('forca--app', 'u1', 'concluiu', 'tok', AGORA, b)).toEqual({ nome: 'Ana' })
+    const [url, init] = (b as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0]
+    expect(url).toMatch(/usuarios\/u1$/)
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok')
+  })
+  it('aluno bloqueado ou vencido: só o "Já paguei" passa', async () => {
+    for (const p of [{ ...emDia, status: 'bloqueado' }, { ...emDia, pagoAte: '2026-09-01T00:00:00Z' }]) {
+      expect(await quemAvisaCoach('forca--app', 'u1', 'concluiu', 't', AGORA, buscaCom(perfil(p)))).toBe(403)
+      expect(await quemAvisaCoach('forca--app', 'u1', 'comentou', 't', AGORA, buscaCom(perfil(p)))).toBe(403)
+      expect(await quemAvisaCoach('forca--app', 'u1', 'pagou', 't', AGORA, buscaCom(perfil(p)))).toEqual({ nome: 'Ana' })
+    }
+  })
+  it('coach ou perfil sem papel de aluno: 403', async () => {
+    expect(await quemAvisaCoach('forca--app', 'u1', 'pagou', 't', AGORA, buscaCom(perfil({ papel: 'coach', nome: 'V' })))).toBe(403)
+    expect(await quemAvisaCoach('forca--app', 'u1', 'pagou', 't', AGORA, buscaCom({}))).toBe(403)
+  })
+  it('perfil negado ou inexistente: 403; falha de leitura: 503', async () => {
+    expect(await quemAvisaCoach('forca--app', 'u1', 'pagou', 't', AGORA, buscaCom({}, 403))).toBe(403)
+    expect(await quemAvisaCoach('forca--app', 'u1', 'pagou', 't', AGORA, buscaCom({}, 404))).toBe(403)
+    expect(await quemAvisaCoach('forca--app', 'u1', 'pagou', 't', AGORA, buscaCom({}, 500))).toBe(503)
+  })
+})
+
+describe('ehCoach', () => {
+  it('só com papel coach lido do próprio perfil', async () => {
+    expect(await ehCoach('forca--app', 'c1', 't', buscaCom(perfil({ papel: 'coach' })))).toBe(true)
+    expect(await ehCoach('forca--app', 'c1', 't', buscaCom(perfil({ papel: 'aluno' })))).toBe(false)
+  })
+  it('negado ou sem resposta: não é coach', async () => {
+    expect(await ehCoach('forca--app', 'c1', 't', buscaCom({}, 403))).toBe(false)
+    expect(await ehCoach('forca--app', 'c1', 't', buscaCom({}, 500))).toBe(false)
   })
 })

@@ -6,6 +6,7 @@ import { metodosDaSessao, prescreverSessao, type Metodo } from '../../engine'
 import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
 import { limparTreino, marcarTreino } from '../../lib/inatividade'
 import { mmss, useDescanso } from '../../lib/descanso'
+import { avisarCoach } from '../../lib/push'
 import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
 import { seriesDoRotulo } from '../../lib/metodoSeries'
 import IconeMetodo from '../metodos/IconeMetodo'
@@ -232,6 +233,7 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
             tipo="primario"
             onClick={() => {
               salvarNota(uid, nome, rascunho)
+              if (rascunho.trim()) avisarCoach('comentou')
               setEditando(false)
             }}
           >
@@ -478,6 +480,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     limparTreino()
+    avisarCoach('concluiu') // o Worker ignora quando quem conclui é o coach (presencial)
     marcarRealizado(mesoId, uid, semana, treino, true, fimMs != null) // fim real desta sessão (inclusive offline, pendente) é mantido; fim de fora (planilha/antigo) é trocado por agora
     setFimLocal(Date.now())
     setConfirmarFim(false)

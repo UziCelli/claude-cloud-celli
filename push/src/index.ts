@@ -1,8 +1,8 @@
 import { DurableObject } from 'cloudflare:workers'
-import { acessoComCache, appCheckOk, lerPermissao, podeAvisarTreino, registrarAgendamento, type CacheAcesso } from './acesso'
+import { acessoComCache, appCheckOk, ehCoach, lerPermissao, podeAvisarTreino, quemAvisaCoach, registrarAgendamento, type CacheAcesso } from './acesso'
 import { cors } from './cors'
 import { chaveDaConta, chaveDoGoogle, verificarAviso, verificarIdToken, type Projeto } from './jwt'
-import { nomeDO, uidOk, validarAvisos, validarFimEm, validarInscricao, type Aviso, type Inscricao } from './validar'
+import { nomeCoaches, nomeDO, tipoCoachOk, uidOk, validarAvisos, validarDesligados, validarFimEm, validarInscricao, validarRecado, type Aviso, type Inscricao, type Tipo, type TipoCoach } from './validar'
 import { enviarPush, gerarParVapid, type ParVapid } from './webpush'
 
 type Env = { DESCANSO: DurableObjectNamespace<Descanso> }
@@ -12,10 +12,21 @@ type Mensagem = { title: string; body: string; tag: string; url: string }
 // Lidas pelo public/sw-push.js. Sem emoji (o ícone é a letra da marca).
 const DESCANSO: Mensagem = { title: 'Descanso acabou', body: 'Volte para o treino', tag: 'descanso', url: '/' }
 const TREINO: Mensagem = { title: 'Treino novo pronto', body: 'Seu próximo treino já está no app. Toque para ver.', tag: 'treino', url: '/' }
-const MENSALIDADE: Record<Aviso['tipo'], Mensagem> = {
-  'vence-3d': { title: 'Mensalidade vence em 3 dias', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/conta' },
-  'vence-hoje': { title: 'Mensalidade vence hoje', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/conta' },
+// Avisos do robô diário: [mensagem, tipo que a pessoa liga/desliga em Conta].
+const ROBO: Record<Aviso['tipo'], [Mensagem, Tipo]> = {
+  'vence-3d': [{ title: 'Mensalidade vence em 3 dias', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/conta' }, 'mensalidade'],
+  'vence-hoje': [{ title: 'Mensalidade vence hoje', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/conta' }, 'mensalidade'],
+  'treino-hoje': [{ title: 'Hoje tem treino', body: 'Seu treino de hoje está no app. Toque para começar.', tag: 'lembrete', url: '/' }, 'lembrete'],
 }
+const recado = (texto: string): Mensagem => ({ title: 'Aviso do coach', body: texto, tag: 'recado', url: '/' })
+// Para o coach. A tag leva o uid do aluno: o aviso de um aluno não apaga o de outro na tela do coach.
+const DO_ALUNO: Record<TipoCoach, (nome: string, uid: string) => Mensagem> = {
+  concluiu: (n, u) => ({ title: 'Treino concluído', body: `${n} concluiu o treino.`, tag: `concluiu:${u}`, url: '/' }),
+  comentou: (n, u) => ({ title: 'Nova anotação', body: `${n} escreveu uma anotação no treino.`, tag: `comentou:${u}`, url: '/' }),
+  pagou: (n, u) => ({ title: 'Pagamento informado', body: `${n} tocou em "Já paguei". Toque para confirmar.`, tag: `pagou:${u}`, url: '/#/alunos' }),
+}
+const DEZ_MIN = 10 * 60_000
+const MAX_COACHES = 5
 
 // Uma instância por aluno (nome: veja nomeDO): guarda a inscrição e dispara o alarme.
 // A instância '__vapid' guarda o par de chaves VAPID (gerado na 1ª vez, nunca regenerado).
@@ -24,6 +35,7 @@ export class Descanso extends DurableObject<Env> {
   // Só na memória: se a instância reiniciar, o limite e o cache recomeçam (basta para segurar abuso).
   private marcas: number[] = []
   private marcasTreino: number[] = []
+  private limites = new Map<string, number[]>()
   private acesso?: CacheAcesso
 
   vapid(): Promise<ParVapid> {
@@ -60,17 +72,41 @@ export class Descanso extends DurableObject<Env> {
     await this.ctx.storage.delete('inscricao')
   }
 
-  // Inscrição fixa (avisos de treino e mensalidade): não é apagada depois do alarme do descanso.
-  async inscrever(inscricao: Inscricao) {
-    await this.ctx.storage.put('fixa', inscricao)
+  // Limite de frequência por chave (janela deslizante, só na memória). false = estourou.
+  async passar(chave: string, limite: number, janela: number): Promise<boolean> {
+    const marcas = registrarAgendamento(this.limites.get(chave) ?? [], Date.now(), limite, janela)
+    if (marcas) this.limites.set(chave, marcas)
+    return !!marcas
+  }
+
+  // Só na instância '__coaches:<projeto>': uids dos coaches que ativaram as notificações (no máximo 5; sai o mais antigo).
+  async coaches(): Promise<string[]> {
+    return (await this.ctx.storage.get<string[]>('coaches')) ?? []
+  }
+
+  async entrarCoach(uid: string) {
+    const lista = (await this.coaches()).filter((c) => c !== uid)
+    await this.ctx.storage.put('coaches', [...lista, uid].slice(-MAX_COACHES))
+  }
+
+  async sairCoach(uid: string) {
+    const lista = await this.coaches()
+    if (lista.includes(uid)) await this.ctx.storage.put('coaches', lista.filter((c) => c !== uid))
+  }
+
+  // Inscrição fixa (todos os avisos menos o descanso): não é apagada depois do alarme do descanso.
+  // `desligados` = tipos que a pessoa desligou em Conta.
+  async inscrever(inscricao: Inscricao, desligados: Tipo[] = []) {
+    await this.ctx.storage.put({ fixa: inscricao, desligados })
   }
 
   async desinscrever() {
-    await this.ctx.storage.delete('fixa')
+    await this.ctx.storage.delete(['fixa', 'desligados'])
   }
 
-  // Envia à inscrição fixa. false = sem inscrição ou não entregue; 404/410 apagam a inscrição.
-  async avisar(msg: Mensagem, comLimite: boolean): Promise<boolean | 'limite'> {
+  // Envia à inscrição fixa. false = sem inscrição, tipo desligado ou não entregue; 404/410 apagam a inscrição.
+  async avisar(msg: Mensagem, tipo: Tipo, comLimite: boolean): Promise<boolean | 'limite'> {
+    if (((await this.ctx.storage.get<Tipo[]>('desligados')) ?? []).includes(tipo)) return false
     if (comLimite) {
       // 3 por 10 min: o coach pode corrigir e reenviar, mas não dá para spammar o aluno.
       const marcas = registrarAgendamento(this.marcasTreino, Date.now(), 3, 10 * 60_000)
@@ -128,6 +164,7 @@ export default {
         return json({ erro: 'JSON inválido' }, 400)
       }
     }
+    const coaches = (projeto: Projeto) => env.DESCANSO.get(env.DESCANSO.idFromName(nomeCoaches(projeto)))
     const aluno = (projeto: Projeto, uid: string) => env.DESCANSO.get(env.DESCANSO.idFromName(nomeDO(projeto, uid)))
 
     // Robô diário (GitHub): JWT da conta de serviço, não ID token.
@@ -140,13 +177,13 @@ export default {
       let enviados = 0
       for (let k = 0; k < dados.avisos.length; k += 10) {
         const lote = dados.avisos.slice(k, k + 10)
-        const r = await Promise.all(lote.map((a) => aluno(dados.projeto, a.uid).avisar(MENSALIDADE[a.tipo], false).catch(() => false)))
+        const r = await Promise.all(lote.map((a) => aluno(dados.projeto, a.uid).avisar(...ROBO[a.tipo], false).catch(() => false)))
         enviados += r.filter((x) => x === true).length
       }
       return json({ ok: true, enviados })
     }
 
-    if (req.method === 'POST' && ['/agendar', '/cancelar', '/inscrever', '/desinscrever', '/treino-pronto'].includes(pathname)) {
+    if (req.method === 'POST' && ['/agendar', '/cancelar', '/inscrever', '/desinscrever', '/treino-pronto', '/avisar-coach', '/recado'].includes(pathname)) {
       const id = token ? await verificarIdToken(token, (kid) => chaveDoGoogle(kid), agora) : null
       if (!token || !id || !uidOk(id.uid)) return json({ erro: 'não autorizado' }, 401)
       const { uid, projeto } = id
@@ -158,27 +195,64 @@ export default {
       }
       if (pathname === '/desinscrever') {
         await meu.desinscrever()
+        await coaches(projeto).sairCoach(uid)
         return json({ ok: true })
       }
 
       const j = await lerJson(4096)
       if (j instanceof Response) return j
-      const corpo = (j as { corpo: { subscription?: unknown; fimEm?: unknown; alunoId?: unknown } | null }).corpo
+      const corpo = (j as { corpo: { subscription?: unknown; fimEm?: unknown; alunoId?: unknown; desligados?: unknown; coach?: unknown; tipo?: unknown } | null }).corpo
 
       if (pathname === '/treino-pronto') {
         const s = await podeAvisarTreino(projeto, uid, corpo?.alunoId, token, fetch, appCheck)
         if (s === 400) return json({ erro: 'alunoId inválido' }, 400)
         if (s === 403) return json({ erro: 'sem permissão' }, 403)
         if (s === 503) return json({ erro: 'não foi possível verificar o aluno' }, 503)
-        const r = await aluno(projeto, corpo!.alunoId as string).avisar(TREINO, true)
+        const r = await aluno(projeto, corpo!.alunoId as string).avisar(TREINO, 'treino', true)
         if (r === 'limite') return json({ erro: 'aviso já enviado há pouco' }, 429, { 'Retry-After': '600' })
         return json({ ok: true, enviado: r })
+      }
+
+      // Aluno avisa o coach (concluiu, anotou, "Já paguei"). Texto fixo; o nome sai do perfil do aluno.
+      if (pathname === '/avisar-coach') {
+        const tipo = corpo?.tipo
+        if (!tipoCoachOk(tipo)) return json({ erro: 'tipo inválido' }, 400)
+        // 10 por minuto no total (segura as leituras do Firestore) e, depois de conferido, 1 por tipo a cada 10 min.
+        if (!(await meu.passar('coach', 10, 60_000))) return json({ erro: 'muitos avisos' }, 429, { 'Retry-After': '60' })
+        const quem = await quemAvisaCoach(projeto, uid, tipo, token, Date.now(), fetch, appCheck)
+        if (quem === 403) return json({ erro: 'sem permissão' }, 403)
+        if (quem === 503) return json({ erro: 'não foi possível verificar o acesso' }, 503)
+        if (!(await meu.passar(`coach:${tipo}`, 1, DEZ_MIN))) return json({ erro: 'aviso já enviado há pouco' }, 429, { 'Retry-After': '600' })
+        const lista = (await coaches(projeto).coaches()).filter((c) => c !== uid)
+        await Promise.all(lista.map((c) => aluno(projeto, c).avisar(DO_ALUNO[tipo](quem.nome, uid), tipo, false).catch(() => false)))
+        return json({ ok: true }) // não revela se o coach recebeu
+      }
+
+      // Coach escreve um aviso para até 15 alunos por chamada. Cada aluno é conferido como no /treino-pronto.
+      if (pathname === '/recado') {
+        const dados = validarRecado(corpo)
+        if (!dados) return json({ erro: 'recado inválido' }, 400)
+        if (!(await meu.passar('recado', 10, DEZ_MIN))) return json({ erro: 'muitos avisos' }, 429, { 'Retry-After': '600' })
+        const msg = recado(dados.texto)
+        const r = await Promise.all(
+          dados.alunoIds.map(async (id) => {
+            const s = await podeAvisarTreino(projeto, uid, id, token, fetch, appCheck)
+            return s === 200 ? aluno(projeto, id).avisar(msg, 'recado', true).catch(() => false) : s
+          }),
+        )
+        if (r.every((x) => x === 403)) return json({ erro: 'sem permissão' }, 403)
+        if (r.every((x) => x === 503)) return json({ erro: 'não foi possível verificar os alunos' }, 503)
+        return json({ ok: true, enviados: r.filter((x) => x === true).length })
       }
 
       const inscricao = validarInscricao(corpo?.subscription)
       if (!inscricao) return json({ erro: 'inscrição inválida' }, 400)
       if (pathname === '/inscrever') {
-        await meu.inscrever(inscricao)
+        const desligados = validarDesligados(corpo?.desligados)
+        if (!desligados) return json({ erro: 'tipos inválidos' }, 400)
+        await meu.inscrever(inscricao, desligados)
+        // Só o app do coach manda `coach: true`; o papel é conferido no perfil (o aluno não gasta essa leitura).
+        if (corpo?.coach === true && (await meu.passar('souCoach', 5, DEZ_MIN)) && (await ehCoach(projeto, uid, token, fetch, appCheck))) await coaches(projeto).entrarCoach(uid)
         return json({ ok: true })
       }
 

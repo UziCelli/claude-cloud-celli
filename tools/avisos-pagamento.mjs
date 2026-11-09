@@ -1,4 +1,5 @@
-// Avisos de mensalidade: manda ao Worker (push/) quem vence em 3 dias ou hoje. Roda no workflow "Avisos de mensalidade".
+// Avisos do robô diário, mandados ao Worker (push/). Roda no workflow "Avisos de mensalidade".
+// MODO=mensalidade (padrão): quem vence em 3 dias ou hoje. MODO=lembrete: lembrete do treino do dia (seg a sáb).
 // Só contagens no log: nunca nome, e-mail ou uid. Sem dependência nova: o JWT é assinado com node:crypto.
 // Uso local: PROJETO=forca--app GOOGLE_APPLICATION_CREDENTIALS=sa.json node avisos-pagamento.mjs
 import { appendFileSync, readFileSync } from 'node:fs'
@@ -35,6 +36,30 @@ export function quaisAvisar(alunos, agora) {
   return avisos
 }
 
+// Lembrete do treino do dia: de segunda a sábado (Brasília), para o aluno do app ativo e em dia, com meso em
+// andamento (início <= hoje < início + semanas*7) e que ainda não concluiu treino hoje.
+// mesos: [{ alunoId, inicio: 'AAAA-MM-DD', semanas }]; treinaramHoje: uids com treino concluído hoje.
+export function quaisLembrar(alunos, mesos, treinaramHoje, agora) {
+  const chave = diaBrasilia(agora)
+  const hoje = numeroDoDia(chave)
+  if (new Date(`${chave}T12:00:00Z`).getUTCDay() === 0) return []
+  const comMeso = new Set()
+  for (const m of mesos) {
+    if (typeof m.inicio !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(m.inicio) || !(m.semanas > 0)) continue
+    const inicio = numeroDoDia(m.inicio)
+    if (inicio <= hoje && hoje < inicio + m.semanas * 7) comMeso.add(m.alunoId)
+  }
+  const feito = new Set(treinaramHoje)
+  const avisos = []
+  for (const a of alunos) {
+    if (a.papel !== 'aluno' || a.status !== 'ativo' || a.presencial || !comMeso.has(a.uid) || feito.has(a.uid)) continue
+    const ms = emMillis(a.pagoAte)
+    if (!Number.isFinite(ms) || ms <= agora) continue
+    avisos.push({ uid: a.uid, tipo: 'treino-hoje' })
+  }
+  return avisos
+}
+
 const base64url = (buf) => Buffer.from(buf).toString('base64url')
 
 export function assinarJwt(sa, agoraSeg) {
@@ -59,9 +84,16 @@ async function executar() {
   initializeApp({ credential: applicationDefault(), projectId: projeto })
   const db = getFirestore()
   const agora = Date.now()
-  const snap = await db.collection('usuarios').select('papel', 'status', 'pagoAte').get()
-  const alunos = snap.docs.map((d) => ({ uid: d.id, papel: d.get('papel'), status: d.get('status'), pagoAte: d.get('pagoAte') }))
-  const avisos = quaisAvisar(alunos, agora)
+  const lembrete = process.env.MODO === 'lembrete'
+  const snap = await db.collection('usuarios').select('papel', 'status', 'pagoAte', 'presencial').get()
+  const alunos = snap.docs.map((d) => ({ uid: d.id, papel: d.get('papel'), status: d.get('status'), pagoAte: d.get('pagoAte'), presencial: d.get('presencial') }))
+  let avisos
+  if (lembrete) {
+    const mesos = (await db.collection('mesos').select('alunoId', 'inicio', 'semanas').get()).docs.map((d) => d.data())
+    const meiaNoite = new Date(`${diaBrasilia(agora)}T00:00:00-03:00`) // Brasília = UTC-3 (sem horário de verão)
+    const feitos = await db.collection('registros').where('realizadoEm', '>=', meiaNoite).select('alunoId', 'realizado').get()
+    avisos = quaisLembrar(alunos, mesos, feitos.docs.filter((d) => d.get('realizado') === true).map((d) => d.get('alunoId')), agora)
+  } else avisos = quaisAvisar(alunos, agora)
   const tres = avisos.filter((a) => a.tipo === 'vence-3d').length
 
   let enviados = 0
@@ -77,14 +109,16 @@ async function executar() {
     enviados += (await res.json()).enviados ?? 0
   }
 
-  const saida = `## Avisos de mensalidade (${marca})\n\n- Vencem em 3 dias: ${tres}\n- Vencem hoje: ${avisos.length - tres}\n- Enviados: ${enviados}\n`
+  const saida = lembrete
+    ? `## Lembrete do treino do dia (${marca})\n\n- Alunos a lembrar: ${avisos.length}\n- Enviados: ${enviados}\n`
+    : `## Avisos de mensalidade (${marca})\n\n- Vencem em 3 dias: ${tres}\n- Vencem hoje: ${avisos.length - tres}\n- Enviados: ${enviados}\n`
   console.log(saida)
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, saida)
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   executar().catch((e) => {
-    console.error(`Falha nos avisos de mensalidade: ${e?.message ?? 'erro desconhecido'}`)
+    console.error(`Falha nos avisos: ${e?.message ?? 'erro desconhecido'}`)
     process.exit(1)
   })
 }

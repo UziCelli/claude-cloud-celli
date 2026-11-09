@@ -33,5 +33,8 @@ Avisa "Descanso acabou / Volte para o treino 💪" na hora certa, mesmo com o ap
 - URL publicada: `https://vfit-descanso.vfitcoach-site.workers.dev`. Ela está em `.env.production` (`VITE_PUSH_URL`) e no `connect-src` da CSP em `firebase.json`; se o subdomínio da conta mudar, troque nos dois.
 - Para ver o Worker localmente: `cd push && npx wrangler@4 deploy --dry-run` (só empacota, não precisa de conta).
 
+## Outros avisos (09/11/2026)
+Além do descanso, o Worker manda: treino pronto, mensalidade, lembrete do treino do dia, aviso escrito pelo coach e, para o coach, "concluiu", "anotou" e "Já paguei". Rotas, limites e textos: `docs/plano-notificacoes.md`. Cada tipo liga/desliga em Conta.
+
 ## Testes
 `npm test` roda `push/src/*.test.ts` (sem rede): JWT do Firebase, criptografia (vetor do RFC 8291), JWT VAPID, validação, acesso (permitido/bloqueado/coach/vencido/erro de rede, cache e limite de 30/min) e CORS. `npm run typecheck` confere também `push/` (`push/tsconfig.json`).

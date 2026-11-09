@@ -3,7 +3,7 @@ import { generateKeyPairSync, verify } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 // O módulo é .mjs sem tipos (roda também no workflow, sem TypeScript).
 // @ts-expect-error sem declaração de tipos
-import { assinarJwt, quaisAvisar } from '../tools/avisos-pagamento.mjs'
+import { assinarJwt, quaisAvisar, quaisLembrar } from '../tools/avisos-pagamento.mjs'
 
 // Brasília = UTC-3 (sem horário de verão desde 2019).
 const brasilia = (dia: string, hora = '12:00') => Date.parse(`${dia}T${hora}:00-03:00`)
@@ -93,5 +93,39 @@ describe('assinarJwt', () => {
     const assinado = Buffer.from(`${h}.${p}`)
     expect(verify('RSA-SHA256', assinado, publicKey, Buffer.from(s, 'base64url'))).toBe(true)
     expect(verify('RSA-SHA256', Buffer.from(`${h}.${p}x`), publicKey, Buffer.from(s, 'base64url'))).toBe(false)
+  })
+})
+
+describe('quaisLembrar (lembrete do treino do dia)', () => {
+  // 13/10/2026 é uma terça-feira.
+  const agora = brasilia('2026-10-13', '06:47')
+  const emDia = brasilia('2026-10-30')
+  const meso = (alunoId: string, inicio: string, semanas = 4) => ({ alunoId, inicio, semanas })
+  it('lembra o aluno ativo, em dia, com meso em andamento e sem treino hoje', () => {
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-10-05')], [], agora)).toEqual([{ uid: 'a', tipo: 'treino-hoje' }])
+  })
+  it('não lembra no domingo', () => {
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-10-05')], [], brasilia('2026-10-18', '06:47'))).toEqual([])
+  })
+  it('lembra no sábado', () => {
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-10-05')], [], brasilia('2026-10-17', '06:47'))).toHaveLength(1)
+  })
+  it('não lembra quem já treinou hoje', () => {
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-10-05')], ['a'], agora)).toEqual([])
+  })
+  it('não lembra sem meso, com meso que ainda não começou ou que já acabou', () => {
+    expect(quaisLembrar([aluno('a', emDia)], [], [], agora)).toEqual([])
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-10-14')], [], agora)).toEqual([])
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-09-15', 4)], [], agora)).toEqual([]) // acabou em 12/10
+    expect(quaisLembrar([aluno('a', emDia)], [meso('a', '2026-09-16', 4)], [], agora)).toHaveLength(1) // último dia
+    expect(quaisLembrar([aluno('a', emDia)], [meso('b', '2026-10-05')], [], agora)).toEqual([])
+  })
+  it('não lembra coach, bloqueado, presencial, vencido nem meso com dados estranhos', () => {
+    const m = [meso('a', '2026-10-05')]
+    expect(quaisLembrar([aluno('a', emDia, { papel: 'coach' })], m, [], agora)).toEqual([])
+    expect(quaisLembrar([aluno('a', emDia, { status: 'bloqueado' })], m, [], agora)).toEqual([])
+    expect(quaisLembrar([aluno('a', emDia, { presencial: true })], m, [], agora)).toEqual([])
+    expect(quaisLembrar([aluno('a', brasilia('2026-10-12'))], m, [], agora)).toEqual([])
+    expect(quaisLembrar([aluno('a', emDia)], [{ alunoId: 'a', inicio: 'x', semanas: 4 }, { alunoId: 'a', inicio: '2026-10-05' }], [], agora)).toEqual([])
   })
 })

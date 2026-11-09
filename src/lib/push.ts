@@ -111,28 +111,65 @@ export function cancelarPush() {
   enfileirar(async () => void (await chamar(base, '/cancelar', {})))
 }
 
-// Avisos fixos (treino novo e mensalidade): inscrição guardada no Worker até a pessoa desligar.
-// Chave por aparelho: '0' = desligado na aba Conta.
-export const CHAVE_AVISOS_COACH = 'forca-avisos-coach'
-export const avisosCoachLigados = () => {
+// Avisos fixos (tudo menos o descanso): inscrição guardada no Worker. Cada tipo liga/desliga em Conta.
+// Contrato em docs/plano-notificacoes.md. Os ids são os mesmos de push/src/validar.ts (TIPOS).
+export const AVISOS_ALUNO = [
+  ['treino', 'Treino novo pronto'],
+  ['lembrete', 'Lembrete do treino do dia'],
+  ['recado', 'Avisos do coach'],
+  ['mensalidade', 'Vencimento da mensalidade'],
+] as const
+export const AVISOS_COACH = [
+  ['concluiu', 'Aluno concluiu o treino'],
+  ['comentou', 'Aluno escreveu uma anotação'],
+  ['pagou', 'Aluno tocou em "Já paguei"'],
+] as const
+export type TipoAviso = (typeof AVISOS_ALUNO)[number][0] | (typeof AVISOS_COACH)[number][0]
+
+// Por aparelho: lista dos tipos desligados. A chave antiga ('forca-avisos-coach' = '0') desligava treino e mensalidade juntos.
+const CHAVE_DESLIGADOS = 'forca-avisos-desligados'
+const CHAVE_ANTIGA = 'forca-avisos-coach'
+export const lerDesligados = (novo: string | null, antigo: string | null): string[] => {
   try {
-    return localStorage.getItem(CHAVE_AVISOS_COACH) !== '0'
+    const v: unknown = JSON.parse(novo ?? 'null')
+    if (Array.isArray(v)) return v.filter((t) => typeof t === 'string')
   } catch {
-    return true
+    /* valor estragado: vale o padrão */
   }
+  return antigo === '0' ? ['treino', 'mensalidade'] : []
+}
+export const avisosDesligados = (): string[] => {
+  try {
+    return lerDesligados(localStorage.getItem(CHAVE_DESLIGADOS), localStorage.getItem(CHAVE_ANTIGA))
+  } catch {
+    return []
+  }
+}
+
+// Liga/desliga um tipo neste aparelho e manda a lista nova ao Worker.
+export function trocarAviso(tipo: TipoAviso, ligado: boolean, coach = false) {
+  const lista = avisosDesligados().filter((t) => t !== tipo)
+  if (!ligado) lista.push(tipo)
+  try {
+    localStorage.setItem(CHAVE_DESLIGADOS, JSON.stringify(lista))
+  } catch {
+    /* sem armazenamento: vale só até fechar o app */
+  }
+  void inscreverAvisos(coach)
 }
 
 const CHAVE_INSCRITO = 'forca-avisos-inscrito'
 const SETE_DIAS = 7 * 24 * 3600 * 1000
-// Reenvia se mudou o uid ou o endpoint, ou se passou 7 dias do último envio.
-export const precisaInscrever = (salvo: unknown, uid: string, endpoint: string, agora: number) => {
+// Reenvia se mudou o uid, o endpoint ou as preferências, ou se passou 7 dias do último envio.
+export const precisaInscrever = (salvo: unknown, uid: string, endpoint: string, agora: number, prefs = '') => {
   if (!Array.isArray(salvo)) return true
-  const [u, e, t] = salvo
-  return u !== uid || e !== endpoint || typeof t !== 'number' || agora - t >= SETE_DIAS
+  const [u, e, t, p = ''] = salvo
+  return u !== uid || e !== endpoint || p !== prefs || typeof t !== 'number' || agora - t >= SETE_DIAS
 }
 
-export async function inscreverAvisos() {
-  if (!disponivel() || !avisosCoachLigados()) return
+// coach = true: o Worker confere o papel e passa a mandar a este aparelho os avisos dos alunos.
+export async function inscreverAvisos(coach = false) {
+  if (!disponivel()) return
   const base = BASE!
   try {
     const { auth } = await import('./firebase')
@@ -146,11 +183,13 @@ export async function inscreverAvisos() {
       /* sem armazenamento: reenvia */
     }
     const agora = Date.now()
-    if (!precisaInscrever(salvo, uid, sub.endpoint, agora)) return
-    const r = await chamar(base, '/inscrever', { subscription: sub.toJSON() })
+    const desligados = avisosDesligados()
+    const prefs = `${coach ? 'c' : 'a'}:${[...desligados].sort().join(',')}`
+    if (!precisaInscrever(salvo, uid, sub.endpoint, agora, prefs)) return
+    const r = await chamar(base, '/inscrever', { subscription: sub.toJSON(), desligados, ...(coach && { coach: true }) })
     if (!r?.ok) return
     try {
-      localStorage.setItem(CHAVE_INSCRITO, JSON.stringify([uid, sub.endpoint, agora]))
+      localStorage.setItem(CHAVE_INSCRITO, JSON.stringify([uid, sub.endpoint, agora, prefs]))
     } catch {
       /* sem armazenamento */
     }
@@ -159,17 +198,19 @@ export async function inscreverAvisos() {
   }
 }
 
+// Ao sair da conta: este aparelho para de receber os avisos de quem saiu.
 export async function desinscreverAvisos() {
   try {
     localStorage.removeItem(CHAVE_INSCRITO)
   } catch {
     /* sem armazenamento */
   }
-  if (!BASE) return
+  // Sem permissão de notificação este aparelho nunca se inscreveu: não há o que apagar.
+  if (!disponivel()) return
   try {
-    await chamar(BASE, '/desinscrever', {})
+    await chamar(BASE!, '/desinscrever', {})
   } catch {
-    /* sem rede: o aviso só deixa de ser reenviado */
+    /* sem rede: a inscrição fica no Worker até a próxima pessoa entrar neste aparelho (ela substitui) ou o endereço morrer */
   }
 }
 
@@ -183,4 +224,31 @@ export async function avisarTreinoPronto(alunoId: string): Promise<'enviado' | '
   } catch {
     return 'erro'
   }
+}
+
+// Aluno: avisa o coach (concluiu o treino, escreveu anotação, tocou "Já paguei"). Silencioso: sem rede, o aviso
+// se perde (o dado em si já foi gravado no Firestore). O Worker limita a 1 por tipo a cada 10 min.
+export function avisarCoach(tipo: 'concluiu' | 'comentou' | 'pagou') {
+  if (!BASE) return
+  chamar(BASE, '/avisar-coach', { tipo }).catch(() => {})
+}
+
+export const lotes = <T,>(lista: T[], n: number): T[][] => Array.from({ length: Math.ceil(lista.length / n) }, (_, i) => lista.slice(i * n, i * n + n))
+
+// Coach: aviso escrito para um ou vários alunos (15 por chamada). Devolve quantos receberam, ou null se nada pôde ser enviado.
+export async function enviarRecado(alunoIds: string[], texto: string): Promise<number | null> {
+  if (!BASE) return null
+  let enviados = 0
+  let algumOk = false
+  for (const lote of lotes(alunoIds, 15)) {
+    try {
+      const r = await chamar(BASE, '/recado', { alunoIds: lote, texto })
+      if (!r?.ok) continue
+      algumOk = true
+      enviados += ((await r.json()) as { enviados?: number }).enviados ?? 0
+    } catch {
+      /* segue para o próximo lote */
+    }
+  }
+  return algumOk ? enviados : null
 }

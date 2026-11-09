@@ -1,11 +1,11 @@
 import type { Projeto } from './jwt'
-import { uidOk } from './validar'
+import { nomeLimpo, uidOk, type TipoCoach } from './validar'
 
 const CACHE_MS = 10 * 60_000
 const LIMITE = 30
 const JANELA_MS = 60_000
 
-type Campos = { papel?: { stringValue?: string }; status?: { stringValue?: string }; pagoAte?: { timestampValue?: string } }
+type Campos = { papel?: { stringValue?: string }; status?: { stringValue?: string }; pagoAte?: { timestampValue?: string }; nome?: { stringValue?: string } }
 
 // Coach sempre pode; aluno só com status 'ativo' e pagoAte no futuro (mesma regra do firestore.rules).
 const liberado = (campos: Campos | undefined, agora: number): boolean => {
@@ -47,6 +47,22 @@ export async function podeAvisarTreino(projeto: Projeto, uid: string, alunoId: u
   const campos = await lerPerfil(projeto, alunoId, token, buscar, appCheck)
   if (campos === null) return 503
   return campos === false || campos.papel?.stringValue === 'coach' ? 403 : 200
+}
+
+// /avisar-coach: quem chama precisa ser aluno (perfil lido com o token dele). Concluir e anotar exigem acesso
+// em dia; o "Já paguei" não (é justamente o aluno vencido que avisa). O nome sai do perfil, nunca do pedido.
+export async function quemAvisaCoach(projeto: Projeto, uid: string, tipo: TipoCoach, token: string, agora: number, buscar: typeof fetch = fetch, appCheck?: string): Promise<{ nome: string } | 403 | 503> {
+  const campos = await lerPerfil(projeto, uid, token, buscar, appCheck)
+  if (campos === null) return 503
+  if (campos === false || campos.papel?.stringValue !== 'aluno') return 403
+  if (tipo !== 'pagou' && !liberado(campos, agora)) return 403
+  return { nome: nomeLimpo(campos.nome?.stringValue) }
+}
+
+// /inscrever com `coach: true`: só entra na lista de coaches quem tem papel coach no próprio perfil.
+export async function ehCoach(projeto: Projeto, uid: string, token: string, buscar: typeof fetch = fetch, appCheck?: string): Promise<boolean> {
+  const campos = await lerPerfil(projeto, uid, token, buscar, appCheck)
+  return !!campos && campos.papel?.stringValue === 'coach'
 }
 
 export type CacheAcesso = { ok: boolean; ate: number }
