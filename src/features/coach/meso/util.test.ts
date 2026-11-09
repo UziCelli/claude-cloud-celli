@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Meso } from '../../../engine'
-import { agruparTrocas, aplicarAdicao, aplicarProposta, aplicarTroca, copiarTreino, grupoTemCarga, nomeImportado, removerGrupo } from './util'
+import { agruparTrocas, aplicarAcoes, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, nomeImportado, removerGrupo, trocarExercicio } from './util'
 
 const meso = {
   frequencia: 3,
@@ -98,41 +98,83 @@ describe('trocas e adições em intervalo', () => {
   })
 })
 
-describe('aplicarProposta', () => {
-  const prop = (treino: number, ...nomes: string[]) => ({ treino, exercicios: nomes.map((nome) => ({ nome })) })
+describe('aplicarAcoes', () => {
+  const ex = (...nomes: string[]) => nomes.map((nome) => ({ nome, noCatalogo: true }))
+  const reg = { '1-1': { a2: [50, null] } } // carga no 2º exercício do treino 1, semana 1
 
-  it('preenche treino vazio e substitui treino com exercícios (tirando métodos e progressão dele)', () => {
-    const r = aplicarProposta(meso, {}, [prop(3, 'Remada', 'Rosca'), prop(2, 'Crucifixo')])
-    expect(r.aplicados).toEqual([3, 2])
-    expect(r.substituidos).toEqual([2])
+  it('adicionar vai para o fim, mantém slotId, métodos e progressão, e não repete exercício', () => {
+    const r = aplicarAcoes(meso, {}, [{ tipo: 'adicionar', treino: 1, exercicios: ex('Remada', 'leg press') }])
+    expect(r.patch.divisao![0].map((s) => s.nome)).toEqual(['Agachamento', 'Leg Press', 'Remada'])
+    expect(r.patch.divisao![0].slice(0, 2)).toEqual(meso.divisao[0])
+    expect(r.patch.metodos).toBe(meso.metodos)
+    expect(r.patch.progressaoExercicio).toEqual(meso.progressaoExercicio)
+    expect(r.aplicados).toEqual(['Treino 1: +1'])
+  })
+
+  it('adicionar funciona mesmo com carga registrada (nada muda de posição) e para no limite de 10', () => {
+    expect(aplicarAcoes(meso, reg, [{ tipo: 'adicionar', treino: 1, exercicios: ex('Remada') }]).aplicados).toEqual(['Treino 1: +1'])
+    const cheio = { ...meso, divisao: [Array.from({ length: 10 }, (_, i) => ({ slotId: `s${i}`, nome: `E${i}` })), [], []] } as unknown as Meso
+    const r = aplicarAcoes(cheio, {}, [{ tipo: 'adicionar', treino: 1, exercicios: ex('Novo') }])
+    expect(r.aplicados).toEqual([])
+    expect(r.bloqueios).toHaveLength(1)
+  })
+
+  it('substituir troca só aquela posição e as semanas com carga continuam com o exercício antigo', () => {
+    const r = aplicarAcoes(meso, reg, [{ tipo: 'substituir', treino: 1, pos: 2, de: 'Leg Press', por: { nome: 'Hack', noCatalogo: true } }])
+    expect(r.patch.divisao![0].map((s) => s.nome)).toEqual(['Agachamento', 'Hack'])
+    expect(r.patch.divisao![0][0]).toBe(meso.divisao[0][0])
+    expect(r.patch.trocas!['1-1-2']).toEqual({ slotId: 'a2', nome: 'Leg Press' })
+    expect(r.patch.trocas!['1-1-1']).toEqual(meso.trocas!['1-1-1'])
+  })
+
+  it('substituir cuja posição já não tem aquele exercício não faz nada', () => {
+    const r = aplicarAcoes(meso, {}, [{ tipo: 'substituir', treino: 1, pos: 2, de: 'Outro', por: { nome: 'Hack', noCatalogo: true } }])
+    expect(r.aplicados).toEqual([])
+    expect(r.bloqueios).toHaveLength(1)
+  })
+
+  it('definir refaz treino vazio ou sem carga (tirando métodos, progressão, trocas e adições dele)', () => {
+    const m = {
+      ...meso,
+      trocas: { '1-3-1': { slotId: 'x', nome: 'Troca' }, '1-2-1': { slotId: 'y', nome: 'Outra' }, '1-1-2': { slotId: 'z', nome: 'Fica' } },
+      adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }], '2-1': [{ slotId: 'ad2', nome: 'Extra 2' }] },
+    } as unknown as Meso
+    const r = aplicarAcoes(m, {}, [
+      { tipo: 'definir', treino: 3, exercicios: ex('Remada', 'Rosca') },
+      { tipo: 'definir', treino: 2, exercicios: ex('Crucifixo') },
+    ])
+    expect(r.aplicados).toHaveLength(2)
+    expect(r.refeitos).toEqual([2])
     expect(r.patch.divisao![2].map((s) => s.nome)).toEqual(['Remada', 'Rosca'])
     expect(r.patch.divisao![1].map((s) => s.nome)).toEqual(['Crucifixo'])
     expect(r.patch.divisao![0]).toBe(meso.divisao[0])
-    expect(new Set(r.patch.divisao![2].map((s) => s.slotId)).size).toBe(2)
-    expect(r.patch.metodos!.map((m) => m.treino)).toEqual([1])
+    expect(r.patch.metodos!.map((x) => x.treino)).toEqual([1])
     expect(r.patch.progressaoExercicio).toEqual({ a1: [[10, 8]] })
+    expect(Object.keys(r.patch.trocas!)).toEqual(['1-1-2'])
+    expect(Object.keys(r.patch.adicoes!)).toEqual(['2-1'])
   })
 
-  it('não toca treino com carga registrada nem treino fora da frequência', () => {
-    const registros = { '1-1': { a2: [50, null] } }
-    const r = aplicarProposta(meso, registros, [prop(1, 'Novo'), prop(9, 'Fora'), prop(3, 'Ok')])
-    expect(r.bloqueados).toEqual([1])
-    expect(r.aplicados).toEqual([3])
+  it('definir nunca refaz treino com carga registrada (nem por carga em adição)', () => {
+    const r = aplicarAcoes(meso, reg, [{ tipo: 'definir', treino: 1, exercicios: ex('Novo') }])
+    expect(r.bloqueios).toHaveLength(1)
     expect(r.patch.divisao![0]).toBe(meso.divisao[0])
-    expect(r.patch.metodos!.map((m) => m.treino)).toEqual([1, 2])
+    const m = { ...meso, adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }] } } as unknown as Meso
+    expect(aplicarAcoes(m, { '2-3': { ad: [20] } }, [{ tipo: 'definir', treino: 3, exercicios: ex('Novo') }]).aplicados).toEqual(['Treino 3: lista refeita'])
   })
 
-  it('apaga trocas e adições do treino aplicado (elas mandam mais que a divisão) e bloqueia adição com carga', () => {
-    const m = {
-      ...meso,
-      trocas: { '1-3-1': { slotId: 'x', nome: 'Troca' }, '1-2-1': { slotId: 'y', nome: 'Outra' } },
-      adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }], '2-2': [{ slotId: 'ad2', nome: 'Extra 2' }] },
-    } as unknown as Meso
-    const r = aplicarProposta(m, {}, [prop(3, 'Remada')])
-    expect(Object.keys(r.patch.trocas!)).toEqual(['1-2-1'])
-    expect(Object.keys(r.patch.adicoes!)).toEqual(['2-2'])
-    const b = aplicarProposta(m, { '2-3': { ad: [20] } }, [prop(3, 'Remada')])
-    expect(b.bloqueados).toEqual([3])
-    expect(b.aplicados).toEqual([])
+  it('ignora treino fora da frequência', () => {
+    expect(aplicarAcoes(meso, {}, [{ tipo: 'adicionar', treino: 9, exercicios: ex('X') }]).aplicados).toEqual([])
+  })
+})
+
+describe('trocarExercicio', () => {
+  it('cria slot novo na posição e guarda o antigo nas semanas com carga', () => {
+    const limpo = { ...meso, trocas: undefined } as unknown as Meso
+    const r = trocarExercicio(limpo, { '1-1': { a1: [40] } }, 1, 1, 'Novo')
+    expect(r.divisao[0][0].nome).toBe('Novo')
+    expect(r.divisao[0][0].slotId).not.toBe('a1')
+    expect(r.trocas['1-1-1']).toEqual(limpo.divisao[0][0])
+    expect(r.preservou).toBe(true)
+    expect(trocarExercicio(limpo, {}, 1, 1, 'Novo').preservou).toBe(false)
   })
 })

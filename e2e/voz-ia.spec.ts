@@ -9,7 +9,7 @@ test.beforeAll(async () => {
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
 })
 
-test('cadastra a chave e monta treinos por texto (API simulada)', async ({ page }) => {
+test('cadastra a chave, dita sem o texto voltar e adiciona/troca/refaz treinos (API simulada)', async ({ page }) => {
   const alunoId = await criarAluno('Voz Teste', 'voz.e2e@teste.com', 'senha123')
   const linha = { w1: [10, 10, 10, null, null, null] }
   const id = await criarMeso({
@@ -17,20 +17,40 @@ test('cadastra a chave e monta treinos por texto (API simulada)', async ({ page 
     divisao: { t1: [{ slotId: 'a1', nome: 'Agachamento Livre Halter' }] }, progressao: { principais: linha, auxiliares: linha },
   })
 
+  // Microfone de mentira: window.__falar(texto) entrega a fala à escuta que estiver ligada.
+  await page.addInitScript(() => {
+    class Falso {
+      lang = ''
+      continuous = false
+      interimResults = false
+      onresult: ((e: unknown) => void) | null = null
+      onerror: ((e: unknown) => void) | null = null
+      onend: (() => void) | null = null
+      start() {
+        ;(window as unknown as { __mic: Falso[] }).__mic.push(this)
+      }
+      stop() {
+        setTimeout(() => this.onend?.(), 0)
+      }
+      abort() {}
+    }
+    ;(window as unknown as { __mic: Falso[] }).__mic = []
+    for (const nome of ['SpeechRecognition', 'webkitSpeechRecognition']) Object.defineProperty(window, nome, { value: Falso, configurable: true, writable: true })
+    ;(window as unknown as { __falar: (t: string, i?: number) => void }).__falar = (t, i = -1) => {
+      const lista = (window as unknown as { __mic: Falso[] }).__mic
+      const m = lista.at(i)
+      m?.onresult?.({ results: [{ 0: { transcript: t }, isFinal: true }] })
+    }
+  })
+
   let cabecalhos: Record<string, string> = {}
+  let corpoEnviado = ''
+  let acoes: unknown = []
+  let avisos: unknown = []
   await page.route('https://api.anthropic.com/v1/messages', async (rota) => {
     cabecalhos = rota.request().headers()
-    await rota.fulfill({
-      json: {
-        content: [
-          {
-            type: 'tool_use',
-            name: 'montar_treinos',
-            input: { treinos: [{ treino: 2, exercicios: ['agachamento livre barra', 'Rosca Inventada'] }, { treino: 9, exercicios: ['Fora'] }] },
-          },
-        ],
-      },
-    })
+    corpoEnviado = rota.request().postData() ?? ''
+    await rota.fulfill({ json: { content: [{ type: 'tool_use', name: 'montar_treinos', input: { acoes, avisos } }] } })
   })
 
   await page.goto('/')
@@ -57,21 +77,62 @@ test('cadastra a chave e monta treinos por texto (API simulada)', async ({ page 
   await expect(page.getByText(CHAVE)).toHaveCount(0)
   expect(JSON.stringify(await lerDoc('segredos/ia'))).toContain(CHAVE)
 
-  // Monta: confere a proposta, aplica e o treino 2 aparece no editor.
+  // O ditado não reescreve o que foi apagado: mexer no texto desliga o microfone e a fala atrasada é ignorada.
   await page.goto(`/#/meso/${id}`)
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
   await page.getByRole('button', { name: 'Montar treinos por voz' }).click()
-  await page.getByLabel('O que você falou').fill('treino dois, agachamento livre barra e rosca inventada')
+  const campo = page.getByLabel('O que você falou')
+  await page.getByRole('button', { name: 'Falar' }).click()
+  await page.evaluate(() => (window as any).__falar('adiciona rosca no treino um'))
+  await expect(campo).toHaveValue('adiciona rosca no treino um')
+  await campo.fill('')
+  await expect(page.getByRole('button', { name: 'Falar' })).toBeVisible() // microfone desligou
+  await page.evaluate(() => (window as any).__falar('palavra antiga')) // fala atrasada da escuta cancelada
+  await expect(campo).toHaveValue('')
+  await page.getByRole('button', { name: 'Falar' }).click()
+  await page.evaluate(() => (window as any).__falar('so isto'))
+  await expect(campo).toHaveValue('so isto')
+  await page.getByRole('button', { name: 'Parar' }).click()
+  await page.getByRole('button', { name: 'Limpar' }).click()
+  await expect(campo).toHaveValue('')
+
+  // Adicionar: entra no fim, o exercício que já estava fica; treino vazio é montado; aviso da IA aparece.
+  acoes = [
+    { acao: 'adicionar', treino: 1, exercicios: ['Rosca Inventada'] },
+    { acao: 'definir', treino: 2, exercicios: ['agachamento livre barra'] },
+    { acao: 'adicionar', treino: 9, exercicios: ['Fora'] },
+  ]
+  avisos = ['Remover exercício não dá para fazer aqui.']
+  await campo.fill('rosca no treino um e agachamento no dois')
   await page.getByRole('button', { name: 'Montar treino', exact: true }).click()
   const proposta = page.getByTestId('proposta-ia')
-  await expect(proposta.getByText('Agachamento Livre Barra')).toBeVisible()
+  await expect(proposta.getByText('Treino 1 · Adicionar')).toBeVisible()
+  await expect(proposta.getByText('Treino 2 · Refazer a lista')).toBeVisible()
   await expect(proposta.getByText('Rosca Inventada')).toBeVisible()
   await expect(proposta.getByText('fora do catálogo')).toHaveCount(1)
   await expect(proposta.getByText('Treino 9')).toHaveCount(0)
+  await expect(proposta.getByText('Remover exercício não dá para fazer aqui.')).toBeVisible()
   expect(cabecalhos['x-api-key']).toBe(CHAVE)
   expect(cabecalhos['anthropic-dangerous-direct-browser-access']).toBe('true')
+  expect(corpoEnviado).toContain('Treino 1: 1. Agachamento Livre Halter')
+  expect(corpoEnviado).toContain('Treino 2: (vazio)')
 
   await page.getByRole('button', { name: 'Aplicar no editor' }).click()
-  await expect(page.getByText('Treino 2 montado.')).toBeVisible()
+  await expect(page.getByText('Pronto: Treino 1: +1')).toBeVisible()
+  const t1 = page.getByTestId('treino-1').getByRole('combobox')
+  await expect(t1.nth(0)).toHaveValue('Agachamento Livre Halter')
+  await expect(t1.nth(1)).toHaveValue('Rosca Inventada')
   await expect(page.getByTestId('treino-2').getByRole('combobox').first()).toHaveValue('Agachamento Livre Barra')
+  await expect(campo).toHaveValue('')
+
+  // Substituir: troca só aquele exercício, na mesma posição.
+  acoes = [{ acao: 'substituir', treino: 1, de: 'rosca', por: 'Leg Press 45' }]
+  avisos = []
+  await campo.fill('troca a rosca por leg press no treino um')
+  await page.getByRole('button', { name: 'Montar treino', exact: true }).click()
+  await expect(page.getByTestId('proposta-ia').getByText('Treino 1 · Trocar')).toBeVisible()
+  expect(corpoEnviado).toContain('2. Rosca Inventada')
+  await page.getByRole('button', { name: 'Aplicar no editor' }).click()
+  await expect(t1.nth(0)).toHaveValue('Agachamento Livre Halter')
+  await expect(t1.nth(1)).toHaveValue('Leg Press 45')
 })

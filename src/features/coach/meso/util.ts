@@ -1,5 +1,6 @@
 import catalogo from '../../../data/exercicios.json'
-import type { Meso, Slot } from '../../../engine'
+import type { Meso, Registros, Slot } from '../../../engine'
+import { MAX_POR_TREINO, normalizar, type Acao } from '../../../lib/iaTreino'
 
 // Cresce/encolhe um array preservando os itens existentes.
 export function redimensionar<T>(arr: T[], n: number, fabrica: () => T): T[] {
@@ -121,38 +122,82 @@ export function grupoTemCarga(g: GrupoTroca, registros: Record<string, Record<st
   return semanasDe(g.de, g.ate).some((w) => registros[`${w}-${g.t}`]?.[g.slot.slotId]?.some((c) => c != null))
 }
 
-// Aplica a proposta da IA (assistente de voz) na divisão. Treino que já tem carga registrada nunca é tocado
-// (mesma regra do "Copiar de…"). Treino que já tinha exercícios é substituído e perde métodos e progressão própria.
-export function aplicarProposta(
-  meso: Meso,
-  registros: Record<string, Record<string, (number | null)[]>>,
-  proposta: { treino: number; exercicios: { nome: string }[] }[],
-): { patch: Partial<Meso>; aplicados: number[]; bloqueados: number[]; substituidos: number[] } {
-  const divisao = [...meso.divisao]
-  const progressaoExercicio = { ...meso.progressaoExercicio }
-  let metodos = meso.metodos
-  let trocas = meso.trocas
-  let adicoes = meso.adicoes
-  const aplicados: number[] = []
-  const bloqueados: number[] = []
-  const substituidos: number[] = []
-  const comCarga = (chave: string, slots: Slot[]) => slots.some((s) => registros[chave]?.[s.slotId]?.some((c) => c != null))
-  for (const { treino: t, exercicios } of proposta) {
-    if (t < 1 || t > meso.frequencia || !exercicios.length) continue
-    const antigos = meso.divisao[t - 1] ?? []
-    const adicoesComCarga = Object.entries(meso.adicoes ?? {}).some(([k, slots]) => k.endsWith(`-${t}`) && comCarga(k, slots))
-    if (adicoesComCarga || antigos.some((_, i) => semanasComHistorico(meso, registros, t, i + 1).length)) {
-      bloqueados.push(t)
-      continue
+// Troca o exercício da posição `p` do treino `t` por `nome` (slot novo, como o editor faz). As semanas que já têm
+// carga continuam mostrando o exercício antigo (guardado em `trocas`). `preservou` = alguma semana ficou com o antigo.
+export function trocarExercicio(meso: Meso, registros: Registros, t: number, p: number, nome: string) {
+  const arr = meso.divisao[t - 1] ?? []
+  const atual = arr[p - 1]
+  const trocas = { ...meso.trocas }
+  let preservou = false
+  for (const w of semanasComHistorico(meso, registros, t, p)) {
+    const chave = `${w}-${t}-${p}`
+    if (!trocas[chave]) {
+      trocas[chave] = atual
+      preservou = true
     }
-    for (const s of antigos) delete progressaoExercicio[s.slotId]
-    if (antigos.length) substituidos.push(t)
-    metodos = metodos.filter((m) => m.treino !== t)
-    // Trocas e adições pontuais do treino têm prioridade sobre a divisão: saem junto, senão o aluno veria o exercício antigo.
-    if (trocas) trocas = Object.fromEntries(Object.entries(trocas).filter(([k]) => k.split('-')[1] !== String(t)))
-    if (adicoes) adicoes = Object.fromEntries(Object.entries(adicoes).filter(([k]) => !k.endsWith(`-${t}`)))
-    divisao[t - 1] = exercicios.slice(0, 10).map((e) => ({ slotId: crypto.randomUUID(), nome: e.nome }))
-    aplicados.push(t)
   }
-  return { patch: { divisao, metodos, progressaoExercicio, trocas, adicoes }, aplicados, bloqueados, substituidos }
+  const divisao = [...meso.divisao]
+  const novoArr = [...arr]
+  novoArr[p - 1] = { slotId: crypto.randomUUID(), nome }
+  divisao[t - 1] = novoArr
+  return { divisao, trocas, preservou }
+}
+
+// Aplica as ações da IA (assistente de voz) na divisão, na ordem.
+// - adicionar: no fim do treino, nunca apaga nem muda a posição de nada (por isso nada se perde);
+// - substituir: usa `trocarExercicio` (mesma regra do editor);
+// - definir: refaz a lista do treino; treino com carga registrada nunca é refeito. O treino que já tinha exercícios
+//   perde métodos, progressão própria, trocas e adições (`refeitos` deixa a tela confirmar antes).
+export function aplicarAcoes(
+  meso: Meso,
+  registros: Registros,
+  acoes: Acao[],
+): { patch: Partial<Meso>; aplicados: string[]; bloqueios: string[]; refeitos: number[] } {
+  let m: Meso = { ...meso, divisao: [...meso.divisao] }
+  let { metodos, trocas, adicoes } = meso
+  const progressaoExercicio = { ...meso.progressaoExercicio }
+  const aplicados: string[] = []
+  const bloqueios: string[] = []
+  const refeitos: number[] = []
+  for (const a of acoes) {
+    const t = a.treino
+    if (t < 1 || t > m.frequencia) continue
+    const arr = m.divisao[t - 1] ?? []
+    if (a.tipo === 'adicionar') {
+      const novos = a.exercicios.filter((e) => !arr.some((s) => normalizar(s.nome) === normalizar(e.nome))).slice(0, MAX_POR_TREINO - arr.length)
+      if (!novos.length) {
+        bloqueios.push(`Treino ${t}: nada para adicionar (já tem esses exercícios ou chegou em ${MAX_POR_TREINO}).`)
+        continue
+      }
+      m.divisao[t - 1] = [...arr, ...novos.map((e) => ({ slotId: crypto.randomUUID(), nome: e.nome }))]
+      aplicados.push(`Treino ${t}: +${novos.length}`)
+    } else if (a.tipo === 'substituir') {
+      if (normalizar(arr[a.pos - 1]?.nome ?? '') !== normalizar(a.de)) {
+        bloqueios.push(`Treino ${t}: "${a.de}" mudou de lugar. Peça de novo.`)
+        continue
+      }
+      const r = trocarExercicio(m, registros, t, a.pos, a.por.nome)
+      m = { ...m, divisao: r.divisao, trocas: r.trocas }
+      trocas = r.trocas
+      aplicados.push(`Treino ${t}: ${a.de} por ${a.por.nome}`)
+    } else {
+      if (arr.some((_, i) => semanasComHistorico(m, registros, t, i + 1).length)) {
+        bloqueios.push(`Treino ${t}: já tem cargas registradas, então a lista não foi refeita. Peça para adicionar ou trocar.`)
+        continue
+      }
+      for (const s of arr) delete progressaoExercicio[s.slotId]
+      if (arr.length) refeitos.push(t)
+      metodos = metodos.filter((x) => x.treino !== t)
+      // Trocas e adições pontuais do treino mandam mais que a divisão: saem junto.
+      if (trocas) trocas = Object.fromEntries(Object.entries(trocas).filter(([k]) => k.split('-')[1] !== String(t)))
+      if (adicoes) adicoes = Object.fromEntries(Object.entries(adicoes).filter(([k]) => !k.endsWith(`-${t}`)))
+      m = { ...m, trocas }
+      m.divisao[t - 1] = a.exercicios.slice(0, MAX_POR_TREINO).map((e) => ({ slotId: crypto.randomUUID(), nome: e.nome }))
+      aplicados.push(`Treino ${t}: lista refeita`)
+    }
+  }
+  const patch: Partial<Meso> = { divisao: m.divisao, metodos, progressaoExercicio }
+  if (trocas) patch.trocas = trocas
+  if (adicoes) patch.adicoes = adicoes
+  return { patch, aplicados, bloqueios, refeitos }
 }
