@@ -7,7 +7,12 @@ const ALUNO = { nome: 'Nina Avisos', email: 'nina.notif-e2e@teste.com', senha: '
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }
 
 test.describe.configure({ mode: 'serial' })
-test.use({ permissions: ['notifications'] })
+// O Chromium sem janela do CI responde 'denied' mesmo com a permissão concedida: fixamos 'granted' na página.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    try { Object.defineProperty(Notification, 'permission', { get: () => 'granted' }) } catch { /* sem Notification: o teste falha adiante */ }
+  })
+})
 
 let alunoId = ''
 test.beforeAll(async () => {
