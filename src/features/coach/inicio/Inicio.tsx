@@ -13,7 +13,9 @@ import { m } from 'motion/react'
 import { calcularAlertas, useArquivados, type Reg } from '../alertas/Alertas'
 import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 import { PIX } from '../../aluno/PagarPix'
-import { IcMais, IcPlay } from '../../../icones'
+import { mediaTexto, useFeedbacks } from '../feedbacks/Feedbacks'
+import { resumoNotas } from '../../../lib/feedback'
+import { IcBalao, IcMais, IcPlay } from '../../../icones'
 import { EscolherAluno } from '../presencial/Presencial'
 import { Quadro } from '../../../vidro'
 
@@ -34,6 +36,7 @@ export default function Inicio({ nome }: { nome: string }) {
   const r = resumoCoach(alunos.dados as AlunoComId[], registros.dados, agora, mesos.dados)
   const arquivados = useArquivados()
   const liberados = useLista<{ id: string }>(useMemo(() => query(collection(db, 'relatorios'), where('liberado', '==', true)), []))
+  const fb = useFeedbacks()
   const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves)
   if (!alunos.carregando && alunos.dados.length === 0)
     return (
@@ -91,6 +94,12 @@ export default function Inicio({ nome }: { nome: string }) {
           Ranking de evolução
         </a>
       </div>
+      {fb.dados.length > 0 && (
+        <a href="#/feedbacks" className="mb-3 flex items-center gap-3 rounded-3xl bg-white/10 p-4 ring-1 ring-white/20 lg:max-w-md">
+          <IcBalao className="size-5 text-marca-400" />
+          <span className="flex-1 font-semibold">Feedbacks · {mediaTexto(resumoNotas(fb.dados).media)} média · {fb.dados.filter((f) => !f.lido).length} novos</span>
+        </a>
+      )}
       {PIX && avisosPix > 0 && (
         <a href="#/alunos" className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-amber-500/60 bg-amber-950/70 p-4 text-amber-100">
           <span className="font-semibold">

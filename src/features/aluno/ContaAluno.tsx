@@ -4,7 +4,7 @@ import { doc } from 'firebase/firestore'
 import { m } from 'motion/react'
 import marca from '@marca/marca.json'
 import { Avatar } from '../../avatar'
-import { IcLivro, IcPessoa, IcPrancheta, IcSair, IcSeta, IcSino } from '../../icones'
+import { IcBalao, IcLivro, IcPessoa, IcPrancheta, IcSair, IcSeta, IcSino } from '../../icones'
 import { vencePerto, type Foto, type Usuario } from '../../lib/acesso'
 import { apagarFoto, recuperarSenha, sair, salvarFoto, salvarNome, salvarPeso, salvarSelo } from '../../lib/acoes'
 import { db } from '../../lib/firebase'
@@ -260,6 +260,9 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
         </button>
         <a href="#/metodos" className="toque block py-2">
           <Linha icone={<IcLivro className="size-5" />}>Guia de métodos</Linha>
+        </a>
+        <a href="#/feedback" className="toque block py-2">
+          <Linha icone={<IcBalao className="size-5" />}>Sua opinião</Linha>
         </a>
         <a href="/privacidade" className="toque block py-2">
           <Linha icone={<IcPessoa className="size-5" />}>Política de Privacidade</Linha>

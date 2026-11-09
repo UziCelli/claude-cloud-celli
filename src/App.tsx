@@ -23,6 +23,7 @@ import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
 import RankingAlunos from './features/coach/RankingAlunos'
+import Feedbacks from './features/coach/feedbacks/Feedbacks'
 import Grupo from './features/coach/presencial/Presencial'
 import RelatorioCoach from './features/relatorio/RelatorioCoach'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
@@ -37,7 +38,7 @@ import Politica from './features/privacidade/Politica'
 import PagarPix, { PIX } from './features/aluno/PagarPix'
 import Aceite from './features/privacidade/Aceite'
 import marca from '@marca/marca.json'
-import { IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
+import { IcBalao, IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
 import { BarraAbas, Bolha, Brilho } from './vidro'
 
 // /instalar, /privacidade e /acao (links dos e-mails do Firebase) são públicas (link enviado pelo WhatsApp): não depende de login.
@@ -110,7 +111,7 @@ function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
 }
 
 const ativaAba = (rota: string) =>
-  rota === '/alertas' || rota === '/ranking' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
+  rota === '/alertas' || rota === '/ranking' || rota === '/feedbacks' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
   : rota === '/alunos' || rota.startsWith('/alunos/') || rota.startsWith('/aluno/') || rota.startsWith('/meso/') ? 'alunos'
   : 'inicio' // '/' e rotas desconhecidas (a tela padrão é o Início)
 
@@ -132,6 +133,7 @@ function Menu({ rota }: { rota: string }) {
     { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },
     { id: 'alertas', rotulo: 'Alertas', href: '#/alertas', Icone: IcSino, selo },
     { id: 'ranking', rotulo: 'Ranking', href: '#/ranking', Icone: IcTrofeu },
+    { id: 'feedbacks', rotulo: 'Feedbacks', href: '#/feedbacks', Icone: IcBalao },
     { id: 'metodos', rotulo: 'Métodos', href: '#/metodos', Icone: IcLivro },
     { id: 'conta', rotulo: 'Minha conta', href: '#/conta', Icone: IcPessoa },
   ]
@@ -162,8 +164,8 @@ function Menu({ rota }: { rota: string }) {
       <BarraAbas
         className="lg:hidden"
         abas={itens
-          .filter((i) => i.id !== 'ranking')
-          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: (at === 'ranking' ? 'inicio' : at) === i.id, selo: i.selo }))}
+          .filter((i) => i.id !== 'ranking' && i.id !== 'feedbacks')
+          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: (at === 'ranking' || at === 'feedbacks' ? 'inicio' : at) === i.id, selo: i.selo }))}
       />
     </>
   )
@@ -188,6 +190,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if ((p = casar('/aluno/:uid', rota))) tela = <MesosDoAluno key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />
   else if (rota === '/ranking') tela = <RankingAlunos />
+  else if (rota === '/feedbacks') tela = <Feedbacks />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n) || 1} />

@@ -2,6 +2,14 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #77 estão juntados e publicados.
 
+## 09/11/2026 — Sua opinião (feedback)
+- Aluno envia nota, assunto, tipo e texto, com nome ou anônimo (anônimo não guarda quem enviou). Só o personal lê (aba Feedbacks): filtros, marcar lido, apagar.
+- Depoimento: só com nome, nota 5, texto e autorização marcada (a regra do Firestore confere). Sai em texto/cartão para story e site.
+- Convite para opinar em bons momentos (recorde, fim de ciclo), no máximo 1 vez a cada 60 dias por aparelho.
+- Privacidade: Política ganhou "Sua opinião e depoimentos" (versão 2026-11-09, o app pede aceite de novo); "apagar de vez" e a limpeza LGPD removem os com nome.
+- Testes: regras (`rules` e `ataques`), `feedback.test.ts`, LGPD.
+- Falta o Victor: mandar o link "Avaliar no Google" (dele e da Gislane) para colocar em `marcas/*/marca.json` → `avaliarGoogle` (hoje vazio).
+
 ## 10/11/2026 — Assistente de voz (IA)
 - Pedido do Victor: chave da API da Anthropic (Haiku) nos dois apps (VFit e Gislane, mesmo código) para montar treino falando.
 - Decisão do Victor: chave guardada no Firestore (`segredos/ia`), só o personal lê. Sem Cloud Function (plano grátis).

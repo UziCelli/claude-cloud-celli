@@ -9,6 +9,7 @@ import { Botao, cascata, item } from '../../ui'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
 import { gerarCartaoTreino, limitar, type DadosTreino } from '../evolucao/cartaoStory'
 import { reduzirFoto } from '../../lib/foto'
+import ConviteFeedback from '../feedback/ConviteFeedback'
 import { IcCamera, IcSubir, IcTrofeu } from '../../icones'
 
 const CONFETE = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#facc15', '#a78bfa']
@@ -187,6 +188,7 @@ export default function FimTreino({
             </Botao>
           </div>
         )}
+        {recordes.length > 0 && <ConviteFeedback />}
         <Botao tipo="primario" className="w-full" onClick={voltar}>
           Voltar para Hoje
         </Botao>

@@ -167,6 +167,35 @@ service cloud.firestore {
             || request.resource.data.tipo in ['caminhada', 'corrida', 'esteira', 'bicicleta', 'eliptico', 'escada', 'outro']);
     }
 
+    // Sua opinião: feedbacks/{id automático} = { nota, assunto, em, tipo?, texto?, alunoId?, depoimento? }.
+    // Aluno liberado só cria. Anônimo = sem alunoId (nada liga ao aluno). Só o coach lê, marca `lido` e apaga.
+    // Depoimento (uso na divulgação) exige nome, nota 5 e texto.
+    match /feedbacks/{id} {
+      allow read, delete: if isCoach();
+      allow update: if isCoach()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lido'])
+        && request.resource.data.lido is bool;
+
+      allow create: if liberado()
+        && request.resource.data.keys().hasOnly(['nota', 'assunto', 'tipo', 'texto', 'alunoId', 'depoimento', 'em'])
+        && request.resource.data.keys().hasAll(['nota', 'assunto', 'em'])
+        && request.resource.data.nota is int
+        && request.resource.data.nota >= 1 && request.resource.data.nota <= 5
+        && request.resource.data.assunto in ['app', 'treinos', 'atendimento']
+        && request.resource.data.em == request.time
+        && (!('tipo' in request.resource.data)
+            || request.resource.data.tipo in ['sugestao', 'elogio', 'critica', 'problema'])
+        && (!('texto' in request.resource.data)
+            || (request.resource.data.texto is string
+                && request.resource.data.texto.size() >= 1 && request.resource.data.texto.size() <= 1000))
+        && (!('alunoId' in request.resource.data) || request.resource.data.alunoId == request.auth.uid)
+        && (!('depoimento' in request.resource.data)
+            || (request.resource.data.depoimento == true
+                && 'alunoId' in request.resource.data
+                && request.resource.data.nota == 5
+                && 'texto' in request.resource.data));
+    }
+
     match /mesos/{mesoId} {
       allow read: if isCoach() || (own(resource.data) && liberado());
       allow write: if isCoach();

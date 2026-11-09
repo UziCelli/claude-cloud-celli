@@ -114,6 +114,8 @@ for (const largura of [1280, 390]) {
     await confere('coach-presencial-treino')
     await ir('/#/ranking', 'Ranking de evolução')
     await confere('coach-ranking')
+    await ir('/#/feedbacks', 'Feedbacks')
+    await confere('coach-feedbacks')
 
     await page.goto(`/#/meso/${mesoId}`)
     await expect(page.getByRole('button', { name: 'Divisão', exact: true })).toBeVisible()
@@ -149,6 +151,8 @@ for (const largura of [1280, 390]) {
     await confere('aluno-evolucao')
     await ir('/#/conta', 'Como usar')
     await confere('aluno-conta')
+    await ir('/#/feedback', 'Sua opinião')
+    await confere('aluno-feedback')
     await page.goto('/#/metodos')
     await expect(page.getByRole('heading').first()).toBeVisible()
     await confere('aluno-metodos')

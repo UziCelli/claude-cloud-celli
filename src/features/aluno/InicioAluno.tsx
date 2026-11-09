@@ -17,6 +17,7 @@ import { Centro } from '../../ui'
 import PagarPix, { dataCurta, PIX } from './PagarPix'
 import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
+import { FaixaFeedback } from '../feedback/ConviteFeedback'
 import BotaoSair from '../auth/BotaoSair'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
@@ -57,6 +58,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
       <Quadros pagoAte={perfil?.pagoAte?.toMillis()} />
+      <FaixaFeedback />
     </main>
   )
 }

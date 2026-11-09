@@ -13,6 +13,7 @@ Comece por aqui para achar onde mexer.
 | Cálculo de reps, séries, dropset, tempo | `src/engine/sessao.ts` + `src/engine/metricas.ts` |
 | Gravação de cargas/reps no Firestore | `src/lib/acoes.ts` + `firestore.rules` |
 | Cardio do dia (marcar no Início, tipo e minutos) | `src/lib/cardio.ts` + `src/features/aluno/CardioHoje.tsx` + `firestore.rules` (`cardios`) + `src/lib/acoes.ts` (`registrarCardio`, `desfazerCardio`) |
+| Sua opinião (feedback, depoimentos, convite em bons momentos) | `src/lib/feedback.ts` + `src/features/feedback/` (`EnviarFeedback.tsx`, `ConviteFeedback.tsx`) + `src/features/coach/feedbacks/Feedbacks.tsx` + `firestore.rules` (`feedbacks`) + `src/lib/acoes.ts` (`enviarFeedback`, `marcarFeedbackLido`, `apagarFeedback`) + `src/features/privacidade/Politica.tsx` |
 | Estrutura de dados (Meso, Registro, tipos) | `src/engine/tipos.ts` + `src/lib/conversores.ts` |
 | Cores, fontes, grid | `marcas/<id>/tema.css` (escalas slate/marca) + `src/index.css` (fontes; Tailwind 4, sem tailwind.config) |
 | Nome, logo, ícones, cores e dados do responsável de uma marca | `marcas/<id>/` (`marca.json` com `cores`, `tema.css`, `Logo.tsx`, `logoPaths.ts`, `public/`) |
@@ -58,6 +59,7 @@ Comece por aqui para achar onde mexer.
 - `recorde.ts` — `ehRecorde()`: verifica se uma carga é recorde
 - `evolucao.test.ts`, `recorde.test.ts` — testes desses cálculos
 - `cardio.ts` (+ `cardio.test.ts`) — cardio do dia: `TIPOS` (lista de tipos), `idCardio()`, `rotuloCardio()`, `diaNumero()`; fora do motor de força
+- `feedback.ts` (+ `feedback.test.ts`) — Sua opinião: assuntos/tipos, `montarFeedback()` (anônimo sem alunoId), convite a cada 60 dias, `resumoNotas()`, `filtrar()`, `textoDepoimento()`
 - `*.test.ts` — testes
 
 ### `push/` — Worker Cloudflare (notificação do descanso)
@@ -83,6 +85,7 @@ Comece por aqui para achar onde mexer.
 - `Treino.tsx` — detalhe do treino (Iniciar/Cancelar treino, cargas, reps, selos de método, nota ao abrir, cronômetro, festa no recorde)
 - `FimTreino.tsx` — tela de fim de treino estilo story (duração, volume, recordes, cargas que subiram, semana) + "Compartilhar no story" e "Adicionar foto" (foto do aluno em tela cheia com a marca, só no aparelho); abre no "Concluir treino" e no "Ver resumo"; vale também no presencial
 - `CardioHoje.tsx` — cartão "Cardio hoje" no Início: marca o cardio do dia (tipo e minutos opcionais), mesmo sem treino de força; desfazer
+- `src/features/feedback/EnviarFeedback.tsx` — tela `/feedback`: nota, assunto, tipo, texto, nome ou anônimo, autorização de depoimento; `ConviteFeedback.tsx` — convite em recorde/fim de ciclo
 - `Tutorial.tsx` — onboarding do aluno (7 passos + "Tudo pronto" com atalhos; abre 1x no 1º acesso; "Como usar" na aba Conta; título de boas-vindas em `marca.json` → `boasVindas`). Usa `features/onboarding/Onboarding.tsx`
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
@@ -111,6 +114,7 @@ Comece por aqui para achar onde mexer.
 - `presencial/Presencial.tsx` — `PresencialHoje`/`PresencialTreino`: faixa "Presencial: aluno" + as telas Hoje/Treino do aluno com `base`. Na 1ª vez de cada aluno abre direto no treino de hoje (`abrirHoje` → `Hoje.tsx`); "Encerrar" volta à tela de antes do presencial ("Tirar" no grupo). `EscolherAluno`: folha com busca e recentes (`forca-presencial-recentes`, só ids), usada no "+ Aluno" e no botão "Treino presencial" do Início
 - `presencial/EditarTreino.tsx` — edição do treino do dia pelo coach (botão Editar no cartão, `Folha` de `ui.tsx` embaixo, "+ Adicionar exercício", "Voltar ao planejado"); usado por `Treino.tsx` só com `coach`
 - `inicio/Inicio.tsx` — dashboard do coach: saudação, 4 números, aguardando aprovação, Novo aluno/Ranking, treinaram hoje, sumidos e vencimentos (faixa "⚠️ N alertas")
+- `feedbacks/Feedbacks.tsx` — aba `/feedbacks`: lista, filtros, marcar lido, apagar, copiar depoimento; `feedbacks/cartaoDepoimento.ts` — imagem do depoimento para story
 - `alertas/Alertas.tsx` — aba Alertas (`#/alertas`): reps abaixo da meta, treinos acima do tempo, treinos que demoraram; hooks `useAlertasCoach()` e `useArquivados()` (também usado no Início e no selo)
 - `alertas/calcularAlertas.ts` (+ teste) — `calcularAlertas()` puro (visíveis, `arquivados`, `chave` em cada item) e `chavesAtuais()`
 - `alunos/Alunos.tsx`, `NovoAluno.tsx` — lista, cadastro
@@ -182,6 +186,7 @@ Comece por aqui para achar onde mexer.
 - `e2e/pix.spec.ts` — Pix simples: mensalidade, QR/copia e cola, "Já paguei", coach confirma
 - `e2e/evolucao.spec.ts`, `e2e/recorde.spec.ts`, `e2e/ranking.spec.ts` — fluxos do painel de evolução, recorde e ranking
 - `e2e/cardio.spec.ts` — cardio do aluno (marcar, tipo/minutos, desfazer) e calendário do painel
+- `e2e/feedback.spec.ts` — Sua opinião (aluno envia, coach lê e filtra)
 - `e2e/prints.spec.ts` — prints para divulgação; **opt-in**: só roda com `PRINTS=1` (`MARCA=gislane` para a outra marca; saída em `PRINTS_DIR`, fora do repositório). Só emulador, alunos `@exemplo.com`; pula a tela do Pix e `/privacidade`; guarda de dados proibidos. Comando: `PRINTS=1 PRINTS_DIR=<pasta> flock /tmp/claude-emulador.lock npx firebase emulators:exec --only auth,firestore --project demo-forca 'npx playwright test e2e/prints.spec.ts'`
 - `e2e/seed.ts` — fixture: usuários, mesos
 
@@ -231,8 +236,10 @@ Comece por aqui para achar onde mexer.
 | `/meso/:id/semana/:n` | VisaoSemana | Coach |
 | `/meso/:id/relatorio` | RelatorioCoach | Coach |
 | `/ranking` | RankingAlunos | Coach |
+| `/feedbacks` | Feedbacks (`coach/feedbacks/Feedbacks.tsx`) | Coach |
 | `/conta` | MinhaConta (coach) · ContaAluno (aluno) | Ambos |
 | `/evolucao` | EvolucaoAluno (`PainelEvolucao.tsx`) | Aluno |
+| `/feedback` | EnviarFeedback (`feedback/EnviarFeedback.tsx`) | Aluno |
 | `/treino` | Hoje (aba Treino) | Aluno |
 | `/treino/:mesoId/:semana/:treino` | Treino | Aluno |
 | `/relatorio/:mesoId` | RelatorioAluno (só liberado) | Aluno |
@@ -281,6 +288,10 @@ Comece por aqui para achar onde mexer.
 ### `cardios/{uid}_{AAAA-MM-DD}`
 - `alunoId`, `dia`, `em` (hora do servidor), `tipo?` (caminhada, corrida, esteira, bicicleta, eliptico, escada, outro), `min?` (1 a 600)
 - Um documento por aluno por dia. Aluno lê, grava e apaga só os próprios; coach só lê e apaga. `dia` entre 14 dias atrás e hoje (+1 dia de folga). Fora do treino: não entra em registros, nos números do painel, ranking, relatório nem agenda (só marca dias no calendário do painel).
+
+### `feedbacks/{id automático}`
+- `nota` (1 a 5), `assunto` (app, treinos, atendimento), `em` (hora do servidor), `tipo?` (sugestao, elogio, critica, problema), `texto?` (1 a 1000), `alunoId?` (só se enviou com nome), `depoimento?` (true), `lido?` (o coach marca)
+- Aluno liberado só cria; nunca lê nem edita (nem o próprio). Coach lê, marca `lido` (único campo editável) e apaga. Anônimo = sem `alunoId`.
 
 ---
 
@@ -412,3 +423,4 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Prints para divulgação | `e2e/prints.spec.ts` | **Opt-in**: só roda com `PRINTS=1`; nunca em produção. Só emulador e alunos fictícios `@exemplo.com`. Pula a tela do Pix (chave real) e `/privacidade`. Tem guarda de dados proibidos (chave Pix, CREF, CNPJ, nome do responsável, e-mail, outra marca). Saída em `PRINTS_DIR`, fora do repositório: nunca salvar imagem dentro do repo. | guarda de dados proibidos dentro do próprio spec |
 | Robôs com a chave (SA) | `.github/workflows/*.yml` (alterar-email, aluno-exemplo, avisos-pagamento, backup, erros, importar-meso, limpeza-lgpd, mfa, vigia) | Passo "Instalar dependências" (`npm ci --ignore-scripts`, lockfile) sem SA no env e antes de gravar o `sa.json`; o passo com SA só roda `node tools/<script>.mjs` da raiz. Nunca `npm install` com a chave presente. | Revisão do workflow (sem teste automático) |
 | Texto de terceiros em links/resumos | `src/lib/contato.ts`, `public/sw-push.js`, `tools/erros.mjs` | `mailto:` codifica o e-mail; o clique do push só abre caminho `/x` ou mesma origem (senão `/`); a tabela pública de erros escapa Markdown/HTML. | `contato.test.ts` |
+| Sua opinião (09/11/2026) | `src/lib/feedback.ts`, `firestore.rules` (`feedbacks`), `acoes.ts`, `tools/limpeza-lgpd.mjs`, `Politica.tsx` | Anônimo de verdade: nunca gravar uid/nome no anônimo; o aluno nunca lê feedbacks (nem o próprio). Depoimento exige nome + nota 5 + texto **na regra**, não só na tela. Risco aceito: um aluno pago pode mandar muitos envios (sem limite por aluno; o coach apaga). LGPD apaga só os com nome (`alunoId`); o anônimo fica, não há como ligá-lo ao aluno. Mudou o texto da Política: trocar `VERSAO_PRIVACIDADE`. | `feedback.test.ts`, `tests/rules.test.ts` e `tests/ataques.test.ts` (feedbacks), `tests/limpeza-lgpd.test.ts`, e2e `feedback.spec.ts` |

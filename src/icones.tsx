@@ -62,3 +62,12 @@ export const IcSubir = svg(<path d="M12 20V5m0 0-6 6m6-6 6 6" />)
 
 export const D_TROFEU = 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9.5 17h5'
 export const D_SUBIR = 'M12 20V5m0 0-6 6m6-6 6 6'
+
+export const D_ESTRELA = 'm12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8z'
+// Estrela: `cheia` pinta o miolo (nota dada); vazia só o contorno.
+export const IcEstrela = ({ className = 'size-6', cheia = false }: P & { cheia?: boolean }) => (
+  <svg viewBox="0 0 24 24" className={className} fill={cheia ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d={D_ESTRELA} />
+  </svg>
+)
+export const IcBalao = svg(<path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />)

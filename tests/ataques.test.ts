@@ -1005,3 +1005,104 @@ describe('cardios (marcar que fez cardio)', () => {
     await assertSucceeds(deleteDoc(card('coach')));
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// Sua opinião: feedbacks/{id}. Aluno só cria; anônimo de verdade (sem alunoId); só o coach lê.
+describe('feedbacks (sua opinião)', () => {
+  const fb = (uid: string | undefined, id = 'f1') => doc(db(uid), 'feedbacks', id);
+  const novo = (extra: object = {}) => ({ nota: 4, assunto: 'app', em: serverTimestamp(), ...extra });
+  const semear = (extra: object = {}) =>
+    admin((a) => setDoc(doc(a, 'feedbacks', 'f1'), { nota: 4, assunto: 'app', em: Timestamp.now(), alunoId: 'ana', ...extra }));
+
+  it('o envio válido passa (sem isso os negados abaixo não provam nada)', async () => {
+    await assertSucceeds(setDoc(fb('ana', 'ok1'), novo({ alunoId: 'ana' })));
+    await assertSucceeds(setDoc(fb('ana', 'ok2'), novo()));
+    await assertSucceeds(setDoc(fb('ana', 'ok3'), novo({ nota: 5, alunoId: 'ana', texto: 'Muito bom', depoimento: true })));
+  });
+
+  it('assinar como outro aluno', async () => {
+    await negar(setDoc(fb('ana', 'x'), novo({ alunoId: 'bia' })));
+    await negar(setDoc(fb('ana', 'x'), novo({ alunoId: 'coach' })));
+  });
+
+  it('depoimento forjado: sem nome, nota menor que 5, sem texto, valor falso', async () => {
+    await negar(setDoc(fb('ana', 'x'), novo({ nota: 5, texto: 'ok', depoimento: true })));
+    await negar(setDoc(fb('ana', 'x'), novo({ nota: 4, alunoId: 'ana', texto: 'ok', depoimento: true })));
+    await negar(setDoc(fb('ana', 'x'), novo({ nota: 5, alunoId: 'ana', depoimento: true })));
+    await negar(setDoc(fb('ana', 'x'), novo({ nota: 5, alunoId: 'ana', texto: 'ok', depoimento: 'sim' })));
+  });
+
+  it('nota fora de 1 a 5, quebrada ou texto; texto grande ou vazio; campo extra; lido forjado', async () => {
+    for (const nota of [0, 6, -1, 3.5, '5', null]) await negar(setDoc(fb('ana', 'x'), novo({ nota: nota as never })));
+    await negar(setDoc(fb('ana', 'x'), novo({ texto: 'x'.repeat(1001) })));
+    await negar(setDoc(fb('ana', 'x'), novo({ texto: '' })));
+    await negar(setDoc(fb('ana', 'x'), novo({ extra: 1 })));
+    await negar(setDoc(fb('ana', 'x'), novo({ lido: true })));
+    await negar(setDoc(fb('ana', 'x'), novo({ assunto: 'x' })));
+    await negar(setDoc(fb('ana', 'x'), novo({ tipo: 'x' })));
+  });
+
+  it('data forjada (em)', async () => {
+    await negar(setDoc(fb('ana', 'x'), novo({ em: passado })));
+    await negar(setDoc(fb('ana', 'x'), novo({ em: Timestamp.fromMillis(Date.now() + 30 * DIA) })));
+    await negar(setDoc(fb('ana', 'x'), { nota: 4, assunto: 'app' }));
+  });
+
+  it('vencido, bloqueado, aguardando, arquivado, sem pagoAte e pagoAte corrompido', async () => {
+    for (const uid of NAO_LIBERADOS) {
+      await negar(setDoc(fb(uid, uid), novo()));
+      await negar(setDoc(fb(uid, uid), novo({ alunoId: uid })));
+    }
+  });
+
+  it('sem login e login anônimo do Firebase: criar, ler, listar e apagar', async () => {
+    await semear();
+    const anon = comoFirestore('anon1', { firebase: { sign_in_provider: 'anonymous' } });
+    for (const c of [db(), anon]) {
+      await negar(setDoc(doc(c, 'feedbacks', 'x'), novo()));
+      await negar(getDoc(doc(c, 'feedbacks', 'f1')));
+      await negar(getDocs(collection(c, 'feedbacks')));
+      await negar(deleteDoc(doc(c, 'feedbacks', 'f1')));
+    }
+  });
+
+  it('aluno lendo, listando, apagando e editando (nem o próprio)', async () => {
+    await semear();
+    await negar(getDoc(fb('ana')));
+    await negar(getDoc(fb('bia')));
+    await negar(getDocs(collection(db('ana'), 'feedbacks')));
+    await negar(getDocs(query(collection(db('ana'), 'feedbacks'), where('alunoId', '==', 'ana'))));
+    await negar(getDocs(collectionGroup(db('ana'), 'feedbacks')));
+    await negar(deleteDoc(fb('ana')));
+    await negar(updateDoc(fb('ana'), { lido: true }));
+    await negar(updateDoc(fb('ana'), { nota: 1 }));
+    await negar(setDoc(fb('ana'), novo({ alunoId: 'ana' }))); // sobrescrever
+  });
+
+  it('coach sem 2º fator: não lê, não lista, não edita e não apaga', async () => {
+    await semear();
+    const c = comoFirestore('coach', SEM_FATOR);
+    await negar(getDoc(doc(c, 'feedbacks', 'f1')));
+    await negar(getDocs(collection(c, 'feedbacks')));
+    await negar(updateDoc(doc(c, 'feedbacks', 'f1'), { lido: true }));
+    await negar(deleteDoc(doc(c, 'feedbacks', 'f1')));
+  });
+
+  it('coach com 2º fator muda campo além de `lido`', async () => {
+    await semear();
+    await negar(updateDoc(fb('coach'), { nota: 1 }));
+    await negar(updateDoc(fb('coach'), { texto: 'forjado' }));
+    await negar(updateDoc(fb('coach'), { lido: 1 }));
+    await negar(updateDoc(fb('coach'), { lido: true, depoimento: true }));
+    await negar(updateDoc(fb('coach'), { alunoId: 'bia' }));
+    await negar(setDoc(fb('coach', 'novo'), novo()));
+  });
+
+  it('PERMITIDO DE PROPÓSITO: coach com 2º fator lê, lista, marca lido e apaga', async () => {
+    await semear();
+    await assertSucceeds(getDoc(fb('coach')));
+    await assertSucceeds(getDocs(collection(db('coach'), 'feedbacks')));
+    await assertSucceeds(updateDoc(fb('coach'), { lido: true }));
+    await assertSucceeds(deleteDoc(fb('coach')));
+  });
+});
