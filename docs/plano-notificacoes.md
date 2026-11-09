@@ -37,3 +37,64 @@ Mensagem enviada (JSON do push), lida pelo `public/sw-push.js`:
 | vence-hoje | Mensalidade vence hoje | Toque para ver como pagar. | mensalidade | `/#/conta` |
 
 Push respondido com 404/410: a inscrição `fixa` é apagada.
+
+---
+
+# 2ª parte (09/11/2026): avisos para o coach, lembrete do treino e aviso escrito
+
+Pedido do Victor: terminar as notificações nas 2 marcas.
+- Para o coach: aluno concluiu o treino; aluno escreveu anotação; aluno tocou "Já paguei".
+- Para o aluno: lembrete do treino do dia; aviso escrito pelo coach.
+
+## Respostas do Victor
+- Lembrete: horário fixo para todos (6h47 de Brasília; o GitHub costuma atrasar alguns minutos).
+- Dias: segunda a sábado, só para quem tem meso em andamento e ainda não treinou hoje.
+- Aviso escrito: para todos os alunos ativos ou para um aluno só.
+- Aviso escrito é só a notificação: nada gravado no banco (sem regra nova no Firestore, sem dado novo para a LGPD).
+
+## Decisões
+- **Sem Cloud Functions e sem segredo novo.** Tudo no Worker `push/` e no workflow "Avisos de mensalidade".
+- **Quem é o coach?** O app do coach manda `coach: true` no `/inscrever`. O Worker lê o perfil dele (com o token dele) e, se `papel == 'coach'`, guarda o uid na instância `__coaches:<projeto>` (até 5). Sai da lista ao sair da conta (`/desinscrever`).
+- **Aluno avisa o coach** pelo app, logo depois de gravar no Firestore (`avisarCoach`). O texto é fixo e o nome vem do perfil lido pelo Worker, nunca do pedido.
+- **Ligar/desligar por tipo:** a lista de tipos desligados fica no aparelho (`forca-avisos-desligados`) e vai ao Worker no `/inscrever` (`desligados`). O Worker não envia tipo desligado. Quem tinha desligado "Treino novo e mensalidade" continua com os dois desligados.
+- **Lembrete:** mesmo workflow e mesmo script (`MODO=lembrete`), com um 2º horário. Usa a rota `/aviso-pagamento` com o tipo novo `treino-hoje`.
+- **Comentário** = anotação do aluno no exercício. "Sua opinião" fica de fora (pode ser anônima).
+- **Regras do Firestore:** não mudam (nenhum dado novo).
+
+## Contrato novo do Worker
+| Rota | Quem | Corpo | Resposta |
+|---|---|---|---|
+| `/inscrever` | token válido | `{ subscription, desligados?: Tipo[], coach?: true }` | `{ ok: true }`; tipo desconhecido = 400 |
+| `/desinscrever` | token válido | `{}` | apaga inscrição e preferências; tira o uid da lista de coaches |
+| `/avisar-coach` | aluno (perfil lido com o token dele; `concluiu` e `comentou` exigem ativo e em dia; `pagou` não) | `{ tipo: 'concluiu' \| 'comentou' \| 'pagou' }` | `{ ok: true }` (não diz se o coach recebeu) |
+| `/recado` | coach: cada `alunoId` é conferido como no `/treino-pronto` | `{ alunoIds: string[] (1 a 15), texto (1 a 200) }` | `{ ok: true, enviados: n }`; ninguém permitido = 403 |
+| `/aviso-pagamento` | robô (igual) | aceita também `tipo: 'treino-hoje'` | igual |
+
+Tipos (`Tipo`): aluno `treino`, `mensalidade`, `lembrete`, `recado`; coach `concluiu`, `comentou`, `pagou`.
+
+Limites (memória da instância):
+- `/avisar-coach`: 10 por minuto por aluno e 1 por tipo a cada 10 min (concluir, desfazer e concluir de novo manda um só).
+- `/recado`: 10 chamadas a cada 10 min por coach; cada aluno recebe no máximo 3 avisos do coach a cada 10 min (somado ao "treino pronto").
+- `/inscrever` com `coach: true`: 5 conferências de papel a cada 10 min.
+
+| Tipo | title | body | url |
+|---|---|---|---|
+| lembrete | Hoje tem treino | Seu treino de hoje está no app. Toque para começar. | `/` |
+| recado | Aviso do coach | texto do coach (uma linha) | `/` |
+| concluiu | Treino concluído | `<nome> concluiu o treino.` | `/` |
+| comentou | Nova anotação | `<nome> escreveu uma anotação no treino.` | `/` |
+| pagou | Pagamento informado | `<nome> tocou em "Já paguei". Toque para confirmar.` | `/#/alunos` |
+
+## Critério de pronto
+- Testes do Worker (`push/src/*.test.ts`), do robô (`tests/avisos-pagamento.test.ts`) e do app (`src/lib/push.test.ts`) passando.
+- e2e `notificacoes.spec.ts`: chaves por tipo na Conta (aluno e coach) e aviso escrito (todos e um aluno).
+- Worker publicado pelo `push.yml` e app no ar nas 2 marcas.
+- Victor confirma num iPhone e num Android (lista em `docs/estado-sessao.md`).
+
+## Riscos
+- **Sem internet na hora:** o aviso ao coach se perde (o dado em si fica gravado; o coach vê no app).
+- **Uma inscrição por pessoa:** vale o último aparelho que abriu o app (já era assim).
+- **Horário do lembrete:** o agendador do GitHub pode atrasar (em geral minutos).
+- **Coach que deixa de ser coach** continua na lista até sair da conta naquele aparelho.
+- **Nome do aluno** passa pelo Worker dentro da notificação (criptografada até o celular do coach); nada é guardado nem logado. O texto da Política sobre a Cloudflare foi ajustado, sem pedir novo aceite.
+- **Aluno mal-intencionado** só consegue mandar ao coach os 3 textos fixos, com o próprio nome, 1 a cada 10 min por tipo.

@@ -1,11 +1,13 @@
 name: Avisos de mensalidade
 
-# Roda para as duas marcas (cada uma só no PRÓPRIO projeto), todo dia às 8h47 de Brasília.
-# Lê as datas de vencimento e manda ao Worker (push/) o aviso de quem vence em 3 dias ou hoje.
+# Roda para as duas marcas (cada uma só no PRÓPRIO projeto).
+# - Todo dia às 8h47 de Brasília: mensalidade (quem vence em 3 dias ou hoje).
+# - De segunda a sábado às 6h47 de Brasília: lembrete do treino do dia (meso em andamento e sem treino hoje).
 # O log só tem contagens: nunca nome, e-mail ou uid.
 on:
   schedule:
     - cron: '47 11 * * *'
+    - cron: '47 9 * * 1-6'
   workflow_dispatch:
     inputs:
       marca:
@@ -15,6 +17,13 @@ on:
         options:
           - vfit
           - gislane
+      modo:
+        description: Qual aviso mandar
+        type: choice
+        default: mensalidade
+        options:
+          - mensalidade
+          - lembrete
 
 permissions:
   contents: read
@@ -52,10 +61,11 @@ jobs:
           node-version: 22
       - name: Instalar dependências
         run: npm ci --ignore-scripts
-      - name: Avisar mensalidade (${{ matrix.marca }})
+      - name: Avisar (${{ matrix.marca }})
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJETO: ${{ matrix.projeto }}
+          MODO: ${{ (github.event.schedule == '47 9 * * 1-6' || inputs.modo == 'lembrete') && 'lembrete' || 'mensalidade' }}
         run: |
           trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"

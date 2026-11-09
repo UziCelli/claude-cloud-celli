@@ -85,8 +85,8 @@ export default function Politica() {
         <p>Não vendemos nem cedemos dados para propaganda.</p>
         <Lista>
           <li>
-            Usamos serviços que guardam ou processam os dados por nós: Google Firebase (login, banco de dados e site), Cloudflare (aviso
-            de fim do descanso; não guarda nada depois do aviso) e GitHub (cópias de segurança e manutenção).
+            Usamos serviços que guardam ou processam os dados por nós: Google Firebase (login, banco de dados e site), Cloudflare (envio das
+            notificações; guarda só o endereço de notificação do aparelho e quais avisos estão ligados) e GitHub (cópias de segurança e manutenção).
           </li>
           <li>Alguns ficam fora do Brasil, com proteções de segurança.</li>
         </Lista>

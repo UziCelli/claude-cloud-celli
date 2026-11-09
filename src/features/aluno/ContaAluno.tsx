@@ -1,7 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { doc } from 'firebase/firestore'
-import { m } from 'motion/react'
 import marca from '@marca/marca.json'
 import { Avatar } from '../../avatar'
 import { IcBalao, IcLivro, IcPessoa, IcPrancheta, IcSair, IcSeta, IcSino } from '../../icones'
@@ -10,10 +9,10 @@ import { apagarFoto, recuperarSenha, sair, salvarFoto, salvarNome, salvarPeso, s
 import { db } from '../../lib/firebase'
 import { reduzirFoto } from '../../lib/foto'
 import { useDoc } from '../../lib/hooks'
-import { avisosCoachLigados, avisosLigados, cancelarPush, CHAVE_AVISOS, CHAVE_AVISOS_COACH, desinscreverAvisos, inscreverAvisos } from '../../lib/push'
-import { agil } from '../../movimento'
+import { AVISOS_ALUNO, avisosLigados, cancelarPush, CHAVE_AVISOS, inscreverAvisos } from '../../lib/push'
 import { Aviso, Botao, Campo, Msg, Painel } from '../../ui'
 import { IconeQuadrado, Quadro } from '../../vidro'
+import ChavesAvisos, { Chave } from '../conta/ChavesAvisos'
 import { permissao } from './AvisoNotificacoes'
 import PagarPix, { dataCurta, PIX } from './PagarPix'
 
@@ -27,23 +26,6 @@ const Linha = ({ icone, children }: { icone: ReactNode; children: ReactNode }) =
     <IcSeta className="size-5 text-slate-500" />
   </span>
 )
-
-// Chave liga/desliga (role="switch"). A bolinha anda por `x`, não por `layout`: com `layout` ela animava
-// também quando a tela mudava de lugar (entrada da aba, foto carregando) e chegava atrasada, vindo de baixo.
-function Chave({ ligada, rotulo, onChange }: { ligada: boolean; rotulo: string; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={ligada}
-      aria-label={rotulo}
-      onClick={() => onChange(!ligada)}
-      className={`relative flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors after:absolute after:-inset-2 ${ligada ? 'bg-marca-500' : 'bg-white/15'}`}
-    >
-      <m.span initial={false} animate={{ x: ligada ? 24 : 0 }} transition={agil} className="size-6 rounded-full bg-white shadow" />
-    </button>
-  )
-}
 
 function Peso({ uid, atual }: { uid: string; atual?: number }) {
   const [kg, setKg] = useState(atual != null ? String(atual) : '')
@@ -81,7 +63,6 @@ function Peso({ uid, atual }: { uid: string; atual?: number }) {
 function AvisoDescanso() {
   const [p, setP] = useState(permissao)
   const [ligado, setLigado] = useState(avisosLigados)
-  const [coach, setCoach] = useState(avisosCoachLigados)
   const pedir = async () => {
     try {
       await Notification.requestPermission()
@@ -103,12 +84,6 @@ function AvisoDescanso() {
     if (!v) cancelarPush() // descanso em andamento: o aviso já agendado não chega
     guardar(CHAVE_AVISOS, v)
   }
-  const trocarCoach = (v: boolean) => {
-    setCoach(v)
-    guardar(CHAVE_AVISOS_COACH, v)
-    if (v) void inscreverAvisos()
-    else void desinscreverAvisos()
-  }
   return (
     <Quadro className="space-y-2">
       <div className="flex min-h-12 items-center gap-3">
@@ -117,12 +92,7 @@ function AvisoDescanso() {
         {p === 'default' && <Botao tipo="primario" onClick={pedir}>Ativar</Botao>}
         {p === 'granted' && <Chave ligada={ligado} rotulo="Aviso do fim do descanso" onChange={trocar} />}
       </div>
-      {p === 'granted' && (
-        <div className="flex min-h-12 items-center gap-3">
-          <span className="flex-1 text-base font-semibold">Treino novo e mensalidade</span>
-          <Chave ligada={coach} rotulo="Treino novo e mensalidade" onChange={trocarCoach} />
-        </div>
-      )}
+      {p === 'granted' && <ChavesAvisos tipos={AVISOS_ALUNO} />}
       {p == null && <p className="text-sm text-slate-400">Este aparelho não permite notificações.</p>}
       {p === 'denied' && <p className="text-sm text-slate-400">Bloqueado no celular — libere nas configurações do aparelho.</p>}
     </Quadro>

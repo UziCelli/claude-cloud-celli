@@ -189,10 +189,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Mapa e pontos sensíveis atualizados com as novas regras.
 
 ## Ideias e pendências futuras (não fazer sem pedido)
-- **Notificações** (1ª parte no ar em 13/10/2026: mensalidade e treino pronto, ver a seção do dia; o resto continua a planejar):
-  - para o coach: aluno fez o treino, comentário do aluno, "Já paguei";
-  - para o aluno: avisos do coach, treino do dia.
-  - Reaproveitar o Worker de push que já existe (`push/`, Cloudflare, grátis).
+- **Notificações:** prontas (2ª parte em 09/11/2026, ver a seção do dia). Sobrou só uma ideia: avisar o coach de "Sua opinião" nova.
 - **Lojas (App Store / Google Play), ideia de 08/10/2026:**
   - embrulhar o mesmo código com Capacitor; nada de reescrever nativo;
   - mesmo projeto Firebase (aceita web + iOS + Android);
@@ -289,3 +286,18 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
   - presencial: "Sair" virou "Encerrar" (volta para onde estava antes); no grupo, "Tirar";
   - aluno: o Voltar do treino respeita de onde veio (Início ou aba Treino); saiu o "← Hoje" da aba Evolução.
 - Vale para as duas marcas. Nada muda nos dados.
+
+## 09/11/2026 — Notificações: coach, lembrete do treino e aviso escrito
+- Plano e contrato: `docs/plano-notificacoes.md` (2ª parte). Vale para as 2 marcas.
+- **Coach recebe:** aluno concluiu o treino, escreveu anotação, tocou "Já paguei". Ativa em Minha conta → Notificações.
+- **Aluno recebe:** lembrete do treino do dia (seg a sáb, 6h47, só com meso em andamento e sem treino hoje) e aviso escrito pelo coach.
+- **Aviso escrito:** em Alunos → "Aviso para todos", ou engrenagem do aluno → "Enviar aviso". Até 200 letras; nada é gravado no banco.
+- **Ligar/desligar por tipo** em Conta (aluno e coach), por aparelho.
+- Ao sair da conta, o aparelho para de receber avisos.
+- Regras do Firestore não mudaram. Texto da Política sobre a Cloudflare ajustado, sem novo aceite.
+- **Pendências do Victor (testar em iPhone e Android):**
+  - coach: Minha conta → "Ativar notificações neste aparelho";
+  - aluno conclui treino, escreve anotação e toca "Já paguei": o coach recebe os 3;
+  - coach manda "Aviso para todos" e um aviso para um aluno;
+  - lembrete das 6h47 (ou rodar o workflow "Avisos de mensalidade" com modo `lembrete`);
+  - desligar um tipo em Conta e conferir que ele para de chegar.

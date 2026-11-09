@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { b64u } from './b64'
-import { nomeDO, uidOk, validarAvisos, validarFimEm, validarInscricao } from './validar'
+import { nomeDO, uidOk, validarAvisos, validarDesligados, validarRecado, tipoCoachOk, nomeLimpo, nomeCoaches, validarFimEm, validarInscricao } from './validar'
 
 const p256dh = b64u(new Uint8Array([4, ...new Array(64).fill(7)]))
 const auth = b64u(new Uint8Array(16).fill(9))
@@ -87,5 +87,66 @@ describe('validarAvisos', () => {
   })
   it('recusa formatos errados', () => {
     for (const c of [null, 'x', 1, [], {}, { projeto: 'forca--app' }, { projeto: 'forca--app', avisos: {} }, { projeto: 'forca--app', avisos: [null] }]) expect(validarAvisos(c)).toBeNull()
+  })
+})
+
+describe('validarAvisos: lembrete do treino', () => {
+  it('aceita o tipo treino-hoje', () => {
+    expect(validarAvisos({ projeto: 'forca--app', avisos: [{ uid: 'u1', tipo: 'treino-hoje' }] })?.avisos[0].tipo).toBe('treino-hoje')
+  })
+})
+
+describe('validarDesligados', () => {
+  it('sem o campo: nada desligado', () => {
+    expect(validarDesligados(undefined)).toEqual([])
+  })
+  it('aceita só tipos conhecidos, sem repetir', () => {
+    expect(validarDesligados(['lembrete', 'pagou', 'lembrete'])).toEqual(['lembrete', 'pagou'])
+    expect(validarDesligados([])).toEqual([])
+  })
+  it('recusa tipo desconhecido e formato errado', () => {
+    for (const v of [['descanso'], ['x'], [1], 'lembrete', {}, null, Array(20).fill('pagou')]) expect(validarDesligados(v)).toBeNull()
+  })
+})
+
+describe('tipoCoachOk', () => {
+  it('só os 3 avisos do aluno para o coach', () => {
+    for (const t of ['concluiu', 'comentou', 'pagou']) expect(tipoCoachOk(t)).toBe(true)
+    for (const t of ['treino', 'recado', 'lembrete', '', null, 1, undefined]) expect(tipoCoachOk(t)).toBe(false)
+  })
+})
+
+describe('validarRecado', () => {
+  it('aceita de 1 a 15 alunos e texto de 1 a 200 letras (aparado)', () => {
+    expect(validarRecado({ alunoIds: ['a1'], texto: '  Amanhã não tem aula.  ' })).toEqual({ alunoIds: ['a1'], texto: 'Amanhã não tem aula.' })
+    expect(validarRecado({ alunoIds: Array.from({ length: 15 }, (_, i) => `a${i}`), texto: 'x'.repeat(200) })).not.toBeNull()
+  })
+  it('tira repetidos e troca quebras de linha por espaço', () => {
+    expect(validarRecado({ alunoIds: ['a1', 'a1'], texto: 'oi\n\ntudo\tbem' })).toEqual({ alunoIds: ['a1'], texto: 'oi tudo bem' })
+  })
+  it('recusa lista vazia, mais de 15, uid inválido, texto vazio ou longo', () => {
+    const t = 'oi'
+    for (const c of [
+      null, {}, { alunoIds: [], texto: t }, { alunoIds: 'a1', texto: t }, { alunoIds: ['a/b'], texto: t }, { alunoIds: ['__vapid'], texto: t },
+      { alunoIds: Array.from({ length: 16 }, (_, i) => `a${i}`), texto: t },
+      { alunoIds: ['a1'] }, { alunoIds: ['a1'], texto: '   ' }, { alunoIds: ['a1'], texto: 'x'.repeat(201) }, { alunoIds: ['a1'], texto: 5 },
+    ]) expect(validarRecado(c)).toBeNull()
+  })
+})
+
+describe('nomeLimpo', () => {
+  it('apara, tira caracteres de controle e limita a 60', () => {
+    expect(nomeLimpo('  Ana \n Paula ')).toBe('Ana Paula')
+    expect(nomeLimpo('x'.repeat(80))).toHaveLength(60)
+  })
+  it('sem nome: texto neutro', () => {
+    for (const n of [undefined, null, '', '   ', 7]) expect(nomeLimpo(n)).toBe('Um aluno')
+  })
+})
+
+describe('nomeCoaches', () => {
+  it('uma instância por projeto, que nunca colide com uid', () => {
+    expect(nomeCoaches('forca--app')).toBe('__coaches:forca--app')
+    expect(uidOk(nomeCoaches('forca--app'))).toBe(false)
   })
 })

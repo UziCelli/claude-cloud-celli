@@ -52,6 +52,7 @@ import { auth, authCadastro, db } from './firebase'
 import type { Importado } from './planilha'
 import { inicioJanela } from './resumo'
 import { VERSAO_PRIVACIDADE } from './privacidade'
+import { desinscreverAvisos } from './push'
 import marca from '@marca/marca.json'
 
 // ---------- coach ----------
@@ -510,6 +511,8 @@ let saindo: Promise<void> | null = null
 export function sair() {
   saindo ??= (async () => {
     await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
+    // Este aparelho para de receber os avisos de quem saiu (precisa do login ainda válido; desiste em 2 s).
+    await Promise.race([desinscreverAvisos(), new Promise((r) => setTimeout(r, 2000))])
     await signOut(auth)
   })().finally(() => {
     saindo = null
