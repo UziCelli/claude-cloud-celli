@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { b64uParaBytes, cabecalhosPush, juntarUrl, mesmaChave, precisaInscrever } from './push'
+import { b64uParaBytes, cabecalhosPush, juntarUrl, lerDesligados, lotes, mesmaChave, precisaInscrever } from './push'
 
 describe('b64uParaBytes', () => {
   it('converte base64url (com - e _, sem =) em bytes', () => {
@@ -50,5 +50,24 @@ describe('cabecalhosPush', () => {
   })
   it('sem App Check (ou falha ao obter): só Authorization e Content-Type', () => {
     expect(cabecalhosPush('t')).toEqual({ Authorization: 'Bearer t', 'Content-Type': 'application/json' })
+  })
+})
+
+describe('preferências de aviso', () => {
+  it('reenvia a inscrição quando as preferências mudam', () => {
+    const agora = 10 * 24 * 3600 * 1000
+    expect(precisaInscrever(['u', 'e', agora - 1000, 'a:'], 'u', 'e', agora, 'a:')).toBe(false)
+    expect(precisaInscrever(['u', 'e', agora - 1000, 'a:'], 'u', 'e', agora, 'a:lembrete')).toBe(true)
+    expect(precisaInscrever(['u', 'e', agora - 1000], 'u', 'e', agora, 'a:')).toBe(true) // gravado pela versão antiga
+  })
+  it('lê a lista de desligados; sem ela, respeita a chave antiga', () => {
+    expect(lerDesligados('["lembrete"]', '0')).toEqual(['lembrete'])
+    expect(lerDesligados(null, '0')).toEqual(['treino', 'mensalidade'])
+    expect(lerDesligados(null, null)).toEqual([])
+    expect(lerDesligados('{estragado', '1')).toEqual([])
+  })
+  it('divide os alunos em lotes de 15', () => {
+    expect(lotes([1, 2, 3], 2)).toEqual([[1, 2], [3]])
+    expect(lotes([], 15)).toEqual([])
   })
 })

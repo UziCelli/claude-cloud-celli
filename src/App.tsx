@@ -5,6 +5,7 @@ import { collection, query, where } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
 import { consultaRegistrosRecentes } from './lib/acoes'
 import { useLista, useUsuarioAtual } from './lib/hooks'
+import { inscreverAvisos } from './lib/push'
 import { inicioJanela, type AlunoComId } from './lib/resumo'
 import type { MesoSalvo } from './lib/conversores'
 import { calcularAlertas, useArquivados, type Reg } from './features/coach/alertas/Alertas'
@@ -182,6 +183,9 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
     auth.currentUser?.getIdTokenResult().then((t) => setSemFator(faltaSegundoFator(t.claims))).catch(() => {})
   }, [uid])
   // Treino presencial: sem menu nem logo (a barra do presencial cobre a área segura); o Grupo fica montado entre as telas.
+  useEffect(() => {
+    void inscreverAvisos(true) // avisos dos alunos (concluiu, anotou, "Já paguei"); só faz algo com a permissão já dada
+  }, [uid])
   const presencial = rota.startsWith('/aluno/') && rota.includes('/presencial')
   let p: Record<string, string> | null
   let tela = <Inicio nome={nome} />

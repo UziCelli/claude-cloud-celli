@@ -2,6 +2,7 @@ import { useState } from 'react'
 import marca from '@marca/marca.json'
 import type { Usuario } from '../../lib/acesso'
 import { informarPagamento } from '../../lib/acoes'
+import { avisarCoach } from '../../lib/push'
 import { codigoPix } from '../../lib/pix'
 import { qrDataUrl } from '../../lib/qr'
 import { Aviso, Botao, Msg } from '../../ui'
@@ -55,6 +56,7 @@ export default function PagarPix({ uid, perfil }: { uid: string; perfil: Usuario
           onClick={() => {
             setErro('')
             setEnviado(new Date())
+            avisarCoach('pagou')
             informarPagamento(uid).catch(() => {
               setEnviado(null)
               setErro('Não deu para enviar o aviso. Tente de novo.')

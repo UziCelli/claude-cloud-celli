@@ -11,6 +11,7 @@ import { ir } from '../../../rota'
 import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
 import { PIX, reais } from '../../aluno/PagarPix'
+import EnviarAviso from './EnviarAviso'
 import { IcEngrenagem, IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
 
@@ -77,6 +78,7 @@ export default function Alunos() {
   const [ok, setOk] = useState('')
   const [arquivados, setArquivados] = useState(false)
   const [confirmando, setConfirmando] = useState<{ id: string; tipo: 'arquivar' | 'apagar' } | null>(null)
+  const [avisando, setAvisando] = useState<string | null>(null) // id do aluno, ou 'todos'
   const nArquivados = alunos.filter((a) => a.status === 'arquivado').length
 
   const filtrados = alunos
@@ -127,8 +129,10 @@ export default function Alunos() {
     setAberto(id)
     setEditando(null)
     setConfirmando(null)
+    setAvisando((v) => (v === 'todos' ? v : null))
   }
 
+  const ativosApp = alunos.filter((a) => a.status === 'ativo' && !a.presencial).map((a) => a.id)
   const linhaAcao = 'flex h-11 w-full items-center text-left text-sm font-semibold'
   const acoes = (a: Aluno) => {
     const arq = a.status === 'arquivado'
@@ -141,6 +145,7 @@ export default function Alunos() {
       <>
         {!a.presencial && a.status === 'bloqueado' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Liberar</button>}
         {!a.presencial && a.status === 'ativo' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Renovar</button>}
+        {!a.presencial && <button className={linhaAcao} onClick={() => setAvisando(a.id)}>Enviar aviso</button>}
         {!a.presencial && a.status !== 'bloqueado' && (
           <button className={`${linhaAcao} text-red-400`} onClick={() => { abrir(null); bloquear(a.id) }}>Bloquear</button>
         )}
@@ -175,6 +180,8 @@ export default function Alunos() {
           <m.div className="pt-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
             {confirmando?.id === a.id ? (
               <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />
+            ) : avisando === a.id ? (
+              <EnviarAviso ids={[a.id]} para={a.nome} onFechar={() => setAvisando(null)} />
             ) : editando === a.id ? (
               <div className="w-full space-y-3 pb-2">
                 <FormularioData padrao={dataPadrao(a)} onConfirmar={(v) => liberar(a.id, v)} onCancelar={() => setEditando(null)} />
@@ -197,6 +204,17 @@ export default function Alunos() {
       {(nArquivados > 0 || arquivados) && (
         <div className="mb-4">
           <Botao onClick={() => setArquivados((v) => !v)}>{arquivados ? 'Voltar aos alunos' : `Arquivados (${nArquivados})`}</Botao>
+        </div>
+      )}
+      {!arquivados && ativosApp.length > 0 && (
+        <div className="mb-4">
+          {avisando === 'todos' ? (
+            <Cartao>
+              <EnviarAviso ids={ativosApp} para={`todos os alunos ativos (${ativosApp.length})`} onFechar={() => setAvisando(null)} />
+            </Cartao>
+          ) : (
+            <Botao onClick={() => setAvisando('todos')}>Aviso para todos</Botao>
+          )}
         </div>
       )}
       {arquivados && <p className="mb-4 text-sm text-slate-400">Apagar de vez apaga tudo do aluno, inclusive o login e as cópias de segurança (em até 24 h).</p>}
