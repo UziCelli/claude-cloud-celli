@@ -19,7 +19,7 @@ export default function VozTreino({
   registros: Registros
   onAtualizar: (patch: Partial<Meso>) => void
 }) {
-  const { dados, carregando } = useDoc<{ chave: string }>(refChaveIA())
+  const { dados, carregando, erro: erroLeitura } = useDoc<{ chave: string }>(refChaveIA())
   const [aberto, setAberto] = useState(false)
   const [texto, setTexto] = useState('')
   const [ouvindo, setOuvindo] = useState(false)
@@ -93,11 +93,16 @@ export default function VozTreino({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Montar treinos por voz</h2>
-          <button type="button" className="min-h-11 px-2 text-sm text-slate-400 hover:text-slate-200" onClick={() => setAberto(false)}>
+          <button type="button" className="min-h-11 px-2 text-sm text-slate-400 hover:text-slate-200" onClick={() => {
+              parar.current()
+              setAberto(false)
+            }}>
             Fechar
           </button>
         </div>
-        {!dados?.chave ? (
+        {erroLeitura ? (
+          <Aviso>Ative a verificação em 2 etapas em Minha conta para usar o assistente.</Aviso>
+        ) : !dados?.chave ? (
           <Aviso>
             Falta cadastrar a chave da IA. <a href="#/conta" className="underline">Abrir Minha conta</a>
           </Aviso>

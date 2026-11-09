@@ -121,4 +121,18 @@ describe('aplicarProposta', () => {
     expect(r.patch.divisao![0]).toBe(meso.divisao[0])
     expect(r.patch.metodos!.map((m) => m.treino)).toEqual([1, 2])
   })
+
+  it('apaga trocas e adições do treino aplicado (elas mandam mais que a divisão) e bloqueia adição com carga', () => {
+    const m = {
+      ...meso,
+      trocas: { '1-3-1': { slotId: 'x', nome: 'Troca' }, '1-2-1': { slotId: 'y', nome: 'Outra' } },
+      adicoes: { '2-3': [{ slotId: 'ad', nome: 'Extra' }], '2-2': [{ slotId: 'ad2', nome: 'Extra 2' }] },
+    } as unknown as Meso
+    const r = aplicarProposta(m, {}, [prop(3, 'Remada')])
+    expect(Object.keys(r.patch.trocas!)).toEqual(['1-2-1'])
+    expect(Object.keys(r.patch.adicoes!)).toEqual(['2-2'])
+    const b = aplicarProposta(m, { '2-3': { ad: [20] } }, [prop(3, 'Remada')])
+    expect(b.bloqueados).toEqual([3])
+    expect(b.aplicados).toEqual([])
+  })
 })

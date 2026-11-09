@@ -131,21 +131,28 @@ export function aplicarProposta(
   const divisao = [...meso.divisao]
   const progressaoExercicio = { ...meso.progressaoExercicio }
   let metodos = meso.metodos
+  let trocas = meso.trocas
+  let adicoes = meso.adicoes
   const aplicados: number[] = []
   const bloqueados: number[] = []
   const substituidos: number[] = []
+  const comCarga = (chave: string, slots: Slot[]) => slots.some((s) => registros[chave]?.[s.slotId]?.some((c) => c != null))
   for (const { treino: t, exercicios } of proposta) {
     if (t < 1 || t > meso.frequencia || !exercicios.length) continue
     const antigos = meso.divisao[t - 1] ?? []
-    if (antigos.some((_, i) => semanasComHistorico(meso, registros, t, i + 1).length)) {
+    const adicoesComCarga = Object.entries(meso.adicoes ?? {}).some(([k, slots]) => k.endsWith(`-${t}`) && comCarga(k, slots))
+    if (adicoesComCarga || antigos.some((_, i) => semanasComHistorico(meso, registros, t, i + 1).length)) {
       bloqueados.push(t)
       continue
     }
     for (const s of antigos) delete progressaoExercicio[s.slotId]
     if (antigos.length) substituidos.push(t)
     metodos = metodos.filter((m) => m.treino !== t)
+    // Trocas e adições pontuais do treino têm prioridade sobre a divisão: saem junto, senão o aluno veria o exercício antigo.
+    if (trocas) trocas = Object.fromEntries(Object.entries(trocas).filter(([k]) => k.split('-')[1] !== String(t)))
+    if (adicoes) adicoes = Object.fromEntries(Object.entries(adicoes).filter(([k]) => !k.endsWith(`-${t}`)))
     divisao[t - 1] = exercicios.slice(0, 10).map((e) => ({ slotId: crypto.randomUUID(), nome: e.nome }))
     aplicados.push(t)
   }
-  return { patch: { divisao, metodos, progressaoExercicio }, aplicados, bloqueados, substituidos }
+  return { patch: { divisao, metodos, progressaoExercicio, trocas, adicoes }, aplicados, bloqueados, substituidos }
 }
