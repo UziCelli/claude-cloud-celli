@@ -34,7 +34,7 @@ export default function Politica() {
         <Logo className="h-10 text-white" />
         Política de Privacidade
       </h1>
-      <p className="text-center text-xs text-slate-500">Versão vigente: 13/10/2026</p>
+      <p className="text-center text-xs text-slate-500">Versão vigente: 09/11/2026</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
           {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
@@ -104,8 +104,12 @@ export default function Politica() {
       </Secao>
       <Secao n={8} titulo="Segurança">
         <p>
-          Conexão criptografada; regras que impedem um aluno de ver dados de outro; acesso do coach com verificação em 2 etapas; proteção
-          contra robôs (reCAPTCHA); saída automática por inatividade.
+          Conexão criptografada; dados guardados criptografados pelo Google; regras que impedem um aluno de ver dados de outro; acesso do
+          coach com verificação em 2 etapas; proteção contra robôs (reCAPTCHA); saída automática por inatividade.
+        </p>
+        <p>
+          Senha com no mínimo 8 caracteres, com letra e número. Ela é guardada pelo Google de um jeito que ninguém consegue ler, nem o coach.
+          Quem tinha senha mais fraca precisa criar uma nova para continuar usando o app.
         </p>
       </Secao>
       <Secao n={9} titulo="Mudanças">

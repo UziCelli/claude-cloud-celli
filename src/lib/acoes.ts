@@ -8,6 +8,7 @@ import {
   getMultiFactorResolver,
   multiFactor,
   reauthenticateWithCredential,
+  updatePassword,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
@@ -419,6 +420,12 @@ export async function reautenticar(senhaAtual: string) {
   if (!user?.email) throw new Error('Sem login')
   await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, senhaAtual))
   return user
+}
+
+// Aceite dos termos (Aceite.tsx): confere a senha atual e, se vier `nova`, troca a senha.
+export async function confirmarSenha(senhaAtual: string, nova?: string) {
+  const user = await reautenticar(senhaAtual)
+  if (nova) await updatePassword(user, nova)
 }
 
 export async function alterarEmail(senhaAtual: string, novoEmail: string) {
