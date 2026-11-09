@@ -90,7 +90,7 @@ export function filtrar<T extends Pick<Feedback, 'tipo' | 'lido' | 'depoimento'>
 
 export const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0] ?? ''
 
-// "do VFITCOACH" → "treina com o VFITCOACH"; "da Gislane" → "treina com a Gislane" (sem supor o gênero do aluno).
+// marca.doNome "do X" → "treina com o X"; "da Y" → "treina com a Y" (sem supor o gênero do aluno).
 export const assinaturaMarca = (doNome: string) => 'treina ' + doNome.replace(/^d([oa]) /, 'com $1 ')
 
 // Texto pronto para colar no site.
