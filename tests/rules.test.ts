@@ -717,6 +717,48 @@ describe('notas', () => {
   });
 });
 
+// Chave da API de IA: só o coach (com 2º fator) toca.
+describe('segredos (chave da IA)', () => {
+  const ref = (uid: string | undefined, id = 'ia') => doc(db(uid), 'segredos', id);
+  const chave = 'sk-ant-api03-' + 'x'.repeat(30);
+  const gravar = (uid: string | undefined, extra: object = {}, id = 'ia') =>
+    setDoc(ref(uid, id), { chave, atualizadoEm: serverTimestamp(), ...extra });
+
+  beforeEach(() =>
+    env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore() as unknown as Firestore, 'segredos', 'ia'), { chave, atualizadoEm: passado });
+    }),
+  );
+
+  it('coach lê, troca e apaga a chave', async () => {
+    await assertSucceeds(getDoc(ref('coach')));
+    await assertSucceeds(gravar('coach'));
+    await assertSucceeds(deleteDoc(ref('coach')));
+  });
+
+  it('aluno (liberado ou não), anônimo e coach sem 2º fator não leem nem gravam', async () => {
+    for (const uid of ['ana', 'exp', 'blq', 'agu', undefined]) {
+      await assertFails(getDoc(ref(uid)));
+      await assertFails(gravar(uid));
+      await assertFails(deleteDoc(ref(uid)));
+    }
+    const semFator = contexto('coach', SEM_FATOR).firestore() as unknown as Firestore;
+    await assertFails(getDoc(doc(semFator, 'segredos', 'ia')));
+    await assertFails(setDoc(doc(semFator, 'segredos', 'ia'), { chave, atualizadoEm: serverTimestamp() }));
+  });
+
+  it('nega outro documento, chave fora do formato, campo extra e data do aparelho', async () => {
+    await assertFails(gravar('coach', {}, 'outro'));
+    await assertFails(getDoc(ref('coach', 'outro')));
+    await assertFails(gravar('coach', { chave: 'curta' }));
+    await assertFails(gravar('coach', { chave: 'abc-' + 'x'.repeat(30) }));
+    await assertFails(gravar('coach', { chave: 'sk-ant-' + 'x'.repeat(400) }));
+    await assertFails(gravar('coach', { chave: 123 }));
+    await assertFails(gravar('coach', { extra: 1 }));
+    await assertFails(gravar('coach', { atualizadoEm: futuro }));
+  });
+});
+
 // Pedido de exclusão total (LGPD): só o coach cria/lê/apaga; o workflow diário usa a Admin SDK.
 describe('exclusoes', () => {
   const ex = (uid: string | undefined, id = 'ana') => doc(db(uid), 'exclusoes', id);

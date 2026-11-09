@@ -2,6 +2,13 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: `claude/fervent-brahmagupta-y5vri5`. Os PRs até o #77 estão juntados e publicados.
 
+## 10/11/2026 — Assistente de voz (IA)
+- Pedido do Victor: chave da API da Anthropic (Haiku) nos dois apps (VFit e Gislane, mesmo código) para montar treino falando.
+- Decisão do Victor: chave guardada no Firestore (`segredos/ia`), só o personal lê. Sem Cloud Function (plano grátis).
+- Feito: cadastro da chave em Minha conta; botão "Montar treinos por voz" na aba Divisão (ditado do navegador, grátis → Haiku → prévia → Aplicar); regra + testes; CSP; backup ignora `segredos`.
+- Falta o Victor: criar a chave no console.anthropic.com, **definir limite de gasto lá**, colar em Minha conta (nos dois apps) e testar o microfone num celular real (Android; no iPhone instalado o ditado pode não existir, aí usa o microfone do teclado).
+- Ideia futura: pedir também séries/reps/métodos por voz (hoje só a lista de exercícios por treino).
+
 ## Regras combinadas com o Victor
 - **Linguagem:** respostas curtas, em tópicos, pt-BR (ele tem TDAH e não programa).
 - **Hierarquia (14/10/2026, `CLAUDE.md`):** Opus é o **arquiteto** (decisões e questões difíceis passam por ele), Sonnet **executa** (`dev`, `revisor`), Haiku faz o **operacional** (`auxiliar`, `explorador`: commit, PR, merge, CI, deploy, testes).

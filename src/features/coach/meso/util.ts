@@ -120,3 +120,32 @@ export function removerGrupo(meso: Meso, g: GrupoTroca): Partial<Meso> {
 export function grupoTemCarga(g: GrupoTroca, registros: Record<string, Record<string, (number | null)[]>>): boolean {
   return semanasDe(g.de, g.ate).some((w) => registros[`${w}-${g.t}`]?.[g.slot.slotId]?.some((c) => c != null))
 }
+
+// Aplica a proposta da IA (assistente de voz) na divisão. Treino que já tem carga registrada nunca é tocado
+// (mesma regra do "Copiar de…"). Treino que já tinha exercícios é substituído e perde métodos e progressão própria.
+export function aplicarProposta(
+  meso: Meso,
+  registros: Record<string, Record<string, (number | null)[]>>,
+  proposta: { treino: number; exercicios: { nome: string }[] }[],
+): { patch: Partial<Meso>; aplicados: number[]; bloqueados: number[]; substituidos: number[] } {
+  const divisao = [...meso.divisao]
+  const progressaoExercicio = { ...meso.progressaoExercicio }
+  let metodos = meso.metodos
+  const aplicados: number[] = []
+  const bloqueados: number[] = []
+  const substituidos: number[] = []
+  for (const { treino: t, exercicios } of proposta) {
+    if (t < 1 || t > meso.frequencia || !exercicios.length) continue
+    const antigos = meso.divisao[t - 1] ?? []
+    if (antigos.some((_, i) => semanasComHistorico(meso, registros, t, i + 1).length)) {
+      bloqueados.push(t)
+      continue
+    }
+    for (const s of antigos) delete progressaoExercicio[s.slotId]
+    if (antigos.length) substituidos.push(t)
+    metodos = metodos.filter((m) => m.treino !== t)
+    divisao[t - 1] = exercicios.slice(0, 10).map((e) => ({ slotId: crypto.randomUUID(), nome: e.nome }))
+    aplicados.push(t)
+  }
+  return { patch: { divisao, metodos, progressaoExercicio }, aplicados, bloqueados, substituidos }
+}

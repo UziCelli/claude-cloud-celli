@@ -32,7 +32,8 @@ const lerColecao = async (col) => {
 }
 
 const backup = {}
-for (const col of await db.listCollections()) backup[col.id] = await lerColecao(col)
+// `segredos` (chave da IA) nunca entra no backup: o artifact fica 30 dias no GitHub.
+for (const col of await db.listCollections()) if (col.id !== 'segredos') backup[col.id] = await lerColecao(col)
 
 const arquivo = process.argv[2] ?? 'backup.json'
 writeFileSync(arquivo, JSON.stringify(backup, null, 2))

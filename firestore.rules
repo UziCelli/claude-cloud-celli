@@ -267,6 +267,19 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
+    // Chave da API de IA (assistente de voz, src/lib/ia.ts): segredos/ia = { chave, atualizadoEm }.
+    // Só o coach (com 2º fator) lê, grava e apaga; aluno e anônimo nunca. O backup semanal ignora esta coleção.
+    match /segredos/{id} {
+      allow read, delete: if isCoach() && id == 'ia';
+      allow create, update: if isCoach() && id == 'ia'
+        && request.resource.data.keys().hasOnly(['chave', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['chave', 'atualizadoEm'])
+        && request.resource.data.chave is string
+        && request.resource.data.chave.size() >= 20 && request.resource.data.chave.size() <= 300
+        && request.resource.data.chave.matches('sk-ant-.*')
+        && request.resource.data.atualizadoEm == request.time;
+    }
+
     // Registro de erros do app (src/lib/log.ts): qualquer usuário logado cria, com campos e
     // tamanhos fixos (exige login para ninguém de fora esgotar a cota grátis). Só o coach lê e apaga.
     match /logs/{id} {

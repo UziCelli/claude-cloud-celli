@@ -26,6 +26,7 @@ Comece por aqui para achar onde mexer.
 | Painel de evolução, conquistas, ranking | `src/lib/evolucao.ts` + `src/features/evolucao/` + `src/features/coach/RankingAlunos.tsx` |
 | Relatório do fim do ciclo (tela, PDF, story) | `src/lib/relatorio.ts` + `src/features/relatorio/` |
 | PDF (canvas → arquivo) | `src/lib/pdf.ts` (`montarPdf`) + `src/features/relatorio/pdfRelatorio.ts` (+ `pdf.test.ts`) |
+| Assistente de voz (IA): montar treinos falando | `src/lib/voz.ts` (ditado) + `src/lib/iaTreino.ts` (pedido/resposta, puro) + `src/lib/ia.ts` (chave e chamada ao Haiku) + `src/features/coach/meso/VozTreino.tsx` + `src/features/conta/AssistenteIA.tsx` + `firestore.rules` (`segredos`) |
 | Guarda contra emoji | `src/semEmoji.test.ts` (varre `src/**`; usar `src/icones.tsx`) |
 
 ## Árvore por pasta
@@ -116,6 +117,7 @@ Comece por aqui para achar onde mexer.
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão (Config: pausa dos principais e dos auxiliares)
 - `meso/MesosDoAluno.tsx` — lista de mesos de um aluno
 - `meso/ImportarPlanilha.tsx` — "Importar da planilha": lê o .xlsx no aparelho (`lib/xlsx.ts` + `lib/planilha.ts`) e grava meso + cargas num lote (`importarMeso` em `acoes.ts`)
+- `meso/VozTreino.tsx` — "Montar treinos por voz" no topo da aba Divisão: ditado (`lib/voz.ts`) ou texto → Haiku (`lib/ia.ts`) → prévia → "Aplicar no editor" (`aplicarProposta` em `meso/util.ts`; não salva sozinho, treino com carga é pulado)
 - `meso/CampoExercicio.tsx` — combobox de exercício (sugestões de `src/lib/busca.ts`, texto livre)
 - `meso/Preview.tsx` (pré-visualização recolhível, estado em `localStorage` `preview-aberta`, começa fechada)
 - `meso/TabDivisao.tsx` (cartão "Trocas e adições" com intervalo de semanas; navegação por teclado: Tab/Enter via `onAvancar` do `CampoExercicio`, foco no `useEffect`; copiar treino via `copiarTreino` de `meso/util.ts`), `TabMetodos.tsx` (abas de treino + lista por exercício; cada método é uma linha com as semanas; "+ Método" ou tocar na linha abre a `Folha` com rascunho: método, semanas, séries, drop, "Juntar com", "Mais ajustes"; o ✕ da linha pede confirmação; lógica em `engine/planoMetodos.ts`), `TabProgressao.tsx` (Ajustar volume: % por semana e limite de reps gravados no meso, prévia automática com movimentos por semana, variação % e total; modos Progressão (com chips para pausar semanas), Reduzir com volta gradual e Polimento (chips de semanas, a última já marcada; motor `polimento` em `engine/volume.ts`); só "Aplicar alterações" grava) — abas do editor (progressão: padrão + por exercício via slotId)
@@ -124,6 +126,7 @@ Comece por aqui para achar onde mexer.
 - `semana/Monitoramento.tsx`, `LoadInput.tsx`, `SessaoCard.tsx` — cards de treino (treino de hoje em destaque: prop `hoje`, calculada em `VisaoSemana`; Início usa `resumoCoach().treinosHoje`)
 
 ### `src/features/conta/` — Minha Conta
+- `AssistenteIA.tsx` — só do coach: cadastra/troca/remove a chave da Anthropic (`segredos/ia`); mostra só `sk-ant-…` + 4 últimos
 - `MinhaConta.tsx` — só do coach: e-mail, trocar e-mail/senha, 2 etapas, Como usar (abre o `TutorialCoach`), Sair (o aluno usa a `ContaAluno`)
 
 ### `src/features/onboarding/` — Onboarding (aluno e coach, as duas marcas)
@@ -311,6 +314,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
+| Chave da IA (10/11/2026) | `firestore.rules` (`segredos/ia`), `src/lib/ia.ts`, `tools/backup.mjs`, `firebase.json` (CSP + `microphone=(self)`) | A chave da Anthropic fica em `segredos/ia`: só coach com 2º fator lê/grava (formato `sk-ant-…`, `hasOnly`). Nunca no código, no log (`registrarErro`), na tela inteira ou no backup (`backup.mjs` pula `segredos`; o artifact fica 30 dias no GitHub). A chamada sai do aparelho do coach direto para `api.anthropic.com` (header `anthropic-dangerous-direct-browser-access`; `connect-src` liberado). O aluno nunca carrega esse código de tela. Gasto limitado no console.anthropic.com (Limits). A IA só sugere: nada grava sem o coach tocar em "Aplicar" e "Salvar"; resposta da IA é lida com desconfiança (`lerResposta`). | `tests/rules.test.ts` (segredos), `iaTreino.test.ts`, `util.test.ts` (`aplicarProposta`), `e2e/voz-ia.spec.ts` |
 | Senha mínima (08/11/2026) | `src/lib/senha.ts`, `Entrar.tsx`, `AcaoEmail.tsx`, `tools/mfa.mjs` | Senha nova: 8+ caracteres, letra e número (`problemaSenha`), no cadastro e no `/acao`. O servidor (Identity Platform, workflow "2 etapas do coach" → `senha-minima`) exige 8 + número; mudou o mínimo? mude nos dois. `forceUpgradeOnSignin: false`: quem tem senha antiga curta continua entrando. | `senha.test.ts`, `acao.spec.ts`, `privacidade.spec.ts` |
 | Links dos e-mails (22/10/2026) | `AcaoEmail.tsx`, `acoes.ts` | O `oobCode` nunca vai para log/`registrarErro` (só o código do erro). `/acao` precisa tratar todos os modos (`resetPassword`, `verifyAndChangeEmail`, `recoverEmail`, `verifyEmail`) enquanto o URL de ação do Firebase apontar para ela, senão a troca de e-mail quebra. | `acao.spec.ts` |
 | Cargas gravadas fora do app (04/11/2026) | `conversores.ts` (`docParaCargas`, `lerPc`), `Treino.tsx`, `VisaoSemana.tsx`, `xlsx.ts` | As regras não conferem os valores dentro de `cargas`/`reps`/`pc`: a leitura ignora coluna fora de s1..s40 (s999999999 travava a tela do coach) e valor que não é número finito até 2000; negativo fica (dado antigo). `pc` fora de 0..300 = desligado. O .xlsx tem teto de 20 MB comprimido e 50 MB descompactado por parte (zip bomba). | `conversores.test.ts`, `xlsx.test.ts` |

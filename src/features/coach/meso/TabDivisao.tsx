@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import CampoExercicio from './CampoExercicio'
+import VozTreino from './VozTreino'
 import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, type GrupoTroca } from './util'
 
 
@@ -182,6 +183,7 @@ export default function TabDivisao({
   return (
     <div className="space-y-4">
       <Msg>{aviso && <Aviso>{aviso}</Aviso>}</Msg>
+      <VozTreino meso={meso} registros={registros} onAtualizar={onAtualizar} />
       <Cartao>
         <div className="mb-3 flex gap-2 overflow-x-auto md:hidden">
           {treinos.map((t) => (
