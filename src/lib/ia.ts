@@ -2,7 +2,7 @@
 // e chama o Haiku direto do aparelho do coach. A chave nunca vai no código do app nem para o aluno.
 import { deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db } from './firebase'
-import { corpoPedido, lerResposta, type TreinoProposto } from './iaTreino'
+import { corpoPedido, lerResposta, type Proposta } from './iaTreino'
 
 const refChave = () => doc(db, 'segredos', 'ia')
 
@@ -21,8 +21,8 @@ const ERROS_HTTP: Record<number, string> = {
   529: 'A IA está sobrecarregada agora. Tente de novo em instantes.',
 }
 
-// Manda a fala ao Haiku e devolve os exercícios por treino. Erros viram texto em português para a tela.
-export async function montarTreinosPorFala(chave: string, fala: string, frequencia: number): Promise<TreinoProposto[]> {
+// Manda a fala (e a lista atual de exercícios de cada treino) ao Haiku e devolve as ações pedidas. Erros viram texto em português para a tela.
+export async function montarTreinosPorFala(chave: string, fala: string, divisao: string[][]): Promise<Proposta> {
   let resp: Response
   try {
     resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -34,11 +34,11 @@ export async function montarTreinosPorFala(chave: string, fala: string, frequenc
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify(corpoPedido(fala, frequencia)),
+      body: JSON.stringify(corpoPedido(fala, divisao)),
     })
   } catch {
     throw new Error('Sem conexão com a IA. Confira a internet e tente de novo.')
   }
   if (!resp.ok) throw new Error(ERROS_HTTP[resp.status] ?? `A IA não respondeu (erro ${resp.status}).`)
-  return lerResposta(await resp.json().catch(() => null), frequencia)
+  return lerResposta(await resp.json().catch(() => null), divisao)
 }
