@@ -253,7 +253,7 @@ export function sinaisAtencao(r: Respostas): string[] {
   const s = PARQ_ORDEM.filter((k) => r[k] === true).map((k) => FRASE_PARQ[k])
   if (r.gestante === 'sim') s.push('Gestante ou com bebê de até 6 meses')
   if (r.cirurgia12m === true) s.push('Cirurgia nos últimos 12 meses')
-  if (Array.isArray(r.dores) && r.dores.length > 0) s.push('Dor em alguma região')
+  if (Array.isArray(r.dores) && r.dores.length > 0) s.push(`Dor: ${r.dores.join(', ')}`)
   return s
 }
 
@@ -271,11 +271,11 @@ const rotuloDe = (p: Pergunta, v: Resposta): string => {
 
 // Linhas "Pergunta: resposta" da ficha, na ordem das perguntas. Sem a declaração e sem texto vazio.
 export const resumoAnamnese = (r: Respostas): string[] =>
-  TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo} ${rotuloDe(p, r[p.id])}`)
+  TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo}: ${rotuloDe(p, r[p.id])}`)
 
 // Não vistas pelo coach: com atenção primeiro, depois as mais recentes.
 export const anamnesesNovas = (docs: Anamnese[]) =>
-  docs.filter((d) => d.vistaEm === null).sort((a, b) => Number(tem(b)) - Number(tem(a)) || emOuAgora(b) - emOuAgora(a))
+  docs.filter((d) => d.origem === 'aluno' && d.vistaEm === null).sort((a, b) => Number(tem(b)) - Number(tem(a)) || emOuAgora(b) - emOuAgora(a))
 
 // 'primeira' = nunca respondeu. 'ciclo' = um ciclo terminou (há até 30 dias) e a última resposta é de antes dos 7 dias finais.
 export function precisaAtualizar(ultimaDia: string | null, mesos: Meso[], agora: Date): 'primeira' | 'ciclo' | null {

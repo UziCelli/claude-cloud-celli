@@ -195,6 +195,9 @@ describe('sinaisAtencao / avisoMedico', () => {
     expect(sinaisAtencao({ ...minima(), gestante: 'sim', cirurgia12m: true, dores: ['joelho'] })).toHaveLength(3)
     expect(sinaisAtencao({ ...minima(), gestante: 'nao', cirurgia12m: false, dores: [] })).toEqual([])
   })
+  it('dor lista as regiões escolhidas', () => {
+    expect(sinaisAtencao({ ...minima(), dores: ['ombro', 'joelho'] })).toEqual(['Dor: ombro, joelho'])
+  })
   it('avisoMedico só para "sim" no PAR-Q', () => {
     expect(avisoMedico({ ...minima(), tontura: true })).toBe(true)
     expect(avisoMedico({ ...minima(), gestante: 'sim', dores: ['ombro'] })).toBe(false)
@@ -207,6 +210,9 @@ describe('resumoAnamnese', () => {
     expect(l.some((x) => x.includes('Lombar') && x.includes('Ombro'))).toBe(true)
     expect(l.some((x) => x.includes('7 a 8 h'))).toBe(true)
     expect(l.every((x) => x.length > 0)).toBe(true)
+  })
+  it('usa "pergunta: resposta"', () => {
+    expect(resumoAnamnese({ ...minima(), coracao: true, parqQual: 'Pressão alta' })).toContain('Conte qual: Pressão alta')
   })
   it('mínima não quebra', () => expect(resumoAnamnese(minima()).length).toBeGreaterThan(0))
 })
@@ -228,6 +234,9 @@ describe('anamnesesNovas', () => {
       doc('atencao', 'c', { coracao: true }, { em: 0 }),
     ])
     expect(r.map((d) => d.id)).toEqual(['atencao', 'nova', 'velha'])
+  })
+  it('ignora versões lançadas pelo coach', () => {
+    expect(anamnesesNovas([doc('c', 'a', {}, { origem: 'coach' }), doc('x', 'a')]).map((d) => d.id)).toEqual(['x'])
   })
 })
 
