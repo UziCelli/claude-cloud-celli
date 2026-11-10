@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { codigoPix, crc16 } from './pix'
+import { codigoPix, crc16, valorComAtraso } from './pix'
 
 // Lê o código como TLV (ID de 2 dígitos + tamanho de 2 dígitos + valor).
 function tlv(s: string) {
@@ -64,5 +64,34 @@ describe('codigoPix', () => {
     for (const chave of ['victor@exemplo.com', '+5511999998888', base.chave]) {
       expect(tlv(tlv(codigoPix({ ...base, chave }))['26'])['01']).toBe(chave)
     }
+  })
+})
+
+describe('valorComAtraso (multa 2% + juros 1% ao mês, por dia)', () => {
+  const regra = { multa: 2, jurosMes: 1 }
+  const vence = new Date('2026-11-10T23:59:59.999-03:00') // pagoAte = fim do dia em São Paulo
+
+  it('em dia: só a mensalidade', () => {
+    expect(valorComAtraso(150, vence, new Date('2026-11-10T20:00:00-03:00'), regra)).toEqual({ dias: 0, multa: 0, juros: 0, total: 150 })
+  })
+
+  it('1º dia de atraso: multa de 2% + 1 dia de juros (1%/30)', () => {
+    expect(valorComAtraso(150, vence, new Date('2026-11-11T00:00:00-03:00'), regra)).toEqual({ dias: 1, multa: 3, juros: 0.05, total: 153.05 })
+  })
+
+  it('30 dias de atraso: juros de 1% inteiro', () => {
+    expect(valorComAtraso(150, vence, new Date('2026-12-10T09:00:00-03:00'), regra)).toEqual({ dias: 30, multa: 3, juros: 1.5, total: 154.5 })
+  })
+
+  it('conta o dia pelo calendário de São Paulo (23h de SP já é o dia seguinte em UTC)', () => {
+    expect(valorComAtraso(150, vence, new Date('2026-11-12T23:30:00-03:00'), regra).dias).toBe(2)
+  })
+
+  it('arredonda cada parte em centavos', () => {
+    expect(valorComAtraso(99.9, vence, new Date('2026-11-17T10:00:00-03:00'), regra)).toEqual({ dias: 7, multa: 2, juros: 0.23, total: 102.13 })
+  })
+
+  it('marca sem regra de atraso: nunca cobra a mais', () => {
+    expect(valorComAtraso(150, vence, new Date('2026-12-10T09:00:00-03:00'))).toEqual({ dias: 30, multa: 0, juros: 0, total: 150 })
   })
 })

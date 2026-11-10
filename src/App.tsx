@@ -12,6 +12,7 @@ import { calcularAlertas, useArquivados, type Reg } from './features/coach/alert
 import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
+import { emLinkCadastro } from './lib/cadastro'
 import { Abertura, Aviso, Botao, Centro, Tela } from './ui'
 import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
@@ -65,6 +66,10 @@ function Principal() {
   else if (!aceitouPrivacidade(perfil) && !adiouAceite)
     [estagio, tela] = ['privacidade', <Aceite uid={user.uid} adiar={perfil.privacidadeVersao ? () => setAdiouAceite(true) : undefined} />]
   else tela = <AlunoApp uid={user.uid} perfil={perfil} />
+  // Cadastro pelo QR Code concluído (ou aluno já logado que abriu o link): tira /cadastro do endereço.
+  useEffect(() => {
+    if (user && emLinkCadastro()) history.replaceState(history.state, '', '/' + location.hash)
+  }, [user])
   useEffect(() => {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
     else telaPronta()

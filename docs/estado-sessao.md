@@ -17,6 +17,12 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
   - conferir as opções do questionário.
 - **Ideias para depois (não fazer sem pedido):** notas privadas do coach (coleção separada); avisar o coach por notificação quando chegar anamnese nova; gráfico ou histórico comparativo.
 
+## 10/11/2026 — QR Code de cadastro
+- Coach: Início → botão **"QR Code de cadastro"** (QR grande + link + Copiar link). Vale para as duas marcas (usa o `dominio` de cada `marca.json`).
+- Aluno: aponta a câmera → abre `/cadastro` → cai direto em "Criar conta" (sem boas-vindas) → depois da conta, tela "Cadastro recebido!" (coach libera).
+- Na tela de cadastro, cartão **"Instale o app antes de criar a conta"** (iPhone: folha passo a passo; Android: instala direto). Não existe instalar automático pelo QR: o navegador não deixa.
+- **Falta (Victor):** mandar o vídeo de "Adicionar à Tela de Início" para virar tutorial passo a passo (hoje a folha do iPhone é só texto/desenho).
+
 ## 10/11/2026 — Meso inteiro por voz
 - "Montar o meso por voz" saiu da aba Divisão e fica no topo do editor do meso.
 - Além da divisão, a fala agora monta: séries e reps (padrão ou de um exercício), volume (progredir, reduzir, polimento) e métodos (pôr ou tirar; Biset/Triset/Superset/Circuito com parceiros).
@@ -339,3 +345,10 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
   - coach manda "Aviso para todos" e um aviso para um aluno;
   - lembrete das 6h47 (ou rodar o workflow "Avisos de mensalidade" com modo `lembrete`);
   - desligar um tipo em Conta e conferir que ele para de chegar.
+
+## 10/11/2026 — Multa e juros no Pix
+- Venceu: o Pix soma multa de 2% (uma vez) + juros de 1% ao mês, proporcional aos dias (1%/30 por dia).
+- O QR e o "copia e cola" já saem com o total do dia e se atualizam sozinhos à meia-noite.
+- Antes de vencer, o Pix avisa: "Após o vencimento: multa de 2% e juros de 1% ao mês."
+- Coach: lista de Alunos mostra "Com atraso: R$ X" (valor do dia em que o aluno tocou "Já paguei").
+- Ligado nas duas marcas (`pix.atraso` no `marca.json`): VFIT e Gislane, mesma regra.
