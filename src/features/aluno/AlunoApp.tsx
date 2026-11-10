@@ -14,6 +14,7 @@ import Hoje from './Hoje'
 import InicioAluno from './InicioAluno'
 import Treino from './Treino'
 import RelatorioAluno from '../relatorio/RelatorioAluno'
+import AnamneseAluno from '../anamnese/AnamneseAluno'
 import AvaliacaoAluno from '../avaliacao/AvaliacaoAluno'
 import EnviarFeedback from '../feedback/EnviarFeedback'
 import Tutorial, { tutorialNaoVisto } from './Tutorial'
@@ -32,13 +33,15 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   else if ((p = casar('/relatorio/:mesoId', rota))) tela = <RelatorioAluno uid={uid} nome={nome} mesoId={p.mesoId} />
   else if ((p = casar('/avaliacao/:id', rota))) tela = <AvaliacaoAluno key={p.id} uid={uid} nome={nome} id={p.id} />
   else if (rota === '/treino') tela = <Hoje uid={uid} />
+  else if (rota === '/anamnese') tela = <AnamneseAluno uid={uid} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
   else if (rota === '/feedback') tela = <EnviarFeedback uid={uid} nome={nome} />
   else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />
   else if (rota === '/conta') tela = <ContaAluno uid={uid} perfil={perfil} abrirTutorial={() => setTutorial(true)} />
 
   // Sem barra na tela do treino (e no fim do treino, que mora nela): ela cobriria os botões.
-  const comBarra = !p
+  const interna = !!p || rota === '/anamnese'
+  const comBarra = !interna
   const abas = [
     { rotulo: 'Início', href: '#/', Icone: IcCasa, ativo: rota === '/' },
     { rotulo: 'Treino', href: '#/treino', Icone: IcHaltere, ativo: rota === '/treino' },
@@ -52,7 +55,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
       <AnimatePresence>{tutorial && <Tutorial nome={nome} fechar={() => setTutorial(false)} />}</AnimatePresence>
       <div className="pt-topo">
         <AvisoIOS />
-        <Tela chave={rota} abrir={!!p}>{tela}</Tela>
+        <Tela chave={rota} abrir={interna}>{tela}</Tela>
       </div>
       {comBarra && <BarraAbas abas={abas} />}
     </div>

@@ -70,7 +70,7 @@ export const FAIXA = { peso: [20, 300], altura: [100, 250], idade: [10, 100], pe
 const DIA = 86400_000
 const r1 = (x: number) => Math.round(x * 10) / 10
 const r2 = (x: number) => Math.round(x * 100) / 100
-const somarDias = (iso: string, n: number) => new Date(Date.parse(`${iso}T12:00Z`) + n * DIA).toISOString().slice(0, 10)
+export const somarDias = (iso: string, n: number) => new Date(Date.parse(`${iso}T12:00Z`) + n * DIA).toISOString().slice(0, 10)
 const num = (v: unknown, [min, max]: readonly [number, number]) => (typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max ? v : undefined)
 
 function mapa<K extends string>(v: unknown, defs: readonly { id: K }[], faixa: (d: { id: K }) => readonly [number, number]) {

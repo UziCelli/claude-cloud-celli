@@ -72,7 +72,7 @@ Decisões do arquiteto:
 ## v2 (10/11/2026): tela do aluno resumida, cores de evolução e leitura medida x dobra
 Pedido do Victor depois de testar no celular: o quadro "Avaliações · Em breve" contradizia o banner "avaliação pronta"; a tela tinha informação demais; os números não mostravam quem evoluiu; a coluna Diferença era cortada.
 - **Leitura** (motor, `src/lib/avaliacao.ts`): seta + cor por medida; braço x tríceps, cintura x supra-ilíaca etc. (`PAR_DOBRA`); esperado subir, exceto cintura e abdômen; limiares 0,5 cm e 1 mm. Detalhes na linha "Avaliação física" de "Pontos sensíveis".
-- **Lipedema** (decidido pelo Victor): campo `lipedema` (`bracos`/`pernas`) na avaliação, só o coach marca, inverte a expectativa da região. Dado de saúde novo: Política e `VERSAO_PRIVACIDADE` = `2026-11-10`.
+- **Lipedema** (decidido pelo Victor): campo `lipedema` (`bracos`/`pernas`) na avaliação, só o coach marca, inverte a expectativa da região. Dado de saúde novo: Política e `VERSAO_PRIVACIDADE` = `2026-11-10b`.
 - **Peso e IMC neutros** (decidido pelo Victor): seta cinza; a cor vem da composição (gordura %, massa magra).
 - **Tela** (7 leis de UX): resumo no topo (frase + 4 cartões com delta), "O que mais mudou" (até 3 ganhos e 3 a observar), grupos recolhidos por região, linha de medida sem tabela, texto escrito recolhido.
 - **Início do aluno:** o quadro vira link para a última avaliação; o banner "pronta" só nos 7 dias seguintes à liberação.

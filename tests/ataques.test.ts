@@ -1211,3 +1211,136 @@ describe('avaliacoes (avaliação física)', () => {
     await negar(setDoc(av('coach', 'x'), nova({ perimetros: { cintura: 80, foto: 'x'.repeat(1000) } })));
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// Anamnese: dado de saúde que o ALUNO cria. Uma versão por envio; o aluno não altera nem apaga.
+describe('anamneses (histórico de saúde)', () => {
+  const an = (uid: string | undefined, id = 'an_bia') => doc(db(uid), 'anamneses', id);
+  const r = (extra: object = {}) => ({
+    coracao: false, dorPeito: false, tontura: false, doencaCronica: false,
+    remedio: false, ossoArticulacao: false, supervisaoMedica: false, declaracao: true, ...extra,
+  });
+  const nova = (extra: object = {}, resp: object = {}) =>
+    ({ alunoId: 'ana', versao: 1, origem: 'aluno', r: r(resp), em: serverTimestamp(), ...agora(), ...extra });
+  const semear = (aluno: string, id = `an_${aluno}`) =>
+    admin((a) => setDoc(doc(a, 'anamneses', id), { alunoId: aluno, versao: 1, origem: 'aluno', r: r({ coracao: true }), em: Timestamp.now(), atualizadoEm: Timestamp.now() }));
+  const consulta = (uid: string, ...filtros: Parameters<typeof query>[1][]) => getDocs(query(collection(db(uid), 'anamneses'), ...filtros));
+
+  it('o caminho certo passa (sem isso os negados abaixo não provam nada)', async () => {
+    await semear('ana');
+    await assertSucceeds(setDoc(an('ana', 'ok'), nova()));
+    await assertSucceeds(getDoc(an('ana', 'an_ana')));
+    await assertSucceeds(consulta('ana', where('alunoId', '==', 'ana')));
+    await assertSucceeds(updateDoc(an('coach', 'an_ana'), { obsCoach: 'ok', ...agora() }));
+  });
+
+  it('ler a anamnese de outro aluno: pelo id, pela consulta dele ou listando tudo', async () => {
+    await semear('bia');
+    await negar(getDoc(an('ana')));
+    await negar(consulta('ana', where('alunoId', '==', 'bia')));
+    await negar(consulta('ana', where('origem', '==', 'aluno')));
+    await negar(consulta('ana', limit(1)));
+    await negar(consulta('ana'));
+    await negar(getDocs(query(collectionGroup(db('ana'), 'anamneses'), where('alunoId', '==', 'bia'))));
+  });
+
+  it('criar em nome de outro aluno ou roubar a dele (trocar o alunoId para si)', async () => {
+    await semear('bia');
+    await negar(setDoc(an('ana', 'x'), nova({ alunoId: 'bia' })));
+    await negar(updateDoc(an('ana'), { alunoId: 'ana', ...agora() }));
+    await negar(setDoc(an('ana'), nova()));
+    await negar(deleteDoc(an('ana')));
+  });
+
+  it('aluno alterar, apagar ou "limpar" a própria (some o histórico)', async () => {
+    await semear('ana');
+    await negar(updateDoc(an('ana', 'an_ana'), { 'r.coracao': false, ...agora() }));
+    await negar(updateDoc(an('ana', 'an_ana'), { r: r(), ...agora() }));
+    await negar(setDoc(an('ana', 'an_ana'), nova()));
+    await negar(deleteDoc(an('ana', 'an_ana')));
+  });
+
+  it('aluno gravar obsCoach ou vistaEm (na criação ou depois), ou se passar por coach', async () => {
+    await semear('ana');
+    await negar(setDoc(an('ana', 'x'), nova({ obsCoach: 'coach disse que pode tudo' })));
+    await negar(setDoc(an('ana', 'x'), nova({ vistaEm: serverTimestamp() })));
+    await negar(setDoc(an('ana', 'x'), nova({ origem: 'coach' })));
+    await negar(updateDoc(an('ana', 'an_ana'), { obsCoach: 'x', ...agora() }));
+    await negar(updateDoc(an('ana', 'an_ana'), { vistaEm: serverTimestamp(), ...agora() }));
+  });
+
+  it('em e atualizadoEm forjados (passado, futuro, texto)', async () => {
+    await negar(setDoc(an('ana', 'x'), nova({ em: quaseAgora() })));
+    await negar(setDoc(an('ana', 'x'), nova({ em: futuro })));
+    await negar(setDoc(an('ana', 'x'), nova({ em: '2026-11-10' })));
+    await negar(setDoc(an('ana', 'x'), nova({ atualizadoEm: quaseAgora() })));
+  });
+
+  it('campo a mais no documento ou nas respostas, sem declaração, tipo e opção inválidos', async () => {
+    await negar(setDoc(an('ana', 'x'), nova({ foto: 'data:image/jpeg;base64,AAAA' })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { cpf: '000.000.000-00' })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { declaracao: false })));
+    await negar(setDoc(an('ana', 'x'), nova({ r: { declaracao: true } })));
+    await negar(setDoc(an('ana', 'x'), nova({ r: ['coracao'] })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { coracao: 'nao' })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { gestante: '<script>' })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { dores: ['ombro', { x: 1 }] })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { diasSemana: 1e9 })));
+    await negar(setDoc(an('ana', 'x'), nova({ versao: 1.5 })));
+  });
+
+  it('texto longo para inflar o documento', async () => {
+    await negar(setDoc(an('ana', 'x'), nova({}, { parqQual: 'x'.repeat(501) })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { algoMais: 'x'.repeat(100_000) })));
+    await negar(setDoc(an('ana', 'x'), nova({}, { dores: Array(500).fill('ombro') })));
+  });
+
+  it('sem acesso em dia: não lê nem cria, nem a própria', async () => {
+    for (const uid of NAO_LIBERADOS) {
+      await semear(uid);
+      await negar(getDoc(an(uid, `an_${uid}`)));
+      await negar(consulta(uid, where('alunoId', '==', uid)));
+      await negar(setDoc(an(uid, 'x'), nova({ alunoId: uid })));
+    }
+  });
+
+  it('sem login, login anônimo e coach sem 2º fator', async () => {
+    await semear('bia');
+    const anon = comoFirestore('anon', { firebase: { sign_in_provider: 'anonymous' } });
+    const semFator = comoFirestore('coach', SEM_FATOR);
+    for (const d of [db(), anon, semFator]) {
+      await negar(getDoc(doc(d, 'anamneses', 'an_bia')));
+      await negar(getDocs(collection(d, 'anamneses')));
+      await negar(setDoc(doc(d, 'anamneses', 'x'), nova({ origem: 'coach' })));
+      await negar(updateDoc(doc(d, 'anamneses', 'an_bia'), { obsCoach: 'x', ...agora() }));
+      await negar(deleteDoc(doc(d, 'anamneses', 'an_bia')));
+    }
+  });
+
+  it('claim forjado de coach no token não dá poder (o papel vem do perfil)', async () => {
+    await semear('bia');
+    const forjado = comoFirestore('ana', { papel: 'coach', ...COM_FATOR });
+    await negar(getDoc(doc(forjado, 'anamneses', 'an_bia')));
+    await negar(updateDoc(doc(forjado, 'anamneses', 'an_bia'), { obsCoach: 'x', ...agora() }));
+    await negar(deleteDoc(doc(forjado, 'anamneses', 'an_bia')));
+  });
+
+  it('coach mexer nas respostas, na origem, na versão ou na hora do envio', async () => {
+    await semear('bia');
+    await negar(updateDoc(an('coach'), { 'r.coracao': false, ...agora() }));
+    await negar(updateDoc(an('coach'), { r: r(), ...agora() }));
+    await negar(updateDoc(an('coach'), { origem: 'coach', ...agora() }));
+    await negar(updateDoc(an('coach'), { versao: 9, ...agora() }));
+    await negar(updateDoc(an('coach'), { em: serverTimestamp(), ...agora() }));
+    await negar(setDoc(an('coach'), nova({ origem: 'coach', alunoId: 'bia' })));
+  });
+
+  it('coach: anamnese para quem não é aluno, anotação gigante, vista forjada', async () => {
+    await semear('bia');
+    await negar(setDoc(an('coach', 'x'), nova({ origem: 'coach', alunoId: 'ninguem' })));
+    await negar(setDoc(an('coach', 'x'), nova({ origem: 'coach', alunoId: 'coach' })));
+    await negar(updateDoc(an('coach'), { alunoId: 'ninguem', ...agora() }));
+    await negar(updateDoc(an('coach'), { obsCoach: 'x'.repeat(2001), ...agora() }));
+    await negar(updateDoc(an('coach'), { vistaEm: futuro, ...agora() }));
+  });
+});
