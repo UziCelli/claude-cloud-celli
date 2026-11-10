@@ -324,3 +324,10 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
   - coach manda "Aviso para todos" e um aviso para um aluno;
   - lembrete das 6h47 (ou rodar o workflow "Avisos de mensalidade" com modo `lembrete`);
   - desligar um tipo em Conta e conferir que ele para de chegar.
+
+## 10/11/2026 — Multa e juros no Pix
+- Venceu: o Pix soma multa de 2% (uma vez) + juros de 1% ao mês, proporcional aos dias (1%/30 por dia).
+- O QR e o "copia e cola" já saem com o total do dia e se atualizam sozinhos à meia-noite.
+- Antes de vencer, o Pix avisa: "Após o vencimento: multa de 2% e juros de 1% ao mês."
+- Coach: lista de Alunos mostra "Com atraso: R$ X" (valor do dia em que o aluno tocou "Já paguei").
+- Só na marca VFIT (`pix.atraso` no `marca.json`). Gislane continua sem multa; ligar é uma linha.
