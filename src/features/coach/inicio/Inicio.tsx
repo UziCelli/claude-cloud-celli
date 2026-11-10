@@ -16,7 +16,8 @@ import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
 import { PIX } from '../../aluno/PagarPix'
 import { mediaTexto, useFeedbacks } from '../feedbacks/Feedbacks'
 import { resumoNotas } from '../../../lib/feedback'
-import { IcBalao, IcMais, IcPlay } from '../../../icones'
+import { IcBalao, IcMais, IcPlay, IcQr } from '../../../icones'
+import QrCadastro from '../alunos/QrCadastro'
 import { EscolherAluno } from '../presencial/Presencial'
 import { Quadro } from '../../../vidro'
 
@@ -27,6 +28,7 @@ const saudacao = (d: Date) => {
 
 export default function Inicio({ nome }: { nome: string }) {
   const [escolher, setEscolher] = useState(false)
+  const [qr, setQr] = useState(false)
   const alunos = useLista<Usuario>(useMemo(() => query(collection(db, 'usuarios'), where('papel', '==', 'aluno')), []))
   const mesos = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos')), []))
   const agora = new Date()
@@ -95,6 +97,10 @@ export default function Inicio({ nome }: { nome: string }) {
           Ranking de evolução
         </a>
       </div>
+      <Botao className="mb-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold lg:max-w-md" onClick={() => setQr(true)}>
+        <IcQr className="size-5" /> QR Code de cadastro
+      </Botao>
+      {qr && <QrCadastro onFechar={() => setQr(false)} />}
       {fb.dados.length > 0 && (
         <a href="#/feedbacks" className="mb-3 flex items-center gap-3 rounded-3xl bg-white/10 p-4 ring-1 ring-white/20 lg:max-w-md">
           <IcBalao className="size-5 text-marca-400" />

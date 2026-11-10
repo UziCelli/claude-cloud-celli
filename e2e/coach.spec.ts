@@ -38,6 +38,12 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
 
     await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
+    // Atalho do QR Code de cadastro (o coach mostra ao aluno novo).
+    await page.getByRole('button', { name: 'QR Code de cadastro' }).click()
+    const qr = page.getByRole('dialog', { name: 'QR Code de cadastro' })
+    await expect(qr.getByRole('img', { name: /QR Code/ })).toBeVisible()
+    await expect(qr.getByText(/\/cadastro$/)).toBeVisible()
+    await qr.getByRole('button', { name: 'Fechar' }).click()
     const aguardando = page.locator('div').filter({ has: page.getByRole('heading', { name: /Aguardando aprovação/ }) }).last()
     await expect(aguardando.getByRole('link', { name: ALUNO.nome })).toBeVisible({ timeout: 10_000 })
     await page.getByRole('link', { name: 'Alunos', exact: true }).click()

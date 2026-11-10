@@ -9,7 +9,8 @@ import { Aviso, Msg, Painel } from '../../ui'
 import { Brilho } from '../../vidro'
 import { ir, useRota } from '../../rota'
 import EsqueciSenha, { campo, rotulo } from './EsqueciSenha'
-import BoasVindas, { deveMostrarBoasVindas } from './BoasVindas'
+import BoasVindas, { CartaoInstalar, deveMostrarBoasVindas } from './BoasVindas'
+import { emLinkCadastro } from '../../lib/cadastro'
 import { jaInstalado } from '../instalar/Instalar'
 import Logo from '@marca/Logo'
 import { CaixaAceite } from '../privacidade/Politica'
@@ -51,8 +52,9 @@ const SESSAO_MFA_VENCIDA = 'auth/invalid-multi-factor-session'
 
 export default function Entrar() {
   const rota = useRota()
-  const [cadastro, setCadastro] = useState(false)
-  const [boasVindas, setBoasVindas] = useState(() => deveMostrarBoasVindas(jaInstalado()))
+  const viaQr = emLinkCadastro() // aluno veio do QR Code do coach: cai direto no cadastro, sem boas-vindas
+  const [cadastro, setCadastro] = useState(viaQr)
+  const [boasVindas, setBoasVindas] = useState(() => !viaQr && deveMostrarBoasVindas(jaInstalado()))
   const [verSenha, setVerSenha] = useState(false)
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
@@ -169,6 +171,7 @@ export default function Entrar() {
         <main className="mx-auto flex min-h-dvh max-w-sm flex-col px-5 pb-6 pt-[calc(1rem+env(safe-area-inset-top))] text-left">
           <Logo className="h-9 self-start text-white" />
           <h1 className="mt-8 text-[30px] leading-tight">{cadastro ? 'Criar conta' : 'Entrar'}</h1>
+          {viaQr && cadastro && !jaInstalado() && <CartaoInstalar titulo="Instale o app antes de criar a conta" dica="No iPhone, assim você já entra pelo app instalado" />}
 
           <form
             className="mt-5 space-y-4"
