@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { avisoMedico, CHAVE_RASCUNHO, PERGUNTAS, resumoAnamnese, validarRespostas, type Pergunta, type Respostas } from '../../lib/anamnese'
-import { enviarAnamnese } from '../../lib/acoes'
+import { avisoMedico, CHAVE_RASCUNHO, PERGUNTAS, resumoAnamnese, TODAS, validarRespostas, type Pergunta, type Respostas } from '../../lib/anamnese'
+import { enviarAnamnese, novaVersaoCoach } from '../../lib/acoes'
 import { registrarErro } from '../../lib/log'
 import { IcCheck } from '../../icones'
 import { ir } from '../../rota'
@@ -11,16 +11,16 @@ import { useAnamnese } from './useAnamnese'
 
 type Rascunho = { r: Respostas; menor: boolean; etapa: number; t: number }
 
-const ler = (uid: string): Rascunho | null => {
+const ler = (chave: string): Rascunho | null => {
   try {
-    return JSON.parse(localStorage.getItem(CHAVE_RASCUNHO + uid) ?? 'null')
+    return JSON.parse(localStorage.getItem(CHAVE_RASCUNHO + chave) ?? 'null')
   } catch {
     return null
   }
 }
-const apagar = (uid: string) => {
+const apagar = (chave: string) => {
   try {
-    localStorage.removeItem(CHAVE_RASCUNHO + uid)
+    localStorage.removeItem(CHAVE_RASCUNHO + chave)
   } catch {
     /* sem armazenamento: sem rascunho */
   }
@@ -70,19 +70,23 @@ function Campo({ p, v, mudar }: { p: Pergunta; v: unknown; mudar: (x: unknown) =
   }
 }
 
+// `coach`: o coach corrige ou lança pelo aluno (origem 'coach'); `aoFim` volta à ficha.
+export type ModoCoach = { aoFim: () => void }
+
 export default function AnamneseAluno({ uid }: { uid: string }) {
   const { carregando, ultima, motivo } = useAnamnese(uid)
   if (carregando) return <Centro>Carregando…</Centro>
   return <Conteudo uid={uid} ultima={ultima} motivo={motivo} />
 }
 
-function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typeof useAnamnese>['ultima']; motivo: 'primeira' | 'ciclo' | null }) {
+export function Conteudo({ uid, ultima, motivo, coach }: { uid: string; ultima: ReturnType<typeof useAnamnese>['ultima']; motivo: 'primeira' | 'ciclo' | null; coach?: ModoCoach }) {
+  const chave = (coach ? 'coach-' : '') + uid // rascunho do coach não se mistura com o do aluno
   // Rascunho do aparelho vale só se for mais novo que a última resposta enviada (pendente conta como mais nova).
   const [rasc] = useState(() => {
-    const d = ler(uid)
+    const d = ler(chave)
     return d && (!ultima || (ultima.em != null && ultima.em < d.t)) ? d : null
   })
-  const [editando, setEditando] = useState(!ultima || !!rasc)
+  const [editando, setEditando] = useState(!ultima || !!rasc || !!coach)
   const [enviado, setEnviado] = useState<Respostas | null>(null)
   const [etapa, setEtapa] = useState(rasc?.etapa ?? 0)
   const [menor, setMenor] = useState(rasc?.menor ?? ultima?.r.responsavelConfirmou === true)
@@ -106,7 +110,7 @@ function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typ
   }
   const guardar = (rr: Respostas, m: boolean, e: number) => {
     try {
-      localStorage.setItem(CHAVE_RASCUNHO + uid, JSON.stringify({ r: rr, menor: m, etapa: e, t: Date.now() } satisfies Rascunho))
+      localStorage.setItem(CHAVE_RASCUNHO + chave, JSON.stringify({ r: rr, menor: m, etapa: e, t: Date.now() } satisfies Rascunho))
     } catch {
       /* sem armazenamento: segue sem rascunho */
     }
@@ -137,10 +141,11 @@ function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typ
       return setErro('Falta responder algo. Confira as perguntas.')
     }
     setErro('')
-    enviarAnamnese(uid, final as Respostas)
-      .then(() => apagar(uid))
-      .catch((e) => registrarErro('gravacao', `anamnese: ${e?.code ?? e}`, e))
-    setEnviado(final as Respostas)
+    ;(coach ? novaVersaoCoach : enviarAnamnese)(uid, final as Respostas)
+      .then(() => apagar(chave))
+      .catch((e) => registrarErro('gravacao', `anamnese: ${e?.code ?? e}`, e)) // só o código, nunca a resposta
+    if (coach) coach.aoFim()
+    else setEnviado(final as Respostas)
   }
 
   if (enviado)
@@ -166,6 +171,12 @@ function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typ
             {resumoAnamnese(ultima.r).map((l) => <li key={l} className="break-words">{l}</li>)}
           </ul>
         </Quadro>
+        {ultima.obsCoach && (
+          <Quadro className="space-y-1">
+            <h2 className="text-sm font-semibold text-slate-300">Anotação do seu coach</h2>
+            <p className="whitespace-pre-line break-words text-sm">{ultima.obsCoach}</p>
+          </Quadro>
+        )}
         {erro && <Aviso>{erro}</Aviso>}
         <div className="space-y-2">
           {motivo === 'ciclo' && <Botao tipo="primario" className="min-h-12 w-full" onClick={() => enviar({ ...ultima.r, declaracao: true })}>Nada mudou</Botao>}
@@ -176,9 +187,9 @@ function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typ
 
   const ultimaEtapa = etapa === PERGUNTAS.length - 1
   return (
-    <main className="mx-auto max-w-md px-4 py-4 pb-32">
+    <main className={`mx-auto max-w-md px-4 py-4 ${coach ? "pb-6" : "pb-32"}`}>
       <div ref={topo} />
-      <BotaoVoltar para={ultima ? '/conta' : '/'} aoVoltar={etapa > 0 ? () => irPara(etapa - 1) : undefined} />
+      <BotaoVoltar para={ultima ? '/conta' : '/'} aoVoltar={etapa > 0 ? () => irPara(etapa - 1) : coach ? coach.aoFim : undefined} />
       <p className="text-sm text-slate-400">Etapa {etapa + 1} de {PERGUNTAS.length}</p>
       <div role="progressbar" aria-valuemin={1} aria-valuemax={PERGUNTAS.length} aria-valuenow={etapa + 1} className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-marca-500 transition-all" style={{ width: `${((etapa + 1) / PERGUNTAS.length) * 100}%` }} />
@@ -190,7 +201,7 @@ function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typ
           {menor && (
             <>
               <p className="text-sm text-slate-400">Um responsável legal precisa autorizar.</p>
-              <Caixa rotulo="Meu responsável autoriza" on={r.responsavelConfirmou === true} mudar={(v) => mudar('responsavelConfirmou', v ? true : undefined)} />
+              <Caixa rotulo={TODAS.find((p) => p.id === 'responsavelConfirmou')!.rotulo} on={r.responsavelConfirmou === true} mudar={(v) => mudar('responsavelConfirmou', v ? true : undefined)} />
             </>
           )}
         </Quadro>
@@ -204,7 +215,7 @@ function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typ
         ))}
       </div>
       {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+      <div className={coach ? 'sticky bottom-2 z-20 mt-6 rounded-2xl bg-slate-950/90 p-2 backdrop-blur' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
         <div className="mx-auto flex max-w-md gap-2">
           {etapa > 0 && <Botao className="min-h-12 flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}
           <Botao

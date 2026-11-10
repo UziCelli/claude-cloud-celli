@@ -315,6 +315,13 @@ export const apagarAvaliacao = (id: string) => deleteDoc(doc(db, 'avaliacoes', i
 export const enviarAnamnese = (alunoId: string, r: Respostas) =>
   addDoc(collection(db, 'anamneses'), { alunoId, versao: VERSAO_ANAMNESE, origem: 'aluno', r, em: serverTimestamp(), atualizadoEm: serverTimestamp() })
 
+// Coach: nova versão (corrige ou lança pelo aluno presencial), já vista. Anotação e "vista" mexem só
+// em obsCoach/vistaEm (a regra recusa qualquer outro campo). Nunca log de resposta.
+export const novaVersaoCoach = (alunoId: string, r: Respostas) =>
+  addDoc(collection(db, 'anamneses'), { alunoId, versao: VERSAO_ANAMNESE, origem: 'coach', r, em: serverTimestamp(), atualizadoEm: serverTimestamp(), vistaEm: serverTimestamp() })
+export const anotarAnamnese = (id: string, obsCoach: string) => updateDoc(doc(db, 'anamneses', id), { obsCoach, atualizadoEm: serverTimestamp() })
+export const marcarAnamneseVista = (id: string) => updateDoc(doc(db, 'anamneses', id), { vistaEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
+
 // ---------- aluno ----------
 
 // Estratégia de gravação do registro: setDoc com { merge: true } e identidade sempre junto.
