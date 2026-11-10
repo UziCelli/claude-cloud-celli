@@ -311,7 +311,7 @@ service cloud.firestore {
         || (own(resource.data) && resource.data.liberado == true && liberado());
       allow delete: if isCoach();
       allow create, update: if isCoach()
-        && request.resource.data.keys().hasOnly(['alunoId', 'data', 'pesoKg', 'alturaCm', 'sexo', 'idade', 'perimetros', 'dobras', 'bio', 'comentario', 'liberado', 'liberadoEm', 'atualizadoEm'])
+        && request.resource.data.keys().hasOnly(['alunoId', 'data', 'pesoKg', 'alturaCm', 'sexo', 'idade', 'perimetros', 'dobras', 'bio', 'lipedema', 'comentario', 'liberado', 'liberadoEm', 'atualizadoEm'])
         && request.resource.data.keys().hasAll(['alunoId', 'data', 'pesoKg', 'comentario', 'liberado', 'liberadoEm', 'atualizadoEm'])
         && request.resource.data.alunoId is string
         && get(/databases/$(database)/documents/usuarios/$(request.resource.data.alunoId)).data.papel == 'aluno'
@@ -326,6 +326,11 @@ service cloud.firestore {
         && mapaDe(request.resource.data, 'perimetros', ['ombro', 'torax', 'cintura', 'abdomen', 'quadril', 'bracoD', 'bracoE', 'antebracoD', 'antebracoE', 'coxaD', 'coxaE', 'panturrilhaD', 'panturrilhaE'])
         && mapaDe(request.resource.data, 'dobras', ['peitoral', 'axilar', 'triceps', 'subescapular', 'abdominal', 'suprailiaca', 'coxa'])
         && mapaDe(request.resource.data, 'bio', ['gorduraPct', 'massaMuscularKg', 'visceral'])
+        // Lipedema (condição de saúde, marcada só pelo coach): lista com até 2 itens, só braços e pernas.
+        && (!('lipedema' in request.resource.data)
+            || (request.resource.data.lipedema is list
+                && request.resource.data.lipedema.size() <= 2
+                && request.resource.data.lipedema.hasOnly(['bracos', 'pernas'])))
         && request.resource.data.comentario is string
         && request.resource.data.comentario.size() <= 3000
         && request.resource.data.liberado is bool

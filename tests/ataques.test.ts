@@ -1191,6 +1191,19 @@ describe('avaliacoes (avaliação física)', () => {
     await negar(setDoc(doc(forjado, 'avaliacoes', 'x'), nova()));
   });
 
+  it('aluno marcar lipedema em si mesmo (condição de saúde é do coach)', async () => {
+    await semear('ana', true);
+    await negar(updateDoc(av('ana', 'av_ana'), { lipedema: ['bracos'], ...agora() }));
+    await negar(setDoc(av('ana', 'x'), nova({ lipedema: ['pernas'] })));
+  });
+
+  it('coach: lipedema forjado (valor estranho, lista longa, outro tipo)', async () => {
+    await assertSucceeds(setDoc(av('coach', 'ok'), nova({ lipedema: ['bracos', 'pernas'] })));
+    await negar(setDoc(av('coach', 'x'), nova({ lipedema: ['cabeca'] })));
+    await negar(setDoc(av('coach', 'x'), nova({ lipedema: ['bracos', 'pernas', 'pernas'] })));
+    await negar(setDoc(av('coach', 'x'), nova({ lipedema: 'sim' })));
+  });
+
   it('coach: avaliação para quem não é aluno, com foto ou campo fora da lista', async () => {
     await negar(setDoc(av('coach', 'x'), nova({ alunoId: 'ninguem' })));
     await negar(setDoc(av('coach', 'x'), nova({ alunoId: 'coach' })));

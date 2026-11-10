@@ -1445,6 +1445,14 @@ describe('avaliacoes', () => {
       await assertSucceeds(setDoc(av('coach'), valida({ perimetros: {}, dobras: {}, bio: {} })));
     });
 
+    it('lipedema: só braços e/ou pernas, em lista de até 2', async () => {
+      await assertSucceeds(setDoc(av('coach'), valida({ lipedema: ['bracos'] })));
+      await assertSucceeds(setDoc(av('coach'), valida({ lipedema: ['bracos', 'pernas'] })));
+      await assertSucceeds(setDoc(av('coach'), valida({ lipedema: [] })));
+      for (const lipedema of [['rosto'], ['bracos', 'pernas', 'bracos'], 'pernas', 'bracos', true, [1], { bracos: true }])
+        await assertFails(setDoc(av('coach'), valida({ lipedema })));
+    });
+
     it('coach sem 2º fator não lê nem escreve', async () => {
       await existente('ana', true);
       const r = doc(contexto('coach', SEM_FATOR).firestore() as unknown as Firestore, 'avaliacoes', 'av_ana');

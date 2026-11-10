@@ -34,7 +34,7 @@ export default function Politica() {
         <Logo className="h-10 text-white" />
         Política de Privacidade
       </h1>
-      <p className="text-center text-xs text-slate-500">Versão vigente: 10/11/2026 (anamnese)</p>
+      <p className="text-center text-xs text-slate-500">Versão vigente: 10/11/2026 (anamnese, avaliação física e lipedema)</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
           {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
@@ -50,7 +50,7 @@ export default function Politica() {
           <li>Treinos, cargas, repetições e anotações.</li>
           <li>Horários de treino.</li>
           <li>Cardio (dia, tipo e minutos).</li>
-          <li>Avaliação física, se o seu coach fizer: data, idade, sexo, peso, altura, perímetros, dobras cutâneas, bioimpedância e o recado do coach.</li>
+          <li>Avaliação física, se o seu coach fizer: data, idade, sexo, peso, altura, perímetros, dobras cutâneas, bioimpedância, o recado do coach e, se existir, a condição de saúde lipedema (braços e/ou pernas).</li>
           <li>Anamnese (histórico de saúde): respostas sobre saúde, dores, rotina e treino, e se você tem menos de 18 anos, a autorização do responsável.</li>
           <li>Sua opinião e depoimentos (nota, assunto e texto).</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
@@ -65,7 +65,8 @@ export default function Politica() {
         </p>
         <p>
           Avaliação física: quem mede e registra é {marca.responsavel.nome}. Só você e o seu coach veem, e você só vê depois que ele libera.
-          O IMC, o percentual de gordura e o texto de evolução são calculados no seu aparelho, sem enviar suas medidas para outro serviço.
+          O IMC, o percentual de gordura, as setas coloridas e o texto de evolução são calculados no seu aparelho, sem enviar suas medidas para outro serviço.
+          A informação sobre lipedema só é marcada pelo seu coach, serve apenas para interpretar as suas medidas e você a vê no seu relatório.
           Não guardamos foto do corpo. O PDF é montado no seu aparelho; depois de baixado ou compartilhado, o arquivo fica sob o seu cuidado.
         </p>
         <p>
@@ -77,7 +78,7 @@ export default function Politica() {
       </Secao>
       <Secao n={3} titulo="Dados de saúde">
         <p>
-          Peso, medidas da avaliação física (perímetros, dobras, percentual de gordura), respostas da anamnese (doenças, dores, remédios, gestação) e informações de treino são dados de saúde (dados
+          Peso, medidas da avaliação física (perímetros, dobras, percentual de gordura), condições como o lipedema, respostas da anamnese (doenças, dores, remédios, gestação) e informações de treino são dados de saúde (dados
           sensíveis, LGPD art. 11). Só os usamos com o seu consentimento específico, dado ao aceitar esta política.
         </p>
       </Secao>

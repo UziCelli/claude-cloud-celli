@@ -93,7 +93,7 @@ export default function Aceite({ uid, adiar }: { uid: string; adiar?: () => void
           <h2 className="font-semibold">Sua privacidade</h2>
           <ul className="list-disc space-y-1 pl-5 text-sm text-slate-300">
             <li>Guardamos seu nome, e-mail, peso, treinos e, se o seu coach fizer, a avaliação física (medidas do corpo).</li>
-            <li>Peso, medidas da avaliação física e treinos são dados de saúde: só usamos com o seu aceite.</li>
+            <li>Peso, medidas da avaliação física, lipedema (se o coach marcar) e treinos são dados de saúde: só usamos com o seu aceite.</li>
             <li>Não vendemos seus dados.</li>
             <li>Senha com no mínimo 8 caracteres, com letra e número. Ninguém consegue ler a sua senha, nem o coach.</li>
             <li>Você pode pedir cópia ou exclusão a qualquer momento pelo WhatsApp.</li>

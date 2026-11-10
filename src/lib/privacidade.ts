@@ -3,6 +3,8 @@
 // Esta mesma versão também cobre o item "Sua opinião e depoimentos" (feedbacks), para ninguém aceitar duas vezes no mesmo dia.
 // 2026-11-09b: avaliação física (Fase 3), dado de saúde novo. O sufixo "b" é a 2ª versão do mesmo dia.
 // 2026-11-10: anamnese (histórico de saúde, inclusive de menores de 18 com autorização do responsável).
-export const VERSAO_PRIVACIDADE = '2026-11-10'
+// 2026-11-10b: a avaliação física passa a registrar condição de saúde (lipedema), marcada só pelo coach.
+// (A 2026-11-10 da anamnese já foi aceita pelos alunos: por isso o sufixo "b", para pedir o aceite de novo.)
+export const VERSAO_PRIVACIDADE = '2026-11-10b'
 
 export const aceitouPrivacidade = (p: { privacidadeVersao?: string }) => p.privacidadeVersao === VERSAO_PRIVACIDADE

@@ -2,6 +2,13 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 10/11/2026 — Avaliação física v2 (tela do aluno, cores e lipedema)
+- Pedido do Victor depois de testar no celular. Plano em `docs/plano-avaliacao.md` (seção v2).
+- Início do aluno: o quadro "Avaliações" não diz mais "Em breve" (vira link); o banner "pronta" some depois de 7 dias.
+- Tela da avaliação resumida: frase + 4 cartões com seta e cor, "O que mais mudou", regiões recolhidas e texto escrito recolhido.
+- Leitura de evolução: seta e cor por medida; cruza perímetro x dobra (braço maior com tríceps estável = massa; com tríceps maior = gordura). Peso e IMC ficam cinza.
+- **Lipedema** (braços e/ou pernas): o coach marca na avaliação e a região passa a ser lida como "não deveria subir". Dado de saúde novo: Política atualizada, `VERSAO_PRIVACIDADE` = `2026-11-10b` (**todos os alunos aceitam de novo**).
+- **Pendências do Victor:** ver numa avaliação real se as leituras fazem sentido para o caso dele (limiares 0,5 cm e 1 mm; quadril/coxa dividem a dobra da coxa); abrir o PDF novo no celular.
 ## 10/11/2026 — Anamnese
 - **O aluno vê:** questionário em 5 etapas (~3 min, quase tudo toque): saúde (PAR-Q+), gestação e cirurgia, dores, rotina e treino. Funciona offline e sincroniza depois. Cartão no Início e "Minha anamnese" na Conta.
 - **O coach vê:** ficha com as respostas, selo Atenção quando há sinal (PAR-Q "sim", gestante, cirurgia recente, dor), histórico, anotação (o aluno também lê) e "Lançar pelo aluno" no presencial. Cartão "Anamneses" no Início.
