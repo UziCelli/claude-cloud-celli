@@ -91,10 +91,13 @@ export default function Alunos() {
     const a = alunos.find((x) => x.id === uid)
     if (a?.status === 'aguardando') {
       // Aluno apagado hoje: o login só some na limpeza da madrugada; liberar agora ressuscitaria o perfil.
-      const apagado = await getDocFromServer(doc(db, 'exclusoes', uid)).then((d) => d.exists(), () => false)
-      if (apagado) {
+      // Sem conseguir conferir (offline/erro), não libera: melhor tentar de novo do que ressuscitar um aluno apagado.
+      const apagado = await getDocFromServer(doc(db, 'exclusoes', uid)).then((d) => d.exists() ? 'sim' : 'nao', () => 'erro')
+      if (apagado !== 'nao') {
         setEditando(null)
-        setErro('Este aluno foi apagado hoje. O login some na limpeza da madrugada; peça para ele criar a conta de novo amanhã.')
+        setErro(apagado === 'sim'
+          ? 'Este aluno foi apagado hoje. O login some na limpeza da madrugada; peça para ele criar a conta de novo amanhã.'
+          : 'Sem conexão para conferir. Tente de novo.')
         return
       }
     }

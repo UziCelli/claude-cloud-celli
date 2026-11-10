@@ -120,7 +120,7 @@ function PerfilDemora() {
       setEnviando(false)
       setErro(
         e?.message === 'ja-existe' ? 'Sua conta já existe. Feche e abra o app.'
-        : e?.code === 'unavailable' || e?.code === 'failed-precondition' || !navigator.onLine ? 'Sem internet. Conecte-se e tente de novo.'
+        : e?.code === 'unavailable' || e?.code === 'failed-precondition' || e?.code === 'aborted' || !navigator.onLine ? 'Sem internet. Conecte-se e tente de novo.'
         : 'Não deu para pedir acesso. Fale com seu coach.',
       )
     })
