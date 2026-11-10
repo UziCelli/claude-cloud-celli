@@ -2,10 +2,11 @@
 // (registros, relatórios, mesos, cardios, feedbacks com nome, avaliações físicas, notas, foto, perfil, logs e o login do Auth). Roda no workflow "Limpeza LGPD".
 // O resumo só tem contagens: nunca nome, e-mail ou uid (o log do Actions não guarda dado pessoal).
 // Uso local: PROJETO=forca--app (ou gislane-personal-trainer) GOOGLE_APPLICATION_CREDENTIALS=sa.json node limpeza-lgpd.mjs
-import { appendFileSync } from 'node:fs'
+import { appendFileSync, readFileSync } from 'node:fs'
 import { applicationDefault, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { assinarJwt } from './avisos-pagamento.mjs'
 
 // Projeto SEMPRE explícito (env PROJETO): nunca vem do JSON da credencial nem de padrão. Sem ele, sai.
 const PROJETOS = { 'forca--app': 'vfit', 'gislane-personal-trainer': 'gislane' }
@@ -19,6 +20,20 @@ const marca = PROJETOS[projeto] ?? projeto
 initializeApp({ ...(emulador ? {} : { credential: applicationDefault() }), projectId: projeto })
 const db = getFirestore()
 const auth = getAuth()
+
+// O Worker de notificações (push/) guarda o endereço de push de cada aparelho da pessoa: também precisa esquecer.
+// No emulador (testes) não há Worker. Se o Worker falhar, o pedido fica e a limpeza tenta de novo amanhã.
+const PUSH_URL = process.env.PUSH_URL || 'https://vfit-descanso.vfitcoach-site.workers.dev'
+async function esquecerNoWorker(uid) {
+  if (emulador) return
+  const sa = JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'))
+  const res = await fetch(`${PUSH_URL}/esquecer`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${assinarJwt(sa, Math.floor(Date.now() / 1000))}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projeto, uids: [uid] }),
+  })
+  if (!res.ok) throw new Error(`Worker de notificações respondeu HTTP ${res.status} ao esquecer um aluno.`)
+}
 
 const apagarLotes = async (refs) => {
   for (let i = 0; i < refs.length; i += 400) {
@@ -61,6 +76,7 @@ for (const pedido of (await db.collection('exclusoes').get()).docs) {
   } catch (e) {
     if (e?.code !== 'auth/user-not-found') throw e
   }
+  await esquecerNoWorker(uid)
   await pedido.ref.delete() // por último: se cair antes, roda de novo amanhã
   apagados++
 }

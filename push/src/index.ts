@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers'
 import { acessoComCache, appCheckOk, ehCoach, lerPermissao, podeAvisarTreino, quemAvisaCoach, registrarAgendamento, type CacheAcesso } from './acesso'
 import { cors } from './cors'
 import { chaveDaConta, chaveDoGoogle, verificarAviso, verificarIdToken, type Projeto } from './jwt'
-import { inicioDoDiaBrasilia, nomeAgenda, nomeCoaches, nomeDO, passoAgenda, prefixoAgenda, tipoCoachOk, uidOk, validarAvisos, validarDesligados, validarFimEm, validarInscricao, validarRecado, type Aviso, type Inscricao, type Tipo, type TipoCoach } from './validar'
+import { alvosDe, comAparelho, endpointOk, semAparelho, type Fixa, inicioDoDiaBrasilia, nomeAgenda, nomeCoaches, nomeDO, passoAgenda, prefixoAgenda, tipoCoachOk, uidOk, validarAvisos, validarDesligados, validarEsquecer, validarFimEm, validarInscricao, validarRecado, type Aviso, type Inscricao, type Tipo, type TipoCoach } from './validar'
 import { enviarPush, gerarParVapid, type ParVapid } from './webpush'
 
 type Env = { DESCANSO: DurableObjectNamespace<Descanso> }
@@ -94,14 +94,36 @@ export class Descanso extends DurableObject<Env> {
     if (lista.includes(uid)) await this.ctx.storage.put('coaches', lista.filter((c) => c !== uid))
   }
 
-  // Inscrição fixa (todos os avisos menos o descanso): não é apagada depois do alarme do descanso.
-  // `desligados` = tipos que a pessoa desligou em Conta.
-  async inscrever(inscricao: Inscricao, desligados: Tipo[] = []) {
-    await this.ctx.storage.put({ fixa: inscricao, desligados })
+  // Inscrições fixas (todos os avisos menos o descanso), uma por aparelho: não são apagadas depois do alarme do descanso.
+  // Formato antigo (uma só: chaves `fixa` e `desligados`) é lido como a primeira da lista.
+  private async fixas(): Promise<Fixa[]> {
+    const lista = await this.ctx.storage.get<Fixa[]>('fixas')
+    if (lista) return lista
+    const antiga = await this.ctx.storage.get<Inscricao>('fixa')
+    return antiga ? [{ i: antiga, d: (await this.ctx.storage.get<Tipo[]>('desligados')) ?? [], em: 0 }] : []
   }
 
-  async desinscrever() {
+  private async guardarFixas(lista: Fixa[]) {
+    await this.ctx.storage.put('fixas', lista)
     await this.ctx.storage.delete(['fixa', 'desligados'])
+  }
+
+  // `desligados` = tipos que a pessoa desligou em Conta, neste aparelho.
+  async inscrever(inscricao: Inscricao, desligados: Tipo[] = []) {
+    await this.guardarFixas(comAparelho(await this.fixas(), { i: inscricao, d: desligados, em: Date.now() }))
+  }
+
+  // Tira este aparelho (ou todos, sem endpoint). Devolve quantos aparelhos sobraram.
+  async desinscrever(endpoint?: string): Promise<number> {
+    const resto = semAparelho(await this.fixas(), endpoint)
+    await this.guardarFixas(resto)
+    return resto.length
+  }
+
+  // Limpeza LGPD ("Apagar de vez"): apaga tudo o que esta instância guarda da pessoa.
+  async esquecer() {
+    await this.ctx.storage.deleteAlarm()
+    await this.ctx.storage.deleteAll()
   }
 
   // O aluno concluiu um treino agora (vem do /avisar-coach): o lembrete de hoje não faz mais sentido.
@@ -137,9 +159,12 @@ export class Descanso extends DurableObject<Env> {
     )
   }
 
-  // Envia à inscrição fixa. false = sem inscrição, tipo desligado ou não entregue; 404/410 apagam a inscrição.
+  // Envia a todos os aparelhos da pessoa que não desligaram o tipo. true = chegou em pelo menos um;
+  // false = sem inscrição, tipo desligado ou não entregue; 404/410 apagam a inscrição daquele aparelho.
   async avisar(msg: Mensagem, tipo: Tipo, comLimite: boolean): Promise<boolean | 'limite'> {
-    if (((await this.ctx.storage.get<Tipo[]>('desligados')) ?? []).includes(tipo)) return false
+    const fixas = await this.fixas()
+    const alvos = alvosDe(fixas, tipo)
+    if (fixas.length && !alvos.length) return false
     // Lembrete do treino: quem já concluiu um treino hoje (Brasília) não recebe.
     if (tipo === 'lembrete' && ((await this.ctx.storage.get<number>('concluiuEm')) ?? 0) >= inicioDoDiaBrasilia(Date.now())) return false
     if (comLimite) {
@@ -148,13 +173,15 @@ export class Descanso extends DurableObject<Env> {
       if (!marcas) return 'limite'
       this.marcasTreino = marcas
     }
-    const fixa = await this.ctx.storage.get<Inscricao>('fixa')
-    if (!fixa) return false
+    if (!alvos.length) return false
     try {
       const chaves = await this.env.DESCANSO.get(this.env.DESCANSO.idFromName('__vapid')).vapid()
-      const status = await enviarPush(fixa, msg, chaves, Math.floor(Date.now() / 1000))
-      if (status === 404 || status === 410) await this.ctx.storage.delete('fixa')
-      return status >= 200 && status < 300
+      const agora = Math.floor(Date.now() / 1000)
+      const status = await Promise.all(alvos.map((f) => enviarPush(f.i, msg, chaves, agora).catch(() => 0)))
+      const mortas = alvos.filter((_, k) => status[k] === 404 || status[k] === 410).map((f) => f.i.endpoint)
+      // Relê a lista: durante o envio pode ter chegado um /inscrever ou /desinscrever (não regravar a lista velha).
+      if (mortas.length) await this.guardarFixas((await this.fixas()).filter((f) => !mortas.includes(f.i.endpoint)))
+      return status.some((x) => x >= 200 && x < 300)
     } catch {
       return false
     }
@@ -224,6 +251,20 @@ export default {
       return json({ ok: true, enviados })
     }
 
+    // Limpeza LGPD (GitHub): mesmo JWT da conta de serviço. Apaga o que o Worker guarda de cada pessoa apagada.
+    if (req.method === 'POST' && pathname === '/esquecer') {
+      if (!token || !(await verificarAviso(token, (iss, kid) => chaveDaConta(iss, kid), agora))) return json({ erro: 'não autorizado' }, 401)
+      const j = await lerJson(4096)
+      if (j instanceof Response) return j
+      const dados = validarEsquecer((j as { corpo: unknown }).corpo)
+      if (!dados) return json({ erro: 'pedido inválido' }, 400)
+      for (const uid of dados.uids) {
+        await aluno(dados.projeto, uid).esquecer()
+        await coaches(dados.projeto).sairCoach(uid)
+      }
+      return json({ ok: true, esquecidos: dados.uids.length })
+    }
+
     if (req.method === 'POST' && ['/agendar', '/cancelar', '/inscrever', '/desinscrever', '/treino-pronto', '/avisar-coach', '/recado'].includes(pathname)) {
       const id = token ? await verificarIdToken(token, (kid) => chaveDoGoogle(kid), agora) : null
       if (!token || !id || !uidOk(id.uid)) return json({ erro: 'não autorizado' }, 401)
@@ -235,8 +276,10 @@ export default {
         return json({ ok: true })
       }
       if (pathname === '/desinscrever') {
-        await meu.desinscrever()
-        await coaches(projeto).sairCoach(uid)
+        // Com `endpoint`, sai só este aparelho; o app antigo manda `{}` e tira todos.
+        const endpoint = await req.text().then((t) => (t.length <= 4096 ? (JSON.parse(t) as { endpoint?: unknown } | null)?.endpoint : undefined)).catch(() => undefined)
+        const sobraram = await meu.desinscrever(endpointOk(endpoint) ? endpoint : undefined)
+        if (sobraram === 0) await coaches(projeto).sairCoach(uid)
         return json({ ok: true })
       }
 

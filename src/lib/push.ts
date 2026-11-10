@@ -208,9 +208,12 @@ export async function desinscreverAvisos() {
   // Sem permissão de notificação este aparelho nunca se inscreveu: não há o que apagar.
   if (!disponivel()) return
   try {
-    await chamar(BASE!, '/desinscrever', {})
+    // Só este aparelho: quem usa celular e computador continua recebendo no outro.
+    const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription()
+    if (!sub) return
+    await chamar(BASE!, '/desinscrever', { endpoint: sub.endpoint })
   } catch {
-    /* sem rede: a inscrição fica no Worker até a próxima pessoa entrar neste aparelho (ela substitui) ou o endereço morrer */
+    /* sem rede: a inscrição deste aparelho fica no Worker até o endereço morrer (ou sair da lista de 3 aparelhos) */
   }
 }
 
