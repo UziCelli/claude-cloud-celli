@@ -62,6 +62,7 @@ for (const pedido of (await db.collection('exclusoes').get()).docs) {
     ...(await refsDe('cardios', 'alunoId', uid)),
     ...(await refsDe('feedbacks', 'alunoId', uid)),
     ...(await refsDe('avaliacoes', 'alunoId', uid)),
+    ...(await refsDe('anamneses', 'alunoId', uid)),
     ...(await refsDe('usuarios', 'migradoPara', uid)),
     ...(await refsDe('logs', 'uid', uid)),
     db.doc(`notas/${uid}`),

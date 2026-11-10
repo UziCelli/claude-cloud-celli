@@ -36,8 +36,8 @@ Três níveis. Cada um faz só o seu papel:
 
 | Nível | Modelo | Agentes | Papel |
 |---|---|---|---|
-| Arquiteto | **Opus** | `arquiteto` | **Decide e desenha.** Planos, decisões de design, segurança e dados, bugs difíceis. |
-| Executor | **Sonnet** | `dev`, `revisor` | **Executa** o que o arquiteto desenhou: telas, formulários, integração, testes, revisão do diff. |
+| Arquiteto | **Opus** | `arquiteto`, `revisor` | **Decide, desenha e revisa.** Planos, decisões de design, segurança e dados, bugs difíceis, e a revisão do diff antes de cada PR (pedido do Victor em 10/11/2026: quem revisa decide melhor). |
+| Executor | **Sonnet** | `dev` | **Executa** o que o arquiteto desenhou: telas, formulários, integração, testes. |
 | Operacional | **Haiku** | `auxiliar`, `explorador` | **Ações básicas:** commit/push/PR/merge, acompanhar CI e deploy, rodar testes, achar arquivos, docs e dados mecânicos. |
 
 > Neste repo vale **só** esta hierarquia. Ignore a tabela "Model routing" do `~/.claude/CLAUDE.md` e os agentes globais (`code-searcher`, `implementer`, `test-runner`, `reviewer`).

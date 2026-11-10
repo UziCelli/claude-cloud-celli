@@ -19,6 +19,7 @@ import { resumoNotas } from '../../../lib/feedback'
 import { IcBalao, IcMais, IcPlay, IcQr } from '../../../icones'
 import QrCadastro from '../alunos/QrCadastro'
 import { EscolherAluno } from '../presencial/Presencial'
+import { anamnesesNovas, anamnesesPendentes, lerAnamnese, sinaisAtencao, type Anamnese } from '../../../lib/anamnese'
 import { Quadro } from '../../../vidro'
 
 const saudacao = (d: Date) => {
@@ -42,6 +43,7 @@ export default function Inicio({ nome }: { nome: string }) {
   const corte = corteAvaliacoes(agora)
   const avaliacoes = useLista<{ alunoId: string; data: string }>(useMemo(() => query(collection(db, 'avaliacoes'), where('data', '>=', corte)), [corte]))
   const fb = useFeedbacks()
+  const anamneses = useLista<object>(useMemo(() => query(collection(db, 'anamneses')), [])) // uma consulta só: coleção pequena
   const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves)
   if (!alunos.carregando && alunos.dados.length === 0)
     return (
@@ -59,6 +61,9 @@ export default function Inicio({ nome }: { nome: string }) {
   const mesosAtivos = mesos.dados.filter((d) => nomeDe.has(d.alunoId)).map((d) => ({ id: d.id, alunoId: d.alunoId, meso: docParaMeso(d), nome: d.nome }))
   const paraRevisar = relatoriosParaRevisar(mesosAtivos, new Set(liberados.dados.map((x) => x.id)), agora)
   const paraAvaliar = avaliacoesParaFazer(mesosAtivos, avaliacoes.dados, agora)
+  const docsAnam = anamneses.dados.map((d) => lerAnamnese(d.id, d)).filter((a): a is Anamnese => !!a && nomeDe.has(a.alunoId))
+  const novasAnam = anamnesesNovas(docsAnam) // uma por aluno
+  const pendentesAnam = anamnesesPendentes(alunos.dados.map((a) => ({ id: a.id, nome: a.nome, status: a.status, presencial: a.presencial })), docsAnam, mesosAtivos, agora)
   const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial).length
   const blocos: [string, AlunoComId[], string][] = [
     ['Aguardando aprovação', r.aguardando, 'Ninguém aguardando.'],
@@ -144,6 +149,29 @@ export default function Inicio({ nome }: { nome: string }) {
               <li key={x.mesoId} className="max-w-full min-w-0">
                 <a href={`#/aluno/${x.alunoId}/avaliacoes`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                   {nomeDe.get(x.alunoId)} · {x.nome}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {(novasAnam.length > 0 || pendentesAnam.length > 0) && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-marca-500/60 bg-marca-900/40 p-4">
+          <h2 className="font-semibold">
+            Anamneses <span className="font-display text-lg font-bold text-marca-300">{novasAnam.length + pendentesAnam.length}</span>
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {novasAnam.map((a) => (
+              <li key={a.id} className="max-w-full min-w-0">
+                <a href={`#/aluno/${a.alunoId}/anamnese`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                  {nomeDe.get(a.alunoId)} · nova{sinaisAtencao(a.r).length > 0 && ' · Atenção'}
+                </a>
+              </li>
+            ))}
+            {pendentesAnam.map((x) => (
+              <li key={x.alunoId} className="max-w-full min-w-0">
+                <a href={`#/aluno/${x.alunoId}/anamnese`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/15">
+                  {x.nome} · {x.motivo === 'primeira' ? 'não respondeu' : 'atualizar'}
                 </a>
               </li>
             ))}

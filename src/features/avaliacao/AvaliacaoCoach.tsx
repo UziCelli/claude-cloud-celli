@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react'
 import { diaSP, type Usuario } from '../../lib/acesso'
 import { apagarAvaliacao, novaAvaliacaoId, recolherAvaliacao, salvarAvaliacao } from '../../lib/acoes'
 import {
-  BIO, cicloDaAvaliacao, DOBRAS, FAIXA, lerAvaliacao, PERIMETROS, relatorioAvaliacao,
-  type Avaliacao as Av, type AvaliacaoForm,
+  BIO, cicloDaAvaliacao, DOBRAS, FAIXA, lerAvaliacao, LIPEDEMA, PERIMETROS, relatorioAvaliacao,
+  type Avaliacao as Av, type AvaliacaoForm, type Lipedema,
 } from '../../lib/avaliacao'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../lib/contato'
 import { db } from '../../lib/firebase'
@@ -85,6 +85,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
       ...BIO.map((b) => ['b_' + b.id, txt(ficha?.bio[b.id])]),
     ]),
   }))
+  const [lipedema, setLipedema] = useState<Lipedema[]>(base?.lipedema ?? [])
   const [existe, setExiste] = useState(!!ficha)
   const [liberado, setLiberado] = useState(!!ficha?.liberado)
   // Trocar a rota remonta a tela: a mensagem do 1º salvar atravessa pelo `flash`.
@@ -120,6 +121,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
         perimetros: pega('p_', PERIMETROS),
         dobras: pega('d_', DOBRAS),
         bio: pega('b_', BIO),
+        lipedema,
         comentario: v.comentario,
       }
     : null
@@ -176,6 +178,20 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
           <Num rotulo="Peso (kg)" v={v.peso} onChange={set('peso')} ruim={ruim('peso')} />
           <Num rotulo="Altura (cm)" v={v.altura} onChange={set('altura')} ruim={ruim('altura')} />
         </div>
+        <fieldset className="space-y-1">
+          <legend className="sr-only">Lipedema</legend>
+          {LIPEDEMA.map((l) => (
+            <label key={l.id} className="flex min-h-11 items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={lipedema.includes(l.id)}
+                onChange={(e) => setLipedema((x) => (e.target.checked ? [...x, l.id] : x.filter((i) => i !== l.id)))}
+                className="size-6 shrink-0 accent-marca-500"
+              />
+              {l.rotulo}
+            </label>
+          ))}
+        </fieldset>
         {secao('Perímetros (cm)', [...PERIMETROS], 'p_')}
         {secao('Dobras cutâneas (mm)', [...DOBRAS], 'd_')}
         {secao('Bioimpedância', BIO.map((b) => ({ id: b.id, rotulo: `${b.rotulo}${b.un ? ` (${b.un})` : ''}` })), 'b_')}
