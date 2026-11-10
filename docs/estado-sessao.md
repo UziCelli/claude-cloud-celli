@@ -336,4 +336,4 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - O QR e o "copia e cola" já saem com o total do dia e se atualizam sozinhos à meia-noite.
 - Antes de vencer, o Pix avisa: "Após o vencimento: multa de 2% e juros de 1% ao mês."
 - Coach: lista de Alunos mostra "Com atraso: R$ X" (valor do dia em que o aluno tocou "Já paguei").
-- Só na marca VFIT (`pix.atraso` no `marca.json`). Gislane continua sem multa; ligar é uma linha.
+- Ligado nas duas marcas (`pix.atraso` no `marca.json`): VFIT e Gislane, mesma regra.
