@@ -47,7 +47,7 @@ Pedido do Victor: terminar as notificações nas 2 marcas.
 - Para o aluno: lembrete do treino do dia; aviso escrito pelo coach.
 
 ## Respostas do Victor
-- Lembrete: horário fixo para todos (6h47 de Brasília; o GitHub costuma atrasar alguns minutos).
+- Lembrete: horário fixo para todos (6h47 de Brasília), disparado pelo Worker (ver "Lembrete na hora certa" abaixo).
 - Dias: segunda a sábado, só para quem tem meso em andamento e ainda não treinou hoje.
 - Aviso escrito: para todos os alunos ativos ou para um aluno só.
 - Aviso escrito é só a notificação: nada gravado no banco (sem regra nova no Firestore, sem dado novo para a LGPD).
@@ -94,7 +94,17 @@ Limites (memória da instância):
 ## Riscos
 - **Sem internet na hora:** o aviso ao coach se perde (o dado em si fica gravado; o coach vê no app).
 - **Uma inscrição por pessoa:** vale o último aparelho que abriu o app (já era assim).
-- **Horário do lembrete:** o agendador do GitHub pode atrasar (em geral minutos).
+- **Horário do lembrete:** pontual (alarme do Worker). A mensalidade ainda sai quando o robô do GitHub roda (hoje, à tarde).
 - **Coach que deixa de ser coach** continua na lista até sair da conta naquele aparelho.
 - **Nome do aluno** passa pelo Worker dentro da notificação (criptografada até o celular do coach); nada é guardado nem logado. O texto da Política sobre a Cloudflare foi ajustado, sem pedir novo aceite.
 - **Aluno mal-intencionado** só consegue mandar ao coach os 3 textos fixos, com o próprio nome, 1 a cada 10 min por tipo.
+
+# Lembrete na hora certa (10/11/2026)
+Medido em 12 dias: o agendador do GitHub rodou o robô das 8h47 entre 13h19 e 18h37. O lembrete das 6h47 chegaria à tarde.
+- **Como ficou:** o robô roda 3 vezes por dia (`AGENDAR=1`) só para **entregar** a lista ao Worker, com `quando` = próximas 6h47 de Brasília. O Worker guarda na instância `__agenda:<projeto>` e dispara pelo alarme do Durable Object, que é pontual. Sem segredo novo.
+- **Contrato:** `/aviso-pagamento` aceita `quando` (ms, de agora+1 min a agora+36 h) e `inicio` (1º lote: troca a lista guardada para essa hora; lote vazio limpa). Sem `quando`, envia na hora (mensalidade e teste manual do lembrete).
+- **No disparo:** um lote (até 20) por alarme; lote com mais de 3 h de atraso é descartado; apaga antes de enviar (alarme repetido não duplica).
+- **Quem recebe** (`quaisLembrar`): meso em andamento que pede treino naquele dia. Com "Dias de treino": só nos dias marcados e enquanto faltar treino na semana. Sem eles: calendário automático (`DIAS_AUTO`, igual a `src/lib/agenda.ts`), no dia planejado ou enquanto estiver atrasado na semana.
+- **Já treinou hoje:** como a lista sai na véspera, o Worker anota a hora do "concluiu" (`/avisar-coach`) e não manda o lembrete a quem concluiu treino no dia.
+- **Limite:** renovação ou meso criado depois da última rodada do robô (em geral à noite) só entra no lembrete do dia seguinte.
+

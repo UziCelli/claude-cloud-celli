@@ -2,12 +2,16 @@ name: Avisos de mensalidade
 
 # Roda para as duas marcas (cada uma só no PRÓPRIO projeto).
 # - Todo dia às 8h47 de Brasília: mensalidade (quem vence em 3 dias ou hoje).
-# - De segunda a sábado às 6h47 de Brasília: lembrete do treino do dia (meso em andamento e sem treino hoje).
+# - Lembrete do treino do dia (seg a sáb, 6h47 de Brasília): o agendador do GitHub atrasa de 5 a 10 horas neste
+#   repositório, então o robô roda 3 vezes por dia só para ENTREGAR a lista ao Worker (push/), que guarda e dispara
+#   pontualmente às 6h47. Cada rodada troca a lista da anterior. A mensalidade continua saindo quando o robô roda.
 # O log só tem contagens: nunca nome, e-mail ou uid.
 on:
   schedule:
     - cron: '47 11 * * *'
-    - cron: '47 9 * * 1-6'
+    - cron: '47 15 * * *'
+    - cron: '47 21 * * *'
+    - cron: '47 3 * * *'
   workflow_dispatch:
     inputs:
       marca:
@@ -65,7 +69,9 @@ jobs:
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJETO: ${{ matrix.projeto }}
-          MODO: ${{ (github.event.schedule == '47 9 * * 1-6' || inputs.modo == 'lembrete') && 'lembrete' || 'mensalidade' }}
+          MODO: ${{ ((github.event_name == 'schedule' && github.event.schedule != '47 11 * * *') || inputs.modo == 'lembrete') && 'lembrete' || 'mensalidade' }}
+          # Agendado: o Worker guarda até as 6h47. Manual (teste): sai na hora.
+          AGENDAR: ${{ github.event_name == 'schedule' && '1' || '' }}
         run: |
           trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"

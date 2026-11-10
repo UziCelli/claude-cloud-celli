@@ -46,8 +46,10 @@ export const nomeDO = (projeto: Projeto, uid: string): string => (projeto === 'f
 export type Aviso = { uid: string; tipo: 'vence-3d' | 'vence-hoje' | 'treino-hoje' }
 
 // Corpo de /aviso-pagamento: projeto da lista, no máximo 20 avisos (limite de 50 subpedidos do plano grátis), só os tipos do contrato.
-export function validarAvisos(c: unknown): { projeto: Projeto; avisos: Aviso[] } | null {
-  const o = c as { projeto?: unknown; avisos?: unknown } | null
+// Com `quando` (ms, de agora+1 min até agora+36 h) o Worker guarda e dispara na hora marcada (o agendador do GitHub
+// atrasa horas; o alarme do Durable Object é pontual). `inicio: true` = 1º lote: troca o que já estava guardado para essa hora.
+export function validarAvisos(c: unknown, agora = Date.now()): { projeto: Projeto; avisos: Aviso[]; quando?: number; inicio: boolean } | null {
+  const o = c as { projeto?: unknown; avisos?: unknown; quando?: unknown; inicio?: unknown } | null
   const projeto = PROJETOS.find((p) => p === o?.projeto)
   if (!projeto || !Array.isArray(o?.avisos) || o.avisos.length > 20) return null
   const avisos: Aviso[] = []
@@ -55,8 +57,29 @@ export function validarAvisos(c: unknown): { projeto: Projeto; avisos: Aviso[] }
     if (!a || !uidOk(a.uid) || (a.tipo !== 'vence-3d' && a.tipo !== 'vence-hoje' && a.tipo !== 'treino-hoje')) return null
     avisos.push({ uid: a.uid, tipo: a.tipo })
   }
-  return { projeto, avisos }
+  const q = o.quando
+  if (q === undefined) return { projeto, avisos, inicio: false }
+  if (typeof q !== 'number' || !Number.isInteger(q) || q < agora + 60_000 || q > agora + 36 * 3600_000) return null
+  return { projeto, avisos, quando: q, inicio: o.inicio === true }
 }
+
+// Agenda de avisos (instância '__agenda:<projeto>'): chaves 'ag:<quando com 13 dígitos>:<id>' = lote de até 20 avisos.
+export const nomeAgenda = (projeto: Projeto): string => `__agenda:${projeto}`
+export const prefixoAgenda = (quando: number): string => `ag:${String(quando).padStart(13, '0')}:`
+const ATRASO_MAX = 3 * 3600_000
+// Dado as chaves guardadas e a hora: qual lote disparar agora, quais jogar fora (mais de 3 h de atraso: o aviso
+// perdeu o sentido) e para quando armar o próximo alarme (1 s depois, se ainda há lote vencido; senão a próxima hora marcada).
+export function passoAgenda(chaves: string[], agora: number): { disparar?: string; descartar: string[]; alarme?: number } {
+  const itens = chaves.map((k) => ({ k, quando: Number(k.split(':')[1]) })).sort((a, b) => a.quando - b.quando || a.k.localeCompare(b.k))
+  const descartar = itens.filter((i) => !Number.isFinite(i.quando) || agora - i.quando > ATRASO_MAX).map((i) => i.k)
+  const vivos = itens.filter((i) => !descartar.includes(i.k))
+  const disparar = vivos[0] && vivos[0].quando <= agora ? vivos[0].k : undefined
+  const resto = vivos.filter((i) => i.k !== disparar)
+  return { disparar, descartar, alarme: resto[0] ? Math.max(resto[0].quando, agora + 1000) : undefined }
+}
+
+// Meia-noite de Brasília (UTC-3, sem horário de verão) do dia de `agora`, em ms.
+export const inicioDoDiaBrasilia = (agora: number): number => Math.floor((agora - 3 * 3600_000) / 86400_000) * 86400_000 + 3 * 3600_000
 
 // Tipos de aviso que a pessoa liga/desliga em Conta (o descanso tem chave própria no aparelho).
 // Aluno recebe: treino, mensalidade, lembrete, recado. Coach recebe: concluiu, comentou, pagou.

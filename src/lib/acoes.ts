@@ -126,7 +126,7 @@ export function criarAlunoPresencial(a: { nome: string }) {
 // Presencial -> aluno com app, mantendo o histórico. Ordem pensada para nunca perder dados;
 // se falhar no meio, chamar de novo continua de onde parou:
 // 1. cria a conta (ou reaproveita a anotada em migradoPara) e anota migradoPara no perfil antigo;
-// 2. cria o perfil novo; 3. troca alunoId de mesos, registros, relatórios e avaliações (lotes de 400; os ids dos
+// 2. cria o perfil novo; 3. troca alunoId de mesos, registros, relatórios e avaliações e leva as anotações (lotes de 400; os ids dos
 // registros só têm o mesoId, continuam válidos; relatórios depois dos mesos, que a regra confere o dono
 // do meso); 4. apaga o perfil antigo; 5. e-mail de senha.
 export async function darAcessoAoApp(idPresencial: string, a: { email: string; pagoAte: string /* YYYY-MM-DD */ }) {
@@ -151,6 +151,13 @@ export async function darAcessoAoApp(idPresencial: string, a: { email: string; p
       for (const d of docs.slice(i, i + 400)) b.update(d.ref, campos)
       await b.commit()
     }
+  }
+  // Anotações dos exercícios (notas/{id}): o id é o do aluno, então copia para o id novo e só depois apaga a antiga.
+  // Com merge: repetir depois de uma queda no meio não apaga o que já foi copiado.
+  const notas = await getDocFromServer(doc(db, 'notas', idPresencial))
+  if (notas.exists()) {
+    await setDoc(doc(db, 'notas', uid), { ...notas.data(), alunoId: uid, atualizadoEm: serverTimestamp() }, { merge: true })
+    await deleteDoc(notas.ref)
   }
   await deleteDoc(antigo)
   await sendPasswordResetEmail(auth, a.email)

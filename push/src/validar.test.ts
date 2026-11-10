@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { b64u } from './b64'
-import { nomeDO, uidOk, validarAvisos, validarDesligados, validarRecado, tipoCoachOk, nomeLimpo, nomeCoaches, validarFimEm, validarInscricao } from './validar'
+import { inicioDoDiaBrasilia, nomeAgenda, nomeDO, passoAgenda, prefixoAgenda, uidOk, validarAvisos, validarDesligados, validarRecado, tipoCoachOk, nomeLimpo, nomeCoaches, validarFimEm, validarInscricao } from './validar'
 
 const p256dh = b64u(new Uint8Array([4, ...new Array(64).fill(7)]))
 const auth = b64u(new Uint8Array(16).fill(9))
@@ -69,7 +69,7 @@ describe('uidOk e nomeDO', () => {
 describe('validarAvisos', () => {
   const ok = { projeto: 'forca--app', avisos: [{ uid: 'u1', tipo: 'vence-3d' }, { uid: 'u2', tipo: 'vence-hoje' }] }
   it('aceita projeto da lista e os dois tipos', () => {
-    expect(validarAvisos(ok)).toEqual(ok)
+    expect(validarAvisos(ok)).toEqual({ ...ok, inicio: false })
     expect(validarAvisos({ ...ok, projeto: 'gislane-personal-trainer' })?.projeto).toBe('gislane-personal-trainer')
     expect(validarAvisos({ projeto: 'forca--app', avisos: [] })?.avisos).toEqual([])
   })
@@ -93,6 +93,52 @@ describe('validarAvisos', () => {
 describe('validarAvisos: lembrete do treino', () => {
   it('aceita o tipo treino-hoje', () => {
     expect(validarAvisos({ projeto: 'forca--app', avisos: [{ uid: 'u1', tipo: 'treino-hoje' }] })?.avisos[0].tipo).toBe('treino-hoje')
+  })
+})
+
+describe('validarAvisos: agendado (quando)', () => {
+  const agora = 1_800_000_000_000
+  const c = (extra: object) => ({ projeto: 'forca--app', avisos: [{ uid: 'u1', tipo: 'treino-hoje' }], ...extra })
+  it('sem quando: envio imediato, como antes', () => {
+    expect(validarAvisos(c({}), agora)).toEqual({ projeto: 'forca--app', avisos: [{ uid: 'u1', tipo: 'treino-hoje' }], inicio: false })
+  })
+  it('aceita de 1 min a 36 h à frente e lê inicio', () => {
+    expect(validarAvisos(c({ quando: agora + 60_000 }), agora)?.quando).toBe(agora + 60_000)
+    expect(validarAvisos(c({ quando: agora + 36 * 3600_000, inicio: true }), agora)).toMatchObject({ quando: agora + 36 * 3600_000, inicio: true })
+    expect(validarAvisos(c({ quando: agora + 3600_000, inicio: 'sim' }), agora)?.inicio).toBe(false)
+    expect(validarAvisos({ projeto: 'forca--app', avisos: [], quando: agora + 3600_000, inicio: true }, agora)?.avisos).toEqual([])
+  })
+  it('recusa passado, longe demais e o que não é inteiro', () => {
+    for (const quando of [agora, agora - 1, agora + 59_000, agora + 36 * 3600_000 + 1, 1.5, '1800000000000', null, NaN, Infinity]) expect(validarAvisos(c({ quando }), agora)).toBeNull()
+  })
+})
+
+describe('agenda de avisos', () => {
+  const t = 1_800_000_000_000
+  const k = (quando: number, id: string) => `${prefixoAgenda(quando)}${id}`
+  it('nome e prefixo não colidem com uid nem entre horas', () => {
+    expect(nomeAgenda('forca--app')).toBe('__agenda:forca--app')
+    expect(uidOk(nomeAgenda('forca--app'))).toBe(false)
+    expect(prefixoAgenda(5)).toBe('ag:0000000000005:')
+    expect(k(t, 'a').startsWith(prefixoAgenda(t))).toBe(true)
+  })
+  it('antes da hora: nada dispara e o alarme fica na hora mais próxima', () => {
+    expect(passoAgenda([k(t + 5000, 'b'), k(t + 1000, 'a')], t)).toEqual({ disparar: undefined, descartar: [], alarme: t + 1000 })
+    expect(passoAgenda([k(t + 5000, 'b')], 0).alarme).toBe(t + 5000)
+  })
+  it('na hora: dispara um lote por vez e rearma em 1 s enquanto houver lote vencido', () => {
+    expect(passoAgenda([k(t, 'b'), k(t, 'a'), k(t + 86400_000, 'c')], t + 10)).toEqual({ disparar: k(t, 'a'), descartar: [], alarme: t + 1010 })
+    expect(passoAgenda([k(t, 'b'), k(t + 86400_000, 'c')], t + 2000)).toEqual({ disparar: k(t, 'b'), descartar: [], alarme: t + 86400_000 })
+    expect(passoAgenda([k(t, 'b')], t)).toEqual({ disparar: k(t, 'b'), descartar: [], alarme: undefined })
+  })
+  it('mais de 3 h atrasado ou chave estranha: descarta sem enviar', () => {
+    expect(passoAgenda([k(t, 'a'), 'ag:x:1', k(t + 4 * 3600_000, 'b')], t + 3 * 3600_000 + 1)).toEqual({ disparar: undefined, descartar: [k(t, 'a'), 'ag:x:1'], alarme: t + 4 * 3600_000 })
+    expect(passoAgenda([], t)).toEqual({ disparar: undefined, descartar: [], alarme: undefined })
+  })
+  it('início do dia em Brasília (UTC-3)', () => {
+    expect(inicioDoDiaBrasilia(Date.parse('2026-10-13T06:47:00-03:00'))).toBe(Date.parse('2026-10-13T00:00:00-03:00'))
+    expect(inicioDoDiaBrasilia(Date.parse('2026-10-13T23:59:59-03:00'))).toBe(Date.parse('2026-10-13T00:00:00-03:00'))
+    expect(inicioDoDiaBrasilia(Date.parse('2026-10-13T00:00:00-03:00'))).toBe(Date.parse('2026-10-13T00:00:00-03:00'))
   })
 })
 

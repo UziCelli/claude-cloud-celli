@@ -1,6 +1,18 @@
-# Estado da sessão (retomada) — atualizado em 09/11/2026
+# Estado da sessão (retomada) — atualizado em 10/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
+
+## 10/11/2026 — Varredura e 3 correções
+- **Lembrete do treino na hora:** o agendador do GitHub atrasava 5 a 10 h. Agora o robô entrega a lista e o Worker dispara às 6h47 (`docs/plano-notificacoes.md`, "Lembrete na hora certa"). A mensalidade continua saindo à tarde.
+- **Lembrete só em dia de treino:** respeita os "Dias de treino" (ou o calendário automático) e para quando a semana está completa.
+- **Anotações ao dar acesso ao app:** as anotações do presencial vão junto para a conta nova.
+- **Achados ainda abertos** (não corrigidos):
+  - notificação vale em um aparelho só por pessoa (o último que abriu o app);
+  - "Apagar de vez" não apaga a inscrição de notificação guardada no Worker;
+  - anotações órfãs de migrações antigas (presencial → app) continuam no banco: apagar exige o ok do Victor;
+  - o monitor "Saúde dos apps" roda ~3 vezes por dia, não a cada hora (mesmo atraso do GitHub);
+  - `push.yml` publica o Worker a partir de qualquer branch que mexa em `push/`;
+  - a aba Métodos não oferece os exercícios de "Trocas e adições".
 
 ## 09/11/2026 — Avaliação física e relatório escrito (Fase 3)
 - Plano e escolhas do Victor: `docs/plano-avaliacao.md` (perímetros, dobras Pollock 7, bioimpedância; só o coach preenche e libera; lembrete a cada mesociclo; **sem foto**).
