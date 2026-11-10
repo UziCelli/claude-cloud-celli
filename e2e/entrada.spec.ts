@@ -94,5 +94,6 @@ test('login sem perfil: depois de 10 s oferece "Pedir acesso" e cai em "Cadastro
   await page.getByRole('checkbox', { name: /Li e aceito/ }).check()
   await page.getByRole('button', { name: 'Pedir acesso' }).click()
   await expect(page.getByRole('heading', { name: 'Cadastro recebido!' })).toBeVisible()
-  expect((await lerDoc(`usuarios/${uid}`))?.status).toBe('aguardando')
+  const f = ((await lerDoc(`usuarios/${uid}`))?.fields ?? {}) as Record<string, any>
+  expect(f.status?.stringValue).toBe('aguardando')
 })
