@@ -10,7 +10,7 @@
   "apk": "",
   "iconeFundo": "#1A0F0D",
   "dominio": "app.gislanepersonaltrainer.com",
-  "pix": { "chave": "gislanesantos017@gmail.com", "nome": "GISLANE SANTOS MADEIRA", "cidade": "SAO PAULO" },
+  "pix": { "chave": "gislanesantos017@gmail.com", "nome": "GISLANE SANTOS MADEIRA", "cidade": "SAO PAULO", "atraso": { "multa": 2, "jurosMes": 1 } },
   "avaliarGoogle": "",
   "responsavel": {
     "nome": "Gislane dos Santos Madeira",
