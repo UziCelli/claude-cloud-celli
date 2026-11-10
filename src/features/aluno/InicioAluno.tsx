@@ -6,6 +6,7 @@ import type { RegistroAlerta } from '../../lib/alertas'
 import type { MesoSalvo } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useHoje, useLista, useSemInternet } from '../../lib/hooks'
+import { dataBR } from '../../lib/avaliacao'
 import { fmtMin } from '../../lib/tempo'
 import { IcCartao, IcCheck, IcFogo, IcGrafico, IcLivro, IcPrancheta, IcRelogio, IcSeta } from '../../icones'
 import { ir } from '../../rota'
@@ -59,8 +60,8 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
-      <AvaliacaoPronta id={avaliacoes.dados[0]?.id} />
-      <Quadros pagoAte={perfil?.pagoAte?.toMillis()} />
+      <AvaliacaoPronta a={avaliacoes.dados[0]} />
+      <Quadros pagoAte={perfil?.pagoAte?.toMillis()} ultima={avaliacoes.dados[0]} />
       <FaixaFeedback />
     </main>
   )
@@ -175,10 +176,10 @@ function RelatorioPronto({ relatorios, mesos }: { relatorios: { mesoId: string; 
 }
 
 // Avaliação física liberada mais recente (a lista já vem da mais nova para a mais antiga).
-function AvaliacaoPronta({ id }: { id?: string }) {
-  if (!id) return null
+function AvaliacaoPronta({ a }: { a?: { id: string; liberadoEmMs?: number } }) {
+  if (!a?.liberadoEmMs || Date.now() - a.liberadoEmMs > 7 * 86400000) return null
   return (
-    <a href={`#/avaliacao/${id}`} className="toque block">
+    <a href={`#/avaliacao/${a.id}`} className="toque block">
       <Quadro className="flex items-center gap-3">
         <IconeQuadrado><IcGrafico className="size-5" /></IconeQuadrado>
         <div className="min-w-0 flex-1">
@@ -207,7 +208,7 @@ function PixPerto({ uid, perfil, hoje }: { uid: string; perfil: Usuario; hoje: D
   )
 }
 
-function Quadros({ pagoAte }: { pagoAte?: number }) {
+function Quadros({ pagoAte, ultima }: { pagoAte?: number; ultima?: { id: string; data: string } }) {
   const emDia = pagoAte != null && pagoAte > Date.now()
   const pagamento = (
     <Quadro className="h-full space-y-3">
@@ -232,14 +233,18 @@ function Quadros({ pagoAte }: { pagoAte?: number }) {
         </Quadro>
       </a>
       {PIX ? <a href="#/conta" className="toque block">{pagamento}</a> : pagamento}
-      <Quadro className="space-y-3 opacity-80">
-        <IconeQuadrado cor="bg-white/8 text-slate-300"><IcPrancheta className="size-5" /></IconeQuadrado>
-        <div>
-          <Chip>Em breve</Chip>
-          <p className="mt-2 text-sm font-semibold">Avaliações</p>
-          <p className="text-xs text-slate-400">peso, medidas e % de gordura</p>
-        </div>
-      </Quadro>
+      {(() => {
+        const q = (
+          <Quadro className="h-full space-y-3">
+            <IconeQuadrado cor="bg-white/8 text-slate-300"><IcPrancheta className="size-5" /></IconeQuadrado>
+            <div>
+              <p className="text-sm font-semibold">{ultima ? 'Avaliações' : 'Ainda sem avaliação'}</p>
+              <p className="text-xs text-slate-400">{ultima ? `última: ${dataBR(ultima.data).slice(0, 5)}` : 'peso, medidas e % de gordura'}</p>
+            </div>
+          </Quadro>
+        )
+        return ultima ? <a href={`#/avaliacao/${ultima.id}`} className="toque block">{q}</a> : q
+      })()}
       <a href="#/metodos" className="toque block">
         <Quadro className="h-full space-y-3">
           <IconeQuadrado cor="bg-fuchsia-500/15 text-fuchsia-300"><IcLivro className="size-5" /></IconeQuadrado>
