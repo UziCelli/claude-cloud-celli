@@ -74,12 +74,12 @@ function Campo({ p, v, mudar }: { p: Pergunta; v: unknown; mudar: (x: unknown) =
 export type ModoCoach = { aoFim: () => void }
 
 export default function AnamneseAluno({ uid }: { uid: string }) {
-  const { carregando, ultima, motivo } = useAnamnese(uid)
+  const { carregando, ultima, anotacao, motivo } = useAnamnese(uid)
   if (carregando) return <Centro>Carregando…</Centro>
-  return <Conteudo uid={uid} ultima={ultima} motivo={motivo} />
+  return <Conteudo uid={uid} ultima={ultima} anotacao={anotacao} motivo={motivo} />
 }
 
-export function Conteudo({ uid, ultima, motivo, coach }: { uid: string; ultima: ReturnType<typeof useAnamnese>['ultima']; motivo: 'primeira' | 'ciclo' | null; coach?: ModoCoach }) {
+export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: string; ultima: ReturnType<typeof useAnamnese>['ultima']; anotacao?: string; motivo: 'primeira' | 'ciclo' | null; coach?: ModoCoach }) {
   const chave = (coach ? 'coach-' : '') + uid // rascunho do coach não se mistura com o do aluno
   // Rascunho do aparelho vale só se for mais novo que a última resposta enviada (pendente conta como mais nova).
   const [rasc] = useState(() => {
@@ -92,6 +92,7 @@ export function Conteudo({ uid, ultima, motivo, coach }: { uid: string; ultima: 
   const [menor, setMenor] = useState(rasc?.menor ?? ultima?.r.responsavelConfirmou === true)
   const [r, setR] = useState<Respostas>(() => rasc?.r ?? (({ declaracao: _d, ...resto }) => resto)(ultima?.r ?? {}))
   const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
   const topo = useRef<HTMLDivElement>(null)
   useEffect(() => {
     topo.current?.scrollIntoView?.({ block: 'start' })
@@ -141,11 +142,15 @@ export function Conteudo({ uid, ultima, motivo, coach }: { uid: string; ultima: 
       return setErro('Falta responder algo. Confira as perguntas.')
     }
     setErro('')
+    setEnviando(true)
     ;(coach ? novaVersaoCoach : enviarAnamnese)(uid, final as Respostas)
-      .then(() => apagar(chave))
-      .catch((e) => registrarErro('gravacao', `anamnese: ${e?.code ?? e}`, e)) // só o código, nunca a resposta
-    if (coach) coach.aoFim()
-    else setEnviado(final as Respostas)
+      .then(() => { apagar(chave); coach?.aoFim() })
+      .catch((e) => {
+        registrarErro('gravacao', `anamnese: ${e?.code ?? e}`, e) // só o código, nunca a resposta
+        setEnviando(false)
+        if (coach) setErro('Não foi possível salvar. Tente de novo.')
+      })
+    if (!coach) setEnviado(final as Respostas)
   }
 
   if (enviado)
@@ -171,10 +176,10 @@ export function Conteudo({ uid, ultima, motivo, coach }: { uid: string; ultima: 
             {resumoAnamnese(ultima.r).map((l) => <li key={l} className="break-words">{l}</li>)}
           </ul>
         </Quadro>
-        {ultima.obsCoach && (
+        {anotacao && (
           <Quadro className="space-y-1">
             <h2 className="text-sm font-semibold text-slate-300">Anotação do seu coach</h2>
-            <p className="whitespace-pre-line break-words text-sm">{ultima.obsCoach}</p>
+            <p className="whitespace-pre-line break-words text-sm">{anotacao}</p>
           </Quadro>
         )}
         {erro && <Aviso>{erro}</Aviso>}
@@ -210,21 +215,21 @@ export function Conteudo({ uid, ultima, motivo, coach }: { uid: string; ultima: 
         {ativas(etapa).map((p) => (
           <section key={p.id} className="space-y-2">
             {p.tipo !== 'aceite' && <p className="text-[15px] font-semibold">{p.rotulo}</p>}
-            <Campo p={p} v={r[p.id]} mudar={(v) => mudar(p.id, v)} />
+            <Campo p={coach && p.tipo === 'aceite' ? { ...p, rotulo: 'Lancei conforme o aluno informou.' } : p} v={r[p.id]} mudar={(v) => mudar(p.id, v)} />
           </section>
         ))}
       </div>
       {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
-      <div className={coach ? 'sticky bottom-2 z-20 mt-6 rounded-2xl bg-slate-950/90 p-2 backdrop-blur' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
+      <div className={coach ? 'sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 rounded-2xl bg-slate-950/90 p-2 backdrop-blur lg:bottom-2' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
         <div className="mx-auto flex max-w-md gap-2">
           {etapa > 0 && <Botao className="min-h-12 flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}
           <Botao
             tipo="primario"
             className="min-h-12 flex-[2]"
-            disabled={falta(etapa)}
+            disabled={falta(etapa) || enviando}
             onClick={() => (ultimaEtapa ? enviar(r) : irPara(etapa + 1))}
           >
-            {ultimaEtapa ? 'Enviar' : 'Próximo'}
+            {ultimaEtapa ? (enviando ? 'Enviando…' : 'Enviar') : 'Próximo'}
           </Botao>
         </div>
       </div>

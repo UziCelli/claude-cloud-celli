@@ -13,7 +13,8 @@ import { BotaoVoltar } from '../../voltar'
 import { Conteudo } from './AnamneseAluno'
 
 const quando = (a: Anamnese) => (a.em == null ? 'agora' : dataBR(new Date(diaSP(a.em) * 86_400_000).toISOString().slice(0, 10)))
-const falhou = (e: unknown) => registrarErro('gravacao', `anamnese coach: ${(e as { code?: string })?.code ?? 'erro'}`, e) // nunca a resposta
+const codigo = (e: unknown) => (e as { code?: string })?.code ?? 'erro'
+const falhou = (e: unknown) => registrarErro('gravacao', `anamnese coach: ${codigo(e)}`, e) // nunca a resposta
 
 // Todas as anamneses do aluno (a coleção toda é lida pelo coach; filtrada pelo aluno), da mais nova para a mais antiga.
 export function useAnamnesesDoAluno(uid: string) {
@@ -31,9 +32,11 @@ export default function AnamneseCoach({ uid }: { uid: string }) {
   const semInternet = useSemInternet()
   const [escolhida, setEscolhida] = useState<string | null>(null)
   const [novaVersao, setNovaVersao] = useState(false)
+  const [erro, setErro] = useState('')
   const ultima = maisRecente(an.dados)
   const atual = an.dados.find((a) => a.id === escolhida) ?? ultima
 
+  if (!aluno.carregando && !aluno.dados) return <main className="mx-auto max-w-md px-4 py-4"><BotaoVoltar para="/" /><p className="py-6 text-center text-slate-400">Aluno não encontrado.</p></main>
   if (novaVersao && !an.carregando) return <Conteudo uid={uid} ultima={ultima} motivo={null} coach={{ aoFim: () => { setNovaVersao(false); setEscolhida(null) } }} />
 
   const sinais = atual ? sinaisAtencao(atual.r) : []
@@ -79,10 +82,11 @@ export default function AnamneseCoach({ uid }: { uid: string }) {
           )}
         </div>
       )}
-      <div className="sticky bottom-2 mt-6"> {/* o menu do coach já ocupa o rodapé: sem barra fixa */}
+      {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
+      <div className="sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 lg:bottom-2"> {/* acima das abas do coach (66px) no celular */}
         <div className="flex gap-2 rounded-2xl bg-slate-950/90 p-2 backdrop-blur">
           {atual && atual.origem === 'aluno' && atual.vistaEm == null && (
-            <Botao className="min-h-12 flex-1" onClick={() => marcarAnamneseVista(atual.id).catch(falhou)}>Marcar como vista</Botao>
+            <Botao className="min-h-12 flex-1" onClick={() => marcarAnamneseVista(atual.id).catch((e) => { falhou(e); setErro(`Não foi possível marcar como vista (${codigo(e)}).`) })}>Marcar como vista</Botao>
           )}
           <Botao tipo="primario" className="min-h-12 flex-1" disabled={an.carregando} onClick={() => setNovaVersao(true)}>{rotuloAcao}</Botao>
         </div>
@@ -94,7 +98,7 @@ export default function AnamneseCoach({ uid }: { uid: string }) {
 // Anotação do coach: o aluno LÊ este texto (o Firestore não esconde campo). Nunca dado secreto aqui.
 function Anotacao({ a }: { a: Anamnese }) {
   const [txt, setTxt] = useState(a.obsCoach)
-  const [salvo, setSalvo] = useState(false)
+  const [estado, setEstado] = useState<'' | 'salvando' | 'salvo' | 'erro'>('')
   return (
     <section className="space-y-2">
       <h2 className="font-semibold">Anotação</h2>
@@ -104,11 +108,19 @@ function Anotacao({ a }: { a: Anamnese }) {
         value={txt}
         maxLength={2000}
         rows={3}
-        onChange={(e) => { setTxt(e.target.value); setSalvo(false) }}
+        onChange={(e) => { setTxt(e.target.value); setEstado('') }}
         className={`${campoBase} w-full p-3`}
       />
-      <Botao className="min-h-11 w-full" disabled={txt === a.obsCoach} onClick={() => { anotarAnamnese(a.id, txt.trim()).catch(falhou); setSalvo(true) }}>
-        {salvo ? 'Anotação salva' : 'Salvar anotação'}
+      {estado === 'erro' && <Aviso>Não foi possível salvar a anotação. Tente de novo.</Aviso>}
+      <Botao
+        className="min-h-11 w-full"
+        disabled={txt === a.obsCoach || estado === 'salvando'}
+        onClick={() => {
+          setEstado('salvando')
+          anotarAnamnese(a.id, txt.trim()).then(() => setEstado('salvo')).catch((e) => { falhou(e); setEstado('erro') })
+        }}
+      >
+        {estado === 'salvando' ? 'Salvando…' : estado === 'salvo' ? 'Anotação salva' : 'Salvar anotação'}
       </Botao>
     </section>
   )

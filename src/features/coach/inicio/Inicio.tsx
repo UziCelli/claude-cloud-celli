@@ -60,7 +60,7 @@ export default function Inicio({ nome }: { nome: string }) {
   const paraRevisar = relatoriosParaRevisar(mesosAtivos, new Set(liberados.dados.map((x) => x.id)), agora)
   const paraAvaliar = avaliacoesParaFazer(mesosAtivos, avaliacoes.dados, agora)
   const docsAnam = anamneses.dados.map((d) => lerAnamnese(d.id, d)).filter((a): a is Anamnese => !!a && nomeDe.has(a.alunoId))
-  const novasAnam = anamnesesNovas(docsAnam).filter((a, i, l) => l.findIndex((b) => b.alunoId === a.alunoId) === i) // uma por aluno
+  const novasAnam = anamnesesNovas(docsAnam) // uma por aluno
   const pendentesAnam = anamnesesPendentes(alunos.dados.map((a) => ({ id: a.id, nome: a.nome, status: a.status, presencial: a.presencial })), docsAnam, mesosAtivos, agora)
   const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial).length
   const blocos: [string, AlunoComId[], string][] = [

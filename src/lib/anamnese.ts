@@ -277,8 +277,15 @@ export const resumoAnamnese = (r: Respostas): string[] =>
   TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo}${p.rotulo.endsWith('?') ? '' : ':'} ${rotuloDe(p, r[p.id])}`)
 
 // Não vistas pelo coach: com atenção primeiro, depois as mais recentes.
+// Só conta a versão mais recente de cada aluno (se é do coach ou já foi vista, o aluno não está "novo").
 export const anamnesesNovas = (docs: Anamnese[]) =>
-  docs.filter((d) => d.origem === 'aluno' && d.vistaEm === null).sort((a, b) => Number(tem(b)) - Number(tem(a)) || emOuAgora(b) - emOuAgora(a))
+  [...new Set(docs.map((d) => d.alunoId))]
+    .map((id) => maisRecente(docs.filter((d) => d.alunoId === id)))
+    .filter((d): d is Anamnese => !!d && d.origem === 'aluno' && d.vistaEm === null)
+    .sort((a, b) => Number(tem(b)) - Number(tem(a)) || emOuAgora(b) - emOuAgora(a))
+
+// Última anotação do coach que não está vazia (da versão mais nova para a mais antiga).
+export const ultimaAnotacao = (docs: Anamnese[]): string => [...docs].sort((a, b) => emOuAgora(b) - emOuAgora(a)).find((d) => d.obsCoach)?.obsCoach ?? ''
 
 // 'primeira' = nunca respondeu. 'ciclo' = um ciclo terminou (há até 30 dias) e a última resposta é de antes dos 7 dias finais.
 export function precisaAtualizar(ultimaDia: string | null, mesos: Meso[], agora: Date): 'primeira' | 'ciclo' | null {

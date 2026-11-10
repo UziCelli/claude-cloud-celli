@@ -39,6 +39,11 @@ test('coach vê selo e cartão, marca vista, anota e o aluno lê', async ({ page
   await expect(page.getByText('Problema no coração ou pressão alta', { exact: true })).toBeVisible() // sinal de atenção
   await expect(page.getByText('Dor: joelho')).toBeVisible()
 
+  for (const n of ['Marcar como vista', 'Nova versão']) { // a barra de ações fica acima das abas, sem rolar
+    const caixa = await page.getByRole('button', { name: n }).boundingBox()
+    const aba = await page.getByRole('navigation', { name: 'Menu' }).locator('a').first().boundingBox()
+    expect(caixa!.y + caixa!.height).toBeLessThanOrEqual(aba!.y)
+  }
   await page.getByRole('button', { name: 'Marcar como vista' }).click()
   await expect(page.getByRole('button', { name: 'Marcar como vista' })).toHaveCount(0)
   await expect.poll(async () => (await doAluno())[0].fields.vistaEm?.timestampValue).toBeTruthy()
@@ -65,11 +70,30 @@ test('coach cria nova versão (origem coach, já vista)', async ({ page }) => {
   await page.getByRole('button', { name: 'Nova versão' }).click()
   await expect(page.getByText('Etapa 1 de 5')).toBeVisible()
   for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Próximo', exact: true }).click()
-  await page.getByRole('checkbox', { name: /Respondi com verdade/ }).click()
+  await page.getByRole('checkbox', { name: /Lancei conforme o aluno informou/ }).click()
   await page.getByRole('button', { name: 'Enviar', exact: true }).click()
   await expect(page.getByRole('heading', { name: /Anamnese de/ })).toBeVisible()
   await expect.poll(async () => (await doAluno()).length).toBe(2)
   const nova = (await doAluno()).find((d) => d.fields.origem.stringValue === 'coach')!
   expect(nova.fields.vistaEm?.timestampValue).toBeTruthy()
   await expect(page.getByRole('heading', { name: 'Histórico' })).toBeVisible()
+})
+
+test('versão do coach tira a "nova" do aluno e aluno inexistente é avisado', async ({ page }) => {
+  const outro = await criarAluno('Rui Novo', email('rui'), senha, undefined, true, { anamnese: false })
+  await criarAnamnese(outro, PARQ_NAO)
+  await entrar(page, email('victor'), /Início|Bom dia|Boa tarde|Boa noite/)
+  await expect(page.getByRole('link', { name: /Rui Novo · nova/ })).toBeVisible()
+  await page.goto(`/#/aluno/${outro}/anamnese`)
+  await page.getByRole('button', { name: 'Nova versão' }).click() // sem marcar a do aluno como vista
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Próximo', exact: true }).click()
+  await page.getByRole('checkbox', { name: /Lancei conforme o aluno informou/ }).click()
+  await page.getByRole('button', { name: 'Enviar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: /Anamnese de/ })).toBeVisible()
+  await page.goto('/#/')
+  await expect(page.getByRole('link', { name: /Rui Novo · nova/ })).toHaveCount(0)
+
+  await page.goto('/#/aluno/inexistente123/anamnese')
+  await expect(page.getByText('Aluno não encontrado.')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Lançar pelo aluno|Nova versão/ })).toHaveCount(0)
 })

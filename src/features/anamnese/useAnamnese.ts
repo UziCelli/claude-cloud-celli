@@ -1,7 +1,7 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { useMemo } from 'react'
 import type { Usuario } from '../../lib/acesso'
-import { contaNovaParaAnamnese, lerAnamnese, maisRecente, motivoAnamnese, type Anamnese } from '../../lib/anamnese'
+import { contaNovaParaAnamnese, lerAnamnese, maisRecente, motivoAnamnese, ultimaAnotacao, type Anamnese } from '../../lib/anamnese'
 import { docParaMeso, type MesoSalvo } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useDoc, useLista } from '../../lib/hooks'
@@ -16,5 +16,5 @@ export function useAnamnese(uid: string) {
   const carregando = a.carregando || m.carregando || p.carregando
   const ok = !carregando && !a.erro
   const motivo = useMemo(() => (ok ? motivoAnamnese(docs, m.dados.map((x) => docParaMeso(x)), new Date()) : null), [ok, docs, m.dados])
-  return { carregando, ultima: maisRecente(docs), motivo, travar: motivo === 'primeira' && contaNovaParaAnamnese(p.dados?.criadoEm?.toMillis()) }
+  return { carregando, ultima: maisRecente(docs), anotacao: ultimaAnotacao(docs), motivo, travar: motivo === 'primeira' && contaNovaParaAnamnese(p.dados?.criadoEm?.toMillis()) }
 }

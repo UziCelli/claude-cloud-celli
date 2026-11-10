@@ -4,6 +4,7 @@ import type { Meso } from '../engine'
 import {
   anamnesesNovas,
   anamnesesPendentes,
+  ultimaAnotacao,
   avisoMedico,
   lerAnamnese,
   contaNovaParaAnamnese,
@@ -238,11 +239,25 @@ describe('anamnesesNovas', () => {
       doc('velha', 'a', {}, { em: 1 }),
       doc('nova', 'b', {}, { em: 2 }),
       doc('atencao', 'c', { coracao: true }, { em: 0 }),
+      doc('antiga', 'd', {}, { em: 1 }),
+      doc('recente', 'd', {}, { em: 9 }),
     ])
-    expect(r.map((d) => d.id)).toEqual(['atencao', 'nova', 'velha'])
+    expect(r.map((d) => d.id)).toEqual(['atencao', 'recente', 'nova'])
+  })
+  it('versão mais recente do coach (ou já vista) tira a do aluno de "nova"', () => {
+    expect(anamnesesNovas([doc('x', 'a', {}, { em: 1 }), doc('c', 'a', {}, { origem: 'coach', em: 2, vistaEm: 2 })])).toEqual([])
+    expect(anamnesesNovas([doc('x', 'a', {}, { em: 1 }), doc('c', 'a', {}, { origem: 'coach', em: null })])).toEqual([])
   })
   it('ignora versões lançadas pelo coach', () => {
-    expect(anamnesesNovas([doc('c', 'a', {}, { origem: 'coach' }), doc('x', 'a')]).map((d) => d.id)).toEqual(['x'])
+    expect(anamnesesNovas([doc('c', 'a', {}, { origem: 'coach', em: 1 }), doc('x', 'b')]).map((d) => d.id)).toEqual(['x'])
+  })
+})
+
+describe('ultimaAnotacao', () => {
+  it('a mais recente que não está vazia', () => {
+    const docs = [doc('a', 'x', {}, { em: 1, obsCoach: 'antiga' }), doc('b', 'x', {}, { em: 2, obsCoach: '' })]
+    expect(ultimaAnotacao(docs)).toBe('antiga')
+    expect(ultimaAnotacao([doc('c', 'x', {}, { obsCoach: '' })])).toBe('')
   })
 })
 
