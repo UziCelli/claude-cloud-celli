@@ -22,7 +22,7 @@ const ERROS_HTTP: Record<number, string> = {
 }
 
 // Manda a fala (e a lista atual de exercícios de cada treino) ao Haiku e devolve as ações pedidas. Erros viram texto em português para a tela.
-export async function montarTreinosPorFala(chave: string, fala: string, divisao: string[][]): Promise<Proposta> {
+export async function montarTreinosPorFala(chave: string, fala: string, divisao: string[][], semanas?: number): Promise<Proposta> {
   let resp: Response
   try {
     resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -34,7 +34,7 @@ export async function montarTreinosPorFala(chave: string, fala: string, divisao:
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify(corpoPedido(fala, divisao)),
+      body: JSON.stringify(corpoPedido(fala, divisao, semanas)),
     })
   } catch {
     throw new Error('Sem conexão com a IA. Confira a internet e tente de novo.')

@@ -9,7 +9,7 @@ test.beforeAll(async () => {
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
 })
 
-test('cadastra a chave, dita sem o texto voltar e adiciona/troca/refaz treinos (API simulada)', async ({ page }) => {
+test('cadastra a chave, dita sem o texto voltar, mexe na divisão, progressão e métodos (API simulada)', async ({ page }) => {
   const alunoId = await criarAluno('Voz Teste', 'voz.e2e@teste.com', 'senha123')
   const linha = { w1: [10, 10, 10, null, null, null] }
   const id = await criarMeso({
@@ -62,7 +62,7 @@ test('cadastra a chave, dita sem o texto voltar e adiciona/troca/refaz treinos (
   // Sem chave, o editor avisa onde cadastrar.
   await page.goto(`/#/meso/${id}`)
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
-  await page.getByRole('button', { name: 'Montar treinos por voz' }).click()
+  await page.getByRole('button', { name: 'Montar o meso por voz' }).click()
   await expect(page.getByText('Falta cadastrar a chave da IA')).toBeVisible()
 
   // Chave torta é recusada; a certa é gravada e só o fim aparece na tela.
@@ -80,7 +80,7 @@ test('cadastra a chave, dita sem o texto voltar e adiciona/troca/refaz treinos (
   // O ditado não reescreve o que foi apagado: mexer no texto desliga o microfone e a fala atrasada é ignorada.
   await page.goto(`/#/meso/${id}`)
   await page.getByRole('button', { name: 'Divisão', exact: true }).click()
-  await page.getByRole('button', { name: 'Montar treinos por voz' }).click()
+  await page.getByRole('button', { name: 'Montar o meso por voz' }).click()
   const campo = page.getByLabel('O que você falou')
   await page.getByRole('button', { name: 'Falar' }).click()
   await page.evaluate(() => (window as any).__falar('adiciona rosca no treino um'))
@@ -104,7 +104,7 @@ test('cadastra a chave, dita sem o texto voltar e adiciona/troca/refaz treinos (
   ]
   avisos = ['Remover exercício não dá para fazer aqui.']
   await campo.fill('rosca no treino um e agachamento no dois')
-  await page.getByRole('button', { name: 'Montar treino', exact: true }).click()
+  await page.getByRole('button', { name: 'Montar', exact: true }).click()
   const proposta = page.getByTestId('proposta-ia')
   await expect(proposta.getByText('Treino 1 · Adicionar')).toBeVisible()
   await expect(proposta.getByText('Treino 2 · Refazer a lista')).toBeVisible()
@@ -129,10 +129,25 @@ test('cadastra a chave, dita sem o texto voltar e adiciona/troca/refaz treinos (
   acoes = [{ acao: 'substituir', treino: 1, de: 'rosca', por: 'Leg Press 45' }]
   avisos = []
   await campo.fill('troca a rosca por leg press no treino um')
-  await page.getByRole('button', { name: 'Montar treino', exact: true }).click()
+  await page.getByRole('button', { name: 'Montar', exact: true }).click()
   await expect(page.getByTestId('proposta-ia').getByText('Treino 1 · Trocar')).toBeVisible()
   expect(corpoEnviado).toContain('2. Rosca Inventada')
   await page.getByRole('button', { name: 'Aplicar no editor' }).click()
   await expect(t1.nth(0)).toHaveValue('Agachamento Livre Halter')
   await expect(t1.nth(1)).toHaveValue('Leg Press 45')
+
+  // Progressão e método no mesmo pedido: prévia em texto e aplicados no exercício certo.
+  acoes = [
+    { acao: 'metodo', treino: 1, exercicio: 'leg press', metodo: 'Dropset' },
+    { acao: 'progressao', treino: 1, exercicio: 'leg press', reps: [15, 15] },
+  ]
+  await campo.fill('leg press do treino um 2x15 com dropset')
+  await page.getByRole('button', { name: 'Montar', exact: true }).click()
+  const p2 = page.getByTestId('proposta-ia')
+  await expect(p2.getByText('Treino 1 · Séries e reps')).toBeVisible()
+  await expect(p2.getByText('leg press (Treino 1) · todas as semanas · 2 séries: 15, 15')).toBeVisible()
+  await expect(p2.getByText('Dropset · leg press · todas as semanas')).toBeVisible()
+  expect(corpoEnviado).toContain('O meso tem 1 semana.')
+  await page.getByRole('button', { name: 'Aplicar no editor' }).click()
+  await expect(page.getByText('Pronto: Treino 1, Leg Press 45: 15, 15 · Treino 1, Leg Press 45: Dropset')).toBeVisible()
 })

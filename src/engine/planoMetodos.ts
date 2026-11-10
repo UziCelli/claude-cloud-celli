@@ -7,6 +7,8 @@ import type { AplicacaoMetodo, Meso, Metodo } from './tipos'
 export const METODOS: Metodo[] = ['Dropset', 'Biset', 'Triset', 'Superset', 'Circuito', 'Rest-pause', 'Clusterset']
 const SEQUENCIA: Metodo[] = ['Biset', 'Triset', 'Superset', 'Circuito']
 export const emGrupo = (m: Metodo) => SEQUENCIA.includes(m)
+// Exercícios que cada método de grupo junta: Biset 2, Triset 3, Superset 4 ou mais, Circuito 2 ou mais.
+export const totalCerto = (m: Metodo, total: number) => (m === 'Biset' ? total === 2 : m === 'Triset' ? total === 3 : m === 'Superset' ? total >= 4 : total >= 2)
 
 // Um método num exercício, nas semanas em que ele está igual. `modelo` = as entradas da primeira semana
 // (Dropset em várias séries = várias entradas); `parceiros` = as outras posições do grupo (Biset…).

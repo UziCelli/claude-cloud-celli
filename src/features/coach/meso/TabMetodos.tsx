@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { emGrupo, linhasDoExercicio, METODOS, padraoMetodo, removerLinha, salvarLinha, semanasTexto, serieDoDrop, alternarSerieDropset, seriesDoExercicio, seriesTexto } from '../../../engine'
+import { emGrupo, linhasDoExercicio, METODOS, padraoMetodo, removerLinha, salvarLinha, semanasTexto, serieDoDrop, alternarSerieDropset, seriesDoExercicio, seriesTexto, totalCerto } from '../../../engine'
 import type { AplicacaoMetodo, LinhaMetodo, Meso, Metodo } from '../../../engine'
 import { COR_METODO } from '../../../data/metodos'
 import { Aviso, Botao, Campo, Folha, Painel } from '../../../ui'
 import IconeMetodo from '../../metodos/IconeMetodo'
-import { opcoesSeries, totalCerto } from '../presencial/EditarTreino'
+import { opcoesSeries } from '../presencial/EditarTreino'
 
 const TAMANHO_GRUPO: Partial<Record<Metodo, number>> = { Biset: 2, Triset: 3, Superset: 4 }
 

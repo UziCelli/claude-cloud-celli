@@ -2,16 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import type { Meso, Registros } from '../../../engine'
 import { IcMicrofone } from '../../../icones'
 import { montarTreinosPorFala, refChaveIA } from '../../../lib/ia'
-import { MAX_TEXTO, type Acao, type Proposta } from '../../../lib/iaTreino'
+import { descreverAcao, MAX_TEXTO, type Acao, type Proposta } from '../../../lib/iaTreino'
 import { useDoc } from '../../../lib/hooks'
 import { mensagemVoz, ouvir, vozDisponivel, type Escuta } from '../../../lib/voz'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import { aplicarAcoes } from './util'
 
-const ROTULO: Record<Acao['tipo'], string> = { adicionar: 'Adicionar', definir: 'Refazer a lista', substituir: 'Trocar' }
+const ROTULO: Record<Acao['tipo'], string> = {
+  adicionar: 'Adicionar',
+  definir: 'Refazer a lista',
+  substituir: 'Trocar',
+  progressao: 'Séries e reps',
+  volume: 'Volume',
+  metodo: 'Método',
+}
 
-// Montar a divisão falando: o coach dita (ou digita), a IA entende se é para adicionar, trocar ou refazer, ele confere
-// e aplica. Nada é salvo aqui: aplicar só muda o editor; vale quando o coach tocar em Salvar.
+// Montar o meso falando: o coach dita (ou digita) divisão, séries e reps, volume e métodos; a IA devolve as ações,
+// ele confere e aplica. Nada é salvo aqui: aplicar só muda o editor; vale quando o coach tocar em Salvar.
 export default function VozTreino({
   meso,
   registros,
@@ -96,9 +103,9 @@ export default function VozTreino({
     setPensando(true)
     try {
       const divisao = Array.from({ length: meso.frequencia }, (_, i) => (meso.divisao[i] ?? []).map((s) => s.nome))
-      const r = await montarTreinosPorFala(dados.chave, texto, divisao)
+      const r = await montarTreinosPorFala(dados.chave, texto, divisao, meso.semanas)
       if (r.acoes.length || r.avisos.length) setProposta(r)
-      else setErro(`A IA não entendeu. Diga o treino e o que fazer, por exemplo: "adiciona crucifixo no treino 1" ou "troca leg press por hack no treino 2". Este mesociclo tem ${meso.frequencia} treinos.`)
+      else setErro(`A IA não entendeu. Diga o treino e o que fazer, por exemplo: "adiciona crucifixo no treino 1", "3x12 em todas as semanas" ou "dropset no supino do treino 2". Este mesociclo tem ${meso.frequencia} treinos.`)
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não deu para falar com a IA.')
     } finally {
@@ -124,7 +131,7 @@ export default function VozTreino({
   if (!aberto)
     return (
       <Botao type="button" className="flex w-full items-center justify-center gap-2" onClick={() => setAberto(true)}>
-        <IcMicrofone className="size-5" /> Montar treinos por voz
+        <IcMicrofone className="size-5" /> Montar o meso por voz
       </Botao>
     )
 
@@ -132,7 +139,7 @@ export default function VozTreino({
     <Cartao>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Montar treinos por voz</h2>
+          <h2 className="font-semibold">Montar o meso por voz</h2>
           <button
             type="button"
             className="min-h-11 px-2 text-sm text-slate-400 hover:text-slate-200"
@@ -153,7 +160,7 @@ export default function VozTreino({
         ) : (
           <>
             <p className="text-sm text-slate-400">
-              Fale ou escreva. Exemplos: "adiciona crucifixo e tríceps corda no treino 1" · "troca leg press por hack no treino 2" · "refaz o treino 3: remada curvada, puxada, rosca direta". Sem pedir para trocar, os exercícios entram no fim do treino e nada é apagado.
+              Fale ou escreva. Exemplos: "adiciona crucifixo e tríceps corda no treino 1" · "troca leg press por hack no treino 2" · "3 séries de 12 nas semanas 1 e 2, 4x10 depois" · "reduz 30% do volume na semana 4" · "biset de supino com crucifixo no treino 1". Sem pedir para trocar, os exercícios entram no fim do treino e nada é apagado.
             </p>
             {!vozDisponivel() && <p className="text-xs text-amber-300">Este aparelho não tem ditado no app. Use o microfone do teclado do celular.</p>}
             <textarea
@@ -182,7 +189,7 @@ export default function VozTreino({
                 Limpar
               </Botao>
               <Botao type="button" tipo="primario" className="min-h-11 flex-1" disabled={pensando || !texto.trim()} carregando={pensando} onClick={montar}>
-                {pensando ? 'Montando…' : 'Montar treino'}
+                {pensando ? 'Montando…' : 'Montar'}
               </Botao>
             </div>
           </>
@@ -196,9 +203,11 @@ export default function VozTreino({
               {proposta.acoes.map((a, k) => (
                 <div key={k} className="rounded-lg border border-slate-800 bg-slate-950 text-sm">
                   <p className="border-b border-slate-800 px-3 py-2 font-semibold">
-                    Treino {a.treino} · {ROTULO[a.tipo]}
+                    {a.treino ? `Treino ${a.treino}` : 'Todos os treinos'} · {ROTULO[a.tipo]}
                   </p>
-                  {a.tipo === 'substituir' ? (
+                  {a.tipo === 'progressao' || a.tipo === 'volume' || a.tipo === 'metodo' ? (
+                    <p className="px-3 py-2">{descreverAcao(a, meso.semanas)}</p>
+                  ) : a.tipo === 'substituir' ? (
                     <p className="px-3 py-2">
                       <span className="text-slate-400 line-through">{a.de}</span> por <span className="font-semibold">{a.por.nome}</span>
                       {!a.por.noCatalogo && <span className="ml-2 text-xs text-amber-300">fora do catálogo</span>}
