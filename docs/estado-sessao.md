@@ -54,7 +54,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 
 ## Regras combinadas com o Victor
 - **Linguagem:** respostas curtas, em tópicos, pt-BR (ele tem TDAH e não programa).
-- **Hierarquia (14/10/2026, `CLAUDE.md`):** Opus é o **arquiteto** (decisões e questões difíceis passam por ele), Sonnet **executa** (`dev`, `revisor`), Haiku faz o **operacional** (`auxiliar`, `explorador`: commit, PR, merge, CI, deploy, testes).
+- **Hierarquia (14/10/2026, `CLAUDE.md`):** Opus é o **arquiteto e o revisor** (`arquiteto`, `revisor`: decisões, questões difíceis e revisão do diff; revisor virou Opus em 10/11/2026 a pedido do Victor), Sonnet **executa** (`dev`), Haiku faz o **operacional** (`auxiliar`, `explorador`: commit, PR, merge, CI, deploy, testes).
 - **Merge (desde 07/10/2026):** automático depois de revisão própria + CI verde, sem pedir ao Victor (fluxo em `CLAUDE.md`, "PRs: fluxo automático"). Depois de juntar, conferir o workflow "Publicar".
 
 ## Entregas

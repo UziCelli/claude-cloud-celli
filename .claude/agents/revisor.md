@@ -1,7 +1,7 @@
 ---
 name: revisor
 description: Revisa o diff atual contra o plano, a especificação e o CLAUDE.md antes de commit/PR. Só leitura — aponta problemas, não corrige.
-model: sonnet
+model: opus
 effort: medium
 color: yellow
 tools: Read, Grep, Glob, Bash
