@@ -2,6 +2,21 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 10/11/2026 — Anamnese
+- **O aluno vê:** questionário em 5 etapas (~3 min, quase tudo toque): saúde (PAR-Q+), gestação e cirurgia, dores, rotina e treino. Funciona offline e sincroniza depois. Cartão no Início e "Minha anamnese" na Conta.
+- **O coach vê:** ficha com as respostas, selo Atenção quando há sinal (PAR-Q "sim", gestante, cirurgia recente, dor), histórico, anotação (o aluno também lê) e "Lançar pelo aluno" no presencial. Cartão "Anamneses" no Início.
+- **Travas:** só aluno novo (conta criada a partir de 11/11) tem o "Iniciar treino" travado até responder. Alunos atuais e fim de ciclo recebem só lembrete.
+- **Aviso médico neutro:** se algum "sim" no PAR-Q, o aluno vê "procure seu médico antes de treinar forte". Não bloqueia.
+- **Menores:** a anamnese pede a autorização do responsável. O aceite geral ainda não mudou (fica para depois, com o advogado).
+- **Política:** `VERSAO_PRIVACIDADE = '2026-11-10'`, então todos aceitam de novo uma vez.
+- **Sem IA:** nenhuma resposta sai do Firebase.
+- **Pendências do Victor:**
+  - testar no celular: aluno responde offline e sincroniza; coach vê o selo Atenção;
+  - pedir ao advogado para revisar a Política (anamnese e menores);
+  - decidir se quer a autorização do responsável também no aceite geral;
+  - conferir as opções do questionário.
+- **Ideias para depois (não fazer sem pedido):** notas privadas do coach (coleção separada); avisar o coach por notificação quando chegar anamnese nova; gráfico ou histórico comparativo.
+
 ## 10/11/2026 — Meso inteiro por voz
 - "Montar o meso por voz" saiu da aba Divisão e fica no topo do editor do meso.
 - Além da divisão, a fala agora monta: séries e reps (padrão ou de um exercício), volume (progredir, reduzir, polimento) e métodos (pôr ou tirar; Biset/Triset/Superset/Circuito com parceiros).

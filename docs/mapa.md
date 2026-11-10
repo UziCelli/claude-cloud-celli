@@ -14,6 +14,7 @@ Comece por aqui para achar onde mexer.
 | Gravação de cargas/reps no Firestore | `src/lib/acoes.ts` + `firestore.rules` |
 | Cardio do dia (marcar no Início, tipo e minutos) | `src/lib/cardio.ts` + `src/features/aluno/CardioHoje.tsx` + `firestore.rules` (`cardios`) + `src/lib/acoes.ts` (`registrarCardio`, `desfazerCardio`) |
 | Sua opinião (feedback, depoimentos, convite em bons momentos) | `src/lib/feedback.ts` + `src/features/feedback/` (`EnviarFeedback.tsx`, `ConviteFeedback.tsx`) + `src/features/coach/feedbacks/Feedbacks.tsx` + `firestore.rules` (`feedbacks`) + `src/lib/acoes.ts` (`enviarFeedback`, `marcarFeedbackLido`, `apagarFeedback`) + `src/features/privacidade/Politica.tsx` |
+| Anamnese (aluno responde, coach lê, Atenção) | `src/lib/anamnese.ts` (+ `anamnese.test.ts`) + `src/features/anamnese/` (`AnamneseAluno.tsx`, `AnamneseCoach.tsx`, `useAnamnese.ts`) + `firestore.rules` (`anamneses`) + `src/lib/acoes.ts` (`enviarAnamnese`, `novaVersaoCoach`, `anotarAnamnese`, `marcarAnamneseVista`, `apagarAluno`, `darAcessoAoApp`) + `src/features/privacidade/Politica.tsx` |
 | Estrutura de dados (Meso, Registro, tipos) | `src/engine/tipos.ts` + `src/lib/conversores.ts` |
 | Cores, fontes, grid | `marcas/<id>/tema.css` (escalas slate/marca) + `src/index.css` (fontes; Tailwind 4, sem tailwind.config) |
 | Nome, logo, ícones, cores e dados do responsável de uma marca | `marcas/<id>/` (`marca.json` com `cores`, `tema.css`, `Logo.tsx`, `logoPaths.ts`, `public/`) |
@@ -60,6 +61,7 @@ Comece por aqui para achar onde mexer.
 - `evolucao.test.ts`, `recorde.test.ts` — testes desses cálculos
 - `cardio.ts` (+ `cardio.test.ts`) — cardio do dia: `TIPOS` (lista de tipos), `idCardio()`, `rotuloCardio()`, `diaNumero()`; fora do motor de força
 - `feedback.ts` (+ `feedback.test.ts`) — Sua opinião: assuntos/tipos, `montarFeedback()` (anônimo sem alunoId), convite a cada 60 dias, `resumoNotas()`, `filtrar()`, `textoDepoimento()`
+- `anamnese.ts` (+ `anamnese.test.ts`) — anamnese (saúde, PAR-Q+): `PERGUNTAS` (5 etapas, fonte única), `TODAS`, `VERSAO_ANAMNESE`, `CHAVE_RASCUNHO`, `validarRespostas()`, `lerAnamnese()` (leitura com desconfiança), `avisoMedico()`, `sinaisAtencao()` (selo Atenção), `maisRecente()`, `resumoAnamnese()`, `anamnesesNovas()`, `ultimaAnotacao()`, `precisaAtualizar()` (`primeira` ou `ciclo`), `motivoAnamnese()`, `ANAMNESE_TRAVA_DESDE` + `contaNovaParaAnamnese()` (trava só conta nova), `anamnesesPendentes()`
 - `*.test.ts` — testes
 
 ### `push/` — Worker Cloudflare (notificação do descanso)
@@ -112,6 +114,12 @@ Comece por aqui para achar onde mexer.
 - `AvaliacaoAluno.tsx` (`#/avaliacao/:id`, só as liberadas; `useAvaliacoesLiberadas`)
 - `pdfAvaliacao.ts` — PDF da avaliação, com as folhas de `relatorio/folhasPdf.ts`
 - Cálculo em `src/lib/avaliacao.ts` (+ teste): leitura com desconfiança, IMC, % de gordura (Pollock 7 dobras ou bioimpedância), comparação, texto, ciclo de referência e lembrete do coach
+
+### `src/features/anamnese/` — Anamnese (PAR-Q+, saúde, dores, rotina, treino; 10/11/2026)
+- `AnamneseAluno.tsx` — etapas do aluno (barra de progresso, botões embaixo, rascunho no aparelho até confirmar), rota `/anamnese`; "Nada mudou" na atualização de ciclo; aviso médico neutro se algum "sim" do PAR-Q
+- `AnamneseCoach.tsx` — ficha, sinais de Atenção, histórico, anotação (`obsCoach`, o aluno lê), nova versão ("Lançar pelo aluno"), marca como vista
+- `useAnamnese.ts` — hook de leitura das anamneses (aluno: a própria; coach: todas do aluno)
+- Cartão no Início do aluno e "Minha anamnese" na Conta; cartão "Anamneses" e selo Atenção no coach (`MesosDoAluno.tsx`, `coach/inicio/Inicio.tsx`)
 
 ### `src/features/metodos/` — Guia e ícones dos métodos (rota `#/metodos`, aluno e coach)
 - `IconeMetodo.tsx` — ícone SVG animado por método
@@ -196,6 +204,8 @@ Comece por aqui para achar onde mexer.
 - `e2e/evolucao.spec.ts`, `e2e/recorde.spec.ts`, `e2e/ranking.spec.ts` — fluxos do painel de evolução, recorde e ranking
 - `e2e/cardio.spec.ts` — cardio do aluno (marcar, tipo/minutos, desfazer) e calendário do painel
 - `e2e/feedback.spec.ts` — Sua opinião (aluno envia, coach lê e filtra)
+- `e2e/anamnese.spec.ts` — anamnese do aluno: trava só conta nova, aviso médico, "Nada mudou" (nova versão), menor com responsável, envio offline sincroniza
+- `e2e/anamnese-coach.spec.ts` — coach vê selo e cartão, marca vista, anota (aluno lê), cria nova versão
 - `e2e/prints.spec.ts` — prints para divulgação; **opt-in**: só roda com `PRINTS=1` (`MARCA=gislane` para a outra marca; saída em `PRINTS_DIR`, fora do repositório). Só emulador, alunos `@exemplo.com`; pula a tela do Pix e `/privacidade`; guarda de dados proibidos. Comando: `PRINTS=1 PRINTS_DIR=<pasta> flock /tmp/claude-emulador.lock npx firebase emulators:exec --only auth,firestore --project demo-forca 'npx playwright test e2e/prints.spec.ts'`
 - `e2e/seed.ts` — fixture: usuários, mesos
 
@@ -296,6 +306,10 @@ Comece por aqui para achar onde mexer.
 ### `avaliacoes/{id automático}`
 - `alunoId`, `data` (AAAA-MM-DD), `pesoKg`, `alturaCm?`, `sexo?` (M/F), `idade?`, `perimetros?` (cm), `dobras?` (mm, 7 de Pollock), `bio?` (gorduraPct, massaMuscularKg, visceral), `comentario` (≤ 3000), `liberado`, `liberadoEm`, `atualizadoEm`
 - Dado de saúde. Só o coach grava (documento inteiro) e apaga; o aluno lê só a própria liberada, pela consulta. IMC, % de gordura e texto não são gravados (`src/lib/avaliacao.ts`).
+
+### `anamneses/{id automático}`
+- `alunoId`, `versao`, `origem` (`aluno` ou `coach`), `r` (respostas), `em`, `atualizadoEm`, `obsCoach?` (coach, ≤ 2000), `vistaEm?`
+- Dado de saúde (LGPD art. 11). Nova versão a cada envio (nunca sobrescreve); vale a de `em` mais recente. Validação em `src/lib/anamnese.ts`.
 
 ### `exclusoes/{uid}`
 - `em` (hora do servidor)
@@ -446,3 +460,10 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Robôs com a chave (SA) | `.github/workflows/*.yml` (alterar-email, aluno-exemplo, avisos-pagamento, backup, erros, importar-meso, limpeza-lgpd, mfa, vigia) | Passo "Instalar dependências" (`npm ci --ignore-scripts`, lockfile) sem SA no env e antes de gravar o `sa.json`; o passo com SA só roda `node tools/<script>.mjs` da raiz. Nunca `npm install` com a chave presente. | Revisão do workflow (sem teste automático) |
 | Texto de terceiros em links/resumos | `src/lib/contato.ts`, `public/sw-push.js`, `tools/erros.mjs` | `mailto:` codifica o e-mail; o clique do push só abre caminho `/x` ou mesma origem (senão `/`); a tabela pública de erros escapa Markdown/HTML. | `contato.test.ts` |
 | Sua opinião (09/11/2026) | `src/lib/feedback.ts`, `firestore.rules` (`feedbacks`), `acoes.ts`, `tools/limpeza-lgpd.mjs`, `Politica.tsx` | Anônimo de verdade: nunca gravar uid/nome no anônimo; o aluno nunca lê feedbacks (nem o próprio). Depoimento exige nome + nota 5 + texto **na regra**, não só na tela. Risco aceito: um aluno pago pode mandar muitos envios (sem limite por aluno; o coach apaga). LGPD apaga só os com nome (`alunoId`); o anônimo fica, não há como ligá-lo ao aluno. Mudou o texto da Política: trocar `VERSAO_PRIVACIDADE`. | `feedback.test.ts`, `tests/rules.test.ts` e `tests/ataques.test.ts` (feedbacks), `tests/limpeza-lgpd.test.ts`, e2e `feedback.spec.ts` |
+| Anamnese: criação pelo aluno (10/11/2026) | `firestore.rules` (`anamneses`), `src/lib/anamnese.ts`, `acoes.ts` (`enviarAnamnese`) | **Dado de saúde criado pelo aluno.** O aluno **cria**, nunca altera nem apaga: uma versão nova por envio, vale a de `em` mais recente. Regra confere `origem == 'aluno'`, campos, tipos e `em` = hora do servidor. | `anamnese.test.ts`, `tests/rules.test.ts` e `tests/ataques.test.ts` (anamneses), e2e `anamnese.spec.ts` |
+| Anamnese: `obsCoach` é do aluno para leitura (10/11/2026) | `firestore.rules` (`anamneses`), `AnamneseCoach.tsx`, `acoes.ts` (`anotarAnamnese`) | O coach escreve `obsCoach`/`vistaEm`; o **aluno lê** a anotação. Não pôr nela nada que não possa ser visto pelo aluno. O aluno nunca grava `obsCoach`. | `tests/ataques.test.ts` (aluno gravando `obsCoach`), e2e `anamnese-coach.spec.ts` |
+| Anamnese: mudar as perguntas (10/11/2026) | `src/lib/anamnese.ts` (`PERGUNTAS`, `VERSAO_ANAMNESE`), `firestore.rules` | Ao mudar as perguntas, **só acrescentar** chaves ou opções. Se algo for removido, envios offline antigos são recusados ao sincronizar. Única exceção: a troca do sono `5a6`→`5a7` (já feita). Chaves duplicadas em `anamnese.ts` e nas regras; o teste compara. | `anamnese.test.ts`, `tests/rules.test.ts` (chaves) |
+| Anamnese: trava do "Iniciar treino" (10/11/2026) | `src/lib/anamnese.ts` (`ANAMNESE_TRAVA_DESDE`, `contaNovaParaAnamnese`), `src/features/aluno/Treino.tsx`, `Hoje.tsx` | Trava **só** para conta criada a partir de `ANAMNESE_TRAVA_DESDE` (11/11/2026, dia de São Paulo). Alunos atuais e fim de ciclo recebem só o cartão (lembrete). Nunca travar no coach nem no presencial. | `anamnese.test.ts`, e2e `anamnese.spec.ts` (aluno novo e atual) |
+| Anamnese: custo de leitura (10/11/2026) | `src/features/anamnese/useAnamnese.ts`, `AnamneseCoach.tsx`, `coach/inicio/Inicio.tsx` | O Início do coach lê a coleção `anamneses` **inteira** para o cartão "Anamneses". O custo (leituras do Firestore) cresce com o tempo. Revisar (consulta por aluno ou contador) se a coleção crescer. | — (revisão ao crescer) |
+| Anamnese: apagar e LGPD (10/11/2026) | `acoes.ts` (`apagarAluno`, `darAcessoAoApp`), `tools/limpeza-lgpd.mjs`, `Politica.tsx` | Toda anamnese do aluno entra em "Apagar de vez", em `darAcessoAoApp` e na Limpeza LGPD diária. Mudou o texto da Política (anamnese e menores): trocar `VERSAO_PRIVACIDADE` (hoje `2026-11-10`). | `tests/limpeza-lgpd.test.ts` |
+| Anamnese: nada de resposta em log (10/11/2026) | `src/lib/acoes.ts`, `tools/*.mjs`, alertas e push | **Nunca** imprimir resposta de saúde em log (`registrarErro`), alerta, push, resumo de robô ou tela de erro. Só contagens. Vale para todo código novo que toque `r`. | revisão (sem teste automático) |
