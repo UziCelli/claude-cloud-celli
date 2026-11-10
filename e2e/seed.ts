@@ -10,7 +10,7 @@ export async function limparEmuladores() {
 }
 
 // Cria um usuário no Auth emulator e devolve o uid.
-async function criarConta(email: string, senha: string): Promise<string> {
+export async function criarConta(email: string, senha: string): Promise<string> {
   const r = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

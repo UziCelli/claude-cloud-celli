@@ -1,7 +1,7 @@
 import { AnimatePresence, m } from 'motion/react'
 import { agil, saida, suave } from '../../../movimento'
 import { useState } from 'react'
-import { collection, query, where } from 'firebase/firestore'
+import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
 import { apagarAluno, confirmarPagamento, definirAcesso, salvarMensalidade } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
@@ -86,8 +86,21 @@ export default function Alunos() {
     .filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase()) || a.email.toLowerCase().includes(busca.toLowerCase()))
     .sort(comparar)
 
-  function liberar(uid: string, pagoAte: string) {
+  async function liberar(uid: string, pagoAte: string) {
     setErro('')
+    const a = alunos.find((x) => x.id === uid)
+    if (a?.status === 'aguardando') {
+      // Aluno apagado hoje: o login só some na limpeza da madrugada; liberar agora ressuscitaria o perfil.
+      // Sem conseguir conferir (offline/erro), não libera: melhor tentar de novo do que ressuscitar um aluno apagado.
+      const apagado = await getDocFromServer(doc(db, 'exclusoes', uid)).then((d) => d.exists() ? 'sim' : 'nao', () => 'erro')
+      if (apagado !== 'nao') {
+        setEditando(null)
+        setErro(apagado === 'sim'
+          ? 'Este aluno foi apagado hoje. O login some na limpeza da madrugada; peça para ele criar a conta de novo amanhã.'
+          : 'Sem conexão para conferir. Tente de novo.')
+        return
+      }
+    }
     definirAcesso(uid, { status: 'ativo', pagoAte }).catch((e) => {
       registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
       setErro('Não deu para gravar. Tente de novo.')
