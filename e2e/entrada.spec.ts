@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { criarAluno } from './seed'
+import { criarAluno, criarConta, lerDoc } from './seed'
 
 // Entrada: boas-vindas na 1ª visita (forçadas, pois o e2e roda com webdriver) e login limpo.
 const UA_IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
@@ -79,4 +79,20 @@ test('cadastro pelo QR Code: cria a conta, cai na tela de espera e /cadastro sai
   await page.getByRole('button', { name: 'Criar conta', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Cadastro recebido!' })).toBeVisible()
   expect(new URL(page.url()).pathname).toBe('/')
+})
+
+// O botão some para quem tem 2º fator (coach): não dá para cadastrar TOTP no emulador sem o app autenticador, então esse caso fica sem e2e.
+test('login sem perfil: depois de 10 s oferece "Pedir acesso" e cai em "Cadastro recebido!"', async ({ page }) => {
+  test.setTimeout(60_000)
+  const uid = await criarConta('semperfil.e2e@teste.com', 'senha123')
+  await page.goto('/')
+  await page.getByLabel('E-mail').fill('semperfil.e2e@teste.com')
+  await page.getByLabel('Senha').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(page.getByText('Não encontramos seu cadastro. Peça acesso ao seu coach.')).toBeVisible({ timeout: 25_000 })
+  await page.getByLabel('Seu nome').fill('Sem Perfil')
+  await page.getByRole('checkbox', { name: /Li e aceito/ }).check()
+  await page.getByRole('button', { name: 'Pedir acesso' }).click()
+  await expect(page.getByRole('heading', { name: 'Cadastro recebido!' })).toBeVisible()
+  expect((await lerDoc(`usuarios/${uid}`))?.status).toBe('aguardando')
 })
