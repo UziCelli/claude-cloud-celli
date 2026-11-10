@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers'
 import { acessoComCache, appCheckOk, ehCoach, lerPermissao, podeAvisarTreino, quemAvisaCoach, registrarAgendamento, type CacheAcesso } from './acesso'
 import { cors } from './cors'
 import { chaveDaConta, chaveDoGoogle, verificarAviso, verificarIdToken, type Projeto } from './jwt'
-import { nomeCoaches, nomeDO, tipoCoachOk, uidOk, validarAvisos, validarDesligados, validarFimEm, validarInscricao, validarRecado, type Aviso, type Inscricao, type Tipo, type TipoCoach } from './validar'
+import { inicioDoDiaBrasilia, nomeAgenda, nomeCoaches, nomeDO, passoAgenda, prefixoAgenda, tipoCoachOk, uidOk, validarAvisos, validarDesligados, validarFimEm, validarInscricao, validarRecado, type Aviso, type Inscricao, type Tipo, type TipoCoach } from './validar'
 import { enviarPush, gerarParVapid, type ParVapid } from './webpush'
 
 type Env = { DESCANSO: DurableObjectNamespace<Descanso> }
@@ -104,9 +104,44 @@ export class Descanso extends DurableObject<Env> {
     await this.ctx.storage.delete(['fixa', 'desligados'])
   }
 
+  // O aluno concluiu um treino agora (vem do /avisar-coach): o lembrete de hoje não faz mais sentido.
+  async marcarConcluiu() {
+    await this.ctx.storage.put('concluiuEm', Date.now())
+  }
+
+  // Só na instância '__agenda:<projeto>': guarda um lote de avisos para disparar em `quando` (alarme pontual).
+  // `limpar` = 1º lote de um envio novo: troca o que estava guardado para essa mesma hora.
+  async agendarAvisos(projeto: Projeto, quando: number, avisos: Aviso[], limpar: boolean) {
+    const prefixo = prefixoAgenda(quando)
+    if (limpar) await this.ctx.storage.delete([...(await this.ctx.storage.list({ prefix: prefixo })).keys()])
+    if (avisos.length) await this.ctx.storage.put(`${prefixo}${crypto.randomUUID()}`, { projeto, avisos })
+    const { alarme } = passoAgenda([...(await this.ctx.storage.list({ prefix: 'ag:' })).keys()], 0)
+    if (alarme) await this.ctx.storage.setAlarm(alarme)
+    else await this.ctx.storage.deleteAlarm()
+  }
+
+  // Um lote (até 20 avisos) por alarme, para caber nos 50 subpedidos do plano grátis; o resto fica para o alarme seguinte.
+  private async dispararAgenda(chaves: string[]) {
+    const { disparar, descartar, alarme } = passoAgenda(chaves, Date.now())
+    const lote = disparar ? await this.ctx.storage.get<{ projeto: Projeto; avisos: Aviso[] }>(disparar) : undefined
+    // Apaga antes de enviar: se o alarme falhar e repetir, ninguém recebe duas vezes.
+    await this.ctx.storage.delete([...descartar, ...(disparar ? [disparar] : [])])
+    if (alarme) await this.ctx.storage.setAlarm(alarme)
+    if (!lote) return
+    await Promise.all(
+      lote.avisos.map((a) =>
+        this.env.DESCANSO.get(this.env.DESCANSO.idFromName(nomeDO(lote.projeto, a.uid)))
+          .avisar(...ROBO[a.tipo], false)
+          .catch(() => false),
+      ),
+    )
+  }
+
   // Envia à inscrição fixa. false = sem inscrição, tipo desligado ou não entregue; 404/410 apagam a inscrição.
   async avisar(msg: Mensagem, tipo: Tipo, comLimite: boolean): Promise<boolean | 'limite'> {
     if (((await this.ctx.storage.get<Tipo[]>('desligados')) ?? []).includes(tipo)) return false
+    // Lembrete do treino: quem já concluiu um treino hoje (Brasília) não recebe.
+    if (tipo === 'lembrete' && ((await this.ctx.storage.get<number>('concluiuEm')) ?? 0) >= inicioDoDiaBrasilia(Date.now())) return false
     if (comLimite) {
       // 3 por 10 min: o coach pode corrigir e reenviar, mas não dá para spammar o aluno.
       const marcas = registrarAgendamento(this.marcasTreino, Date.now(), 3, 10 * 60_000)
@@ -126,6 +161,8 @@ export class Descanso extends DurableObject<Env> {
   }
 
   async alarm() {
+    const agenda = [...(await this.ctx.storage.list({ prefix: 'ag:' })).keys()]
+    if (agenda.length) return this.dispararAgenda(agenda)
     const inscricao = await this.ctx.storage.get<Inscricao>('inscricao')
     if (!inscricao) return
     await this.ctx.storage.delete('inscricao')
@@ -174,6 +211,10 @@ export default {
       if (j instanceof Response) return j
       const dados = validarAvisos((j as { corpo: unknown }).corpo)
       if (!dados) return json({ erro: 'avisos inválidos' }, 400)
+      if (dados.quando) {
+        await env.DESCANSO.get(env.DESCANSO.idFromName(nomeAgenda(dados.projeto))).agendarAvisos(dados.projeto, dados.quando, dados.avisos, dados.inicio)
+        return json({ ok: true, agendados: dados.avisos.length })
+      }
       let enviados = 0
       for (let k = 0; k < dados.avisos.length; k += 10) {
         const lote = dados.avisos.slice(k, k + 10)
@@ -222,6 +263,7 @@ export default {
         const quem = await quemAvisaCoach(projeto, uid, tipo, token, Date.now(), fetch, appCheck)
         if (quem === 403) return json({ erro: 'sem permissão' }, 403)
         if (quem === 503) return json({ erro: 'não foi possível verificar o acesso' }, 503)
+        if (tipo === 'concluiu') await meu.marcarConcluiu()
         if (!(await meu.passar(`coach:${tipo}`, 1, DEZ_MIN))) return json({ erro: 'aviso já enviado há pouco' }, 429, { 'Retry-After': '600' })
         const lista = (await coaches(projeto).coaches()).filter((c) => c !== uid)
         await Promise.all(lista.map((c) => aluno(projeto, c).avisar(DO_ALUNO[tipo](quem.nome, uid), tipo, false).catch(() => false)))
