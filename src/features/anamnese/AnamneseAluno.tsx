@@ -1,0 +1,222 @@
+import { useEffect, useRef, useState } from 'react'
+import { avisoMedico, CHAVE_RASCUNHO, PERGUNTAS, resumoAnamnese, validarRespostas, type Pergunta, type Respostas } from '../../lib/anamnese'
+import { enviarAnamnese } from '../../lib/acoes'
+import { registrarErro } from '../../lib/log'
+import { IcCheck } from '../../icones'
+import { ir } from '../../rota'
+import { Aviso, Botao, Centro } from '../../ui'
+import { Quadro } from '../../vidro'
+import { BotaoVoltar } from '../../voltar'
+import { useAnamnese } from './useAnamnese'
+
+type Rascunho = { r: Respostas; menor: boolean; etapa: number; t: number }
+
+const ler = (uid: string): Rascunho | null => {
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_RASCUNHO + uid) ?? 'null')
+  } catch {
+    return null
+  }
+}
+const apagar = (uid: string) => {
+  try {
+    localStorage.removeItem(CHAVE_RASCUNHO + uid)
+  } catch {
+    /* sem armazenamento: sem rascunho */
+  }
+}
+
+const seleciona = (on: boolean) => `min-h-12 rounded-xl border px-4 text-[15px] font-semibold ${on ? 'border-marca-400 bg-marca-500 text-white' : 'border-white/15 bg-white/5 text-slate-200'}`
+
+const Caixa = ({ rotulo, on, mudar }: { rotulo: string; on: boolean; mudar: (v: boolean) => void }) => (
+  <button type="button" role="checkbox" aria-checked={on} onClick={() => mudar(!on)} className={`${seleciona(on)} flex w-full items-center gap-2 py-2 text-left`}>
+    <span className={`grid size-6 shrink-0 place-items-center rounded-md border ${on ? 'border-white' : 'border-white/40'}`}>{on && <IcCheck className="size-5" />}</span>
+    {rotulo}
+  </button>
+)
+
+function Campo({ p, v, mudar }: { p: Pergunta; v: unknown; mudar: (x: unknown) => void }) {
+  const escolhas = (itens: { id: unknown; rotulo: string }[], on: (id: unknown) => boolean, pick: (id: unknown) => void) => (
+    <div className="flex flex-wrap gap-2">
+      {itens.map((o) => (
+        <button key={String(o.id)} type="button" aria-pressed={on(o.id)} onClick={() => pick(o.id)} className={seleciona(on(o.id))}>{o.rotulo}</button>
+      ))}
+    </div>
+  )
+  switch (p.tipo) {
+    case 'simnao':
+      return escolhas([{ id: true, rotulo: 'Sim' }, { id: false, rotulo: 'Não' }], (id) => v === id, mudar)
+    case 'opcao':
+      return escolhas(p.opcoes.map((o) => ({ id: o.id, rotulo: o.rotulo })), (id) => v === id, mudar)
+    case 'multi': {
+      const l = Array.isArray(v) ? (v as string[]) : []
+      return escolhas(p.opcoes.map((o) => ({ id: o.id, rotulo: o.rotulo })), (id) => l.includes(id as string), (id) => mudar(l.includes(id as string) ? l.filter((x) => x !== id) : [...l, id]))
+    }
+    case 'inteiro':
+      return escolhas(Array.from({ length: p.max - p.min + 1 }, (_, i) => ({ id: p.min + i, rotulo: String(p.min + i) })), (id) => v === id, mudar)
+    case 'texto':
+      return (
+        <textarea
+          aria-label={p.rotulo}
+          value={typeof v === 'string' ? v : ''}
+          maxLength={p.max}
+          rows={3}
+          onChange={(e) => mudar(e.target.value)}
+          className="w-full rounded-xl border border-white/15 bg-white/5 p-3 text-[15px]"
+        />
+      )
+    case 'aceite':
+      return <Caixa rotulo={p.rotulo} on={v === true} mudar={(x) => mudar(x ? true : undefined)} />
+  }
+}
+
+export default function AnamneseAluno({ uid }: { uid: string }) {
+  const { carregando, ultima, motivo } = useAnamnese(uid)
+  if (carregando) return <Centro>Carregando…</Centro>
+  return <Conteudo uid={uid} ultima={ultima} motivo={motivo} />
+}
+
+function Conteudo({ uid, ultima, motivo }: { uid: string; ultima: ReturnType<typeof useAnamnese>['ultima']; motivo: 'primeira' | 'ciclo' | null }) {
+  // Rascunho do aparelho vale só se for mais novo que a última resposta enviada (pendente conta como mais nova).
+  const [rasc] = useState(() => {
+    const d = ler(uid)
+    return d && (!ultima || (ultima.em != null && ultima.em < d.t)) ? d : null
+  })
+  const [editando, setEditando] = useState(!ultima || !!rasc)
+  const [enviado, setEnviado] = useState<Respostas | null>(null)
+  const [etapa, setEtapa] = useState(rasc?.etapa ?? 0)
+  const [menor, setMenor] = useState(rasc?.menor ?? ultima?.r.responsavelConfirmou === true)
+  const [r, setR] = useState<Respostas>(() => rasc?.r ?? (({ declaracao: _d, ...resto }) => resto)(ultima?.r ?? {}))
+  const [erro, setErro] = useState('')
+  const topo = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    topo.current?.scrollIntoView?.({ block: 'start' })
+  }, [etapa])
+
+  const ativas = (e: number) =>
+    PERGUNTAS[e].perguntas.filter(
+      (p) => !('soMenor' in p) && !(p.id === 'parqQual' && !avisoMedico(r)) && !(p.id === 'tempoParado' && r.experiencia === 'nunca'),
+    )
+  const mudar = (id: string, v: unknown) => {
+    const n = { ...r }
+    if (v === undefined) delete n[id]
+    else n[id] = v as Respostas[string]
+    setR(n)
+    guardar(n, menor, etapa)
+  }
+  const guardar = (rr: Respostas, m: boolean, e: number) => {
+    try {
+      localStorage.setItem(CHAVE_RASCUNHO + uid, JSON.stringify({ r: rr, menor: m, etapa: e, t: Date.now() } satisfies Rascunho))
+    } catch {
+      /* sem armazenamento: segue sem rascunho */
+    }
+  }
+  const mudarMenor = (m: boolean) => {
+    setMenor(m)
+    guardar(r, m, etapa)
+  }
+  const irPara = (e: number) => {
+    setEtapa(e)
+    guardar(r, menor, e)
+  }
+
+  const respondida = (p: Pergunta) => (p.tipo === 'aceite' ? r[p.id] === true : p.id in r)
+  const falta = (e: number) => ativas(e).some((p) => 'obrigatoria' in p && p.obrigatoria && !respondida(p)) || (e === 0 && menor && r.responsavelConfirmou !== true)
+
+  // Envia sem esperar o servidor (offline vale): a regra recusaria em silêncio, então valida antes.
+  function enviar(base: Respostas) {
+    const final: Record<string, unknown> = {}
+    const vis = PERGUNTAS.flatMap((_, i) => ativas(i)).map((p) => p.id)
+    for (const [k, v] of Object.entries(base)) if ((vis.includes(k) || (k === 'responsavelConfirmou' && menor)) && v !== '') final[k] = v
+    if (menor && final.responsavelConfirmou !== true) return setErro('O responsável precisa autorizar.')
+    const erros = validarRespostas(final)
+    if (erros.length) {
+      const e = PERGUNTAS.findIndex((et) => et.perguntas.some((p) => p.id === erros[0]))
+      setEditando(true)
+      if (e >= 0) setEtapa(e)
+      return setErro('Falta responder algo. Confira as perguntas.')
+    }
+    setErro('')
+    enviarAnamnese(uid, final as Respostas)
+      .then(() => apagar(uid))
+      .catch((e) => registrarErro('gravacao', `anamnese: ${e?.code ?? e}`, e))
+    setEnviado(final as Respostas)
+  }
+
+  if (enviado)
+    return (
+      <main className="mx-auto max-w-md space-y-4 px-4 py-4">
+        <Quadro className="space-y-3 text-center">
+          <h1 className="text-[24px] leading-tight">Anamnese enviada</h1>
+          <p className="text-sm text-slate-400">Obrigado! Só você e seu coach veem estas respostas.</p>
+        </Quadro>
+        {avisoMedico(enviado) && <Aviso>Procure seu médico antes de treinar forte.</Aviso>}
+        <Botao tipo="primario" className="min-h-12 w-full" onClick={() => ir('/')}>Ir para o início</Botao>
+      </main>
+    )
+
+  if (!editando && ultima)
+    return (
+      <main className="mx-auto max-w-md space-y-4 px-4 py-4 pb-8">
+        <BotaoVoltar para="/conta" />
+        <h1 className="text-[24px] leading-tight">{motivo === 'ciclo' ? 'Confirme sua anamnese' : 'Minha anamnese'}</h1>
+        {motivo === 'ciclo' && <p className="text-sm text-slate-400">Um ciclo terminou. Se nada mudou na sua saúde, confirme. Se mudou, atualize.</p>}
+        <Quadro>
+          <ul className="space-y-2 text-sm">
+            {resumoAnamnese(ultima.r).map((l) => <li key={l} className="break-words">{l}</li>)}
+          </ul>
+        </Quadro>
+        {erro && <Aviso>{erro}</Aviso>}
+        <div className="space-y-2">
+          {motivo === 'ciclo' && <Botao tipo="primario" className="min-h-12 w-full" onClick={() => enviar({ ...ultima.r, declaracao: true })}>Nada mudou</Botao>}
+          <Botao tipo={motivo === 'ciclo' ? 'secundario' : 'primario'} className="min-h-12 w-full" onClick={() => setEditando(true)}>Atualizar minhas respostas</Botao>
+        </div>
+      </main>
+    )
+
+  const ultimaEtapa = etapa === PERGUNTAS.length - 1
+  return (
+    <main className="mx-auto max-w-md px-4 py-4 pb-32">
+      <div ref={topo} />
+      <BotaoVoltar para={ultima ? '/conta' : '/'} aoVoltar={etapa > 0 ? () => irPara(etapa - 1) : undefined} />
+      <p className="text-sm text-slate-400">Etapa {etapa + 1} de {PERGUNTAS.length}</p>
+      <div role="progressbar" aria-valuemin={1} aria-valuemax={PERGUNTAS.length} aria-valuenow={etapa + 1} className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full bg-marca-500 transition-all" style={{ width: `${((etapa + 1) / PERGUNTAS.length) * 100}%` }} />
+      </div>
+      <h1 className="mt-3 text-[24px] leading-tight">{PERGUNTAS[etapa].titulo}</h1>
+      {etapa === 0 && (
+        <Quadro className="mt-3 space-y-2">
+          <Caixa rotulo="Tenho menos de 18 anos" on={menor} mudar={mudarMenor} />
+          {menor && (
+            <>
+              <p className="text-sm text-slate-400">Um responsável legal precisa autorizar.</p>
+              <Caixa rotulo="Meu responsável autoriza" on={r.responsavelConfirmou === true} mudar={(v) => mudar('responsavelConfirmou', v ? true : undefined)} />
+            </>
+          )}
+        </Quadro>
+      )}
+      <div className="mt-4 space-y-5">
+        {ativas(etapa).map((p) => (
+          <section key={p.id} className="space-y-2">
+            {p.tipo !== 'aceite' && <p className="text-[15px] font-semibold">{p.rotulo}</p>}
+            <Campo p={p} v={r[p.id]} mudar={(v) => mudar(p.id, v)} />
+          </section>
+        ))}
+      </div>
+      {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto flex max-w-md gap-2">
+          {etapa > 0 && <Botao className="min-h-12 flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}
+          <Botao
+            tipo="primario"
+            className="min-h-12 flex-[2]"
+            disabled={falta(etapa)}
+            onClick={() => (ultimaEtapa ? enviar(r) : irPara(etapa + 1))}
+          >
+            {ultimaEtapa ? 'Enviar' : 'Próximo'}
+          </Botao>
+        </div>
+      </div>
+    </main>
+  )
+}

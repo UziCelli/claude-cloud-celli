@@ -19,6 +19,7 @@ import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
 import { useAvaliacoesLiberadas } from '../avaliacao/AvaliacaoAluno'
 import { FaixaFeedback } from '../feedback/ConviteFeedback'
+import { useAnamnese } from '../anamnese/useAnamnese'
 import BotaoSair from '../auth/BotaoSair'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
@@ -37,6 +38,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
   const relatorios = useRelatoriosLiberados(uid)
   const avaliacoes = useAvaliacoesLiberadas(uid)
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
+  const anamnese = useAnamnese(uid)
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
   const data = hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })
@@ -52,6 +54,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
         </a>
       </div>
+      {anamnese.motivo && <AnamnesePendente primeira={anamnese.motivo === 'primeira'} />}
       {perfil && <PixPerto uid={uid} perfil={perfil} hoje={hoje} />}
       {!atual && <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>}
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
@@ -167,6 +170,22 @@ function RelatorioPronto({ relatorios, mesos }: { relatorios: { mesoId: string; 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Seu relatório{nome ? ` do ciclo ${nome}` : ''} está pronto</p>
           <p className="text-xs text-slate-400">Veja sua evolução e o recado do coach</p>
+        </div>
+        <IcSeta className="size-5 text-slate-400" />
+      </Quadro>
+    </a>
+  )
+}
+
+// Lembrete da anamnese: primeira vez ou confirmação de fim de ciclo (só lembra; a trava é só no "Iniciar treino" do aluno novo).
+function AnamnesePendente({ primeira }: { primeira: boolean }) {
+  return (
+    <a href="#/anamnese" className="toque block">
+      <Quadro className="flex items-center gap-3 ring-1 ring-marca-400/40">
+        <IconeQuadrado><IcPrancheta className="size-5" /></IconeQuadrado>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{primeira ? 'Responda a anamnese (3 min)' : 'Confirme sua anamnese'}</p>
+          <p className="text-xs text-slate-400">{primeira ? 'Seu coach precisa conhecer sua saúde' : 'Um ciclo terminou: nada mudou?'}</p>
         </div>
         <IcSeta className="size-5 text-slate-400" />
       </Quadro>

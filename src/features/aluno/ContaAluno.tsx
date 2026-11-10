@@ -231,6 +231,9 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
         <a href="#/metodos" className="toque block py-2">
           <Linha icone={<IcLivro className="size-5" />}>Guia de métodos</Linha>
         </a>
+        <a href="#/anamnese" className="toque block py-2">
+          <Linha icone={<IcPrancheta className="size-5" />}>Minha anamnese</Linha>
+        </a>
         <a href="#/feedback" className="toque block py-2">
           <Linha icone={<IcBalao className="size-5" />}>Sua opinião</Linha>
         </a>

@@ -43,6 +43,7 @@ import {
 } from 'firebase/firestore'
 import type { Meso, SessaoEditada } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
+import { CHAVE_RASCUNHO, VERSAO_ANAMNESE, type Respostas } from './anamnese'
 import { arquivadosVencidos } from './alertas'
 import { paraDoc, type AvaliacaoForm } from './avaliacao'
 import { idCardio, type TipoCardio } from './cardio'
@@ -309,6 +310,11 @@ export const recolherAvaliacao = (id: string) =>
   updateDoc(doc(db, 'avaliacoes', id), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() })
 export const apagarAvaliacao = (id: string) => deleteDoc(doc(db, 'avaliacoes', id))
 
+// Anamnese do aluno: uma versão nova por envio (nunca sobrescreve). Sem await na tela (offline).
+// Valide com validarRespostas antes: offline, a regra recusaria só ao sincronizar, em silêncio.
+export const enviarAnamnese = (alunoId: string, r: Respostas) =>
+  addDoc(collection(db, 'anamneses'), { alunoId, versao: VERSAO_ANAMNESE, origem: 'aluno', r, em: serverTimestamp(), atualizadoEm: serverTimestamp() })
+
 // ---------- aluno ----------
 
 // Estratégia de gravação do registro: setDoc com { merge: true } e identidade sempre junto.
@@ -520,6 +526,11 @@ export function sair() {
     await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
     // Este aparelho para de receber os avisos de quem saiu (precisa do login ainda válido; desiste em 2 s).
     await Promise.race([desinscreverAvisos(), new Promise((r) => setTimeout(r, 2000))])
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith(CHAVE_RASCUNHO)).forEach((k) => localStorage.removeItem(k)) // rascunho de saúde não fica no aparelho
+    } catch {
+      /* sem armazenamento */
+    }
     await signOut(auth)
   })().finally(() => {
     saindo = null

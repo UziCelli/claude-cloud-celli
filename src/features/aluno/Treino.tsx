@@ -18,6 +18,7 @@ import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
+import { useAnamnese } from '../anamnese/useAnamnese'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
@@ -281,7 +282,7 @@ const hms = (ms: number) => {
 }
 
 // Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
-function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
+function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar, anamnese }: { anamnese: boolean; inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
   const [agora, setAgora] = useState(Date.now)
   // Parado: concluído, ou "Desfazer" (mantém a hora do fim desta sessão): o relógio não volta a contar de um início antigo.
   const parado = realizado || fim != null
@@ -298,6 +299,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     const d = duracaoTreino(inicio, fim) // acima de 3 h é treino esquecido aberto: sem duração falsa
     return d != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(d)}</span> · previsto {previsto}</p> : null
   }
+  if (inicio == null && anamnese) return <a href="#/anamnese" className="borda-brilho mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-marca-400 bg-marca-500 px-3 py-2 text-sm font-semibold text-white">Responda a anamnese (3 min)</a>
   if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 min-h-11 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -371,6 +373,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const sair = () => (coach ? ir(base) : voltar('/treino'))
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
+  const { travar: pedirAnamnese } = useAnamnese(uid)
   const descanso = useDescanso()
   const semInternet = useSemInternet()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
@@ -544,10 +547,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
-      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} />
+      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} anamnese={!coach && pedirAnamnese} />
       {!comecou && !realizado && (coach
         ? <p className="mb-3 text-sm text-slate-400">Sem iniciar: as cargas ficam salvas, mas o treino não conta como feito.</p>
-        : <p className="mb-3 text-sm text-amber-300">Toque em Iniciar treino para anotar as cargas.</p>)}
+        : <p className="mb-3 text-sm text-amber-300">{pedirAnamnese ? 'Responda a anamnese para liberar o treino.' : 'Toque em Iniciar treino para anotar as cargas.'}</p>)}
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>

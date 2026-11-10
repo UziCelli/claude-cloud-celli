@@ -8,6 +8,9 @@ import { diaSP } from './acesso'
 import { somarDias } from './avaliacao'
 import { cicloTerminou, diasDesdeFim, fimISO, RELATORIO_DIAS } from './relatorio'
 
+// Rascunho do formulário no aparelho (chave + uid); apagado ao sincronizar e ao sair.
+export const CHAVE_RASCUNHO = 'anamnese-rascunho-'
+
 // Sobe quando as perguntas mudarem (e as regras junto).
 export const VERSAO_ANAMNESE = 1
 
