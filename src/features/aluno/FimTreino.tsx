@@ -168,7 +168,7 @@ export default function FimTreino({
         <input ref={entrada} type="file" accept="image/*" hidden onChange={(e) => { void escolher(e.target.files?.[0]); e.target.value = '' }} />
         {erro && <p role="status" className="text-sm text-red-400">Não deu para abrir essa foto. Tente outra.</p>}
         {!foto && (
-          <Botao className="w-full" onClick={() => entrada.current?.click()}>
+          <Botao tipo="vidro" className="w-full" onClick={() => entrada.current?.click()}>
             <IcCamera className="mr-1.5 inline size-5 align-[-4px]" /> Adicionar foto
           </Botao>
         )}
@@ -180,19 +180,19 @@ export default function FimTreino({
         />
         {foto && (
           <div className="flex gap-2">
-            <Botao className="flex-1" onClick={() => entrada.current?.click()}>
+            <Botao tipo="vidro" className="flex-1" onClick={() => entrada.current?.click()}>
               Trocar foto
             </Botao>
-            <Botao className="flex-1" onClick={() => { setFoto(undefined); setPrevia(undefined) }}>
+            <Botao tipo="fantasma" className="flex-1" onClick={() => { setFoto(undefined); setPrevia(undefined) }}>
               Tirar foto
             </Botao>
           </div>
         )}
         {recordes.length > 0 && <ConviteFeedback />}
-        <Botao tipo="primario" className="w-full" onClick={voltar}>
+        <Botao tipo="primario" tamanho="lg" className="w-full" onClick={voltar}>
           Voltar para Hoje
         </Botao>
-        <Botao className="w-full" onClick={verTreino}>
+        <Botao tipo="fantasma" className="w-full" onClick={verTreino}>
           Ver treino
         </Botao>
       </div>

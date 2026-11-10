@@ -70,7 +70,7 @@ function AvisoReps({ meso, mesoId, registros }: { meso: Meso; mesoId: string; re
         <b>Reps abaixo da meta:</b> nos últimos 7 dias você fez menos reps que o previsto em {a.abaixo} séries (ex.: {a.exercicios[0].nome}).
         Pode ser descanso curto, sono ou alimentação. No próximo treino, diminua um pouco o peso para completar as reps.
       </p>
-      <Botao onClick={entendi}>Entendi</Botao>
+      <Botao tipo="vidro" onClick={entendi}>Entendi</Botao>
     </div>
   )
 }

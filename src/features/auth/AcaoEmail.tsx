@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { aplicarCodigo, definirSenhaNova, emailDoCodigo } from '../../lib/acoes'
 import { registrarErro } from '../../lib/log'
-import { Aviso, Msg } from '../../ui'
+import { Aviso, Botao, Msg } from '../../ui'
 import { Brilho } from '../../vidro'
 import Logo from '@marca/Logo'
 import { campo, rotulo } from './EsqueciSenha'
@@ -15,7 +15,6 @@ const ACOES: Record<string, string> = {
   verifyEmail: 'E-mail confirmado.',
   recoverEmail: 'E-mail restaurado.',
 }
-const botao = 'h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50'
 
 // O código é de uso único: o StrictMode do dev roda o efeito duas vezes, então a 2ª chamada reaproveita a 1ª.
 const aplicados = new Map<string, Promise<void>>()
@@ -101,14 +100,14 @@ export default function AcaoEmail() {
               <input id="repete" type="password" autoComplete="new-password" className={`${campo} mt-1.5`} value={repete} onChange={(e) => { setRepete(e.target.value); setErro('') }} required />
             </div>
             <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
-            <button type="submit" className={botao} disabled={enviando}>{enviando ? 'Salvando…' : 'Salvar senha'}</button>
+            <Botao type="submit" tipo="primario" tamanho="lg" className="w-full" disabled={enviando}>{enviando ? 'Salvando…' : 'Salvar senha'}</Botao>
           </form>
         )}
         {!form && <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>}
         {!form && !aguardando && (
-          <button type="button" className={`${botao} mt-6`} onClick={irApp}>
+          <Botao type="button" tipo="primario" tamanho="lg" className="mt-6 w-full" onClick={irApp}>
             {pronto ? 'Entrar' : 'Ir para o app'}
-          </button>
+          </Botao>
         )}
       </main>
     </div>
