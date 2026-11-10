@@ -93,7 +93,7 @@ Limites (memória da instância):
 
 ## Riscos
 - **Sem internet na hora:** o aviso ao coach se perde (o dado em si fica gravado; o coach vê no app).
-- **Uma inscrição por pessoa:** vale o último aparelho que abriu o app (já era assim).
+- **Até 3 aparelhos por pessoa** (desde 10/11/2026): cada aparelho guarda a própria inscrição e os tipos que desligou. Antes valia só o último aparelho que abriu o app.
 - **Horário do lembrete:** pontual (alarme do Worker). A mensalidade ainda sai quando o robô do GitHub roda (hoje, à tarde).
 - **Coach que deixa de ser coach** continua na lista até sair da conta naquele aparelho.
 - **Nome do aluno** passa pelo Worker dentro da notificação (criptografada até o celular do coach); nada é guardado nem logado. O texto da Política sobre a Cloudflare foi ajustado, sem pedir novo aceite.
@@ -107,4 +107,8 @@ Medido em 12 dias: o agendador do GitHub rodou o robô das 8h47 entre 13h19 e 18
 - **Quem recebe** (`quaisLembrar`): meso em andamento que pede treino naquele dia. Com "Dias de treino": só nos dias marcados e enquanto faltar treino na semana. Sem eles: calendário automático (`DIAS_AUTO`, igual a `src/lib/agenda.ts`), no dia planejado ou enquanto estiver atrasado na semana.
 - **Já treinou hoje:** como a lista sai na véspera, o Worker anota a hora do "concluiu" (`/avisar-coach`) e não manda o lembrete a quem concluiu treino no dia.
 - **Limite:** renovação ou meso criado depois da última rodada do robô (em geral à noite) só entra no lembrete do dia seguinte.
+
+# Vários aparelhos e "Apagar de vez" (10/11/2026)
+- **Vários aparelhos:** `fixas` no storage do DO = lista de até 3 `{ i: inscrição, d: tipos desligados, em }`. `/inscrever` atualiza o aparelho pelo `endpoint`; `/desinscrever` com `{ endpoint }` tira só aquele (sem `endpoint`, todos). O aviso vai a todos os aparelhos que não desligaram o tipo; 404/410 apaga só a inscrição morta.
+- **`/esquecer`:** JWT da conta de serviço (igual a `/aviso-pagamento`), corpo `{ projeto, uids }` (1 a 20). Apaga tudo o que o Worker guarda da pessoa e tira o uid da lista de coaches. Chamado pela Limpeza LGPD.
 

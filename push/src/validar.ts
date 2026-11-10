@@ -95,6 +95,24 @@ export function validarDesligados(v: unknown): Tipo[] | null {
   return tipos.some((t) => !t) ? null : [...new Set(tipos as Tipo[])]
 }
 
+// Inscrições fixas de uma pessoa: uma por aparelho (até 3; entra a nova, sai a mais antiga). `d` = tipos desligados
+// naquele aparelho. Antes era uma só por pessoa: celular e computador ficavam se revezando.
+export type Fixa = { i: Inscricao; d: Tipo[]; em: number }
+export const MAX_APARELHOS = 3
+export const comAparelho = (lista: Fixa[], nova: Fixa): Fixa[] => [...lista.filter((f) => f.i.endpoint !== nova.i.endpoint), nova].slice(-MAX_APARELHOS)
+// Sair da conta num aparelho tira só ele; sem endpoint (app antigo), tira todos.
+export const semAparelho = (lista: Fixa[], endpoint?: string): Fixa[] => (endpoint ? lista.filter((f) => f.i.endpoint !== endpoint) : [])
+export const alvosDe = (lista: Fixa[], tipo: Tipo): Fixa[] => lista.filter((f) => !f.d.includes(tipo))
+export const endpointOk = (e: unknown): e is string => typeof e === 'string' && e.length >= 1 && e.length <= 1000
+
+// Corpo de /esquecer (Limpeza LGPD): projeto da lista e de 1 a 20 uids.
+export function validarEsquecer(c: unknown): { projeto: Projeto; uids: string[] } | null {
+  const o = c as { projeto?: unknown; uids?: unknown } | null
+  const projeto = PROJETOS.find((p) => p === o?.projeto)
+  if (!projeto || !Array.isArray(o?.uids) || o.uids.length < 1 || o.uids.length > 20 || !o.uids.every(uidOk)) return null
+  return { projeto, uids: o.uids as string[] }
+}
+
 export const tipoCoachOk = (t: unknown): t is TipoCoach => t === 'concluiu' || t === 'comentou' || t === 'pagou'
 
 // Texto livre numa linha só: caracteres de controle e espaços repetidos viram um espaço.

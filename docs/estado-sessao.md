@@ -6,13 +6,18 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - **Lembrete do treino na hora:** o agendador do GitHub atrasava 5 a 10 h. Agora o robô entrega a lista e o Worker dispara às 6h47 (`docs/plano-notificacoes.md`, "Lembrete na hora certa"). A mensalidade continua saindo à tarde.
 - **Lembrete só em dia de treino:** respeita os "Dias de treino" (ou o calendário automático) e para quando a semana está completa.
 - **Anotações ao dar acesso ao app:** as anotações do presencial vão junto para a conta nova.
+- **2ª leva (mesmo dia):**
+  - notificações em até 3 aparelhos por pessoa (celular + computador), cada um com os próprios liga/desliga; sair tira só aquele aparelho;
+  - "Apagar de vez": a Limpeza LGPD agora também apaga a inscrição de notificação guardada no Worker (`/esquecer`);
+  - aba Métodos oferece os exercícios de "Trocas e adições", só nas semanas em que existem;
+  - `docs/mapa.md` sem a linha antiga do `window.print()`.
 - **Achados ainda abertos** (não corrigidos):
-  - notificação vale em um aparelho só por pessoa (o último que abriu o app);
-  - "Apagar de vez" não apaga a inscrição de notificação guardada no Worker;
+  - Dependabot falha no `minimatch`: vem de dentro de ferramentas de build (`firebase-tools`, `workbox-build`) e a versão corrigida não é compatível com elas; não vai para o app (produção com 0 vulnerabilidades). Esperar as ferramentas atualizarem;
+  - inscrições de notificação de alunos apagados antes de 10/11/2026 ficam no Worker até o endereço morrer sozinho;
   - anotações órfãs de migrações antigas (presencial → app) continuam no banco: apagar exige o ok do Victor;
-  - o monitor "Saúde dos apps" roda ~3 vezes por dia, não a cada hora (mesmo atraso do GitHub);
+  - o monitor "Saúde dos apps" roda ~3 vezes por dia, não a cada hora (atraso do agendador do GitHub);
   - `push.yml` publica o Worker a partir de qualquer branch que mexa em `push/`;
-  - a aba Métodos não oferece os exercícios de "Trocas e adições".
+  - a mensalidade ainda é avisada à tarde (atraso do agendador do GitHub).
 
 ## 09/11/2026 — Avaliação física e relatório escrito (Fase 3)
 - Plano e escolhas do Victor: `docs/plano-avaliacao.md` (perímetros, dobras Pollock 7, bioimpedância; só o coach preenche e libera; lembrete a cada mesociclo; **sem foto**).
