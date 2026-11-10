@@ -33,6 +33,7 @@ import {
   getDocs,
   getDocsFromServer,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -494,20 +495,34 @@ export function sincronizarEmail(uid: string, perfilEmail: string) {
   if (email && email !== perfilEmail) updateDoc(doc(db, 'usuarios', uid), { email }).catch(() => {})
 }
 
-// Cria o perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
+// Perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
+const perfilCadastro = (nome: string, email: string) => ({
+  papel: 'aluno',
+  status: 'aguardando',
+  nome,
+  email: email.toLowerCase(), // o da regra: igual ao do login
+  criadoEm: serverTimestamp(),
+  privacidadeEm: serverTimestamp(), // a tela só chama depois do aceite
+  privacidadeVersao: VERSAO_PRIVACIDADE,
+})
+
 export async function cadastrar(nome: string, email: string, senha: string) {
   email = email.trim()
   const { user } = await createUserWithEmailAndPassword(auth, email, senha)
-  await setDoc(doc(db, 'usuarios', user.uid), {
-    papel: 'aluno',
-    status: 'aguardando',
-    nome,
-    email: (user.email ?? email).toLowerCase(), // o da regra: igual ao do login
-    criadoEm: serverTimestamp(),
-    privacidadeEm: serverTimestamp(), // a tela só chama depois do aceite
-    privacidadeVersao: VERSAO_PRIVACIDADE,
-  })
+  await setDoc(doc(db, 'usuarios', user.uid), perfilCadastro(nome, user.email ?? email))
   return user
+}
+
+// Login sem perfil (sumiu): recria como aguardando. Transação = sempre no servidor, nunca fila offline,
+// e nunca por cima de um perfil que já exista (erro "ja-existe").
+export function pedirAcesso(nome: string) {
+  const u = auth.currentUser
+  if (!u?.email) return Promise.reject(new Error('sem-email'))
+  const ref = doc(db, 'usuarios', u.uid)
+  return runTransaction(db, async (tx) => {
+    if ((await tx.get(ref)).exists()) throw new Error('ja-existe')
+    tx.set(ref, perfilCadastro(nome, u.email!))
+  })
 }
 
 // Antes de sair, espera as gravações pendentes chegarem ao servidor (ex.: o cadastro recém-feito);
