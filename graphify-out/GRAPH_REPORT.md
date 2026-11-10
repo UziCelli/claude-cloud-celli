@@ -1,114 +1,114 @@
 # Graph Report - claude-cloud-celli  (2026-11-10)
 
 ## Corpus Check
-- 309 files · ~302,948 words
+- 309 files · ~303,101 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
 ## Summary
-- 2975 nodes · 8103 edges · 162 communities (143 shown, 19 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 366 edges (avg confidence: 0.94)
+- 2977 nodes · 8108 edges · 171 communities (152 shown, 19 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 367 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8654fe0b`
+- Built from commit: `8c5ef019`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- descanso.ts
-- alertas.ts
+- push.ts
+- push.ts
 - ataques.test.ts
 - Lógica da planilha "Força 2027.1" — especificação do motor
 - extrair_planilha.py
 - Motion & Framer Motion
-- ImportarPlanilha.tsx
-- icones.tsx
+- planilha.ts
+- InicioAluno.tsx
 - MesosDoAluno.tsx
-- AlunoApp.tsx
-- EditarTreino.tsx
+- env
+- @playwright/test
 - BoasVindas.tsx
-- AvaliacaoCoach.tsx
-- evolucao.ts
+- avaliacao.ts
+- pdfRelatorio.ts
 - util.ts
 - Alunos.tsx
-- Alertas.tsx
-- limparEmuladores
-- MinhaConta.tsx
+- prescreverSessao
+- steps
+- env
 - Segurança — passos do Victor no console
 - Treino.tsx
-- Relatorio.tsx
+- cartaoRelatorio.ts
 - prints.spec.ts
-- ContaAluno.tsx
-- criarAluno
+- codigoPix
+- FimTreino.tsx
 - jwt.ts
-- Botao
-- Estado da sessão (retomada) — atualizado em 13/10/2026
-- agenda.ts
-- ui.tsx
-- EditorMeso.tsx
+- ContaAluno.tsx
+- Estado da sessão (retomada) — atualizado em 10/11/2026
 - cartaoStory.ts
+- ui.tsx
+- steps
+- steps
 - settings.json
-- ref_node_fs
-- Pontos sensíveis (leia antes de auditar ou mexer)
+- limparEmuladores
+- conversores.ts
 - aluno-exemplo.mjs
 - webpush.ts
 - seed.ts
 - avisos-pagamento.mjs
-- Inicio.tsx
-- Cartao
-- acoes.ts
-- validar.ts
-- TabDivisao.tsx
-- criarAluno
-- devDependencies
-- react
-- log.ts
-- vigia.test.ts
+- Feedbacks.tsx
+- TabProgressao.tsx
+- vidro.tsx
+- src/index.ts
+- steps
+- Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)
+- package.json
+- Onde fica cada coisa
+- PainelEvolucao.tsx
+- with
 - Plano — Entrega 2 (fim de principal/auxiliar + encaixar o treino no tempo)
 - src/acesso.ts
 - compilerOptions
-- progressao.test.ts
-- Plano — App da Gislane (segunda marca)
-- ref_node_fs
-- package.json
-- scripts
-- Logo
-- App.tsx
-- vigia.test.ts
-- firebase-admin
-- Entrar.tsx
-- TabMetodos.tsx
-- Motion / Framer Motion Examples
-- inatividade.ts
-- EnviarFeedback.tsx
-- sessao.test.ts
-- compilerOptions
 - vite.config.ts
+- Plano — App da Gislane (segunda marca)
+- steps
+- steps
+- scripts
+- vfit/Logo.tsx
+- Presencial.tsx
+- steps
+- sair.spec.ts
+- Entrar.tsx
+- engine/index.ts
+- Motion / Framer Motion Examples
+- voz-ia.spec.ts
+- EnviarFeedback.tsx
+- VozTreino.tsx
+- compilerOptions
+- devDependencies
 - vigia.mjs
 - Motion & Framer Motion - Complete API Reference
 - Hooks
 - Plano — Entrega 1 (aprovado pelo Victor)
 - GuiaMetodos.tsx
-- Entrar.tsx
+- steps
 - limpeza-lgpd.test.ts
-- AvisoIOS
-- calcularAlertas.ts
+- criarMeso
+- EditorMeso.tsx
 - 2ª parte (09/11/2026): avisos para o coach, lembrete do treino e aviso escrito
-- vidro.tsx
-- codigoPix
+- push.yml
+- Plano — Fase 3: avaliação física e relatório escrito de evolução (09/11/2026)
 - importar-meso.mjs
-- voz-ia.spec.ts
-- vitest
+- InicioAluno.tsx
+- with
 - overrides
-- Meso
-- relatorio.test.ts
+- treino.test.ts
+- relatorio.ts
 - limpeza-lgpd.mjs
 - Performance Optimization
-- react
-- vigia.test.ts
-- atualizar.ts
-- TutorialCoach.tsx
+- firebase
+- firebase-admin
+- Tutorial.tsx
+- metricas.ts
 - backup.mjs
 - Best Practices Summary
 - Scroll-Based Animations
@@ -124,9 +124,9 @@
 - Animation Props
 - AnimatePresence
 - Roteiro de apresentação do app
-- MinhaConta.tsx
+- acoes.ts
 - gislane/Logo.tsx
-- Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)
+- marca.test.ts
 - Navigation Menus
 - List Animations
 - Shared Element Transitions
@@ -135,45 +135,54 @@
 - Variants
 - Event Info Types
 - Layout Props
-- Alertas.tsx
-- CampoExercicio
-- Tutorial.tsx
-- AvisoIOS
+- TutorialCoach.tsx
+- layout.spec.ts
+- Árvore por pasta
+- AlunoApp.tsx
 - .claude/CLAUDE.md
 - session-start.sh
 - android-teste.sh
-- Entrar.tsx
-- seriesDoRotulo
-- LoadInput
-- pwa-assets.config.ts
+- m
+- erros.mjs
+- SessaoCard.tsx
+- icones.tsx
 - saude.yml
 - cors.ts
-- VozTreino.tsx
+- iaTreino.ts
 - engine/index.ts
+- evolucao.test.ts
 - criarCoach
 - busca.ts
 - rules.test.ts
-- resumo.ts
-- fetch
-- AvaliacaoCoach.tsx
+- Alertas.tsx
+- Pontos sensíveis (leia antes de auditar ou mexer)
+- voz.ts
 - limpeza
 - marca
+- cartaoDepoimento.ts
 - env
 - Plano — Entrega 4: registro de erros e segurança
 - steps
 - feedback.spec.ts
 - limpeza-lgpd.yml
-- cardio.spec.ts
+- Coleções Firestore
 - with
 - aluno-exemplo.test.ts
 - preparar
 - seriesDoRotulo
-- @playwright/test
-- App.tsx
+- Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)
+- historicoExercicios
+- tutorial.spec.ts
+- 5. Auditoria 02/10/2026 (segurança + LGPD)
+- 6. Monitoramento (alertas)
+- Pontos sensíveis (leia antes de auditar ou mexer)
+- evolucao.spec.ts
+- varredura.spec.ts
+- ehRecorde
 
 ## God Nodes (most connected - your core abstractions)
 1. `Pontos sensíveis (leia antes de auditar ou mexer)` - 137 edges
-2. `Botao()` - 98 edges
+2. `Botao()` - 99 edges
 3. `Treino()` - 78 edges
 4. `react` - 66 edges
 5. `vitest` - 66 edges
@@ -184,10 +193,10 @@
 10. `firebase` - 45 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Divisão (agentes Sonnet; ninguém no mesmo arquivo)` --references--> `registros()`  [INFERRED]
-  docs/plano-volume.md → e2e/prints.spec.ts
 - `9. Registro do aluno` --references--> `repsEfetivas()`  [INFERRED]
   docs/logica-planilha.md → src/engine/metricas.ts
+- ``push/` — Worker Cloudflare (notificação do descanso)` --references--> `Descanso()`  [INFERRED]
+  docs/mapa.md → src/features/aluno/Tutorial.tsx
 - `1. Registro de erros ("Erros do app")` --references--> `mensagem()`  [INFERRED]
   docs/plano-entrega4.md → src/features/auth/AcaoEmail.tsx
 - ``src/features/auth/` — Autenticação` --references--> `useSair()`  [INFERRED]
@@ -198,15 +207,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (162 total, 19 thin omitted)
+## Communities (171 total, 19 thin omitted)
 
-### Community 0 - "descanso.ts"
-Cohesion: 0.06
-Nodes (52): `src/lib/` — Firestore, estado, cálculos com dados, 1. Método em destaque no treino do aluno, 2. Nota de cada método (substitui o aviso atual do biset), 3. Ícones animados (um por método), 4. Guia de métodos (nova página, para aluno e coach), 5. Cronômetro de descanso que chama a pessoa de volta, Divisão (agentes Sonnet; nunca dois no mesmo arquivo), Plano — Entrega 3: métodos em destaque, guia de métodos e cronômetro que chama de volta (+44 more)
+### Community 0 - "push.ts"
+Cohesion: 0.09
+Nodes (26): 1. Método em destaque no treino do aluno, 2. Nota de cada método (substitui o aviso atual do biset), 3. Ícones animados (um por método), 4. Guia de métodos (nova página, para aluno e coach), 5. Cronômetro de descanso que chama a pessoa de volta, Divisão (agentes Sonnet; nunca dois no mesmo arquivo), Plano — Entrega 3: métodos em destaque, guia de métodos e cronômetro que chama de volta, Como funciona (+18 more)
 
-### Community 1 - "alertas.ts"
-Cohesion: 0.13
-Nodes (20): limparArquivadosAntigos(), ARQUIVADO_DIAS, arquivadosVencidos(), chaveAlerta, DEMORA_FATOR, DEMORA_MAX, DEMORA_MIN, dentro() (+12 more)
+### Community 1 - "push.ts"
+Cohesion: 0.14
+Nodes (30): AvisoNotificacoes(), permissao(), AvisoDescanso(), Chave(), ChavesAvisos(), IcSino, agendarPush(), avisarTreinoPronto() (+22 more)
 
 ### Community 2 - "ataques.test.ts"
 Cohesion: 0.13
@@ -224,107 +233,107 @@ Nodes (17): col_letters_to_num(), excel_serial_to_date(), extract_divisao(), ext
 Cohesion: 0.04
 Nodes (44): 1. Forgetting AnimatePresence for Exit Animations, 1. Hover Animations, 1. Motion Components, 1. Use Transform Properties, 2. Animate Prop, 2. Individual Transform Properties, 2. Missing key Prop in Lists, 2. Tap/Press Animations (+36 more)
 
-### Community 6 - "ImportarPlanilha.tsx"
-Cohesion: 0.09
-Nodes (40): ImportarPlanilha(), escolher(), importar(), trocarAba(), Previa(), nomeImportado(), importarMeso(), abaMesoFalsa() (+32 more)
+### Community 6 - "planilha.ts"
+Cohesion: 0.10
+Nodes (31): abaMesoFalsa(), Cel, colNum(), criarXlsx(), criarXlsxBruto(), deflate(), enc, esc() (+23 more)
 
-### Community 7 - "icones.tsx"
-Cohesion: 0.09
-Nodes (47): CardioHoje(), Linha(), AvaliacaoPronta(), InicioAluno(), Msg(), Quadros(), RelatorioPronto(), Treinos() (+39 more)
+### Community 7 - "InicioAluno.tsx"
+Cohesion: 0.05
+Nodes (84): Onde mexer para…, CardioHoje(), AvisoReps(), Hoje(), Msg(), RegistroFlag, Semana(), SemanaCarregada() (+76 more)
 
 ### Community 8 - "MesosDoAluno.tsx"
-Cohesion: 0.14
-Nodes (31): NovoAluno(), enviar(), EditorMeso(), atualizar(), salvar(), setSemanas(), estavel(), mesoPadrao() (+23 more)
+Cohesion: 0.10
+Nodes (53): NovoAluno(), enviar(), salvar(), ImportarPlanilha(), escolher(), importar(), trocarAba(), Previa() (+45 more)
 
-### Community 9 - "AlunoApp.tsx"
+### Community 9 - "env"
 Cohesion: 0.05
 Nodes (43): needs, runs-on, steps, strategy, EVENTO, MARCA, MODO, PROJETO (+35 more)
 
-### Community 10 - "EditarTreino.tsx"
-Cohesion: 0.17
-Nodes (5): ALUNO, COACH, CORS, CAINDO, COACH
+### Community 10 - "@playwright/test"
+Cohesion: 0.10
+Nodes (11): ALUNO, COACH, ALUNO, COACH, marca, ALUNO, COACH, CORS (+3 more)
 
 ### Community 11 - "BoasVindas.tsx"
-Cohesion: 0.16
-Nodes (28): `src/features/instalar/` — PWA/Android, BoasVindas(), deveMostrarBoasVindas(), FolhaIPhone(), ler(), Linha(), marcarBoasVindasVistas(), VANTAGENS (+20 more)
-
-### Community 12 - "AvaliacaoCoach.tsx"
-Cohesion: 0.10
-Nodes (32): Peças, r, AvaliacaoForm, avaliacoesParaFazer(), BIO, Ciclo, cicloDaAvaliacao(), DOBRAS (+24 more)
-
-### Community 13 - "evolucao.ts"
 Cohesion: 0.17
-Nodes (22): Avaliacao(), EntradaPdfAvaliacao, gerarPdfAvaliacao(), C, criarFolhas(), disp(), LARG, M (+14 more)
+Nodes (27): `src/features/instalar/` — PWA/Android, BoasVindas(), deveMostrarBoasVindas(), FolhaIPhone(), ler(), Linha(), marcarBoasVindasVistas(), VANTAGENS (+19 more)
+
+### Community 12 - "avaliacao.ts"
+Cohesion: 0.16
+Nodes (22): Avaliacao(), gerarPdfAvaliacao(), BIO, Ciclo, dataBR(), DOBRAS, FAIXA, fmtDelta() (+14 more)
+
+### Community 13 - "pdfRelatorio.ts"
+Cohesion: 0.17
+Nodes (18): EntradaPdfAvaliacao, EvolucaoCoach(), fmt(), C, criarFolhas(), disp(), LARG, M (+10 more)
 
 ### Community 14 - "util.ts"
-Cohesion: 0.14
-Nodes (33): padraoMetodo(), totalCerto(), Registros, Slot, Seletor(), TabDivisao(), cartaoTreino(), commit() (+25 more)
+Cohesion: 0.15
+Nodes (29): Registros, Slot, CampoExercicio(), Seletor(), TabDivisao(), cartaoTreino(), commit(), copiar() (+21 more)
 
 ### Community 15 - "Alunos.tsx"
-Cohesion: 0.08
-Nodes (45): reais(), Aluno, Alunos(), bloquear(), confirmarPix(), liberar(), reativar(), Chip() (+37 more)
+Cohesion: 0.15
+Nodes (26): Aluno, Alunos(), bloquear(), confirmarPix(), liberar(), reativar(), comparar(), ConfirmarAluno() (+18 more)
 
-### Community 16 - "Alertas.tsx"
-Cohesion: 0.13
-Nodes (25): cobre(), extraTempo(), prescreverSessao(), slotsDaSessao(), sufixo(), ANTAGONISTAS, aplicarSugestao(), Candidato (+17 more)
+### Community 16 - "prescreverSessao"
+Cohesion: 0.09
+Nodes (31): nomes(), cobre(), extraTempo(), prescreverSessao(), slotsDaSessao(), sufixo(), TAMANHO, base (+23 more)
 
-### Community 17 - "limparEmuladores"
+### Community 17 - "steps"
 Cohesion: 0.05
 Nodes (43): concurrency, needs, runs-on, steps, strategy, group, BACKUP_SENHA, EVENTO (+35 more)
 
-### Community 18 - "MinhaConta.tsx"
+### Community 18 - "env"
 Cohesion: 0.05
 Nodes (40): EVENTO, GH_TOKEN, MARCA, PROJETO, SA, marca, jobs, preparar (+32 more)
 
 ### Community 19 - "Segurança — passos do Victor no console"
-Cohesion: 0.09
-Nodes (21): 1. Identity Platform (liga a verificação em 2 etapas), 1b. Senha mínima no servidor (08/11/2026), 2. Proteção contra enumeração de e-mail (feito), 2b. URL de ação dos e-mails (/acao), 3. App Check (reCAPTCHA Enterprise, invisível), 4. Restringir a chave da API, 5. Auditoria 02/10/2026 (segurança + LGPD), 6. Monitoramento (alertas) (+13 more)
+Cohesion: 0.20
+Nodes (9): 1. Identity Platform (liga a verificação em 2 etapas), 1b. Senha mínima no servidor (08/11/2026), 2. Proteção contra enumeração de e-mail (feito), 2b. URL de ação dos e-mails (/acao), 3. App Check (reCAPTCHA Enterprise, invisível), 4. Restringir a chave da API, 8. Verificação 07/10/2026 (depois do Painel de Evolução, do app da Gislane e da inatividade de 4 h), 9. Avaliação física (09/11/2026, Fase 3) (+1 more)
 
 ### Community 20 - "Treino.tsx"
-Cohesion: 0.13
-Nodes (28): `notas/{alunoId}`, metodoDoRotulo(), METODOS, AvisoAdaptado(), CONFETE, FestaRecorde(), hms(), Nota() (+20 more)
+Cohesion: 0.12
+Nodes (34): `notas/{alunoId}`, metodoDoRotulo(), AvisoAdaptado(), CONFETE, ExplicacaoMetodo(), FestaRecorde(), hms(), Modal() (+26 more)
 
-### Community 21 - "Relatorio.tsx"
-Cohesion: 0.38
-Nodes (10): dadosCartaoRelatorio(), dataBr(), periodoTexto(), volumeTexto(), gerarPdfRelatorio(), Bloco(), Faixa(), gerarPdf() (+2 more)
+### Community 21 - "cartaoRelatorio.ts"
+Cohesion: 0.22
+Nodes (16): W, dadosCartaoRelatorio(), DadosRelatorio, dataBr(), gerarCartaoRelatorio(), num(), periodoTexto(), r (+8 more)
 
 ### Community 22 - "prints.spec.ts"
-Cohesion: 0.10
-Nodes (11): ANTES, DIAS_AUTO, diasAtras(), ids, marca, NOMES, PROIBIDO, registros() (+3 more)
+Cohesion: 0.08
+Nodes (11): ANTES, DIAS_AUTO, ids, marca, NOMES, PROIBIDO, T1, T2 (+3 more)
 
-### Community 23 - "ContaAluno.tsx"
-Cohesion: 0.29
-Nodes (9): contaDoDia(), campo(), centavos(), codigoPix(), crc16(), limparChave(), semAcento(), base (+1 more)
+### Community 23 - "codigoPix"
+Cohesion: 0.22
+Nodes (12): contaDoDia(), reais(), Chip(), ComAtraso(), campo(), centavos(), codigoPix(), crc16() (+4 more)
 
-### Community 24 - "criarAluno"
-Cohesion: 0.13
-Nodes (21): CONFETE, dur(), FimTreino(), escolher(), Lista(), BotaoCompartilhar(), DadosTreino, limitar() (+13 more)
+### Community 24 - "FimTreino.tsx"
+Cohesion: 0.14
+Nodes (18): CONFETE, dur(), FimTreino(), escolher(), Lista(), DadosTreino, ConviteFeedback(), Faixa() (+10 more)
 
 ### Community 25 - "jwt.ts"
 Cohesion: 0.14
 Nodes (21): abrir(), agoraOk(), caches, chaveDaConta(), chaveDe(), chaveDoGoogle(), Claims, maxAgeDe() (+13 more)
 
-### Community 26 - "Botao"
-Cohesion: 0.09
-Nodes (51): `src/features/aluno/` — App do aluno, `src/features/conta/` — Minha Conta, SemAcesso(), permissao(), AvisoDescanso(), ContaAluno(), escolherFoto(), sairAgora() (+43 more)
+### Community 26 - "ContaAluno.tsx"
+Cohesion: 0.13
+Nodes (26): `src/features/aluno/` — App do aluno, uqr, ContaAluno(), escolherFoto(), desde(), Linha(), Mensalidade(), Peso() (+18 more)
 
-### Community 27 - "Estado da sessão (retomada) — atualizado em 13/10/2026"
+### Community 27 - "Estado da sessão (retomada) — atualizado em 10/11/2026"
 Cohesion: 0.05
 Nodes (34): 03/10/2026, 03/10/2026 (tarde) — App da Gislane, 04/10/2026 — Gislane no ar, 04/11/2026 — Editar o treino na hora (presencial), 04/11/2026 — Login que não cai, 2FA menos vezes e concluir com confirmação, 07/10/2026, 08/10/2026 — Redesenho (PR 56), 08/11/2026 — Aba Métodos mais simples (editor do meso) (+26 more)
 
-### Community 28 - "agenda.ts"
-Cohesion: 0.12
-Nodes (35): `src/features/evolucao/` — Painel de evolução, conquistas, cartão, DadosDepoimento, desenhar(), gerarCartaoDepoimento(), quebrar(), textosDepoimento(), ajustar(), caixa() (+27 more)
+### Community 28 - "cartaoStory.ts"
+Cohesion: 0.24
+Nodes (19): `src/features/evolucao/` — Painel de evolução, conquistas, cartão, ajustar(), caixa(), carregarImagem(), desenhar(), desenharTreino(), desenharTreinoFoto(), fundoELogo() (+11 more)
 
 ### Community 29 - "ui.tsx"
-Cohesion: 0.16
-Nodes (18): AvisoNotificacoes(), Hoje(), Msg(), RegistroFlag, Semana(), mesoAtual(), IcSino, useHoje() (+10 more)
+Cohesion: 0.11
+Nodes (25): Aba, ABAS, freq(), MEDALHA, RankingAlunos(), dataCurta(), Faixa(), Painel() (+17 more)
 
-### Community 30 - "EditorMeso.tsx"
+### Community 30 - "steps"
 Cohesion: 0.05
 Nodes (36): env, runs-on, steps, timeout-minutes, concurrency, cancel-in-progress, group, APK_SENHA (+28 more)
 
-### Community 31 - "cartaoStory.ts"
+### Community 31 - "steps"
 Cohesion: 0.06
 Nodes (35): description, options, required, type, description, required, ACAO, EMAIL (+27 more)
 
@@ -332,13 +341,13 @@ Nodes (35): description, options, required, type, description, required, ACAO, E
 Cohesion: 0.10
 Nodes (20): effortLevel, enabledPlugins, ponytail@ponytail, superpowers@superpowers-marketplace, env, PONYTAIL_DEFAULT_MODE, extraKnownMarketplaces, ponytail (+12 more)
 
-### Community 33 - "ref_node_fs"
-Cohesion: 0.12
-Nodes (10): ALUNO, COACH, ALUNO, COACH, marca, ALUNO, marca, lerDoc() (+2 more)
+### Community 33 - "limparEmuladores"
+Cohesion: 0.13
+Nodes (12): ALUNO, COACH, NOMES, ALUNO, COACH, ALUNO, COACH, semearFormatoAntigo() (+4 more)
 
-### Community 34 - "Pontos sensíveis (leia antes de auditar ou mexer)"
-Cohesion: 0.19
-Nodes (12): repsAbaixo(), arred(), caminhoCarga(), CargasDoc, deMapa(), docParaReps, Linhas, mesoParaDoc() (+4 more)
+### Community 34 - "conversores.ts"
+Cohesion: 0.16
+Nodes (19): arred(), caminhoCarga(), CargasDoc, deMapa(), docParaCargas(), docParaReps, docsParaRegistros(), docsParaRegistrosReps() (+11 more)
 
 ### Community 35 - "aluno-exemplo.mjs"
 Cohesion: 0.09
@@ -349,50 +358,50 @@ Cohesion: 0.17
 Nodes (19): RFC-8188, RFC-8292, b64u(), deb64u(), juntar(), assinar(), Inscricao, criptografar() (+11 more)
 
 ### Community 37 - "seed.ts"
-Cohesion: 0.14
-Nodes (15): ALUNO, COACH, marca, criarAlunoAguardando(), criarAlunoArquivado(), criarConta(), definirPagoAte(), dispensarMfa() (+7 more)
+Cohesion: 0.16
+Nodes (14): ALUNO, COACH, ALUNO, COACH, marca, criarAlunoAguardando(), criarAlunoArquivado(), criarConta() (+6 more)
 
 ### Community 38 - "avisos-pagamento.mjs"
 Cohesion: 0.21
 Nodes (14): assinarJwt(), base64url(), diaBrasilia(), diaDaSemana(), DIAS_AUTO, emMillis(), executar(), numeroDoDia() (+6 more)
 
-### Community 39 - "Inicio.tsx"
-Cohesion: 0.30
-Nodes (14): `src/features/coach/` — App do coach, PIX, useAlertasCoach(), useArquivados(), calcularAlertas(), chavesAtuais(), mediaTexto(), Inicio() (+6 more)
+### Community 39 - "Feedbacks.tsx"
+Cohesion: 0.17
+Nodes (19): Cartao(), Doc, Estrelas(), Feedbacks(), FILTROS, mediaTexto(), BotaoCompartilhar(), clicar() (+11 more)
 
-### Community 40 - "Cartao"
-Cohesion: 0.12
-Nodes (31): AlvoVolume, ajustarSeries(), aplicar(), limiteDe(), Linha, polimento(), progressaoAutomatica(), reduzirVolume() (+23 more)
+### Community 40 - "TabProgressao.tsx"
+Cohesion: 0.16
+Nodes (24): linhaPrescrita(), AlvoVolume, ajustarSeries(), aplicar(), limiteDe(), Linha, polimento(), progressaoAutomatica() (+16 more)
 
-### Community 41 - "acoes.ts"
-Cohesion: 0.23
-Nodes (13): FaixaAjustado(), cancelarTreino(), marcarInicio(), marcarRealizado(), reabrirTreino(), registrarCarga(), registrarPc(), registrarReps() (+5 more)
-
-### Community 42 - "validar.ts"
+### Community 41 - "vidro.tsx"
 Cohesion: 0.13
-Nodes (35): CacheAcesso, DO_ALUNO, Env, fetch(), Mensagem, ROBO, TREINO, alvosDe() (+27 more)
+Nodes (21): Peças compartilhadas (já no código), motion, react-dom, Atalho, marcarVisto(), Onboarding(), Pronto(), Icone (+13 more)
 
-### Community 43 - "TabDivisao.tsx"
+### Community 42 - "src/index.ts"
+Cohesion: 0.11
+Nodes (34): CacheAcesso, DO_ALUNO, Env, Mensagem, ROBO, TREINO, alvosDe(), Aviso (+26 more)
+
+### Community 43 - "steps"
 Cohesion: 0.07
 Nodes (29): description, required, ALUNO, MESO, NOME, SA, runs-on, steps (+21 more)
 
-### Community 44 - "criarAluno"
-Cohesion: 0.18
-Nodes (8): ALUNO, COACH, ALUNO, COACH, iniciarEConcluir(), seg(), semear(), criarAluno()
+### Community 44 - "Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)"
+Cohesion: 0.22
+Nodes (6): ALUNO, COACH, iniciarEConcluir(), seg(), semear(), criarAluno()
 
-### Community 45 - "devDependencies"
+### Community 45 - "package.json"
 Cohesion: 0.10
 Nodes (19): name, private, type, version, @cloudflare/workers-types, @firebase/rules-unit-testing, firebase-tools, tailwindcss (+11 more)
 
-### Community 46 - "react"
-Cohesion: 0.20
-Nodes (16): Como verificar, Limites conhecidos (aceitos), Marcação automática (`corpoEhCarga`), Normalização de leitura (`normalizarCargas`), Onde fica cada coisa, Peso do corpo nas cargas, `rebasear` e `preencherCorpo` (escrita), Testes (+8 more)
+### Community 46 - "Onde fica cada coisa"
+Cohesion: 0.19
+Nodes (17): Como verificar, Limites conhecidos (aceitos), Marcação automática (`corpoEhCarga`), Normalização de leitura (`normalizarCargas`), Onde fica cada coisa, Peso do corpo nas cargas, `rebasear` e `preencherCorpo` (escrita), Testes (+9 more)
 
-### Community 47 - "log.ts"
-Cohesion: 0.08
-Nodes (43): clicar(), docsParaRegistros(), docsParaRegistrosReps(), seriesDe(), arred(), calcular(), cargasPositivas(), coletar() (+35 more)
+### Community 47 - "PainelEvolucao.tsx"
+Cohesion: 0.15
+Nodes (26): `src/lib/` — Firestore, estado, cálculos com dados, arred(), calcular(), cargasPositivas(), coletar(), Conquista, conquistas(), diaInicio() (+18 more)
 
-### Community 48 - "vigia.test.ts"
+### Community 48 - "with"
 Cohesion: 0.09
 Nodes (27): runs-on, steps, runs-on, steps, jobs, app, e2e, rules (+19 more)
 
@@ -401,26 +410,26 @@ Cohesion: 0.50
 Nodes (3): 2. Sugestão de biset/triset para caber no tempo, Divisão (agentes Sonnet), Plano — Entrega 2 (fim de principal/auxiliar + encaixar o treino no tempo)
 
 ### Community 50 - "src/acesso.ts"
-Cohesion: 0.23
-Nodes (14): acessoComCache(), appCheckOk(), Campos, ehCoach(), lerPerfil(), lerPermissao(), liberado(), podeAvisarTreino() (+6 more)
+Cohesion: 0.22
+Nodes (15): acessoComCache(), appCheckOk(), Campos, ehCoach(), lerPerfil(), lerPermissao(), liberado(), podeAvisarTreino() (+7 more)
 
 ### Community 51 - "compilerOptions"
 Cohesion: 0.13
 Nodes (14): compilerOptions, jsx, lib, module, moduleResolution, noEmit, paths, resolveJsonModule (+6 more)
 
-### Community 52 - "progressao.test.ts"
-Cohesion: 0.33
-Nodes (7): igual(), Linhas, migrarProgressao(), antigo(), L(), slot(), todas()
+### Community 52 - "vite.config.ts"
+Cohesion: 0.20
+Nodes (9): igual(), Linhas, migrarProgressao(), antigo(), L(), slot(), todas(), Meso (+1 more)
 
 ### Community 53 - "Plano — App da Gislane (segunda marca)"
 Cohesion: 0.14
 Nodes (13): 1. Mesmo código, duas marcas (não copiar o repositório), 2. Banco de dados: um projeto Firebase para cada coach, 3. Endereço (decidir antes de ela ter alunos), 4. APK Android, Andamento, Checklist antes de começar (Victor/Gislane), Cuidados, Decisões recomendadas (e por quê) (+5 more)
 
-### Community 54 - "ref_node_fs"
+### Community 54 - "steps"
 Cohesion: 0.08
 Nodes (25): runs-on, steps, description, required, description, required, EMAIL_ATUAL, EMAIL_NOVO (+17 more)
 
-### Community 55 - "package.json"
+### Community 55 - "steps"
 Cohesion: 0.09
 Nodes (25): concurrency, cancel-in-progress, group, runs-on, steps, SA, runs-on, steps (+17 more)
 
@@ -428,47 +437,47 @@ Nodes (25): concurrency, cancel-in-progress, group, runs-on, steps, SA, runs-on,
 Cohesion: 0.15
 Nodes (13): scripts, build, build:gislane, dev, dev:gislane, emuladores, icones, icones:gislane (+5 more)
 
-### Community 57 - "Logo"
-Cohesion: 0.26
-Nodes (9): Logo(), LOGO_COACH, LOGO_PARTES, LOGO_VFIT, LOGO_VIEWBOX, CaixaAceite(), Lista(), Politica() (+1 more)
+### Community 57 - "vfit/Logo.tsx"
+Cohesion: 0.29
+Nodes (8): Logo(), LOGO_COACH, LOGO_PARTES, LOGO_VFIT, LOGO_VIEWBOX, Lista(), Politica(), Secao()
 
-### Community 58 - "App.tsx"
-Cohesion: 0.19
-Nodes (22): `src/` — Raiz, Avatar(), iniciais(), Aluno(), Barra(), EscolherAluno(), Grupo(), guardarRecente() (+14 more)
+### Community 58 - "Presencial.tsx"
+Cohesion: 0.22
+Nodes (20): `src/` — Raiz, Avatar(), iniciais(), Aluno(), Barra(), EscolherAluno(), Grupo(), guardarRecente() (+12 more)
 
-### Community 59 - "vigia.test.ts"
+### Community 59 - "steps"
 Cohesion: 0.08
 Nodes (25): MARCA, PROJETO, SA, runs-on, steps, marca, jobs, erros (+17 more)
 
 ### Community 61 - "Entrar.tsx"
-Cohesion: 0.20
-Nodes (16): Entrar(), enviar(), voltar(), mensagemErro(), cadastrar(), confirmarLoginTotp(), entrar(), resolverMfa() (+8 more)
+Cohesion: 0.13
+Nodes (26): Entrar(), enviar(), voltar(), erros, mensagemErro(), CaixaAceite(), cadastrar(), confirmarLoginTotp() (+18 more)
 
-### Community 62 - "TabMetodos.tsx"
-Cohesion: 0.12
-Nodes (37): 1. Configuração do mesociclo, `mesos/{mesoId}`, `src/engine/` — Motor de cálculo puro (sem React/Firebase), COR_METODO, ORDEM, alternarSerieDropset(), serieDoDrop(), assinatura() (+29 more)
+### Community 62 - "engine/index.ts"
+Cohesion: 0.18
+Nodes (28): `src/engine/` — Motor de cálculo puro (sem React/Firebase), padraoMetodo(), assinatura(), emGrupo(), limpa(), LinhaMetodo, LinhaSalva, linhasDoExercicio() (+20 more)
 
 ### Community 63 - "Motion / Framer Motion Examples"
 Cohesion: 0.18
 Nodes (10): Additional Resources, Carousel with Swipe, Custom Route Transition with Direction Detection, Image Galleries, License, Lightbox Gallery, Motion / Framer Motion Examples, Multi-Stage Route Transition (+2 more)
 
-### Community 64 - "inatividade.ts"
-Cohesion: 0.29
-Nodes (10): Armazem, AVISO_SAIU, cronometroRodando(), expirou(), lerUltima(), LIMITE_MIN, marcar(), treinoEmAndamento() (+2 more)
+### Community 64 - "voz-ia.spec.ts"
+Cohesion: 0.23
+Nodes (12): sairAgora(), sairAgora(), sair(), Armazem, AVISO_SAIU, cronometroRodando(), expirou(), lerUltima() (+4 more)
 
 ### Community 65 - "EnviarFeedback.tsx"
-Cohesion: 0.11
-Nodes (36): Onde mexer para…, Cartao(), Doc, Estrelas(), Feedbacks(), FILTROS, useFeedbacks(), chip() (+28 more)
+Cohesion: 0.17
+Nodes (21): chip(), EnviarFeedback(), enviar(), Opcao(), enviarFeedback(), Assunto, ASSUNTOS, CHAVE_CONVITE (+13 more)
 
-### Community 66 - "sessao.test.ts"
-Cohesion: 0.29
-Nodes (3): base, ex1(), Escopo
+### Community 66 - "VozTreino.tsx"
+Cohesion: 0.15
+Nodes (25): ROTULO, VozTreino(), aplicar(), falar(), iniciar(), limpar(), montar(), mudarTexto() (+17 more)
 
 ### Community 67 - "compilerOptions"
 Cohesion: 0.18
 Nodes (10): compilerOptions, lib, module, moduleResolution, noEmit, skipLibCheck, strict, target (+2 more)
 
-### Community 68 - "vite.config.ts"
+### Community 68 - "devDependencies"
 Cohesion: 0.12
 Nodes (16): devDependencies, @cloudflare/workers-types, firebase-admin, @firebase/rules-unit-testing, firebase-tools, @playwright/test, tailwindcss, @tailwindcss/vite (+8 more)
 
@@ -490,33 +499,33 @@ Nodes (9): 1. Semana certa ao abrir (aluno), 2. Tempo do treino, 3. Cronômetro 
 
 ### Community 73 - "GuiaMetodos.tsx"
 Cohesion: 0.27
-Nodes (7): ExplicacaoMetodo(), Modal(), NotaMetodos(), dispensarNota(), mostrarNotasDeNovo(), notaDispensada(), SEQUENCIA
+Nodes (7): COR_METODO, METODOS, ORDEM, dispensarNota(), mostrarNotasDeNovo(), notaDispensada(), SEQUENCIA
 
-### Community 74 - "Entrar.tsx"
+### Community 74 - "steps"
 Cohesion: 0.08
 Nodes (23): MODO, SA, runs-on, steps, modo, jobs, exemplo, default (+15 more)
 
 ### Community 75 - "limpeza-lgpd.test.ts"
-Cohesion: 0.12
-Nodes (8): firebase-admin, app, auth, COLECOES, db, SCRIPTS, atual, novo
+Cohesion: 0.20
+Nodes (4): app, auth, COLECOES, db
 
-### Community 76 - "AvisoIOS"
-Cohesion: 0.09
-Nodes (24): ALUNO, COACH, ALUNO, meso(), prog, ALUNO, COACH, diasAtras() (+16 more)
+### Community 76 - "criarMeso"
+Cohesion: 0.10
+Nodes (20): Regras gerais, Divisão (agentes Sonnet; ninguém no mesmo arquivo), ALUNO, COACH, ALUNO, meso(), prog, ALUNO (+12 more)
 
-### Community 77 - "calcularAlertas.ts"
-Cohesion: 0.13
-Nodes (13): AlertaAbaixo, AlertaAcima, AlertaDemorado, Grupos, Reg, agora, alunos, linha (+5 more)
+### Community 77 - "EditorMeso.tsx"
+Cohesion: 0.20
+Nodes (11): Aba, ABAS, DIAS_SEMANA, EditorMeso(), atualizar(), setSemanas(), estavel(), TITULO_ABA (+3 more)
 
 ### Community 78 - "2ª parte (09/11/2026): avisos para o coach, lembrete do treino e aviso escrito"
 Cohesion: 0.15
 Nodes (12): 2ª parte (09/11/2026): avisos para o coach, lembrete do treino e aviso escrito, Contrato do Worker, Contrato novo do Worker, Critério de pronto, Decisões, Decisões, Lembrete na hora certa (10/11/2026), Notificações: mensalidade e treino pronto (13/10/2026) (+4 more)
 
-### Community 79 - "vidro.tsx"
+### Community 79 - "push.yml"
 Cohesion: 0.08
 Nodes (23): concurrency, cancel-in-progress, group, runs-on, steps, env, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN (+15 more)
 
-### Community 80 - "codigoPix"
+### Community 80 - "Plano — Fase 3: avaliação física e relatório escrito de evolução (09/11/2026)"
 Cohesion: 0.20
 Nodes (9): Critério de pronto, Cálculo (`src/lib/avaliacao.ts`, puro, com testes), LGPD, Modelo de dados, Plano — Fase 3: avaliação física e relatório escrito de evolução (09/11/2026), Regras (`firestore.rules`), Riscos, Telas (+1 more)
 
@@ -524,7 +533,7 @@ Nodes (9): Critério de pronto, Cálculo (`src/lib/avaliacao.ts`, puro, com test
 Cohesion: 0.22
 Nodes (6): aluno, b, db, { meso, registros }, mesoRef, nome
 
-### Community 83 - "vitest"
+### Community 83 - "with"
 Cohesion: 0.09
 Nodes (22): runs-on, steps, timeout-minutes, GH_TOKEN, jobs, emulador, name, on (+14 more)
 
@@ -532,13 +541,13 @@ Nodes (22): runs-on, steps, timeout-minutes, GH_TOKEN, jobs, emulador, name, on 
 Cohesion: 0.25
 Nodes (8): @grpc/grpc-js, uuid, @opentelemetry/core, overrides, basic-ftp, @firebase/firestore, gaxios, @google-cloud/pubsub
 
-### Community 85 - "Meso"
-Cohesion: 0.12
-Nodes (22): Meso, AvisoReps(), SemanaCarregada(), cargaVolta(), comVolta(), dataDe(), Dia, DIAS_AUTO (+14 more)
+### Community 85 - "treino.test.ts"
+Cohesion: 0.25
+Nodes (5): 1. Configuração do mesociclo, `mesos/{mesoId}`, m(), semanas(), base
 
-### Community 86 - "relatorio.test.ts"
-Cohesion: 0.18
-Nodes (8): MesoEvolucao, agora, linha, m0, m1, meso(), registros, slot()
+### Community 86 - "relatorio.ts"
+Cohesion: 0.12
+Nodes (21): avaliacoesParaFazer(), Linha, somarDias(), Evolucao, MesoEvolucao, RegistroEvolucao, arred(), cicloTerminou() (+13 more)
 
 ### Community 87 - "limpeza-lgpd.mjs"
 Cohesion: 0.25
@@ -548,21 +557,21 @@ Nodes (5): auth, corte, db, projeto, PROJETOS
 Cohesion: 0.29
 Nodes (7): Exit Before Enter (Reduce Simultaneous Animations), Lazy Motion Component, Performance Optimization, Reuse Variant Objects, Throttle Scroll Events, useReducedMotion Hook, will-change Optimization
 
-### Community 89 - "react"
-Cohesion: 0.14
-Nodes (41): firebase, react, AvaliacaoAluno(), useAvaliacoesLiberadas(), AvaliacoesCoach(), Aba, ABAS, DIAS_SEMANA (+33 more)
+### Community 89 - "firebase"
+Cohesion: 0.13
+Nodes (47): `src/features/avaliacao/` — Avaliação física e relatório escrito de evolução (Fase 3; plano em `docs/plano-avaliacao.md`), firebase, react, BotaoPdfAvaliacao(), AvaliacaoAluno(), useAvaliacoesLiberadas(), AvaliacaoCoach(), Editor() (+39 more)
 
-### Community 90 - "vigia.test.ts"
-Cohesion: 0.22
-Nodes (4): app, auth, COLECOES, db
+### Community 90 - "firebase-admin"
+Cohesion: 0.12
+Nodes (8): firebase-admin, SCRIPTS, app, auth, COLECOES, db, atual, novo
 
-### Community 91 - "atualizar.ts"
-Cohesion: 0.70
-Nodes (3): atualizarNaEntrada(), deveRecarregar(), versaoDisponivel()
+### Community 91 - "Tutorial.tsx"
+Cohesion: 0.28
+Nodes (15): Abas(), Botaozinho(), Cronometro(), Descanso(), Linha(), mmss(), passos(), Selo() (+7 more)
 
-### Community 92 - "TutorialCoach.tsx"
-Cohesion: 0.10
-Nodes (27): `registros/{regId}`, Custo de leitura (plano grátis), Definições (fonte da verdade do cálculo), Plano — Painel de Evolução (03/10/2026), Regras gerais, 7. Teste de ataques (03/10/2026), vitest, mediana() (+19 more)
+### Community 92 - "metricas.ts"
+Cohesion: 0.16
+Nodes (18): vitest, mediana(), metaCiclo(), metaRobusta(), evolucaoExercicio(), media(), metricasExercicio(), metricasSemana() (+10 more)
 
 ### Community 93 - "backup.mjs"
 Cohesion: 0.33
@@ -624,12 +633,12 @@ Nodes (5): AnimatePresence, Basic Usage, Custom Data, Mode Options, Props
 Cohesion: 0.40
 Nodes (4): Antes de cada apresentação, Dicas, O que mostrar, na ordem, Roteiro de apresentação do app
 
-### Community 108 - "MinhaConta.tsx"
-Cohesion: 0.15
-Nodes (20): uqr, DuasEtapas(), tentar(), erros, mensagemErro(), trocarEmail(), trocarSenha(), alterarEmail() (+12 more)
+### Community 108 - "acoes.ts"
+Cohesion: 0.10
+Nodes (40): trocarSenha(), EsqueciSenha(), enviar(), mensagemRecuperar(), DuasEtapas(), tentar(), erros, mensagemErro() (+32 more)
 
-### Community 110 - "Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)"
-Cohesion: 0.33
+### Community 110 - "marca.test.ts"
+Cohesion: 0.29
 Nodes (5): arquivos(), chaves(), PROIBIDOS, semPix(), VARS
 
 ### Community 111 - "Navigation Menus"
@@ -664,65 +673,73 @@ Nodes (4): Event Info Types, PanInfo (Drag events), Point, TapInfo
 Cohesion: 0.50
 Nodes (4): layout, Layout Props, layoutDependency, layoutId
 
-### Community 119 - "Alertas.tsx"
-Cohesion: 0.30
-Nodes (13): abertura(), Acoes(), Alertas(), CartaoAbaixo(), Grupo(), rotulo, Saindo(), textoAbaixo() (+5 more)
+### Community 119 - "TutorialCoach.tsx"
+Cohesion: 0.31
+Nodes (15): Abas(), Acesso(), Acompanhar(), Meso(), Notificacao(), NovoAluno(), Numeros(), passos() (+7 more)
 
-### Community 120 - "CampoExercicio"
+### Community 120 - "layout.spec.ts"
 Cohesion: 0.50
 Nodes (4): ALUNO, COACH, confere(), semTransbordar()
 
-### Community 121 - "Tutorial.tsx"
-Cohesion: 0.05
-Nodes (64): `arquivados/{chave}`, `cardios/{uid}_{AAAA-MM-DD}`, Coleções Firestore, Comandos e workflows, `exclusoes/{uid}`, `feedbacks/{id automático}`, `fotos/{uid}`, `.github/workflows/` — CI/CD (+56 more)
+### Community 121 - "Árvore por pasta"
+Cohesion: 0.11
+Nodes (17): Comandos e workflows, `.github/workflows/` — CI/CD, Mapa do Código — Força, `marcas/<id>/` — uma pasta por marca (`vfit`, `gislane`), `public/` (comum às marcas), `push/` — Worker Cloudflare (notificação do descanso), Raiz, Rotas do app (+9 more)
 
-### Community 122 - "AvisoIOS"
-Cohesion: 0.83
-Nodes (3): AvisoIOS(), iOS(), standalone()
+### Community 122 - "AlunoApp.tsx"
+Cohesion: 0.26
+Nodes (10): AlunoApp(), tutorialNaoVisto(), EvolucaoAluno(), AvisoIOS(), iOS(), standalone(), GuiaMetodos(), IcCasa (+2 more)
 
-### Community 134 - "Entrar.tsx"
+### Community 134 - "m"
 Cohesion: 0.19
-Nodes (16): AcaoEmail(), salvar(), ACOES, aplicados, aplicarUmaVez(), mensagem(), erros, SENHA_FRACA (+8 more)
+Nodes (15): AcaoEmail(), salvar(), ACOES, aplicados, aplicarUmaVez(), mensagem(), SENHA_FRACA, campo (+7 more)
 
-### Community 135 - "seriesDoRotulo"
+### Community 135 - "erros.mjs"
 Cohesion: 0.22
 Nodes (7): `avaliacoes/{id automático}`, corte, data(), db, linhas, projeto, PROJETOS
+
+### Community 136 - "SessaoCard.tsx"
+Cohesion: 0.31
+Nodes (8): Convenção de gravação (TOTAL), LoadInput(), Chips(), CORES, RepsFeitas(), SessaoCard(), registrarCarga(), duracaoTreino()
 
 ### Community 138 - "saude.yml"
 Cohesion: 0.11
 Nodes (18): ENDERECOS, GH_TOKEN, jobs, saude, name, on, schedule, workflow_dispatch (+10 more)
 
-### Community 140 - "VozTreino.tsx"
-Cohesion: 0.05
-Nodes (63): 1. Volume: progressão e redução (motor em `src/engine/volume.ts`, TDD), 2. Tela do coach (editor do meso), 3. Treino do dia em destaque (aluno), 4. Carga fantasma, 5. Peso corporal (PC), 6. Novidades (tutorial), Divisão (agentes Sonnet; ninguém no mesmo arquivo), Plano — volume (progressão/redução), treino do dia, PC, carga fantasma, novidades (+55 more)
+### Community 140 - "iaTreino.ts"
+Cohesion: 0.10
+Nodes (29): 1. Volume: progressão e redução (motor em `src/engine/volume.ts`, TDD), 2. Tela do coach (editor do meso), 3. Treino do dia em destaque (aluno), 4. Carga fantasma, 5. Peso corporal (PC), 6. Novidades (tutorial), Plano — volume (progressão/redução), treino do dia, PC, carga fantasma, novidades, acharPosicao() (+21 more)
 
 ### Community 141 - "engine/index.ts"
-Cohesion: 0.12
-Nodes (28): adicionarExercicio(), adicionarMetodo(), ESCOPOS, escoposPara(), iniciarEdicao(), mudarSeries(), removerExercicio(), removerMetodo() (+20 more)
+Cohesion: 0.16
+Nodes (27): adicionarExercicio(), adicionarMetodo(), alternarSerieDropset(), ESCOPOS, escoposPara(), iniciarEdicao(), mudarSeries(), removerExercicio() (+19 more)
+
+### Community 142 - "evolucao.test.ts"
+Cohesion: 0.17
+Nodes (14): comparacaoToneladas(), painelEvolucao(), agora, dia(), emSemana(), feito(), linha, m1 (+6 more)
 
 ### Community 143 - "criarCoach"
-Cohesion: 0.10
-Nodes (15): COACH, ALUNO, amanha(), COACH, DOBRAS, ALUNO, COACH, PNG (+7 more)
+Cohesion: 0.09
+Nodes (16): COACH, ALUNO, amanha(), COACH, DOBRAS, ALUNO, COACH, PNG (+8 more)
 
 ### Community 144 - "busca.ts"
-Cohesion: 0.33
-Nodes (5): CampoExercicio(), buscarExercicios(), itens, norm(), nomes()
+Cohesion: 0.48
+Nodes (4): buscarExercicios(), itens, norm(), nomes()
 
 ### Community 145 - "rules.test.ts"
 Cohesion: 0.22
 Nodes (11): ALUNOS, COM_FATOR, contexto(), db(), dbEmail(), fator(), futuro, passado (+3 more)
 
-### Community 146 - "resumo.ts"
-Cohesion: 0.19
-Nodes (17): useHoje(), diaSP(), diasParaVencer(), faltaSegundoFator(), fimDoDiaSaoPaulo(), inicioDoDiaSP(), liberado(), proximoVencimento() (+9 more)
+### Community 146 - "Alertas.tsx"
+Cohesion: 0.08
+Nodes (49): `src/features/coach/` — App do coach, abertura(), Acoes(), Alertas(), CartaoAbaixo(), Grupo(), rotulo, Saindo() (+41 more)
 
-### Community 147 - "fetch"
-Cohesion: 0.17
-Nodes (8): Pontos sensíveis (leia antes de auditar ou mexer), nadaPassaDaTela(), Descanso, Aviso, Fixa, passoAgenda(), Tipo, ParVapid
+### Community 147 - "Pontos sensíveis (leia antes de auditar ou mexer)"
+Cohesion: 0.22
+Nodes (6): Descanso, fetch(), Fixa, nomeDO(), Tipo, ParVapid
 
-### Community 148 - "AvaliacaoCoach.tsx"
-Cohesion: 0.15
-Nodes (22): BotaoPdfAvaliacao(), AvaliacaoCoach(), Editor(), Faixa, fora(), hoje(), num(), Textos (+14 more)
+### Community 148 - "voz.ts"
+Cohesion: 0.16
+Nodes (8): Construtor, ERROS, Escuta, Evento, ouvir(), Reconhecedor, Resultado, vozDisponivel()
 
 ### Community 149 - "limpeza"
 Cohesion: 0.20
@@ -731,6 +748,10 @@ Nodes (10): group, PREFIXO, limpeza, concurrency, env, needs, runs-on, strategy 
 ### Community 150 - "marca"
 Cohesion: 0.20
 Nodes (10): marca, default, description, options, type, on, schedule, workflow_dispatch (+2 more)
+
+### Community 151 - "cartaoDepoimento.ts"
+Cohesion: 0.29
+Nodes (9): DadosDepoimento, desenhar(), gerarCartaoDepoimento(), quebrar(), textosDepoimento(), H, pngDe(), D_ESTRELA (+1 more)
 
 ### Community 152 - "env"
 Cohesion: 0.25
@@ -752,45 +773,69 @@ Nodes (5): ANA, BIA, COACH, comoAluno(), entrar()
 Cohesion: 0.33
 Nodes (5): jobs, name, permissions, actions, contents
 
+### Community 157 - "Coleções Firestore"
+Cohesion: 0.20
+Nodes (10): `arquivados/{chave}`, `cardios/{uid}_{AAAA-MM-DD}`, Coleções Firestore, `exclusoes/{uid}`, `feedbacks/{id automático}`, `fotos/{uid}`, `registros/{regId}`, `relatorios/{mesoId}` (+2 more)
+
 ### Community 158 - "with"
 Cohesion: 0.40
 Nodes (5): with, name, node-version, path, retention-days
 
 ### Community 159 - "aluno-exemplo.test.ts"
-Cohesion: 0.22
-Nodes (7): AGORA, COLECOES, db, FUTURO, plano(), SEMANA2, tudo()
+Cohesion: 0.20
+Nodes (8): registroId(), AGORA, COLECOES, db, FUTURO, plano(), SEMANA2, tudo()
 
 ### Community 160 - "preparar"
 Cohesion: 0.50
 Nodes (4): preparar, matriz, outputs, runs-on
 
-### Community 164 - "@playwright/test"
-Cohesion: 0.13
-Nodes (7): ALUNO, COACH, NOMES, ALUNO, COACH, marca, @playwright/test
+### Community 162 - "Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)"
+Cohesion: 0.20
+Nodes (9): `usuarios/{uid}`, 1. Agenda e regras da semana (lógica pura, TDD) — `src/lib/agenda.ts`, 2. App do aluno, 3. App do coach, 4. Entrada, Ordem, Plano — Redesenho das telas secundárias (VFITCOACH + Gislane), Regras que não mudam (+1 more)
 
-### Community 167 - "App.tsx"
-Cohesion: 0.11
-Nodes (31): Peças compartilhadas (já no código), motion, react-dom, App(), ativaAba(), Coach(), Menu(), PerfilDemora() (+23 more)
+### Community 163 - "historicoExercicios"
+Cohesion: 0.33
+Nodes (5): Custo de leitura (plano grátis), Definições (fonte da verdade do cálculo), Peças, Plano — Painel de Evolução (03/10/2026), historicoExercicios()
+
+### Community 164 - "tutorial.spec.ts"
+Cohesion: 0.33
+Nodes (3): ALUNO, COACH, marca
+
+### Community 165 - "5. Auditoria 02/10/2026 (segurança + LGPD)"
+Cohesion: 0.33
+Nodes (6): 5. Auditoria 02/10/2026 (segurança + LGPD), Conferido e OK, Em aberto (decisão do Victor), LGPD (feito nesta auditoria), Passos do Victor (console, uma vez), Repositório público (22/10/2026)
+
+### Community 166 - "6. Monitoramento (alertas)"
+Cohesion: 0.33
+Nodes (6): 6. Monitoramento (alertas), Alertas automáticos (Vigia de segurança), Cloudflare (notificação de descanso), Dependabot, Procedimento ao receber alerta, Proteção contra cobrança
+
+### Community 167 - "Pontos sensíveis (leia antes de auditar ou mexer)"
+Cohesion: 0.18
+Nodes (26): Pontos sensíveis (leia antes de auditar ou mexer), `src/features/onboarding/` — Onboarding (aluno e coach, as duas marcas), nadaPassaDaTela(), App(), ativaAba(), Coach(), Menu(), PerfilDemora() (+18 more)
+
+### Community 168 - "evolucao.spec.ts"
+Cohesion: 0.40
+Nodes (4): ALUNO, COACH, diasAtras(), semear()
 
 ## Knowledge Gaps
 - **10 isolated node(s):** `@cloudflare/workers-types`, `@types/react`, `@types/react-dom`, `firebase-tools`, `tailwindcss` (+5 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1182 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1183 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `vitest` connect `TutorialCoach.tsx` to `descanso.ts`, `alertas.ts`, `ataques.test.ts`, `ImportarPlanilha.tsx`, `icones.tsx`, `Entrar.tsx`, `cors.ts`, `AvaliacaoCoach.tsx`, `engine/index.ts`, `util.ts`, `VozTreino.tsx`, `Alertas.tsx`, `busca.ts`, `resumo.ts`, `Alunos.tsx`, `AvaliacaoCoach.tsx`, `Treino.tsx`, `rules.test.ts`, `ContaAluno.tsx`, `criarAluno`, `jwt.ts`, `Estado da sessão (retomada) — atualizado em 13/10/2026`, `agenda.ts`, `aluno-exemplo.test.ts`, `seriesDoRotulo`, `Pontos sensíveis (leia antes de auditar ou mexer)`, `ref_node_fs`, `webpush.ts`, `avisos-pagamento.mjs`, `Cartao`, `validar.ts`, `devDependencies`, `react`, `log.ts`, `src/acesso.ts`, `progressao.test.ts`, `Entrar.tsx`, `TabMetodos.tsx`, `inatividade.ts`, `EnviarFeedback.tsx`, `sessao.test.ts`, `GuiaMetodos.tsx`, `limpeza-lgpd.test.ts`, `calcularAlertas.ts`, `Meso`, `relatorio.test.ts`, `vigia.test.ts`, `atualizar.ts`, `MinhaConta.tsx`, `Plano — Redesenho das telas secundárias (VFITCOACH + Gislane)`?**
-  _High betweenness centrality (0.094) - this node is a cross-community bridge._
+- **Why does `vitest` connect `metricas.ts` to `push.ts`, `push.ts`, `ataques.test.ts`, `planilha.ts`, `InicioAluno.tsx`, `m`, `cors.ts`, `avaliacao.ts`, `engine/index.ts`, `util.ts`, `evolucao.test.ts`, `prescreverSessao`, `busca.ts`, `Alertas.tsx`, `iaTreino.ts`, `rules.test.ts`, `cartaoRelatorio.ts`, `prints.spec.ts`, `cartaoDepoimento.ts`, `FimTreino.tsx`, `jwt.ts`, `codigoPix`, `Estado da sessão (retomada) — atualizado em 10/11/2026`, `cartaoStory.ts`, `ContaAluno.tsx`, `ui.tsx`, `aluno-exemplo.test.ts`, `seriesDoRotulo`, `conversores.ts`, `webpush.ts`, `avisos-pagamento.mjs`, `TabProgressao.tsx`, `src/index.ts`, `ehRecorde`, `package.json`, `Onde fica cada coisa`, `src/acesso.ts`, `vite.config.ts`, `Entrar.tsx`, `engine/index.ts`, `voz-ia.spec.ts`, `EnviarFeedback.tsx`, `GuiaMetodos.tsx`, `limpeza-lgpd.test.ts`, `treino.test.ts`, `relatorio.ts`, `firebase`, `firebase-admin`, `marca.test.ts`?**
+  _High betweenness centrality (0.095) - this node is a cross-community bridge._
 - **Are the 136 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `nadaPassaDaTela()` and `appCheckOk()`) actually correct?**
   _`Pontos sensíveis (leia antes de auditar ou mexer)` has 136 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `@cloudflare/workers-types`, `@types/react`, `@types/react-dom` to the rest of the system?**
   _10 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `descanso.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.0633879781420765 - nodes in this community are weakly interconnected._
-- **Why does `Pontos sensíveis (leia antes de auditar ou mexer)` connect `fetch` to `descanso.ts`, `alertas.ts`, `ImportarPlanilha.tsx`, `icones.tsx`, `MesosDoAluno.tsx`, `Entrar.tsx`, `AvaliacaoCoach.tsx`, `engine/index.ts`, `util.ts`, `Alunos.tsx`, `Alertas.tsx`, `evolucao.ts`, `resumo.ts`, `VozTreino.tsx`, `Treino.tsx`, `AvaliacaoCoach.tsx`, `ContaAluno.tsx`, `criarAluno`, `Botao`, `Estado da sessão (retomada) — atualizado em 13/10/2026`, `agenda.ts`, `ui.tsx`, `seriesDoRotulo`, `Pontos sensíveis (leia antes de auditar ou mexer)`, `avisos-pagamento.mjs`, `App.tsx`, `Cartao`, `Inicio.tsx`, `validar.ts`, `acoes.ts`, `react`, `log.ts`, `src/acesso.ts`, `App.tsx`, `TabMetodos.tsx`, `inatividade.ts`, `Meso`, `react`, `TutorialCoach.tsx`, `Tutorial.tsx`, `AvisoIOS`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
+- **Should `push.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.08817204301075268 - nodes in this community are weakly interconnected._
+- **Why does `Pontos sensíveis (leia antes de auditar ou mexer)` connect `Pontos sensíveis (leia antes de auditar ou mexer)` to `push.ts`, `m`, `InicioAluno.tsx`, `SessaoCard.tsx`, `MesosDoAluno.tsx`, `iaTreino.ts`, `engine/index.ts`, `util.ts`, `Alunos.tsx`, `prescreverSessao`, `pdfRelatorio.ts`, `Alertas.tsx`, `Pontos sensíveis (leia antes de auditar ou mexer)`, `Treino.tsx`, `codigoPix`, `ContaAluno.tsx`, `Estado da sessão (retomada) — atualizado em 10/11/2026`, `cartaoStory.ts`, `Coleções Firestore`, `ui.tsx`, `seriesDoRotulo`, `conversores.ts`, `avisos-pagamento.mjs`, `Feedbacks.tsx`, `TabProgressao.tsx`, `vidro.tsx`, `src/index.ts`, `Onde fica cada coisa`, `PainelEvolucao.tsx`, `src/acesso.ts`, `Presencial.tsx`, `Entrar.tsx`, `engine/index.ts`, `voz-ia.spec.ts`, `EditorMeso.tsx`, `firebase`, `acoes.ts`, `Árvore por pasta`, `AlunoApp.tsx`?**
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Botao()` (e.g. with `Pontos sensíveis (leia antes de auditar ou mexer)` and ``src/` — Raiz`) actually correct?**
   _`Botao()` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **Should `alertas.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.12987012987012986 - nodes in this community are weakly interconnected._
+- **Should `push.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._

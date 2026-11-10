@@ -176,7 +176,7 @@ Comece por aqui para achar onde mexer.
 - `rota.ts` — `useRota()`, `ir()`, `casar()`: hash routing; `voltar(reserva)` (pilha do app em `history.state.i`), `trocarRota()` (troca sem criar tela no Voltar), `rotaAnterior()`, `posicaoNaPilha()`/`voltarAte()`
 - `voltar.tsx` — `BotaoVoltar` ("← Voltar" padrão das telas internas; `Pagina` recebe pelo `voltar`). Fora do `ui.tsx` porque importa o roteador
 - `main.tsx` — entry point React
-- `ui.tsx` — componentes comuns: `Botao`, `Centro`, `Tab`, etc.
+- `ui.tsx` — componentes comuns: `Botao` (`tamanho` md = 44px / lg = 56px do onboarding; `tipo` inclui `vidro` e `fantasma`; `classesBotao` para links), `Centro`, `Tab`, etc.
 - `movimento.ts` — molas no modelo da Apple (`suave`, `agil`, `elastico`, `saida`, `confete`); o CSS tem as mesmas em `--mola-agil`/`--mola-suave` (`index.css`)
 - `motionFeatures.ts` — recursos da biblioteca Motion carregados sob demanda; animações e componentes `Tela`, `Painel`, `Barra`, `cascata`/`item` ficam em `src/ui.tsx`
 - `ui.tsx` também tem `Abertura` (carregando), `Msg` (mensagem que aparece/some), `Deslizar` (troca de semana), `Contar`; toque/hover de botões, links, selects e checkboxes vêm do `index.css`

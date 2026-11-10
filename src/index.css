@@ -71,6 +71,14 @@ body {
 }
 button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer; }
 
+/* Foco só no teclado (PC): o toque no Android e no iPhone não mostra anel. Campos de texto têm o brilho próprio. */
+@layer base {
+  :is(button, a, summary, select):focus-visible {
+    outline: 2px solid var(--color-marca-400);
+    outline-offset: 2px;
+  }
+}
+
 /* Vidro (imitação do Liquid Glass do iOS 26). Em @layer components para as classes do Tailwind poderem sobrescrever. */
 @layer components {
   .vidro {
