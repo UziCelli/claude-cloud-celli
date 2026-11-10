@@ -786,7 +786,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               <p className="font-semibold">Concluir o treino?</p>
               <p className="text-sm text-slate-400">Confira se anotou todas as cargas.</p>
               <div className="flex gap-2">
-                <Botao tipo="fantasma" className="flex-1" onClick={() => setConfirmarFim(false)}>Continuar treinando</Botao>
+                <Botao tipo="vidro" tamanho="lg" className="flex-1" onClick={() => setConfirmarFim(false)}>Continuar treinando</Botao>
                 <Botao tipo="primario" tamanho="lg" className="flex-1" onClick={concluir}>Sim, concluir</Botao>
               </div>
             </div>
