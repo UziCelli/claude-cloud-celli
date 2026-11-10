@@ -6,7 +6,9 @@ import {
   anamnesesPendentes,
   avisoMedico,
   lerAnamnese,
+  contaNovaParaAnamnese,
   maisRecente,
+  motivoAnamnese,
   PERGUNTAS,
   precisaAtualizar,
   resumoAnamnese,
@@ -281,5 +283,18 @@ describe('anamnesesPendentes', () => {
   it('resposta antiga gera ciclo', () => {
     const r = anamnesesPendentes(alunos, [doc('d', 'bia', {}, { em: Date.parse('2026-09-01T12:00-03:00') })], mesos, agora)
     expect(r.find((x) => x.alunoId === 'bia')?.motivo).toBe('ciclo')
+  })
+})
+
+describe('motivoAnamnese / contaNovaParaAnamnese', () => {
+  it('sem resposta: primeira; com resposta de hoje: nada', () => {
+    const agora = sp('2026-11-09T08:00')
+    expect(motivoAnamnese([], [], agora)).toBe('primeira')
+    expect(motivoAnamnese([doc('a', 'x', {}, { em: agora.getTime() })], [], agora)).toBeNull()
+  })
+  it('conta nova = criada a partir de 11/11/2026; sem data = antiga', () => {
+    expect(contaNovaParaAnamnese(sp('2026-11-11T00:30').getTime())).toBe(true)
+    expect(contaNovaParaAnamnese(sp('2026-11-10T23:30').getTime())).toBe(false)
+    expect(contaNovaParaAnamnese(undefined)).toBe(false)
   })
 })

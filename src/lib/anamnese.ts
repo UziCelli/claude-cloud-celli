@@ -284,15 +284,25 @@ export function precisaAtualizar(ultimaDia: string | null, mesos: Meso[], agora:
   return ciclo ? 'ciclo' : null
 }
 
+// Motivo para o aluno responder agora, a partir das anamneses e dos mesos dele.
+export function motivoAnamnese(docs: Anamnese[], mesos: Meso[], agora: Date) {
+  const ult = maisRecente(docs)
+  const dia = ult && new Date(diaSP(ult.em ?? agora.getTime()) * 86400_000).toISOString().slice(0, 10)
+  return precisaAtualizar(dia, mesos, agora)
+}
+
+// Contas criadas a partir deste dia (São Paulo) travam o "Iniciar treino" até responder; as anteriores só recebem o cartão.
+export const ANAMNESE_TRAVA_DESDE = '2026-11-11'
+export const contaNovaParaAnamnese = (criadoEmMs: number | undefined) =>
+  criadoEmMs != null && diaSP(criadoEmMs) >= diaSP(new Date(`${ANAMNESE_TRAVA_DESDE}T12:00:00-03:00`).getTime())
+
 type AlunoAnam = { id: string; nome: string; status: string; presencial?: boolean }
 
 // Alunos ativos com app que precisam responder (ou atualizar) a anamnese.
 export function anamnesesPendentes(alunos: AlunoAnam[], docs: Anamnese[], mesos: { alunoId: string; meso: Meso }[], agora: Date) {
   return alunos.flatMap((a) => {
     if (a.status !== 'ativo' || a.presencial) return []
-    const ult = maisRecente(docs.filter((d) => d.alunoId === a.id))
-    const dia = ult && new Date(diaSP(ult.em ?? agora.getTime()) * 86400_000).toISOString().slice(0, 10)
-    const motivo = precisaAtualizar(dia, mesos.filter((m) => m.alunoId === a.id).map((m) => m.meso), agora)
+    const motivo = motivoAnamnese(docs.filter((d) => d.alunoId === a.id), mesos.filter((m) => m.alunoId === a.id).map((m) => m.meso), agora)
     return motivo ? [{ alunoId: a.id, nome: a.nome, motivo }] : []
   })
 }
