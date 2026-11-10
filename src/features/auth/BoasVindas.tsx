@@ -78,18 +78,38 @@ function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
   )
 }
 
-export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void; onEntrar: () => void }) {
+// Cartão "Instale o app" (só em iPhone e Android): usado nas boas-vindas e no cadastro por QR Code.
+export function CartaoInstalar({ titulo = 'Instale o app no celular', dica: textoDica }: { titulo?: string; dica?: string }) {
   const evento = useEventoInstalar()
   const [folha, setFolha] = useState(false)
   const [dica, setDica] = useState(false)
   const ios = eIOS()
   const android = eAndroid()
+  const instalar = () => (ios ? setFolha(true) : evento ? evento.prompt() : setDica(true))
+  if (!ios && !android) return null
+  return (
+    <>
+      <div className="vidro-escuro mt-4 rounded-3xl p-3.5">
+        <div className="flex items-center gap-3">
+          <IconeQuadrado><IcBaixar className="size-5" /></IconeQuadrado>
+          <div>
+            <p className="text-base font-bold leading-tight text-white">{titulo}</p>
+            <p className="text-[15px] text-slate-200">{textoDica ?? 'Leva 30 segundos'}</p>
+          </div>
+        </div>
+        <Botao type="button" tipo="vidro" className="mt-3 w-full" onClick={instalar}>Como instalar</Botao>
+        {dica && !evento && <p className="mt-2 text-[15px] text-slate-200">No Chrome, toque em <strong>⋮</strong> e escolha <strong>Instalar app</strong>.</p>}
+      </div>
+      <AnimatePresence>{folha && <FolhaIPhone onFechar={() => setFolha(false)} />}</AnimatePresence>
+    </>
+  )
+}
 
+export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void; onEntrar: () => void }) {
   const escolher = (fn: () => void) => () => {
     marcarBoasVindasVistas()
     fn()
   }
-  const instalar = () => (ios ? setFolha(true) : evento ? evento.prompt() : setDica(true))
 
   return (
     <div className="min-h-dvh">
@@ -113,23 +133,10 @@ export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void;
           <Botao type="button" tipo="vidro" tamanho="lg" className="w-full" onClick={escolher(onEntrar)}>Já tenho conta</Botao>
         </div>
 
-        {(ios || android) && (
-          <div className="vidro-escuro mt-4 rounded-3xl p-3.5">
-            <div className="flex items-center gap-3">
-              <IconeQuadrado><IcBaixar className="size-5" /></IconeQuadrado>
-              <div>
-                <p className="text-base font-bold leading-tight text-white">Instale o app no celular</p>
-                <p className="text-[15px] text-slate-200">Leva 30 segundos</p>
-              </div>
-            </div>
-            <Botao type="button" tipo="vidro" className="mt-3 w-full" onClick={instalar}>Como instalar</Botao>
-            {dica && !evento && <p className="mt-2 text-[15px] text-slate-200">No Chrome, toque em <strong>⋮</strong> e escolha <strong>Instalar app</strong>.</p>}
-          </div>
-        )}
+        <CartaoInstalar />
 
         <p className="mt-4 text-center"><a href="/privacidade" className="text-[15px] font-medium text-slate-200 underline underline-offset-4">Política de Privacidade</a></p>
       </main>
-      <AnimatePresence>{folha && <FolhaIPhone onFechar={() => setFolha(false)} />}</AnimatePresence>
     </div>
   )
 }
