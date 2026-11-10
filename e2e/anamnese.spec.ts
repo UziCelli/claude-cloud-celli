@@ -1,5 +1,5 @@
 import { expect, test, devices, type Page } from '@playwright/test'
-import { criarAluno, criarAnamnese, criarMeso, hojeSaoPaulo, limparEmuladores, listarDocs } from './seed'
+import { criarAluno, criarAnamnese, criarCoach, criarMeso, hojeSaoPaulo, limparEmuladores, listarDocs } from './seed'
 
 const senha = 'senha123'
 const email = (n: string) => `${n}.anam-e2e@teste.com`
@@ -21,12 +21,12 @@ const PARQ = [
 ]
 const ANTIGA = (dias: number) => new Date(Date.now() - dias * 86_400_000)
 
-async function entrar(page: Page, e: string) {
+async function entrar(page: Page, e: string, titulo = /Olá/) {
   await page.goto('/')
   await page.getByLabel('E-mail').fill(e)
   await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
-  await expect(page.getByRole('heading', { name: /Olá/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: titulo })).toBeVisible()
 }
 
 const proximo = (page: Page) => page.getByRole('button', { name: 'Próximo', exact: true })
@@ -89,6 +89,30 @@ test('aluno atual sem anamnese: só o cartão, o treino não trava', async ({ pa
   await expect(page.getByRole('link', { name: /Responda a anamnese \(3 min\)/ })).toBeVisible()
   await page.goto(`/#/treino/${mesoId}/1/1`)
   await expect(page.getByRole('button', { name: 'Iniciar treino' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Responda a anamnese/ })).toHaveCount(0)
+})
+
+test('coach abrindo o treino de aluno novo não trava', async ({ page }) => {
+  await criarCoach('Victor', email('victor'), senha)
+  const id = await criarAluno('Rui Recente', email('rui'), senha, undefined, true, { anamnese: false, criadoEm: NOVA })
+  await mesoDe(id)
+  await entrar(page, email('victor'), /Início/)
+  await page.goto(`/#/aluno/${id}`)
+  await page.getByRole('button', { name: 'Treino presencial' }).click()
+  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Responda a anamnese/ })).toHaveCount(0)
+})
+
+test('"tempo parado" some quando a experiência é "nunca"', async ({ page }) => {
+  await criarAluno('Teo Tempo', email('teo'), senha, undefined, true, { anamnese: false })
+  await entrar(page, email('teo'))
+  await page.goto('/#/anamnese')
+  for (const p of PARQ) await marcar(page, p.rotulo, 'Não')
+  for (let i = 0; i < ETAPAS - 1; i++) await proximo(page).click()
+  const tempo = page.getByText('Está parado há quanto tempo?')
+  await expect(tempo).toBeVisible()
+  await page.getByRole('button', { name: 'Nunca treinei' }).click()
+  await expect(tempo).toHaveCount(0)
 })
 
 test('fim de ciclo: "Nada mudou" reenvia as respostas como versão nova', async ({ page }) => {
@@ -118,7 +142,7 @@ test('menor de 18 precisa da autorização do responsável', async ({ page }) =>
   await expect(proximo(page)).toBeEnabled()
   await page.getByRole('checkbox', { name: 'Tenho menos de 18 anos' }).click()
   await expect(proximo(page)).toBeDisabled()
-  await page.getByRole('checkbox', { name: 'Meu responsável autoriza' }).click()
+  await page.getByRole('checkbox', { name: 'Meu responsável legal leu e concorda.' }).click()
   await expect(proximo(page)).toBeEnabled()
   for (let i = 0; i < ETAPAS - 1; i++) await proximo(page).click()
   await page.getByRole('checkbox', { name: /Respondi com verdade/ }).click()

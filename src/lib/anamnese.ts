@@ -274,7 +274,7 @@ const rotuloDe = (p: Pergunta, v: Resposta): string => {
 
 // Linhas "Pergunta: resposta" da ficha, na ordem das perguntas. Sem a declaração e sem texto vazio.
 export const resumoAnamnese = (r: Respostas): string[] =>
-  TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo}: ${rotuloDe(p, r[p.id])}`)
+  TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo}${p.rotulo.endsWith('?') ? '' : ':'} ${rotuloDe(p, r[p.id])}`)
 
 // Não vistas pelo coach: com atenção primeiro, depois as mais recentes.
 export const anamnesesNovas = (docs: Anamnese[]) =>

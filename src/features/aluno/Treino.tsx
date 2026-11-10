@@ -373,7 +373,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const sair = () => (coach ? ir(base) : voltar('/treino'))
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
-  const { travar: pedirAnamnese } = useAnamnese(uid)
+  const an = useAnamnese(uid)
+  const pedirAnamnese = !coach && an.travar // coach/presencial nunca trava
   const descanso = useDescanso()
   const semInternet = useSemInternet()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
@@ -406,7 +407,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       </div>
     </Centro>
   )
-  if (carregando || carregandoReg) return <Centro>Carregando…</Centro> // registros também: senão treino já iniciado aparece como "Iniciar treino"
+  if (carregando || carregandoReg || (!coach && an.carregando)) return <Centro>Carregando…</Centro> // registros também: senão treino já iniciado aparece como "Iniciar treino"
   if (!dados || !(Number.isInteger(semana) && semana >= 1 && Number.isInteger(treino) && treino >= 1)) return naoEncontrado // NaN faria prescreverSessao lançar
 
   const hoje = new Date()
@@ -547,7 +548,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
-      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} anamnese={!coach && pedirAnamnese} />
+      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} anamnese={pedirAnamnese} />
       {!comecou && !realizado && (coach
         ? <p className="mb-3 text-sm text-slate-400">Sem iniciar: as cargas ficam salvas, mas o treino não conta como feito.</p>
         : <p className="mb-3 text-sm text-amber-300">{pedirAnamnese ? 'Responda a anamnese para liberar o treino.' : 'Toque em Iniciar treino para anotar as cargas.'}</p>)}

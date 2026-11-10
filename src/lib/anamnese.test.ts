@@ -216,6 +216,10 @@ describe('resumoAnamnese', () => {
   it('usa "pergunta: resposta"', () => {
     expect(resumoAnamnese({ ...minima(), coracao: true, parqQual: 'Pressão alta' })).toContain('Conte qual: Pressão alta')
   })
+  it('rótulo que termina em "?" não leva ":"', () => {
+    const l = resumoAnamnese({ ...minima(), coracao: true })
+    expect(l).toContain('Algum médico já disse que você tem problema no coração ou pressão alta? Sim')
+  })
   it('mínima não quebra', () => expect(resumoAnamnese(minima()).length).toBeGreaterThan(0))
 })
 
