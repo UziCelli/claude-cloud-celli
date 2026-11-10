@@ -3,6 +3,11 @@
 // PERGUNTAS é a fonte única da tela, da validação e das regras: as chaves, opções e limites existem
 // também em firestore.rules (respostasValidas) e o teste compara os dois.
 
+import type { Meso } from '../engine'
+import { diaSP } from './acesso'
+import { somarDias } from './avaliacao'
+import { cicloTerminou, diasDesdeFim, fimISO, RELATORIO_DIAS } from './relatorio'
+
 // Sobe quando as perguntas mudarem (e as regras junto).
 export const VERSAO_ANAMNESE = 1
 
@@ -82,7 +87,7 @@ export const PERGUNTAS: readonly Etapa[] = [
         tipo: 'opcao',
         opcoes: [
           { id: 'ate5', rotulo: 'Até 5 h' },
-          { id: '5a6', rotulo: '5 a 6 h' },
+          { id: '5a7', rotulo: '5 a 7 h' },
           { id: '7a8', rotulo: '7 a 8 h' },
           { id: 'mais8', rotulo: 'Mais de 8 h' },
         ],
@@ -228,4 +233,66 @@ export function lerAnamnese(id: string, d: unknown): Anamnese | null {
     obsCoach: typeof x.obsCoach === 'string' ? x.obsCoach : '',
     vistaEm: ms(x.vistaEm),
   }
+}
+
+const PARQ_ORDEM = ['coracao', 'dorPeito', 'tontura', 'supervisaoMedica', 'doencaCronica', 'remedio', 'ossoArticulacao']
+const FRASE_PARQ: Record<string, string> = {
+  coracao: 'Problema no coração ou pressão alta',
+  dorPeito: 'Dor no peito ao se exercitar ou em repouso',
+  tontura: 'Tontura ou desmaio nos últimos 12 meses',
+  supervisaoMedica: 'Só deve treinar com supervisão médica',
+  doencaCronica: 'Doença crônica',
+  remedio: 'Remédio de uso contínuo',
+  ossoArticulacao: 'Problema de osso, articulação ou coluna',
+}
+
+export const avisoMedico = (r: Respostas) => PARQ_ORDEM.some((k) => r[k] === true)
+
+// Pontos para o coach olhar com atenção. Não é diagnóstico.
+export function sinaisAtencao(r: Respostas): string[] {
+  const s = PARQ_ORDEM.filter((k) => r[k] === true).map((k) => FRASE_PARQ[k])
+  if (r.gestante === 'sim') s.push('Gestante ou com bebê de até 6 meses')
+  if (r.cirurgia12m === true) s.push('Cirurgia nos últimos 12 meses')
+  if (Array.isArray(r.dores) && r.dores.length > 0) s.push('Dor em alguma região')
+  return s
+}
+
+const tem = (a: Anamnese) => sinaisAtencao(a.r).length > 0
+const emOuAgora = (a: Anamnese) => a.em ?? Infinity
+
+// A versão que vale: a mais recente (gravação pendente conta como agora).
+export const maisRecente = (docs: Anamnese[]): Anamnese | null => docs.reduce<Anamnese | null>((m, d) => (!m || emOuAgora(d) > emOuAgora(m) ? d : m), null)
+
+const rotuloDe = (p: Pergunta, v: Resposta): string => {
+  if (typeof v === 'boolean') return v ? 'Sim' : 'Não'
+  if ('opcoes' in p) return [v].flat().map((x) => p.opcoes.find((o) => o.id === x)?.rotulo ?? String(x)).join(', ') || 'Nenhuma'
+  return String(v)
+}
+
+// Linhas "Pergunta: resposta" da ficha, na ordem das perguntas. Sem a declaração e sem texto vazio.
+export const resumoAnamnese = (r: Respostas): string[] =>
+  TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo} ${rotuloDe(p, r[p.id])}`)
+
+// Não vistas pelo coach: com atenção primeiro, depois as mais recentes.
+export const anamnesesNovas = (docs: Anamnese[]) =>
+  docs.filter((d) => d.vistaEm === null).sort((a, b) => Number(tem(b)) - Number(tem(a)) || emOuAgora(b) - emOuAgora(a))
+
+// 'primeira' = nunca respondeu. 'ciclo' = um ciclo terminou (há até 30 dias) e a última resposta é de antes dos 7 dias finais.
+export function precisaAtualizar(ultimaDia: string | null, mesos: Meso[], agora: Date): 'primeira' | 'ciclo' | null {
+  if (!ultimaDia) return 'primeira'
+  const ciclo = mesos.some((m) => cicloTerminou(m, agora) && diasDesdeFim(m, agora) <= RELATORIO_DIAS && ultimaDia < somarDias(fimISO(m), -7))
+  return ciclo ? 'ciclo' : null
+}
+
+type AlunoAnam = { id: string; nome: string; status: string; presencial?: boolean }
+
+// Alunos ativos com app que precisam responder (ou atualizar) a anamnese.
+export function anamnesesPendentes(alunos: AlunoAnam[], docs: Anamnese[], mesos: { alunoId: string; meso: Meso }[], agora: Date) {
+  return alunos.flatMap((a) => {
+    if (a.status !== 'ativo' || a.presencial) return []
+    const ult = maisRecente(docs.filter((d) => d.alunoId === a.id))
+    const dia = ult && new Date(diaSP(ult.em ?? agora.getTime()) * 86400_000).toISOString().slice(0, 10)
+    const motivo = precisaAtualizar(dia, mesos.filter((m) => m.alunoId === a.id).map((m) => m.meso), agora)
+    return motivo ? [{ alunoId: a.id, nome: a.nome, motivo }] : []
+  })
 }

@@ -1514,7 +1514,7 @@ describe('anamneses', () => {
       await assertSucceeds(
         setDoc(an('ana', 'a2'), nova({}, {
           coracao: true, parqQual: 'Pressão alta', gestante: 'naoSeAplica', cirurgia12m: false, fuma: true,
-          dores: ['ombro', 'joelho'], lesoes: 'Menisco 2019', sono: '5a6', trabalho: 'emPe', estresse: 'alto',
+          dores: ['ombro', 'joelho'], lesoes: 'Menisco 2019', sono: '5a7', trabalho: 'emPe', estresse: 'alto',
           objetivo: 'saude', experiencia: 'nunca', tempoParado: 'mais1a', diasSemana: 3, minutos: 'ate30',
           outrasAtividades: 'Pilates', algoMais: '', responsavelConfirmou: true,
         })),

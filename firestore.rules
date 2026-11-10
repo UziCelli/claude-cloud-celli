@@ -344,6 +344,7 @@ service cloud.firestore {
     function inteiro(r, k, min, max) { return !(k in r) || (r[k] is int && r[k] >= min && r[k] <= max); }
 
     // Chaves, opções e limites iguais aos de PERGUNTAS em src/lib/anamnese.ts (o teste compara).
+    // Ao mudar as perguntas, só acrescentar chaves e opções: remover algo recusa envios offline antigos.
     function respostasValidas(r) {
       return r is map
         && r.keys().hasOnly(['coracao', 'dorPeito', 'tontura', 'doencaCronica', 'remedio', 'ossoArticulacao', 'supervisaoMedica', 'parqQual', 'gestante', 'cirurgia12m', 'fuma', 'dores', 'lesoes', 'sono', 'trabalho', 'estresse', 'objetivo', 'experiencia', 'tempoParado', 'diasSemana', 'minutos', 'outrasAtividades', 'algoMais', 'declaracao', 'responsavelConfirmou'])
@@ -355,7 +356,7 @@ service cloud.firestore {
         && simNao(r, 'cirurgia12m') && simNao(r, 'fuma')
         && multi(r, 'dores', ['ombro', 'cotovelo', 'punho', 'cervical', 'lombar', 'quadril', 'joelho', 'tornozelo', 'outra'])
         && texto(r, 'lesoes', 500)
-        && opcao(r, 'sono', ['ate5', '5a6', '7a8', 'mais8'])
+        && opcao(r, 'sono', ['ate5', '5a7', '7a8', 'mais8'])
         && opcao(r, 'trabalho', ['sentado', 'emPe', 'bracal'])
         && opcao(r, 'estresse', ['baixo', 'medio', 'alto'])
         && opcao(r, 'objetivo', ['hipertrofia', 'emagrecimento', 'forca', 'saude', 'condicionamento'])

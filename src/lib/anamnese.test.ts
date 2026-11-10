@@ -1,6 +1,21 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { lerAnamnese, PERGUNTAS, TODAS, validarRespostas, VERSAO_ANAMNESE } from './anamnese'
+import type { Meso } from '../engine'
+import {
+  anamnesesNovas,
+  anamnesesPendentes,
+  avisoMedico,
+  lerAnamnese,
+  maisRecente,
+  PERGUNTAS,
+  precisaAtualizar,
+  resumoAnamnese,
+  sinaisAtencao,
+  TODAS,
+  validarRespostas,
+  VERSAO_ANAMNESE,
+  type Anamnese,
+} from './anamnese'
 
 const ts = (ms: number) => ({ toMillis: () => ms })
 
@@ -149,5 +164,113 @@ describe('firestore.rules (anamneses)', () => {
       : p.tipo === 'inteiro' ? `inteiro(r, '${id}', ${p.min}, ${p.max})`
       : `${p.tipo}(r, '${id}', ${lista(p.opcoes.map((o) => o.id))})`
     expect(bloco).toContain(esperado)
+  })
+})
+
+const sp = (iso: string) => new Date(`${iso}-03:00`)
+const meso = (inicio: string, semanas = 4): Meso => ({ frequencia: 2, semanas, inicio, pausaS: 60, divisao: [[], []], progressao: { principais: [], auxiliares: [] }, metodos: [] })
+const doc = (id: string, alunoId: string, r: Record<string, unknown> = {}, extra: Partial<Anamnese> = {}): Anamnese => ({
+  id, alunoId, versao: 1, origem: 'aluno', r: { ...minima(), ...r } as Anamnese['r'], em: 1000, obsCoach: '', vistaEm: null, ...extra,
+})
+
+describe('sono', () => {
+  it('opções sem buraco entre 6 e 7 h', () => {
+    const p = TODAS.find((x) => x.id === 'sono')
+    expect(p && 'opcoes' in p && p.opcoes.map((o) => o.id)).toEqual(['ate5', '5a7', '7a8', 'mais8'])
+  })
+})
+
+describe('sinaisAtencao / avisoMedico', () => {
+  it('sem sinal: vazio e sem aviso', () => {
+    expect(sinaisAtencao(minima())).toEqual([])
+    expect(avisoMedico(minima())).toBe(false)
+  })
+  it('PAR-Q 1, 2, 3 e 7 vêm primeiro', () => {
+    const s = sinaisAtencao({ ...minima(), ossoArticulacao: true, supervisaoMedica: true, coracao: true, remedio: true })
+    expect(s).toHaveLength(4)
+    expect(s.slice(0, 2).join(' ')).toMatch(/coração/i)
+    expect(s[1]).toMatch(/supervisão/i)
+  })
+  it('gestante, cirurgia e dor entram; "nao" e lista vazia não', () => {
+    expect(sinaisAtencao({ ...minima(), gestante: 'sim', cirurgia12m: true, dores: ['joelho'] })).toHaveLength(3)
+    expect(sinaisAtencao({ ...minima(), gestante: 'nao', cirurgia12m: false, dores: [] })).toEqual([])
+  })
+  it('avisoMedico só para "sim" no PAR-Q', () => {
+    expect(avisoMedico({ ...minima(), tontura: true })).toBe(true)
+    expect(avisoMedico({ ...minima(), gestante: 'sim', dores: ['ombro'] })).toBe(false)
+  })
+})
+
+describe('resumoAnamnese', () => {
+  it('uma linha por resposta dada, com rótulo legível', () => {
+    const l = resumoAnamnese(completa())
+    expect(l.some((x) => x.includes('Lombar') && x.includes('Ombro'))).toBe(true)
+    expect(l.some((x) => x.includes('7 a 8 h'))).toBe(true)
+    expect(l.every((x) => x.length > 0)).toBe(true)
+  })
+  it('mínima não quebra', () => expect(resumoAnamnese(minima()).length).toBeGreaterThan(0))
+})
+
+describe('maisRecente', () => {
+  it('maior em; em nulo (pendente) conta como agora', () => {
+    expect(maisRecente([doc('a', 'x', {}, { em: 5 }), doc('b', 'x', {}, { em: 9 })])?.id).toBe('b')
+    expect(maisRecente([doc('a', 'x', {}, { em: 5 }), doc('b', 'x', {}, { em: null })])?.id).toBe('b')
+    expect(maisRecente([])).toBeNull()
+  })
+})
+
+describe('anamnesesNovas', () => {
+  it('só não vistas; com atenção primeiro, depois a mais recente', () => {
+    const r = anamnesesNovas([
+      doc('vista', 'a', {}, { vistaEm: 5 }),
+      doc('velha', 'a', {}, { em: 1 }),
+      doc('nova', 'b', {}, { em: 2 }),
+      doc('atencao', 'c', { coracao: true }, { em: 0 }),
+    ])
+    expect(r.map((d) => d.id)).toEqual(['atencao', 'nova', 'velha'])
+  })
+})
+
+describe('precisaAtualizar', () => {
+  const agora = sp('2026-11-09T08:00')
+  const m2 = meso('2026-10-12') // termina 08/11
+  it('primeira quando nunca respondeu', () => expect(precisaAtualizar(null, [], agora)).toBe('primeira'))
+  it('ciclo terminou e a última resposta é antiga', () => expect(precisaAtualizar('2026-09-01', [m2], agora)).toBe('ciclo'))
+  it('resposta a partir de 7 dias antes do fim vale', () => {
+    expect(precisaAtualizar('2026-11-01', [m2], agora)).toBeNull()
+    expect(precisaAtualizar('2026-10-31', [m2], agora)).toBe('ciclo')
+  })
+  it('ciclo em andamento ou terminado há mais de 30 dias: nada', () => {
+    expect(precisaAtualizar('2026-09-01', [m2], sp('2026-10-30T08:00'))).toBeNull()
+    expect(precisaAtualizar('2026-09-01', [meso('2026-09-01')], agora)).toBeNull()
+  })
+})
+
+describe('anamnesesPendentes', () => {
+  const agora = sp('2026-11-09T08:00')
+  const mesos = [
+    { id: 'm', alunoId: 'ana', meso: meso('2026-10-12') },
+    { id: 'n', alunoId: 'bia', meso: meso('2026-10-12') },
+    { id: 'o', alunoId: 'duda', meso: meso('2026-10-12') },
+    { id: 'p', alunoId: 'eva', meso: meso('2026-10-12') },
+  ]
+  const alunos = [
+    { id: 'ana', nome: 'Ana', status: 'ativo' },
+    { id: 'bia', nome: 'Bia', status: 'ativo' },
+    { id: 'cris', nome: 'Cris', status: 'ativo' },
+    { id: 'duda', nome: 'Duda', status: 'ativo', presencial: true },
+    { id: 'eva', nome: 'Eva', status: 'bloqueado' },
+  ]
+  const em = Date.parse('2026-11-05T12:00-03:00')
+  it('ativo e não presencial; primeira e ciclo', () => {
+    const r = anamnesesPendentes(alunos, [doc('d', 'bia', {}, { em })], mesos, agora)
+    expect(r).toEqual([
+      { alunoId: 'ana', nome: 'Ana', motivo: 'primeira' },
+      { alunoId: 'cris', nome: 'Cris', motivo: 'primeira' },
+    ])
+  })
+  it('resposta antiga gera ciclo', () => {
+    const r = anamnesesPendentes(alunos, [doc('d', 'bia', {}, { em: Date.parse('2026-09-01T12:00-03:00') })], mesos, agora)
+    expect(r.find((x) => x.alunoId === 'bia')?.motivo).toBe('ciclo')
   })
 })
