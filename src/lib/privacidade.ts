@@ -2,6 +2,7 @@
 // 2026-11-09: senha mínima. O aceite desta versão passa pela senha (Aceite.tsx): quem tinha senha fraca troca na hora.
 // Esta mesma versão também cobre o item "Sua opinião e depoimentos" (feedbacks), para ninguém aceitar duas vezes no mesmo dia.
 // 2026-11-09b: avaliação física (Fase 3), dado de saúde novo. O sufixo "b" é a 2ª versão do mesmo dia.
-export const VERSAO_PRIVACIDADE = '2026-11-09b'
+// 2026-11-10: anamnese (histórico de saúde, inclusive de menores de 18 com autorização do responsável).
+export const VERSAO_PRIVACIDADE = '2026-11-10'
 
 export const aceitouPrivacidade = (p: { privacidadeVersao?: string }) => p.privacidadeVersao === VERSAO_PRIVACIDADE
