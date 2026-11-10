@@ -59,3 +59,24 @@ test('"Esqueci minha senha" abre tela própria e envia o link', async ({ page })
   await page.goBack()
   await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible()
 })
+
+test('link do QR Code (/cadastro): cai direto no cadastro, sem boas-vindas, com o cartão de instalar', async ({ page }) => {
+  await forcar(page) // mesmo forçando as boas-vindas, o QR vai direto ao cadastro
+  await page.goto('/cadastro')
+  await expect(page.getByRole('heading', { name: 'Criar conta' })).toBeVisible()
+  await expect(page.getByText('Instale o app antes de criar a conta')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Criar minha conta' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Já tenho conta' }).click()
+  await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible()
+})
+
+test('cadastro pelo QR Code: cria a conta, cai na tela de espera e /cadastro sai do endereço', async ({ page }) => {
+  await page.goto('/cadastro')
+  await page.getByLabel('Nome').fill('Aluno do QR')
+  await page.getByLabel('E-mail').fill('qr.e2e@teste.com')
+  await page.getByLabel('Senha').fill('senha123')
+  await page.getByRole('checkbox', { name: /Li e aceito/ }).check()
+  await page.getByRole('button', { name: 'Criar conta', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Cadastro recebido!' })).toBeVisible()
+  expect(new URL(page.url()).pathname).toBe('/')
+})

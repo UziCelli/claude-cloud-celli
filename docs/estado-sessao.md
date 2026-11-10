@@ -2,6 +2,12 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 10/11/2026 — QR Code de cadastro
+- Coach: Início → botão **"QR Code de cadastro"** (QR grande + link + Copiar link). Vale para as duas marcas (usa o `dominio` de cada `marca.json`).
+- Aluno: aponta a câmera → abre `/cadastro` → cai direto em "Criar conta" (sem boas-vindas) → depois da conta, tela "Cadastro recebido!" (coach libera).
+- Na tela de cadastro, cartão **"Instale o app antes de criar a conta"** (iPhone: folha passo a passo; Android: instala direto). Não existe instalar automático pelo QR: o navegador não deixa.
+- **Falta (Victor):** mandar o vídeo de "Adicionar à Tela de Início" para virar tutorial passo a passo (hoje a folha do iPhone é só texto/desenho).
+
 ## 10/11/2026 — Meso inteiro por voz
 - "Montar o meso por voz" saiu da aba Divisão e fica no topo do editor do meso.
 - Além da divisão, a fala agora monta: séries e reps (padrão ou de um exercício), volume (progredir, reduzir, polimento) e métodos (pôr ou tirar; Biset/Triset/Superset/Circuito com parceiros).
