@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Meso } from '../../../engine'
-import { agruparTrocas, aplicarAcoes, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, nomeImportado, removerGrupo, trocarExercicio } from './util'
+import { agruparTrocas, aplicarAcoes, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, nomeImportado, posicoesAdicionadas, removerGrupo, trocarExercicio } from './util'
 
 const meso = {
   frequencia: 3,
@@ -272,5 +272,20 @@ describe('aplicarAcoes: progressão, volume e métodos', () => {
     const sem = aplicarAcoes({ ...base, ...r.patch } as Meso, {}, [{ tipo: 'metodo', treino: 2, exercicio: 'Crucifixo', semanas: [], parceiros: [], series: [], remover: true }])
     expect(sem.patch.metodos).toEqual([])
     expect(aplicarAcoes(base, {}, [{ tipo: 'metodo', treino: 2, exercicio: 'Supino', semanas: [], parceiros: [], series: [], remover: true }]).bloqueios).toHaveLength(1)
+  })
+})
+
+describe('posicoesAdicionadas (aba Métodos)', () => {
+  const s = (slotId: string, nome: string) => ({ slotId, nome })
+  it('posição depois da divisão, só nas semanas da adição; nomes diferentes na mesma posição saem juntos', () => {
+    const adicoes = { '2-1': [s('n1', 'Rosca')], '3-1': [s('n1', 'Rosca'), s('n2', 'Tríceps')], '4-1': [s('n3', 'Prancha')], '2-2': [s('n4', 'Remada')] }
+    const m = { ...meso, adicoes } as unknown as Meso
+    expect(posicoesAdicionadas(m, 1)).toEqual([
+      { pos: 3, nome: 'Rosca / Prancha', semanas: [2, 3, 4] },
+      { pos: 4, nome: 'Tríceps', semanas: [3] },
+    ])
+    expect(posicoesAdicionadas(m, 2)).toEqual([{ pos: 2, nome: 'Remada', semanas: [2] }])
+    expect(posicoesAdicionadas(m, 3)).toEqual([])
+    expect(posicoesAdicionadas(meso, 1)).toEqual([])
   })
 })

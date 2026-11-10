@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { posicoesAdicionadas } from './util'
 import { emGrupo, linhasDoExercicio, METODOS, padraoMetodo, removerLinha, salvarLinha, semanasTexto, serieDoDrop, alternarSerieDropset, seriesDoExercicio, seriesTexto, totalCerto } from '../../../engine'
 import type { AplicacaoMetodo, LinhaMetodo, Meso, Metodo } from '../../../engine'
 import { COR_METODO } from '../../../data/metodos'
@@ -17,8 +18,10 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
   const [aberta, setAberta] = useState<Aberta | null>(null)
   const sel = Math.min(treino, meso.frequencia)
   const exercicios = meso.divisao[sel - 1] ?? []
-  const nome = (p: number) => exercicios[p - 1]?.nome ?? `Posição ${p}`
-  const maxPos = Math.max(exercicios.length, ...metodos.filter((m) => m.treino === sel).map((m) => m.exercicio))
+  const adicionadas = posicoesAdicionadas(meso, sel) // exercícios de "Trocas e adições" (aba Divisão)
+  const adicionada = (p: number) => adicionadas.find((a) => a.pos === p)
+  const nome = (p: number) => exercicios[p - 1]?.nome ?? adicionada(p)?.nome ?? `Posição ${p}`
+  const maxPos = Math.max(exercicios.length, ...adicionadas.map((a) => a.pos), ...metodos.filter((m) => m.treino === sel).map((m) => m.exercicio))
 
   const avisos = useMemo(() => {
     const grupos = new Map<string, Set<number>>()
@@ -56,8 +59,10 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
         {Array.from({ length: maxPos }, (_, i) => i + 1).map((pos) => (
           <li key={pos} className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 break-words font-semibold">{exercicios[pos - 1] ? `${pos}. ${nome(pos)}` : `Posição ${pos} (sem exercício)`}</span>
-              {exercicios[pos - 1] && (
+              <span className="min-w-0 break-words font-semibold">
+                {exercicios[pos - 1] ? `${pos}. ${nome(pos)}` : adicionada(pos) ? `${pos}. ${nome(pos)} (adicionado · ${semanasTexto(adicionada(pos)!.semanas, meso.semanas)})` : `Posição ${pos} (sem exercício)`}
+              </span>
+              {(exercicios[pos - 1] || adicionada(pos)) && (
                 <Botao aria-label={`Adicionar método em ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => setAberta({ pos })}>
                   + Método
                 </Botao>
@@ -88,6 +93,8 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
           treino={sel}
           aberta={aberta}
           nome={nome}
+          semanasDoExercicio={adicionada(aberta.pos)?.semanas}
+          outros={[...exercicios.map((_, i) => i + 1), ...adicionadas.map((a) => a.pos)].filter((p) => p !== aberta.pos)}
           onFechar={() => setAberta(null)}
           onAtualizar={onAtualizar}
         />
@@ -96,10 +103,11 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
   )
 }
 
-function FolhaMetodo({ meso, treino, aberta, nome, onFechar, onAtualizar }: { meso: Meso; treino: number; aberta: Aberta; nome: (p: number) => string; onFechar: () => void; onAtualizar: (patch: Partial<Meso>) => void }) {
+function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, onFechar, onAtualizar }: { meso: Meso; treino: number; aberta: Aberta; nome: (p: number) => string; semanasDoExercicio?: number[]; outros: number[]; onFechar: () => void; onAtualizar: (patch: Partial<Meso>) => void }) {
   const { pos, linha } = aberta
-  const todas = Array.from({ length: meso.semanas }, (_, i) => i + 1)
-  const [r, setR] = useState<Rascunho>(linha ? { metodo: linha.metodo, semanas: linha.semanas, modelo: linha.modelo, parceiros: linha.parceiros } : { metodo: null, semanas: todas, modelo: [], parceiros: [] })
+  // Exercício adicionado só existe em algumas semanas: o método só pode ir nelas.
+  const todas = semanasDoExercicio ?? Array.from({ length: meso.semanas }, (_, i) => i + 1)
+  const [r, setR] = useState<Rascunho>(linha ? { metodo: linha.metodo, semanas: linha.semanas.filter((w) => todas.includes(w)), modelo: linha.modelo, parceiros: linha.parceiros } : { metodo: null, semanas: todas, modelo: [], parceiros: [] })
   const [mais, setMais] = useState(false)
   const n = seriesDoExercicio(meso, treino, pos, r.semanas.length ? r.semanas : todas) || 1
   const { metodo } = r
@@ -107,7 +115,6 @@ function FolhaMetodo({ meso, treino, aberta, nome, onFechar, onAtualizar }: { me
   const todos = (patch: Partial<AplicacaoMetodo>) => setR({ ...r, modelo: r.modelo.map((e) => ({ ...e, ...patch })) })
   const escolher = (m: Metodo) => setR({ ...r, metodo: m, modelo: [padraoMetodo(m, 1, treino, pos, n)], parceiros: [] })
   const alternarSemana = (w: number) => setR({ ...r, semanas: r.semanas.includes(w) ? r.semanas.filter((x) => x !== w) : [...r.semanas, w].sort((a, b) => a - b) })
-  const outros = (meso.divisao[treino - 1] ?? []).map((_, i) => i + 1).filter((p) => p !== pos)
   const etapas = m0?.etapas ?? 1
   const lista = (v?: (number | null)[]) => [...(v ?? [])]
   const chip = (ativo: boolean, rotulo: string, onClick: () => void) => (

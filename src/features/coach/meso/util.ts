@@ -93,6 +93,21 @@ export function aplicarAdicao(meso: Meso, t: number, de: number, ate: number, sl
   return adicoes
 }
 
+// Posições do treino `t` criadas em "Trocas e adições": vêm depois da divisão, só nas semanas da adição.
+// Na mesma posição pode haver exercícios diferentes em semanas diferentes (os nomes saem juntos).
+export function posicoesAdicionadas(meso: Meso, t: number): { pos: number; nome: string; semanas: number[] }[] {
+  const base = (meso.divisao[t - 1] ?? []).length
+  const mapa = new Map<number, { nomes: string[]; semanas: number[] }>()
+  for (let w = 1; w <= meso.semanas; w++)
+    (meso.adicoes?.[`${w}-${t}`] ?? []).forEach((slot, k) => {
+      const p = mapa.get(base + k + 1) ?? { nomes: [], semanas: [] }
+      if (!p.nomes.includes(slot.nome)) p.nomes.push(slot.nome)
+      p.semanas.push(w)
+      mapa.set(base + k + 1, p)
+    })
+  return [...mapa].sort((a, b) => a[0] - b[0]).map(([pos, p]) => ({ pos, nome: p.nomes.join(' / '), semanas: p.semanas }))
+}
+
 // Junta entradas com o mesmo slot (e mesmo treino/pos) em semanas consecutivas.
 export function agruparTrocas(meso: Meso): GrupoTroca[] {
   const itens: (Omit<GrupoTroca, 'de' | 'ate'> & { w: number })[] = []
