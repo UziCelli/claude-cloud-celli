@@ -15,6 +15,7 @@ import {
   getDoc,
   getDocs,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -169,6 +170,20 @@ describe('usuarios', () => {
     const criar = (dados: object, id = 'novo') => setDoc(doc(dbEmail('novo', 'n@x.com'), 'usuarios', id), dados);
 
     it('permite aluno aguardando', () => assertSucceeds(criar(novo)));
+    it('transação cria o perfil quando não existe (pedirAcesso)', () => {
+      const conta = dbEmail('novo', 'n@x.com'); // uma instância só: a transação e a referência precisam ser da mesma
+      return assertSucceeds(
+        runTransaction(conta, async (tx) => {
+          const ref = doc(conta, 'usuarios', 'novo');
+          if ((await tx.get(ref)).exists()) throw new Error('ja-existe');
+          tx.set(ref, novo);
+        }),
+      );
+    });
+    it('nega gravar cadastro sobre perfil existente (ativo, bloqueado, aguardando)', async () => {
+      for (const [uid, email] of [['ana', 'a@x.com'], ['blq', 'l@x.com'], ['agu', 'g@x.com']])
+        await assertFails(setDoc(doc(dbEmail(uid, email), 'usuarios', uid), { ...novo, email }));
+    });
     it('nega papel coach', () => assertFails(criar({ ...novo, papel: 'coach' })));
     it('nega status ativo', () => assertFails(criar({ ...novo, status: 'ativo' })));
     it('nega pagoAte', () => assertFails(criar({ ...novo, pagoAte: futuro })));

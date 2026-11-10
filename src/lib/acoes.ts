@@ -33,6 +33,7 @@ import {
   getDocs,
   getDocsFromServer,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -126,7 +127,7 @@ export function criarAlunoPresencial(a: { nome: string }) {
 // Presencial -> aluno com app, mantendo o histórico. Ordem pensada para nunca perder dados;
 // se falhar no meio, chamar de novo continua de onde parou:
 // 1. cria a conta (ou reaproveita a anotada em migradoPara) e anota migradoPara no perfil antigo;
-// 2. cria o perfil novo; 3. troca alunoId de mesos, registros, relatórios e avaliações (lotes de 400; os ids dos
+// 2. cria o perfil novo; 3. troca alunoId de mesos, registros, relatórios e avaliações e leva as anotações (lotes de 400; os ids dos
 // registros só têm o mesoId, continuam válidos; relatórios depois dos mesos, que a regra confere o dono
 // do meso); 4. apaga o perfil antigo; 5. e-mail de senha.
 export async function darAcessoAoApp(idPresencial: string, a: { email: string; pagoAte: string /* YYYY-MM-DD */ }) {
@@ -151,6 +152,13 @@ export async function darAcessoAoApp(idPresencial: string, a: { email: string; p
       for (const d of docs.slice(i, i + 400)) b.update(d.ref, campos)
       await b.commit()
     }
+  }
+  // Anotações dos exercícios (notas/{id}): o id é o do aluno, então copia para o id novo e só depois apaga a antiga.
+  // Com merge: repetir depois de uma queda no meio não apaga o que já foi copiado.
+  const notas = await getDocFromServer(doc(db, 'notas', idPresencial))
+  if (notas.exists()) {
+    await setDoc(doc(db, 'notas', uid), { ...notas.data(), alunoId: uid, atualizadoEm: serverTimestamp() }, { merge: true })
+    await deleteDoc(notas.ref)
   }
   await deleteDoc(antigo)
   await sendPasswordResetEmail(auth, a.email)
@@ -487,20 +495,34 @@ export function sincronizarEmail(uid: string, perfilEmail: string) {
   if (email && email !== perfilEmail) updateDoc(doc(db, 'usuarios', uid), { email }).catch(() => {})
 }
 
-// Cria o perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
+// Perfil exatamente como a regra exige: aluno aguardando, sem pagoAte.
+const perfilCadastro = (nome: string, email: string) => ({
+  papel: 'aluno',
+  status: 'aguardando',
+  nome,
+  email: email.toLowerCase(), // o da regra: igual ao do login
+  criadoEm: serverTimestamp(),
+  privacidadeEm: serverTimestamp(), // a tela só chama depois do aceite
+  privacidadeVersao: VERSAO_PRIVACIDADE,
+})
+
 export async function cadastrar(nome: string, email: string, senha: string) {
   email = email.trim()
   const { user } = await createUserWithEmailAndPassword(auth, email, senha)
-  await setDoc(doc(db, 'usuarios', user.uid), {
-    papel: 'aluno',
-    status: 'aguardando',
-    nome,
-    email: (user.email ?? email).toLowerCase(), // o da regra: igual ao do login
-    criadoEm: serverTimestamp(),
-    privacidadeEm: serverTimestamp(), // a tela só chama depois do aceite
-    privacidadeVersao: VERSAO_PRIVACIDADE,
-  })
+  await setDoc(doc(db, 'usuarios', user.uid), perfilCadastro(nome, user.email ?? email))
   return user
+}
+
+// Login sem perfil (sumiu): recria como aguardando. Transação = sempre no servidor, nunca fila offline,
+// e nunca por cima de um perfil que já exista (erro "ja-existe").
+export function pedirAcesso(nome: string) {
+  const u = auth.currentUser
+  if (!u?.email) return Promise.reject(new Error('sem-email'))
+  const ref = doc(db, 'usuarios', u.uid)
+  return runTransaction(db, async (tx) => {
+    if ((await tx.get(ref)).exists()) throw new Error('ja-existe')
+    tx.set(ref, perfilCadastro(nome, u.email!))
+  })
 }
 
 // Antes de sair, espera as gravações pendentes chegarem ao servidor (ex.: o cadastro recém-feito);

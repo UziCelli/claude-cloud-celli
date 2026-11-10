@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { confirmarNumero } from './ui'
+import { classesBotao, confirmarNumero } from './ui'
+
+describe('classesBotao', () => {
+  it('md tem alvo de toque de 44px', () => expect(classesBotao('primario', 'md')).toContain('min-h-11'))
+  it('lg é o botão grande do onboarding', () => expect(classesBotao('primario', 'lg')).toContain('h-14'))
+  it('vidro e fantasma existem como o Voltar e o Pular', () => {
+    expect(classesBotao('vidro', 'md')).toContain('vidro-escuro')
+    expect(classesBotao('fantasma', 'md')).toContain('bg-transparent')
+  })
+  it('classe de fora entra por último', () => expect(classesBotao('primario', 'md', 'w-full').endsWith('w-full')).toBe(true))
+})
 
 describe('confirmarNumero', () => {
   it('aceita o número digitado depois de apagar tudo', () => expect(confirmarNumero('10', 1, 12, false, 4)).toBe(10))

@@ -1,4 +1,5 @@
 // Pix estático (BR Code EMV do BACEN): sem API e sem taxa. Funções puras.
+import { diaSP } from './acesso'
 
 const campo = (id: string, valor: string) => `${id}${String(valor.length).padStart(2, '0')}${valor}`
 
@@ -35,4 +36,15 @@ export function codigoPix(p: { chave: string; nome: string; cidade: string; valo
     '6304',
   ].join('')
   return sem + crc16(sem)
+}
+
+// Atraso da mensalidade (regra da marca, em %): multa única + juros ao mês proporcionais aos dias
+// (mês de 30 dias), contados no calendário de São Paulo. Sem regra, cobra só a mensalidade.
+const centavos = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100
+export function valorComAtraso(mensalidade: number, pagoAte: Date, agora: Date, regra?: { multa: number; jurosMes: number }) {
+  const vencido = agora.getTime() >= pagoAte.getTime()
+  const dias = vencido ? Math.max(0, diaSP(agora.getTime()) - diaSP(pagoAte.getTime())) : 0
+  const multa = vencido && regra ? centavos((mensalidade * regra.multa) / 100) : 0
+  const juros = regra ? centavos((mensalidade * regra.jurosMes * dias) / 3000) : 0
+  return { dias, multa, juros, total: centavos(mensalidade + multa + juros) }
 }

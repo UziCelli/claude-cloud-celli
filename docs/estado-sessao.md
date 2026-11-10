@@ -1,4 +1,4 @@
-# Estado da sessão (retomada) — atualizado em 09/11/2026
+# Estado da sessão (retomada) — atualizado em 10/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
@@ -9,6 +9,34 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Leitura de evolução: seta e cor por medida; cruza perímetro x dobra (braço maior com tríceps estável = massa; com tríceps maior = gordura). Peso e IMC ficam cinza.
 - **Lipedema** (braços e/ou pernas): o coach marca na avaliação e a região passa a ser lida como "não deveria subir". Dado de saúde novo: Política atualizada, `VERSAO_PRIVACIDADE` = `2026-11-10` (**todos os alunos aceitam de novo**).
 - **Pendências do Victor:** ver numa avaliação real se as leituras fazem sentido para o caso dele (limiares 0,5 cm e 1 mm; quadril/coxa dividem a dobra da coxa); abrir o PDF novo no celular.
+## 10/11/2026 — QR Code de cadastro
+- Coach: Início → botão **"QR Code de cadastro"** (QR grande + link + Copiar link). Vale para as duas marcas (usa o `dominio` de cada `marca.json`).
+- Aluno: aponta a câmera → abre `/cadastro` → cai direto em "Criar conta" (sem boas-vindas) → depois da conta, tela "Cadastro recebido!" (coach libera).
+- Na tela de cadastro, cartão **"Instale o app antes de criar a conta"** (iPhone: folha passo a passo; Android: instala direto). Não existe instalar automático pelo QR: o navegador não deixa.
+- **Falta (Victor):** mandar o vídeo de "Adicionar à Tela de Início" para virar tutorial passo a passo (hoje a folha do iPhone é só texto/desenho).
+
+## 10/11/2026 — Meso inteiro por voz
+- "Montar o meso por voz" saiu da aba Divisão e fica no topo do editor do meso.
+- Além da divisão, a fala agora monta: séries e reps (padrão ou de um exercício), volume (progredir, reduzir, polimento) e métodos (pôr ou tirar; Biset/Triset/Superset/Circuito com parceiros).
+- Prévia mostra cada ação em texto; nada grava sem "Aplicar no editor" + "Salvar".
+- Fora por enquanto: configurações (semanas, dias, descansos) por voz.
+
+## 10/11/2026 — Varredura e 3 correções
+- **Lembrete do treino na hora:** o agendador do GitHub atrasava 5 a 10 h. Agora o robô entrega a lista e o Worker dispara às 6h47 (`docs/plano-notificacoes.md`, "Lembrete na hora certa"). A mensalidade continua saindo à tarde.
+- **Lembrete só em dia de treino:** respeita os "Dias de treino" (ou o calendário automático) e para quando a semana está completa.
+- **Anotações ao dar acesso ao app:** as anotações do presencial vão junto para a conta nova.
+- **2ª leva (mesmo dia):**
+  - notificações em até 3 aparelhos por pessoa (celular + computador), cada um com os próprios liga/desliga; sair tira só aquele aparelho;
+  - "Apagar de vez": a Limpeza LGPD agora também apaga a inscrição de notificação guardada no Worker (`/esquecer`);
+  - aba Métodos oferece os exercícios de "Trocas e adições", só nas semanas em que existem;
+  - `docs/mapa.md` sem a linha antiga do `window.print()`.
+- **Achados ainda abertos** (não corrigidos):
+  - Dependabot falha no `minimatch`: vem de dentro de ferramentas de build (`firebase-tools`, `workbox-build`) e a versão corrigida não é compatível com elas; não vai para o app (produção com 0 vulnerabilidades). Esperar as ferramentas atualizarem;
+  - inscrições de notificação de alunos apagados antes de 10/11/2026 ficam no Worker até o endereço morrer sozinho;
+  - anotações órfãs de migrações antigas (presencial → app) continuam no banco: apagar exige o ok do Victor;
+  - o monitor "Saúde dos apps" roda ~3 vezes por dia, não a cada hora (atraso do agendador do GitHub);
+  - `push.yml` publica o Worker a partir de qualquer branch que mexa em `push/`;
+  - a mensalidade ainda é avisada à tarde (atraso do agendador do GitHub).
 
 ## 09/11/2026 — Avaliação física e relatório escrito (Fase 3)
 - Plano e escolhas do Victor: `docs/plano-avaliacao.md` (perímetros, dobras Pollock 7, bioimpedância; só o coach preenche e libera; lembrete a cada mesociclo; **sem foto**).
@@ -309,3 +337,10 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
   - coach manda "Aviso para todos" e um aviso para um aluno;
   - lembrete das 6h47 (ou rodar o workflow "Avisos de mensalidade" com modo `lembrete`);
   - desligar um tipo em Conta e conferir que ele para de chegar.
+
+## 10/11/2026 — Multa e juros no Pix
+- Venceu: o Pix soma multa de 2% (uma vez) + juros de 1% ao mês, proporcional aos dias (1%/30 por dia).
+- O QR e o "copia e cola" já saem com o total do dia e se atualizam sozinhos à meia-noite.
+- Antes de vencer, o Pix avisa: "Após o vencimento: multa de 2% e juros de 1% ao mês."
+- Coach: lista de Alunos mostra "Com atraso: R$ X" (valor do dia em que o aluno tocou "Já paguei").
+- Ligado nas duas marcas (`pix.atraso` no `marca.json`): VFIT e Gislane, mesma regra.

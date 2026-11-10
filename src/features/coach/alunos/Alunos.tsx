@@ -1,7 +1,7 @@
 import { AnimatePresence, m } from 'motion/react'
 import { agil, saida, suave } from '../../../movimento'
 import { useState } from 'react'
-import { collection, query, where } from 'firebase/firestore'
+import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
 import { apagarAluno, confirmarPagamento, definirAcesso, salvarMensalidade } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
@@ -10,7 +10,7 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks
 import { ir } from '../../../rota'
 import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
-import { PIX, reais } from '../../aluno/PagarPix'
+import { contaDoDia, PIX, reais } from '../../aluno/PagarPix'
 import EnviarAviso from './EnviarAviso'
 import { IcEngrenagem, IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
@@ -86,8 +86,21 @@ export default function Alunos() {
     .filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase()) || a.email.toLowerCase().includes(busca.toLowerCase()))
     .sort(comparar)
 
-  function liberar(uid: string, pagoAte: string) {
+  async function liberar(uid: string, pagoAte: string) {
     setErro('')
+    const a = alunos.find((x) => x.id === uid)
+    if (a?.status === 'aguardando') {
+      // Aluno apagado hoje: o login só some na limpeza da madrugada; liberar agora ressuscitaria o perfil.
+      // Sem conseguir conferir (offline/erro), não libera: melhor tentar de novo do que ressuscitar um aluno apagado.
+      const apagado = await getDocFromServer(doc(db, 'exclusoes', uid)).then((d) => d.exists() ? 'sim' : 'nao', () => 'erro')
+      if (apagado !== 'nao') {
+        setEditando(null)
+        setErro(apagado === 'sim'
+          ? 'Este aluno foi apagado hoje. O login some na limpeza da madrugada; peça para ele criar a conta de novo amanhã.'
+          : 'Sem conexão para conferir. Tente de novo.')
+        return
+      }
+    }
     definirAcesso(uid, { status: 'ativo', pagoAte }).catch((e) => {
       registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
       setErro('Não deu para gravar. Tente de novo.')
@@ -359,8 +372,16 @@ function Chip({ a, s }: { a: Aluno; s: { texto: string; cor: string } }) {
       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
       {PIX && a.mensalidade != null && <span className="text-xs text-slate-400">{reais(a.mensalidade)}/mês</span>}
       {PIX && a.pagamentoInformadoEm && <span className="rounded-full bg-amber-900/50 px-2 py-1 text-xs font-semibold text-amber-300">Informou pagamento</span>}
+      {PIX && a.status === 'ativo' && <ComAtraso a={a} />}
     </>
   )
+}
+
+// Mensalidade com multa e juros: valor de hoje ou, se o aluno tocou "Já paguei", do dia em que pagou.
+function ComAtraso({ a }: { a: Aluno }) {
+  const c = contaDoDia(a, a.pagamentoInformadoEm?.toDate() ?? new Date())
+  if (!c || c.total <= a.mensalidade!) return null
+  return <span className="rounded-full bg-red-900/50 px-2 py-1 text-xs font-semibold text-red-300">Com atraso: {reais(c.total)}</span>
 }
 
 function FormularioData({

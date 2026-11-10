@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { aceitouPrivacidade } from './lib/privacidade'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
-import { collection, query, where } from 'firebase/firestore'
+import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
-import { consultaRegistrosRecentes } from './lib/acoes'
+import { consultaRegistrosRecentes, pedirAcesso, temTotp } from './lib/acoes'
+import { CaixaAceite } from './features/privacidade/Politica'
 import { useLista, useUsuarioAtual } from './lib/hooks'
 import { inscreverAvisos } from './lib/push'
 import { inicioJanela, type AlunoComId } from './lib/resumo'
@@ -12,6 +13,7 @@ import { calcularAlertas, useArquivados, type Reg } from './features/coach/alert
 import { etapaCarregando, telaPronta } from './lib/log'
 import { useInatividade } from './lib/inatividade'
 import { casar, useRota } from './rota'
+import { emLinkCadastro } from './lib/cadastro'
 import { Abertura, Aviso, Botao, Centro, Tela } from './ui'
 import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
@@ -64,6 +66,10 @@ function Principal() {
   else if (!aceitouPrivacidade(perfil) && !adiouAceite)
     [estagio, tela] = ['privacidade', <Aceite uid={user.uid} adiar={perfil.privacidadeVersao ? () => setAdiouAceite(true) : undefined} />]
   else tela = <AlunoApp uid={user.uid} perfil={perfil} />
+  // Cadastro pelo QR Code concluído (ou aluno já logado que abriu o link): tira /cadastro do endereço.
+  useEffect(() => {
+    if (user && emLinkCadastro()) history.replaceState(history.state, '', '/' + location.hash)
+  }, [user])
   useEffect(() => {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
     else telaPronta()
@@ -85,19 +91,63 @@ function Principal() {
   )
 }
 
-// Perfil que não chega: depois de 10 s oferece a saída em vez de girar para sempre.
+// Perfil que não chega: depois de 10 s confere no servidor. Existe: segue esperando.
+// Não existe: deixa pedir acesso. Erro (offline/negado): oferece tentar de novo ou sair.
 function PerfilDemora() {
   const [saindo, sairAgora] = useSair()
   const [demora, setDemora] = useState(false)
+  const [estado, setEstado] = useState<'conferindo' | 'existe' | 'falta' | 'erro'>('conferindo')
+  const [tentativa, setTentativa] = useState(0)
+  const [nome, setNome] = useState(auth.currentUser?.displayName?.slice(0, 80) ?? '')
+  const [aceito, setAceito] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
   useEffect(() => {
     const t = setTimeout(() => setDemora(true), 10_000)
     return () => clearTimeout(t)
   }, [])
+  useEffect(() => {
+    const u = auth.currentUser
+    if (!demora || !u) return
+    setEstado('conferindo')
+    getDocFromServer(doc(db, 'usuarios', u.uid)).then((d) => setEstado(d.exists() ? 'existe' : 'falta'), () => setEstado('erro'))
+  }, [demora, tentativa])
+  const pode = estado === 'falta' && !!auth.currentUser?.email && !temTotp()
+  function pedir() {
+    setErro('')
+    setEnviando(true)
+    pedirAcesso(nome.trim()).catch((e) => {
+      setEnviando(false)
+      setErro(
+        e?.message === 'ja-existe' ? 'Sua conta já existe. Feche e abra o app.'
+        : e?.code === 'unavailable' || e?.code === 'failed-precondition' || e?.code === 'aborted' || !navigator.onLine ? 'Sem internet. Conecte-se e tente de novo.'
+        : 'Não deu para pedir acesso. Fale com seu coach.',
+      )
+    })
+  }
   return (
     <Abertura texto="Preparando sua conta…">
       {demora && (
         <div className="max-w-xs space-y-3 text-center text-sm text-slate-300">
-          <p>Não conseguimos abrir sua conta. Confira a internet ou fale com seu coach.</p>
+          {pode ? (
+            <>
+              <p>Não encontramos seu cadastro. Peça acesso ao seu coach.</p>
+              <input
+                aria-label="Seu nome"
+                placeholder="Seu nome"
+                maxLength={80}
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className="h-14 w-full rounded-2xl bg-white/10 px-4 text-base text-white"
+              />
+              <CaixaAceite marcada={aceito} onChange={setAceito} />
+              {erro && <Aviso>{erro}</Aviso>}
+              <Botao disabled={enviando || !aceito || !nome.trim()} onClick={pedir}>{enviando ? 'Enviando…' : 'Pedir acesso'}</Botao>
+            </>
+          ) : (
+            <p>Não conseguimos abrir sua conta. Confira a internet ou fale com seu coach.</p>
+          )}
+          {estado === 'erro' && <Botao onClick={() => setTentativa((n) => n + 1)}>Tentar de novo</Botao>}
           <Botao disabled={saindo} onClick={sairAgora}>{saindo ? 'Saindo…' : 'Sair'}</Botao>
         </div>
       )}
