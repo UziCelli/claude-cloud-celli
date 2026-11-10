@@ -1,6 +1,6 @@
 // Edição do treino do dia no presencial (só o coach). Cada toque grava na hora; o motor é `engine/editarSessao`.
 import { useRef, useState } from 'react'
-import { adicionarExercicio, adicionarMetodo, alternarSerieDropset, iniciarEdicao, removerExercicio, escoposPara, mudarSeries, removerMetodo, serieDoDrop, trocarExercicio } from '../../../engine'
+import { adicionarExercicio, adicionarMetodo, alternarSerieDropset, iniciarEdicao, removerExercicio, escoposPara, mudarSeries, removerMetodo, serieDoDrop, totalCerto, trocarExercicio } from '../../../engine'
 import type { Escopo, Meso, Metodo, SessaoEditada } from '../../../engine'
 import { COR_METODO } from '../../../data/metodos'
 import { salvarSessaoEditada, voltarAoPlanejado } from '../../../lib/acoes'
@@ -12,7 +12,6 @@ import CampoExercicio from '../meso/CampoExercicio'
 export const MAX_EXERCICIOS = 10
 export const DIRETOS: Metodo[] = ['Dropset', 'Rest-pause', 'Clusterset']
 export const SEQUENCIA: Metodo[] = ['Biset', 'Triset', 'Superset', 'Circuito']
-export const totalCerto = (m: Metodo, total: number) => (m === 'Biset' ? total === 2 : m === 'Triset' ? total === 3 : m === 'Superset' ? total >= 4 : total >= 2)
 
 export const opcoesSeries = (n: number): [string, Escopo, number?][] => [
   ['Todas', 'Todas as séries'],

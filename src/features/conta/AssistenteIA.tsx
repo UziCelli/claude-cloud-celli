@@ -19,7 +19,7 @@ export default function AssistenteIA() {
     try {
       await salvarChaveIA(nova)
       setNova('')
-      setOk('Chave salva. Já dá para montar treinos por voz no editor.')
+      setOk('Chave salva. Já dá para montar o meso por voz no editor.')
     } catch {
       setErro('Não deu para salvar. Confira a internet e a verificação em 2 etapas.')
     } finally {

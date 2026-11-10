@@ -2,6 +2,12 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 10/11/2026 — Meso inteiro por voz
+- "Montar o meso por voz" saiu da aba Divisão e fica no topo do editor do meso.
+- Além da divisão, a fala agora monta: séries e reps (padrão ou de um exercício), volume (progredir, reduzir, polimento) e métodos (pôr ou tirar; Biset/Triset/Superset/Circuito com parceiros).
+- Prévia mostra cada ação em texto; nada grava sem "Aplicar no editor" + "Salvar".
+- Fora por enquanto: configurações (semanas, dias, descansos) por voz.
+
 ## 10/11/2026 — Varredura e 3 correções
 - **Lembrete do treino na hora:** o agendador do GitHub atrasava 5 a 10 h. Agora o robô entrega a lista e o Worker dispara às 6h47 (`docs/plano-notificacoes.md`, "Lembrete na hora certa"). A mensalidade continua saindo à tarde.
 - **Lembrete só em dia de treino:** respeita os "Dias de treino" (ou o calendário automático) e para quando a semana está completa.

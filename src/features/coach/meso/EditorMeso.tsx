@@ -20,6 +20,7 @@ import TabDivisao from './TabDivisao'
 import TabMetodos from './TabMetodos'
 import TabProgressao from './TabProgressao'
 import { redimensionar } from './util'
+import VozTreino from './VozTreino'
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
@@ -216,6 +217,9 @@ export default function EditorMeso({ id }: { id: string }) {
           </div>
         )}
       </Msg>
+      <div className="mb-4">
+        <VozTreino meso={meso} registros={registros} onAtualizar={atualizar} />
+      </div>
       <div className="mb-4 flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
         {ABAS.map((a) => (
           <button

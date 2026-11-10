@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { acharPosicao, corpoPedido, lerResposta, listaAtual, MAX_POR_TREINO, MODELO_IA, PROMPT_SISTEMA } from './iaTreino'
+import { acharPosicao, corpoPedido, descreverAcao, lerResposta, listaAtual, MAX_POR_TREINO, MODELO_IA, PROMPT_SISTEMA } from './iaTreino'
 
 const resposta = (acoes: unknown, avisos?: unknown) => ({ content: [{ type: 'text', text: 'ok' }, { type: 'tool_use', name: 'montar_treinos', input: { acoes, avisos } }] })
 const DIV = [['Supino Reto Barra', 'Crucifixo Halter'], [], ['Leg Press 45', 'Hack']]
@@ -89,5 +89,85 @@ describe('corpoPedido', () => {
 
   it('corta fala enorme', () => {
     expect(corpoPedido('a'.repeat(5000), DIV).messages[0].content.length).toBeLessThan(2300)
+  })
+})
+
+describe('lerResposta: progressão, volume e métodos', () => {
+  it('progressao: com ou sem treino; reps e semanas limpas; exercício sem treino vira aviso', () => {
+    const r = lerResposta(
+      resposta([
+        { acao: 'progressao', reps: [12, 12, 10], semanas: [2, 1, 1, 99] },
+        { acao: 'progressao', treino: 1, exercicio: 'Supino', reps: [8, 0, 8.5, 8] },
+        { acao: 'progressao', exercicio: 'Supino', reps: [10] },
+        { acao: 'progressao', treino: 1, reps: [] },
+        { acao: 'progressao', treino: 9, reps: [10] },
+      ]),
+      DIV,
+    )
+    expect(r.acoes).toEqual([
+      { tipo: 'progressao', semanas: [1, 2], reps: [12, 12, 10] },
+      { tipo: 'progressao', treino: 1, exercicio: 'Supino', semanas: [], reps: [8, 8] },
+    ])
+    expect(r.avisos).toHaveLength(2)
+  })
+
+  it('volume: progredir tem padrão; reduzir e polimento pedem % e semana', () => {
+    const r = lerResposta(
+      resposta([
+        { acao: 'volume', modo: 'progredir' },
+        { acao: 'volume', modo: 'reduzir', pct: 30, de_semana: 4, treino: 2 },
+        { acao: 'volume', modo: 'polimento', pct: 20, de_semana: 5, ate_semana: 3 },
+        { acao: 'volume', modo: 'reduzir', de_semana: 4 },
+        { acao: 'volume', modo: 'polimento', pct: 20 },
+        { acao: 'volume', modo: 'progredir', pct: 80 },
+        { acao: 'volume', modo: 'outro', pct: 10 },
+      ]),
+      DIV,
+    )
+    expect(r.acoes).toEqual([
+      { tipo: 'volume', modo: 'progredir', de: 2 },
+      { tipo: 'volume', modo: 'reduzir', pct: 30, de: 4, ate: 4, treino: 2 },
+      { tipo: 'volume', modo: 'polimento', pct: 20, de: 5, ate: 5 },
+    ])
+    expect(r.avisos).toHaveLength(3)
+  })
+
+  it('metodo: precisa de treino, exercício e método válido (ou remover)', () => {
+    const r = lerResposta(
+      resposta([
+        { acao: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Dropset', series: [3, 2, 9] },
+        { acao: 'metodo', treino: 1, exercicio: 1, metodo: 'Biset', parceiros: ['Crucifixo', ''] },
+        { acao: 'metodo', treino: 1, exercicio: 'Supino', remover: true },
+        { acao: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Inventado' },
+        { acao: 'metodo', exercicio: 'Supino', metodo: 'Dropset' },
+        { acao: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Rest-pause', series: [3, 2] },
+        { acao: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Biset', parceiros: ['Crucifixo'], series: [2] },
+      ]),
+      DIV,
+    )
+    expect(r.acoes).toEqual([
+      { tipo: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Dropset', semanas: [], parceiros: [], series: [2, 3], remover: false },
+      { tipo: 'metodo', treino: 1, exercicio: '1', metodo: 'Biset', semanas: [], parceiros: ['Crucifixo'], series: [], remover: false },
+      { tipo: 'metodo', treino: 1, exercicio: 'Supino', semanas: [], parceiros: [], series: [], remover: true },
+      { tipo: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Rest-pause', semanas: [], parceiros: [], series: [2], remover: false },
+      { tipo: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Biset', semanas: [], parceiros: ['Crucifixo'], series: [], remover: false },
+    ])
+  })
+})
+
+describe('descreverAcao', () => {
+  it('texto da prévia', () => {
+    expect(descreverAcao({ tipo: 'progressao', semanas: [], reps: [12, 12, 10] }, 4)).toBe('progressão padrão · todas as semanas · 3 séries: 12, 12, 10')
+    expect(descreverAcao({ tipo: 'volume', modo: 'reduzir', pct: 30, de: 4, ate: 4, treino: 2 }, 6)).toBe('todos do Treino 2 · reduzir 30% · semana 4 · volta em 2 semanas')
+    expect(descreverAcao({ tipo: 'metodo', treino: 1, exercicio: 'Supino', metodo: 'Dropset', semanas: [1, 2], parceiros: [], series: [3], remover: false }, 4)).toBe(
+      'Dropset · Supino · S3 · semanas 1–2',
+    )
+    expect(descreverAcao({ tipo: 'metodo', treino: 1, exercicio: 'Supino', semanas: [], parceiros: [], series: [], remover: true }, 4)).toBe(
+      'Tirar todos os métodos · Supino · todas as semanas',
+    )
+  })
+
+  it('corpoPedido avisa quantas semanas o meso tem', () => {
+    expect(corpoPedido('x', DIV, 6).messages[0].content).toContain('O meso tem 6 semanas.')
   })
 })

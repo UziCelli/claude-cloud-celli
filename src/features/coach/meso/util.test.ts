@@ -192,6 +192,89 @@ describe('trocarExercicio', () => {
   })
 })
 
+describe('aplicarAcoes: progressão, volume e métodos', () => {
+  const base = { ...meso, metodos: [], progressao: { principais: [[10, 10, 10]], auxiliares: [[12, 12, 12]] } } as unknown as Meso
+
+  it('progressao sem treino grava a progressão padrão nas semanas pedidas', () => {
+    const r = aplicarAcoes(base, {}, [{ tipo: 'progressao', semanas: [3, 4], reps: [8, 8] }])
+    expect(r.patch.progressao!.padrao).toEqual([
+      [12, 12, 12],
+      [null, null, null, null, null, null],
+      [8, 8, null, null, null, null],
+      [8, 8, null, null, null, null],
+    ])
+    expect(r.patch.progressao!.auxiliares).toEqual([[12, 12, 12]])
+    expect(r.aplicados).toEqual(['Progressão padrão: 8, 8'])
+  })
+
+  it('progressao de um exercício mexe só nele; semanas não pedidas ficam como estavam', () => {
+    const r = aplicarAcoes(base, {}, [{ tipo: 'progressao', treino: 1, exercicio: 'leg press', semanas: [2], reps: [15, 15, 15] }])
+    const linhas = r.patch.progressaoExercicio!.a2
+    expect(linhas).toHaveLength(4)
+    expect(linhas[1]).toEqual([15, 15, 15, null, null, null])
+    expect(r.patch.progressaoExercicio!.a1).toEqual(base.progressaoExercicio!.a1)
+    expect(r.patch.progressao).toBeUndefined()
+  })
+
+  it('exercício que não existe ou treino vazio vira bloqueio', () => {
+    const r = aplicarAcoes(base, {}, [
+      { tipo: 'progressao', treino: 1, exercicio: 'Remada', semanas: [], reps: [10] },
+      { tipo: 'progressao', treino: 3, semanas: [], reps: [10] },
+    ])
+    expect(r.aplicados).toEqual([])
+    expect(r.bloqueios).toHaveLength(2)
+  })
+
+  it('volume reduzir num treino usa a mesma conta da aba Progressão', () => {
+    const r = aplicarAcoes(base, {}, [{ tipo: 'volume', modo: 'reduzir', pct: 50, de: 3, ate: 3, treino: 2 }])
+    expect(r.aplicados).toEqual(['Treino 2: redução'])
+    expect(r.patch.progressaoExercicio!.b1).toBeDefined()
+    expect(r.patch.progressaoExercicio!.a1).toEqual(base.progressaoExercicio!.a1)
+    expect(aplicarAcoes(base, {}, [{ tipo: 'volume', modo: 'reduzir', pct: 50, de: 9, ate: 9 }]).bloqueios).toHaveLength(1)
+  })
+
+  it('metodo Dropset em várias séries vira uma entrada por série e por semana', () => {
+    const r = aplicarAcoes(base, {}, [{ tipo: 'metodo', treino: 1, exercicio: 'Agachamento', metodo: 'Dropset', semanas: [1, 2], parceiros: [], series: [1, 2], remover: false }])
+    expect(r.patch.metodos!.map((x) => [x.semana, x.exercicio, x.escopo, x.serie])).toEqual([
+      [1, 1, 'Série específica', 1],
+      [1, 1, 'Série específica', 2],
+      [2, 1, 'Série específica', 1],
+      [2, 1, 'Série específica', 2],
+    ])
+    expect(r.aplicados).toEqual(['Treino 1, Agachamento: Dropset'])
+  })
+
+  it('metodo em série que o exercício não tem vira bloqueio (não cai em outra série)', () => {
+    const r = aplicarAcoes(base, {}, [{ tipo: 'metodo', treino: 1, exercicio: 'Agachamento', metodo: 'Dropset', semanas: [], parceiros: [], series: [5], remover: false }])
+    expect(r.aplicados).toEqual([])
+    expect(r.patch.metodos).toEqual([])
+    expect(r.bloqueios).toEqual(['Treino 1, Agachamento: tem só 2 séries; não pus o Dropset na S5.'])
+  })
+
+  it('metodo Biset junta o parceiro no mesmo grupo; contagem errada é bloqueada', () => {
+    const r = aplicarAcoes(base, {}, [{ tipo: 'metodo', treino: 1, exercicio: '1', metodo: 'Biset', semanas: [1], parceiros: ['Leg Press'], series: [], remover: false }])
+    expect(r.patch.metodos!.map((x) => [x.exercicio, x.metodo, x.grupo])).toEqual([
+      [1, 'Biset', 1],
+      [2, 'Biset', 1],
+    ])
+    const ruim = aplicarAcoes(base, {}, [{ tipo: 'metodo', treino: 1, exercicio: '1', metodo: 'Triset', semanas: [], parceiros: ['2'], series: [], remover: false }])
+    expect(ruim.bloqueios).toHaveLength(1)
+    expect(ruim.patch.metodos).toBe(base.metodos)
+  })
+
+  it('métodos acham o exercício que a divisão acabou de adicionar; remover tira o método', () => {
+    const r = aplicarAcoes(base, {}, [
+      { tipo: 'metodo', treino: 2, exercicio: 'Crucifixo', metodo: 'Rest-pause', semanas: [], parceiros: [], series: [], remover: false },
+      { tipo: 'adicionar', treino: 2, exercicios: [{ nome: 'Crucifixo', noCatalogo: true }] },
+    ])
+    expect(r.patch.metodos).toHaveLength(4)
+    expect(r.patch.metodos!.every((x) => x.exercicio === 2 && x.metodo === 'Rest-pause')).toBe(true)
+    const sem = aplicarAcoes({ ...base, ...r.patch } as Meso, {}, [{ tipo: 'metodo', treino: 2, exercicio: 'Crucifixo', semanas: [], parceiros: [], series: [], remover: true }])
+    expect(sem.patch.metodos).toEqual([])
+    expect(aplicarAcoes(base, {}, [{ tipo: 'metodo', treino: 2, exercicio: 'Supino', semanas: [], parceiros: [], series: [], remover: true }]).bloqueios).toHaveLength(1)
+  })
+})
+
 describe('posicoesAdicionadas (aba Métodos)', () => {
   const s = (slotId: string, nome: string) => ({ slotId, nome })
   it('posição depois da divisão, só nas semanas da adição; nomes diferentes na mesma posição saem juntos', () => {
