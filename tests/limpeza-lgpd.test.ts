@@ -21,7 +21,7 @@ const rodar = () =>
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
-const COLECOES = ['usuarios', 'mesos', 'registros', 'relatorios', 'notas', 'fotos', 'cardios', 'feedbacks', 'avaliacoes', 'logs', 'exclusoes']
+const COLECOES = ['usuarios', 'mesos', 'registros', 'relatorios', 'notas', 'fotos', 'cardios', 'feedbacks', 'avaliacoes', 'anamneses', 'logs', 'exclusoes']
 const existe = async (p: string) => (await db.doc(p).get()).exists
 const login = async (uid: string) => {
   try { await auth.getUser(uid); return true } catch { return false }
@@ -41,12 +41,13 @@ async function semear(uid: string, papel: string, pedido: boolean) {
   await db.doc(`feedbacks/f-${uid}`).set({ nota: 5, assunto: 'app', alunoId: uid, em: Timestamp.now() })
   await db.doc(`avaliacoes/av-${uid}`).set({ alunoId: uid, data: '2026-11-09', pesoKg: 70, dobras: { triceps: 12 }, liberado: true })
   await db.doc(`avaliacoes/av2-${uid}`).set({ alunoId: uid, data: '2026-08-10', pesoKg: 72, liberado: false })
+  await db.doc(`anamneses/an-${uid}`).set({ alunoId: uid, respostas: { lesoes: 'segredo' }, versao: 1 })
   await db.doc(`feedbacks/anon-${uid}`).set({ nota: 4, assunto: 'app', em: Timestamp.now() }) // anônimo: fica
   if (pedido) await db.doc(`exclusoes/${uid}`).set({ em: Timestamp.now() })
 }
 const tudoDe = async (uid: string) =>
   [`usuarios/${uid}`, `mesos/m-${uid}`, `registros/r-${uid}`, `relatorios/m-${uid}`, `notas/${uid}`, `fotos/${uid}`, `logs/l-${uid}`,
-   `cardios/${uid}_2026-10-01`, `cardios/${uid}_2026-10-02`, `feedbacks/f-${uid}`, `avaliacoes/av-${uid}`, `avaliacoes/av2-${uid}`]
+   `cardios/${uid}_2026-10-01`, `cardios/${uid}_2026-10-02`, `feedbacks/f-${uid}`, `avaliacoes/av-${uid}`, `avaliacoes/av2-${uid}`, `anamneses/an-${uid}`]
 
 beforeEach(async () => {
   for (const c of COLECOES) for (const d of (await db.collection(c).get()).docs) await d.ref.delete()

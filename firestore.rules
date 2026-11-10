@@ -335,6 +335,88 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
+    // Respostas da anamnese (mapa r). Cada função aceita a chave ausente; as obrigatórias vêm no hasAll.
+    function simNao(r, k) { return !(k in r) || r[k] is bool; }
+    function aceite(r, k) { return !(k in r) || r[k] == true; }
+    function opcao(r, k, ops) { return !(k in r) || r[k] in ops; }
+    function multi(r, k, ops) { return !(k in r) || (r[k] is list && r[k].size() <= ops.size() && r[k].hasOnly(ops)); }
+    function texto(r, k, max) { return !(k in r) || (r[k] is string && r[k].size() <= max); }
+    function inteiro(r, k, min, max) { return !(k in r) || (r[k] is int && r[k] >= min && r[k] <= max); }
+
+    // Chaves, opções e limites iguais aos de PERGUNTAS em src/lib/anamnese.ts (o teste compara).
+    // Ao mudar as perguntas, só acrescentar chaves e opções: remover algo recusa envios offline antigos.
+    function respostasValidas(r) {
+      return r is map
+        && r.keys().hasOnly(['coracao', 'dorPeito', 'tontura', 'doencaCronica', 'remedio', 'ossoArticulacao', 'supervisaoMedica', 'parqQual', 'gestante', 'cirurgia12m', 'fuma', 'dores', 'lesoes', 'sono', 'trabalho', 'estresse', 'objetivo', 'experiencia', 'tempoParado', 'diasSemana', 'minutos', 'outrasAtividades', 'algoMais', 'declaracao', 'responsavelConfirmou'])
+        && r.keys().hasAll(['coracao', 'dorPeito', 'tontura', 'doencaCronica', 'remedio', 'ossoArticulacao', 'supervisaoMedica', 'declaracao'])
+        && simNao(r, 'coracao') && simNao(r, 'dorPeito') && simNao(r, 'tontura') && simNao(r, 'doencaCronica')
+        && simNao(r, 'remedio') && simNao(r, 'ossoArticulacao') && simNao(r, 'supervisaoMedica')
+        && texto(r, 'parqQual', 500)
+        && opcao(r, 'gestante', ['sim', 'nao', 'naoSeAplica'])
+        && simNao(r, 'cirurgia12m') && simNao(r, 'fuma')
+        && multi(r, 'dores', ['ombro', 'cotovelo', 'punho', 'cervical', 'lombar', 'quadril', 'joelho', 'tornozelo', 'outra'])
+        && texto(r, 'lesoes', 500)
+        && opcao(r, 'sono', ['ate5', '5a7', '7a8', 'mais8'])
+        && opcao(r, 'trabalho', ['sentado', 'emPe', 'bracal'])
+        && opcao(r, 'estresse', ['baixo', 'medio', 'alto'])
+        && opcao(r, 'objetivo', ['hipertrofia', 'emagrecimento', 'forca', 'saude', 'condicionamento'])
+        && opcao(r, 'experiencia', ['nunca', 'menos6m', '6ma2a', 'mais2a'])
+        && opcao(r, 'tempoParado', ['treinando', 'ate3m', '3a12m', 'mais1a'])
+        && inteiro(r, 'diasSemana', 1, 7)
+        && opcao(r, 'minutos', ['ate30', '30a45', '45a60', 'mais60'])
+        && texto(r, 'outrasAtividades', 300)
+        && texto(r, 'algoMais', 1000)
+        && aceite(r, 'declaracao')
+        && aceite(r, 'responsavelConfirmou');
+    }
+
+    // Envio novo (aluno ou coach): campos fixos, horas do servidor, respostas conferidas.
+    function anamneseNova(d) {
+      return d.alunoId is string
+        && d.versao is int && d.versao >= 1 && d.versao <= 1000
+        && d.em == request.time
+        && d.atualizadoEm == request.time
+        && respostasValidas(d.r);
+    }
+
+    // Anamnese (dado de saúde, LGPD art. 11): anamneses/{id automático} = { alunoId, versao, origem, r, em,
+    // atualizadoEm, obsCoach?, vistaEm? }. Primeira coleção de saúde que o ALUNO cria. Uma versão nova por
+    // envio, nunca sobrescreve: o aluno (liberado) só cria a própria com origem 'aluno' e não altera nem
+    // apaga. O coach (2º fator) lê, cria pelo aluno (origem 'coach'), apaga e altera só obsCoach, vistaEm e
+    // alunoId (darAcessoAoApp). O aluno lê as próprias (doc ou consulta alunoId == uid), ativo e em dia;
+    // ele vê também o obsCoach (o Firestore não esconde campo).
+    match /anamneses/{id} {
+      allow read: if isCoach() || (own(resource.data) && liberado());
+      allow delete: if isCoach();
+
+      allow create: if own(request.resource.data) && liberado()
+        && request.resource.data.keys().hasOnly(['alunoId', 'versao', 'origem', 'r', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['alunoId', 'versao', 'origem', 'r', 'em', 'atualizadoEm'])
+        && request.resource.data.origem == 'aluno'
+        && anamneseNova(request.resource.data);
+
+      allow create: if isCoach()
+        && request.resource.data.keys().hasOnly(['alunoId', 'versao', 'origem', 'r', 'em', 'atualizadoEm', 'obsCoach', 'vistaEm'])
+        && request.resource.data.keys().hasAll(['alunoId', 'versao', 'origem', 'r', 'em', 'atualizadoEm'])
+        && request.resource.data.origem == 'coach'
+        && anamneseNova(request.resource.data)
+        && get(/databases/$(database)/documents/usuarios/$(request.resource.data.alunoId)).data.papel == 'aluno'
+        && (!('obsCoach' in request.resource.data)
+            || (request.resource.data.obsCoach is string && request.resource.data.obsCoach.size() <= 2000))
+        && request.resource.data.get('vistaEm', request.time) == request.time;
+
+      allow update: if isCoach()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['obsCoach', 'vistaEm', 'alunoId', 'atualizadoEm'])
+        && request.resource.data.atualizadoEm == request.time
+        && (!('obsCoach' in request.resource.data)
+            || (request.resource.data.obsCoach is string && request.resource.data.obsCoach.size() <= 2000))
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['vistaEm'])
+            || request.resource.data.vistaEm == request.time)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['alunoId'])
+            || (request.resource.data.alunoId is string
+                && get(/databases/$(database)/documents/usuarios/$(request.resource.data.alunoId)).data.papel == 'aluno'));
+    }
+
     // Chave da API de IA (assistente de voz, src/lib/ia.ts): segredos/ia = { chave, atualizadoEm }.
     // Só o coach (com 2º fator) lê, grava e apaga; aluno e anônimo nunca. O backup semanal ignora esta coleção.
     match /segredos/{id} {

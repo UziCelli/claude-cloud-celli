@@ -13,6 +13,8 @@ import { Aviso, Botao, Campo, campoBase, Cartao, cascata, flash, item, Msg, Pagi
 import { BotaoVoltar } from '../../../voltar'
 import { hojeMaisDias } from '../../../lib/acesso'
 import { cicloTerminou } from '../../../lib/relatorio'
+import { useAnamnesesDoAluno } from '../../anamnese/AnamneseCoach'
+import { maisRecente, sinaisAtencao } from '../../../lib/anamnese'
 import ImportarPlanilha from './ImportarPlanilha'
 import { mesoPadrao } from './mesoPadrao'
 
@@ -26,6 +28,8 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
   const mesosQ = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
   const mesos = useLista<MesoSalvo>(mesosQ)
   const semInternet = useSemInternet()
+  const ultimaAnam = maisRecente(useAnamnesesDoAluno(uid).dados)
+  const atencao = !!ultimaAnam && sinaisAtencao(ultimaAnam.r).length > 0
   const [erro, setErro] = useState<string | null>(null)
   const [importando, setImportando] = useState(false)
   const [aviso] = useState(() => {
@@ -64,6 +68,10 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
         <>
           <Botao onClick={() => ir(`/aluno/${uid}/evolucao`)}>Evolução</Botao>
           <Botao onClick={() => ir(`/aluno/${uid}/avaliacoes`)}>Avaliação física</Botao>
+          <Botao className="inline-flex items-center gap-1.5" onClick={() => ir(`/aluno/${uid}/anamnese`)}>
+            Anamnese
+            {atencao && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-300">Atenção</span>}
+          </Botao>
           <Botao tipo="destaque" className="inline-flex items-center gap-1.5" onClick={() => ir(`/aluno/${uid}/presencial`)}>
             <IcPlay className="size-4" />
             Treino presencial

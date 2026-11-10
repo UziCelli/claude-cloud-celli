@@ -44,6 +44,7 @@ import {
 } from 'firebase/firestore'
 import type { Meso, SessaoEditada } from '../engine'
 import { fimDoDiaSaoPaulo, proximoVencimento, type Usuario } from './acesso'
+import { CHAVE_RASCUNHO, VERSAO_ANAMNESE, type Respostas } from './anamnese'
 import { arquivadosVencidos } from './alertas'
 import { paraDoc, type AvaliacaoForm } from './avaliacao'
 import { idCardio, type TipoCardio } from './cardio'
@@ -142,11 +143,11 @@ export async function darAcessoAoApp(idPresencial: string, a: { email: string; p
     await updateDoc(antigo, { migradoPara: uid })
   }
   await setDoc(doc(db, 'usuarios', uid), { ...perfilApp(p.nome, a.email, a.pagoAte), criadoEm: p.criadoEm ?? serverTimestamp() })
-  for (const col of ['mesos', 'registros', 'relatorios', 'avaliacoes']) {
+  for (const col of ['mesos', 'registros', 'relatorios', 'avaliacoes', 'anamneses']) {
     // Do servidor (nunca do cache): offline dá erro antes de apagar o perfil antigo.
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', idPresencial)))).docs
-    // As regras do relatório e da avaliação exigem atualizadoEm da hora do servidor; registros não (atualizadoEm deles é a janela de 14 dias).
-    const campos = col === 'relatorios' || col === 'avaliacoes' ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
+    // As regras do relatório, da avaliação e da anamnese exigem atualizadoEm da hora do servidor; registros não (atualizadoEm deles é a janela de 14 dias).
+    const campos = col === 'relatorios' || col === 'avaliacoes' || col === 'anamneses' ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
       for (const d of docs.slice(i, i + 400)) b.update(d.ref, campos)
@@ -233,7 +234,7 @@ export async function excluirMeso(mesoId: string) {
 export async function apagarAluno(uid: string) {
   await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
   await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
-  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks', 'avaliacoes']) {
+  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks', 'avaliacoes', 'anamneses']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
@@ -309,6 +310,18 @@ export const salvarAvaliacao = (id: string, f: AvaliacaoForm, liberado: boolean)
 export const recolherAvaliacao = (id: string) =>
   updateDoc(doc(db, 'avaliacoes', id), { liberado: false, liberadoEm: null, atualizadoEm: serverTimestamp() })
 export const apagarAvaliacao = (id: string) => deleteDoc(doc(db, 'avaliacoes', id))
+
+// Anamnese do aluno: uma versão nova por envio (nunca sobrescreve). Sem await na tela (offline).
+// Valide com validarRespostas antes: offline, a regra recusaria só ao sincronizar, em silêncio.
+export const enviarAnamnese = (alunoId: string, r: Respostas) =>
+  addDoc(collection(db, 'anamneses'), { alunoId, versao: VERSAO_ANAMNESE, origem: 'aluno', r, em: serverTimestamp(), atualizadoEm: serverTimestamp() })
+
+// Coach: nova versão (corrige ou lança pelo aluno presencial), já vista. Anotação e "vista" mexem só
+// em obsCoach/vistaEm (a regra recusa qualquer outro campo). Nunca log de resposta.
+export const novaVersaoCoach = (alunoId: string, r: Respostas) =>
+  addDoc(collection(db, 'anamneses'), { alunoId, versao: VERSAO_ANAMNESE, origem: 'coach', r, em: serverTimestamp(), atualizadoEm: serverTimestamp(), vistaEm: serverTimestamp() })
+export const anotarAnamnese = (id: string, obsCoach: string) => updateDoc(doc(db, 'anamneses', id), { obsCoach, atualizadoEm: serverTimestamp() })
+export const marcarAnamneseVista = (id: string) => updateDoc(doc(db, 'anamneses', id), { vistaEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
 
 // ---------- aluno ----------
 
@@ -535,6 +548,11 @@ export function sair() {
     await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
     // Este aparelho para de receber os avisos de quem saiu (precisa do login ainda válido; desiste em 2 s).
     await Promise.race([desinscreverAvisos(), new Promise((r) => setTimeout(r, 2000))])
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith(CHAVE_RASCUNHO)).forEach((k) => localStorage.removeItem(k)) // rascunho de saúde não fica no aparelho
+    } catch {
+      /* sem armazenamento */
+    }
     await signOut(auth)
   })().finally(() => {
     saindo = null
