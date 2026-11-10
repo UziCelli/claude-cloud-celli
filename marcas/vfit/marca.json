@@ -10,7 +10,7 @@
   "apk": "forca.apk",
   "iconeFundo": "#0B1E3D",
   "dominio": "app.vfitcoachapp.com",
-  "pix": { "chave": "62539810000178", "nome": "VICTOR CELLI SILVA LTDA", "cidade": "SAO PAULO" },
+  "pix": { "chave": "62539810000178", "nome": "VICTOR CELLI SILVA LTDA", "cidade": "SAO PAULO", "atraso": { "multa": 2, "jurosMes": 1 } },
   "avaliarGoogle": "https://g.page/r/CVND6RTAYZlLEBM/review",
   "responsavel": {
     "nome": "Victor Celli",

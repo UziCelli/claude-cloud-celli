@@ -52,7 +52,7 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
     await expect(page.getByText('Código copiado')).toBeVisible()
     const texto = await page.evaluate(() => navigator.clipboard.readText())
     expect(texto).toContain('br.gov.bcb.pix')
-    expect(texto).toContain('5406150.00')
+    expect(texto).toContain(marca.pix.atraso ? '5406153.05' : '5406150.00') // 1 dia vencido: multa 3,00 + juros 0,05
     await page.getByRole('button', { name: 'Já paguei' }).click()
     await expect(page.getByText(/Aviso enviado em \d{2}\/\d{2}/)).toBeVisible()
   })
@@ -96,4 +96,29 @@ test('Pix no Início: aparece 5 dias antes do vencimento, sem bloquear; longe do
     await expect(page.getByRole('heading', { name: /Mensalidade vence/ })).toHaveCount(0)
     await expect(page.getByRole('img', { name: 'QR Code Pix' })).toHaveCount(0)
   })
+})
+
+test('Pix vencido: QR com multa e juros do dia; o coach vê o valor com atraso', async ({ page, browser }) => {
+  test.skip(!marca.pix?.atraso, 'marca sem multa/juros')
+  await limparEmuladores()
+  await criarCoach(COACH.nome, COACH.email, COACH.senha)
+  const uid = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  // 10 dias de atraso, R$ 150: multa 2% = 3,00; juros 1%/30 × 10 = 0,50; total 153,50.
+  await gravarDoc(`usuarios/${uid}`, {
+    papel: 'aluno', status: 'ativo', nome: ALUNO.nome, email: ALUNO.email, mensalidade: 150,
+    pagoAte: new Date(Date.now() - 10 * 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
+  })
+
+  await entrar(page, ALUNO.email, ALUNO.senha)
+  await expect(page.getByRole('heading', { name: 'Acesso pausado' })).toBeVisible()
+  await expect(page.getByText('Multa por atraso (2%): R$ 3,00')).toBeVisible()
+  await expect(page.getByText('Juros (10 dias): R$ 0,50')).toBeVisible()
+  await expect(page.getByText('Total hoje R$ 153,50')).toBeVisible()
+
+  const ctx = await browser.newContext({ ...devices['Pixel 7'] })
+  const coach = await ctx.newPage()
+  await entrar(coach, COACH.email, COACH.senha)
+  await coach.goto('/#/alunos')
+  await expect(coach.getByText('Com atraso: R$ 153,50').filter({ visible: true })).toBeVisible()
+  await ctx.close()
 })

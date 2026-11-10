@@ -10,7 +10,7 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks
 import { ir } from '../../../rota'
 import { Avatar } from '../../../avatar'
 import type { Foto } from '../../../lib/acesso'
-import { PIX, reais } from '../../aluno/PagarPix'
+import { contaDoDia, PIX, reais } from '../../aluno/PagarPix'
 import EnviarAviso from './EnviarAviso'
 import { IcEngrenagem, IcPlay } from '../../../icones'
 import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
@@ -359,8 +359,16 @@ function Chip({ a, s }: { a: Aluno; s: { texto: string; cor: string } }) {
       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.cor}`}>{s.texto}</span>
       {PIX && a.mensalidade != null && <span className="text-xs text-slate-400">{reais(a.mensalidade)}/mês</span>}
       {PIX && a.pagamentoInformadoEm && <span className="rounded-full bg-amber-900/50 px-2 py-1 text-xs font-semibold text-amber-300">Informou pagamento</span>}
+      {PIX && a.status === 'ativo' && <ComAtraso a={a} />}
     </>
   )
+}
+
+// Mensalidade com multa e juros: valor de hoje ou, se o aluno tocou "Já paguei", do dia em que pagou.
+function ComAtraso({ a }: { a: Aluno }) {
+  const c = contaDoDia(a, a.pagamentoInformadoEm?.toDate() ?? new Date())
+  if (!c || c.total <= a.mensalidade!) return null
+  return <span className="rounded-full bg-red-900/50 px-2 py-1 text-xs font-semibold text-red-300">Com atraso: {reais(c.total)}</span>
 }
 
 function FormularioData({
