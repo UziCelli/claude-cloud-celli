@@ -11,7 +11,7 @@ export default function QrCadastro({ onFechar }: { onFechar: () => void }) {
       await navigator.clipboard.writeText(linkCadastro)
       setMsg('Link copiado')
     } catch {
-      setMsg('Não deu para copiar. Selecione o link acima.')
+      setMsg('Não deu para copiar. Selecione o link.')
     }
   }
   return (
