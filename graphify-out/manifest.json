@@ -216,8 +216,8 @@
     "semantic_hash": ""
   },
   "e2e/varredura.spec.ts": {
-    "mtime": 1794360824.82277,
-    "seen": 1794398567.0671973,
+    "mtime": 1794419352.739244,
+    "seen": 1794419506.6588638,
     "ast_hash": "c71b00c6c6a4d973430ab500fd0f5fb8",
     "semantic_hash": ""
   },
@@ -948,9 +948,9 @@
     "semantic_hash": ""
   },
   "src/features/feedback/EnviarFeedback.tsx": {
-    "mtime": 1794418321.7573254,
-    "seen": 1794418334.0055656,
-    "ast_hash": "76108b3cc18d4b0bdc27ae42a53949ac",
+    "mtime": 1794419360.6972926,
+    "seen": 1794419506.6590052,
+    "ast_hash": "a773701466502bbe819ef530143d6cec",
     "semantic_hash": ""
   },
   "src/features/instalar/AvisoIOS.tsx": {
@@ -1902,9 +1902,9 @@
     "semantic_hash": ""
   },
   "docs/mapa.md": {
-    "mtime": 1794418291.9652526,
-    "seen": 1794418296.7334843,
-    "ast_hash": "f331af331eb5c82e60c2861ed42b16ca",
+    "mtime": 1794419486.421297,
+    "seen": 1794419506.6591582,
+    "ast_hash": "867dbcd1ab8d54a7b1b9ff9cb3f3d698",
     "semantic_hash": ""
   },
   "docs/peso-corporal.md": {

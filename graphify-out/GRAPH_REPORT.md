@@ -1,7 +1,7 @@
 # Graph Report - claude-cloud-celli  (2026-11-11)
 
 ## Corpus Check
-- 329 files · ~339,358 words
+- 329 files · ~339,413 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f58d7ed3`
+- Built from commit: `1807f47b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -851,7 +851,7 @@ Nodes (6): 6. Monitoramento (alertas), Alertas automáticos (Vigia de segurança
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Pontos sensíveis (leia antes de auditar ou mexer)` connect `Pontos sensíveis (leia antes de auditar ou mexer)` to `InicioAluno.tsx`, `Hoje.tsx`, `EditorMeso.tsx`, `Relatorio.tsx`, `TabProgressao.tsx`, `src/index.ts`, `ContaAluno.tsx`, `avaliacao.ts`, `util.ts`, `App.tsx`, ``src/lib/` — Firestore, estado, cálculos com dados`, `inatividade.ts`, `senha.ts`, `Treino.tsx`, `pix.ts`, `Plano — Entrega 4: registro de erros e segurança`, `Alunos.tsx`, `cartaoStory.ts`, `Entrar.tsx`, `lib/acesso.ts`, `SessaoCard.tsx`, `Mapa do Código — Força`, `avisos-pagamento.mjs`, `registrarErro`, `src/index.ts`, `Coleções Firestore`, `iaTreino.ts`, `pesoCorporal.ts`, `evolucao.ts`, `src/acesso.ts`, `Botao`, `App.tsx`, `Avaliacao.tsx`, `PagarPix.tsx`, `TabMetodos.tsx`, `push.ts`, `ui.tsx`, `conversores.ts`, `Botao`, `aluno-exemplo.test.ts`, `Presencial.tsx`, `react`, `vidro.tsx`, `MesosDoAluno.tsx`, `layout.spec.ts`, `prescreverSessao`?**
-  _High betweenness centrality (0.087) - this node is a cross-community bridge._
+  _High betweenness centrality (0.089) - this node is a cross-community bridge._
 - **Are the 144 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `nadaPassaDaTela()` and `versao()`) actually correct?**
   _`Pontos sensíveis (leia antes de auditar ou mexer)` has 144 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `@cloudflare/workers-types`, `@types/react`, `@types/react-dom` to the rest of the system?**

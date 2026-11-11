@@ -36,7 +36,8 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
   const faltaTrava = travaAte - Date.now()
   // A tela de origem (Conta, fim do treino) costuma estar rolada até embaixo, e a troca de rota mantém a rolagem:
   // sem isto a tela abre já na caixa de texto e as estrelas ficam escondidas lá em cima.
-  useEffect(() => window.scrollTo(0, 0), [])
+  // Chaves no corpo: o efeito não pode devolver nada (o React chamaria o retorno ao sair da tela).
+  useEffect(() => { window.scrollTo(0, 0) }, [])
   useEffect(() => {
     if (faltaTrava <= 0) return
     const t = setTimeout(() => atualizar((n) => n + 1), faltaTrava)
