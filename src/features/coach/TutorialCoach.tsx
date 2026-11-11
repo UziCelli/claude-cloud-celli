@@ -201,8 +201,8 @@ const passos = (nome: string): Passo[] => [
     rotulo: 'Passo 2',
     titulo: 'Acesso e pagamento',
     texto: PIX
-      ? 'O acesso vale até a data de "Pago até"; depois, trava sozinho. Quando o aluno avisar que pagou no Pix, toque em "Confirmar pagamento": o acesso ganha +1 mês.'
-      : 'O acesso vale até a data de "Pago até"; depois, trava sozinho. Use Renovar para estender ou Bloquear para pausar.',
+      ? 'O acesso vale até a data de "Pago até"; depois, trava sozinho. Quando o aluno avisar que pagou no Pix, toque em "Confirmar pagamento": o acesso ganha +1 mês, mantendo o mesmo dia do vencimento.'
+      : 'O acesso vale até a data de "Pago até"; depois, trava sozinho. Renovar soma +1 mês mantendo o mesmo dia do vencimento; Bloquear pausa.',
     ilustracao: <Palco><Acesso /></Palco>,
   },
   {

@@ -33,8 +33,8 @@ Mensagem enviada (JSON do push), lida pelo `public/sw-push.js`:
 |---|---|---|---|---|
 | descanso | Descanso acabou | Volte para o treino | descanso | `/` |
 | treino pronto | Treino novo pronto | Seu próximo treino já está no app. Toque para ver. | treino | `/` |
-| vence-3d | Mensalidade vence em 3 dias | Toque para ver como pagar. | mensalidade | `/#/conta` |
-| vence-hoje | Mensalidade vence hoje | Toque para ver como pagar. | mensalidade | `/#/conta` |
+| vence-3d | Mensalidade vence em 3 dias | Toque para ver como pagar. | mensalidade | `/#/` (Início: abre o pop-up do Pix) |
+| vence-hoje | Mensalidade vence hoje | Toque para ver como pagar. | mensalidade | `/#/` (Início: abre o pop-up do Pix) |
 
 Push respondido com 404/410: a inscrição `fixa` é apagada.
 

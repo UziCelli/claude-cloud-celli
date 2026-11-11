@@ -25,7 +25,7 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, cascata, Centro, item, Painel } from '../../ui'
+import { Botao, cascata, Centro, item, Modal, Painel } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
@@ -79,28 +79,6 @@ function Novidades() {
 }
 
 const METODOS_SEQUENCIA = /Biset|Triset|Superset|Circuito/
-const Modal = ({ rotulo, children }: { rotulo: string; children: ReactNode }) => (
-  <m.div
-    role="dialog"
-    aria-label={rotulo}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0, transition: saida }}
-    transition={suave}
-    className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
-  >
-    <m.div
-      initial={{ y: 48, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 48, opacity: 0, transition: saida }}
-      transition={suave}
-      className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
-    >
-      {children}
-    </m.div>
-  </m.div>
-)
-
 // Explicação de um método (toque no selo): sempre abre.
 function ExplicacaoMetodo({ metodo, fechar }: { metodo: Metodo; fechar: () => void }) {
   const t = METODOS[metodo]

@@ -14,8 +14,8 @@ const DESCANSO: Mensagem = { title: 'Descanso acabou', body: 'Volte para o trein
 const TREINO: Mensagem = { title: 'Treino novo pronto', body: 'Seu próximo treino já está no app. Toque para ver.', tag: 'treino', url: '/' }
 // Avisos do robô diário: [mensagem, tipo que a pessoa liga/desliga em Conta].
 const ROBO: Record<Aviso['tipo'], [Mensagem, Tipo]> = {
-  'vence-3d': [{ title: 'Mensalidade vence em 3 dias', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/conta' }, 'mensalidade'],
-  'vence-hoje': [{ title: 'Mensalidade vence hoje', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/conta' }, 'mensalidade'],
+  'vence-3d': [{ title: 'Mensalidade vence em 3 dias', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/' }, 'mensalidade'],
+  'vence-hoje': [{ title: 'Mensalidade vence hoje', body: 'Toque para ver como pagar.', tag: 'mensalidade', url: '/#/' }, 'mensalidade'],
   'treino-hoje': [{ title: 'Hoje tem treino', body: 'Seu treino de hoje está no app. Toque para começar.', tag: 'lembrete', url: '/' }, 'lembrete'],
 }
 const recado = (texto: string): Mensagem => ({ title: 'Aviso do coach', body: texto, tag: 'recado', url: '/' })

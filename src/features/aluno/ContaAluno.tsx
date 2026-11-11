@@ -4,7 +4,7 @@ import { doc } from 'firebase/firestore'
 import marca from '@marca/marca.json'
 import { Avatar } from '../../avatar'
 import { IcBalao, IcLivro, IcPessoa, IcPrancheta, IcSair, IcSeta, IcSino } from '../../icones'
-import { vencePerto, type Foto, type Usuario } from '../../lib/acesso'
+import { type Foto, type Usuario } from '../../lib/acesso'
 import { apagarFoto, recuperarSenha, sair, salvarFoto, salvarNome, salvarPeso, salvarSelo } from '../../lib/acoes'
 import { db } from '../../lib/firebase'
 import { reduzirFoto } from '../../lib/foto'
@@ -105,10 +105,10 @@ const desde = (d: Date) => {
   return `${v('month').replace('.', '')}/${v('year')}`
 }
 
-// Mensalidade: vencimento e, se a marca tem Pix, o pagamento (abre ao tocar; já aberto perto do vencimento,
-// para quem chega pela notificação ver o código direto).
+// Mensalidade: vencimento e, se a marca tem Pix, o pagamento (sempre fechado; abre ao tocar.
+// Perto do vencimento quem avisa é o pop-up do Início).
 function Mensalidade({ uid, perfil }: { uid: string; perfil: Usuario }) {
-  const [aberto, setAberto] = useState(() => vencePerto(perfil, new Date()) != null)
+  const [aberto, setAberto] = useState(false)
   return (
     <Quadro className="space-y-3">
       <h2 className="text-base">Mensalidade</h2>

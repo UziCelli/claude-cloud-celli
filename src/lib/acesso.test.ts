@@ -91,8 +91,14 @@ describe('proximoVencimento (+1 mês, calendário de São Paulo)', () => {
   it('vence hoje ainda conta como em dia', () => {
     expect(proximoVencimento(pago('2026-10-10'), sp('2026-10-10T23:00'))).toBe('2026-11-10')
   })
-  it('vencido ou sem pagoAte: soma 1 mês a hoje', () => {
+  it('atrasado 8 dias: mantém o dia do vencimento (+1 mês)', () => {
+    expect(proximoVencimento(pago('2026-10-01'), sp('2026-10-09T12:00'))).toBe('2026-11-01')
+  })
+  it('+1 mês cairia em hoje ou antes: conta de hoje', () => {
+    expect(proximoVencimento(pago('2026-09-09'), sp('2026-10-09T12:00'))).toBe('2026-11-09')
     expect(proximoVencimento(pago('2026-09-01'), sp('2026-10-09T12:00'))).toBe('2026-11-09')
+  })
+  it('sem pagoAte: soma 1 mês a hoje', () => {
     expect(proximoVencimento(undefined, sp('2026-10-09T12:00'))).toBe('2026-11-09')
   })
   it('hoje é o dia de São Paulo, não o de UTC (23h = já é o dia seguinte em UTC)', () => {

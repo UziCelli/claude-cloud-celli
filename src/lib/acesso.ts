@@ -66,12 +66,16 @@ export function vencePerto(u: Usuario | null, agora: Date, dias = 5) {
 export const hojeMaisDias = (dias: number) =>
   new Date(Date.now() + dias * DIA).toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' })
 
-// Próximo vencimento (YYYY-MM-DD, São Paulo): 1 mês depois do pagoAte (se ainda não venceu) ou de hoje,
-// preso ao último dia do mês (31/01 → 28 ou 29/02).
+// Próximo vencimento (YYYY-MM-DD, São Paulo): dia fixo. Soma 1 mês ao pagoAte (adiantado ou atrasado),
+// preso ao último dia do mês (31/01 → 28 ou 29/02). Se o resultado ainda ficar no passado ou for hoje
+// (ou não há pagoAte), conta 1 mês a partir de hoje.
 export function proximoVencimento(pagoAte: Timestamp | undefined, agora: Date) {
-  const emDia = !!pagoAte && agora.getTime() < pagoAte.toMillis()
-  const base = new Date(inicioDoDiaSP(diaSP(emDia ? pagoAte!.toMillis() : agora.getTime())))
-  const [a, m, d] = base.toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' }).split('-').map(Number)
-  const dia = Math.min(d, new Date(Date.UTC(a, m + 1, 0)).getUTCDate())
-  return new Date(Date.UTC(a, m, dia)).toISOString().slice(0, 10)
+  const mais1 = (ms: number) => {
+    const [a, m, d] = new Date(inicioDoDiaSP(diaSP(ms))).toLocaleDateString('sv', { timeZone: 'America/Sao_Paulo' }).split('-').map(Number)
+    const dia = Math.min(d, new Date(Date.UTC(a, m + 1, 0)).getUTCDate())
+    return new Date(Date.UTC(a, m, dia)).toISOString().slice(0, 10)
+  }
+  const hoje = new Date(agora.getTime() + SP).toISOString().slice(0, 10)
+  const novo = pagoAte && mais1(pagoAte.toMillis())
+  return novo && novo > hoje ? novo : mais1(agora.getTime())
 }

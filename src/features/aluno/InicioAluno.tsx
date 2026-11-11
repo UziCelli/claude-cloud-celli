@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { AnimatePresence } from 'motion/react'
 import { collection, doc, query, where } from 'firebase/firestore'
 import { prescreverSessao, type Meso } from '../../engine'
 import { vencePerto, type Foto, type Usuario } from '../../lib/acesso'
@@ -13,7 +15,7 @@ import { Avatar } from '../../avatar'
 import { Chip, IconeQuadrado, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
-import { Centro } from '../../ui'
+import { Botao, Centro, Modal } from '../../ui'
 import PagarPix, { dataCurta, PIX } from './PagarPix'
 import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
@@ -37,6 +39,17 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
   const relatorios = useRelatoriosLiberados(uid)
   const avaliacoes = useAvaliacoesLiberadas(uid)
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
+  // Abre sozinho 1x por dia perto do vencimento (se ainda não tocou "Já paguei"); o quadro Pagamento abre quando quiser.
+  const [pix, setPix] = useState(false)
+  const [visto, setVisto] = useState('') // dia já mostrado nesta abertura (vale mesmo sem localStorage)
+  const dia = dataSP(hoje)
+  const auto = !!perfil && !!PIX && vencePerto(perfil, hoje) != null && !perfil.pagamentoInformadoEm && visto !== dia && !jaViuPopup(dia)
+  useEffect(() => {
+    if (!auto) return
+    setPix(true)
+    setVisto(dia)
+    marcarPopup(dia)
+  }, [auto, dia])
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
   const data = hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })
@@ -52,7 +65,6 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
         </a>
       </div>
-      {perfil && <PixPerto uid={uid} perfil={perfil} hoje={hoje} />}
       {!atual && <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>}
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
@@ -60,7 +72,8 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
       <AvaliacaoPronta id={avaliacoes.dados[0]?.id} />
-      <Quadros pagoAte={perfil?.pagoAte?.toMillis()} />
+      <Quadros pagoAte={perfil?.pagoAte?.toMillis()} aoPagar={perfil?.status === 'ativo' && perfil.pagoAte ? () => setPix(true) : undefined} />
+      <AnimatePresence>{pix && perfil && <PixPopup uid={uid} perfil={perfil} hoje={hoje} fechar={() => setPix(false)} />}</AnimatePresence>
       <FaixaFeedback />
     </main>
   )
@@ -191,23 +204,36 @@ function AvaliacaoPronta({ id }: { id?: string }) {
   )
 }
 
-// Pix pronto no Início nos 5 dias antes do vencimento (some quando o coach confirma: pagoAte vai +1 mês).
-function PixPerto({ uid, perfil, hoje }: { uid: string; perfil: Usuario; hoje: Date }) {
+// `dia` = YYYY-MM-DD de São Paulo.
+function jaViuPopup(dia: string) {
+  try { return localStorage.getItem(`pixPopup:${dia}`) != null } catch { return false }
+}
+function marcarPopup(dia: string) {
+  try { localStorage.setItem(`pixPopup:${dia}`, '1') } catch { /* sem armazenamento: abre de novo na próxima visita */ }
+}
+
+// Pop-up do Pix: perto do vencimento ("adiantar"), ou a qualquer hora pelo quadro Pagamento.
+function PixPopup({ uid, perfil, hoje, fechar }: { uid: string; perfil: Usuario; hoje: Date; fechar: () => void }) {
   const faltam = vencePerto(perfil, hoje)
-  if (!PIX || faltam == null) return null
   const prazo = faltam === 0 ? 'hoje' : faltam === 1 ? 'amanhã' : `em ${faltam} dias`
+  const data = dataCurta(perfil.pagoAte!.toDate())
   return (
-    <Quadro className="space-y-3 ring-1 ring-marca-400/40">
-      <div>
-        <h2 className="text-base">Mensalidade vence {prazo}</h2>
-        <p className="text-sm text-slate-400">Pague com Pix até {dataCurta(perfil.pagoAte!.toDate())} e continue treinando sem pausa.</p>
+    <Modal rotulo="Pagar mensalidade" aoFechar={fechar}>
+      <div className="space-y-3">
+        <div className="text-center">
+          <h2 className="text-lg font-bold">{faltam != null ? 'Quer adiantar a mensalidade?' : 'Mensalidade'}</h2>
+          <p className="text-sm text-slate-400">
+            {faltam != null ? `Vence ${prazo} (${data}). Se quiser, já pode pagar com Pix.` : `Vence em ${data}`}
+          </p>
+        </div>
+        <PagarPix uid={uid} perfil={perfil} />
+        <Botao className="w-full" onClick={fechar}>Agora não</Botao>
       </div>
-      <PagarPix uid={uid} perfil={perfil} />
-    </Quadro>
+    </Modal>
   )
 }
 
-function Quadros({ pagoAte }: { pagoAte?: number }) {
+function Quadros({ pagoAte, aoPagar }: { pagoAte?: number; aoPagar?: () => void }) {
   const emDia = pagoAte != null && pagoAte > Date.now()
   const pagamento = (
     <Quadro className="h-full space-y-3">
@@ -231,7 +257,7 @@ function Quadros({ pagoAte }: { pagoAte?: number }) {
           </div>
         </Quadro>
       </a>
-      {PIX ? <a href="#/conta" className="toque block">{pagamento}</a> : pagamento}
+      {PIX && aoPagar ? <a href="#/" role="button" onClick={(e) => { e.preventDefault(); aoPagar() }} className="toque block">{pagamento}</a> : pagamento}
       <Quadro className="space-y-3 opacity-80">
         <IconeQuadrado cor="bg-white/8 text-slate-300"><IcPrancheta className="size-5" /></IconeQuadrado>
         <div>
