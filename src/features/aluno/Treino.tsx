@@ -263,11 +263,11 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     <AnimatePresence initial={false} mode="wait">
       <m.div
         key={editando ? 'e' : 'v'}
-        initial={{ height: 0, opacity: 0 }}
-        animate={{ height: 'auto', opacity: 1 }}
-        exit={{ height: 0, opacity: 0, transition: saida }}
+        // sem animar altura (travava no iPhone): só opacidade + deslize, como o Painel
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8, transition: saida }}
         transition={suave}
-        className="overflow-hidden"
       >
         {conteudo ?? fechado}
       </m.div>

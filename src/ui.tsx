@@ -163,11 +163,12 @@ export const Msg = ({ children, className = '' }: { children?: ReactNode; classN
     {children ? (
       <m.div
         key={typeof children === 'string' ? children : 'msg'}
-        initial={{ opacity: 0, height: 0, y: -4 }}
-        animate={{ opacity: 1, height: 'auto', y: 0 }}
-        exit={{ opacity: 0, height: 0, transition: saida }}
+        // sem animar altura (travava no iPhone): só opacidade + deslize
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4, transition: saida }}
         transition={agil}
-        className={`overflow-hidden ${className}`}
+        className={className}
       >
         {children}
       </m.div>
@@ -261,15 +262,15 @@ export const Tela = ({ chave, abrir = false, children }: { chave: string; abrir?
   )
 }
 
-// Painel que abre/fecha com altura + opacidade (use no lugar de `{aberto && <X/>}`).
+// Painel que abre/fecha com opacidade + deslize (use no lugar de `{aberto && <X/>}`).
+// Sem animar altura: altura recalcula a página a cada quadro e, sob o vidro (backdrop-filter), travava no iPhone.
 export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => (
   <AnimatePresence initial={false}>
     {aberto && (
       <m.div
-        // overflow escondido só durante abrir/fechar: aberto, não corta o anel de foco dos campos
-        initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
-        animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }}
-        exit={{ height: 0, opacity: 0, overflow: 'hidden', transition: saida }}
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8, transition: saida }}
         transition={suave}
         className={className}
       >
