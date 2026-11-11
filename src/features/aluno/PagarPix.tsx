@@ -72,7 +72,7 @@ export default function PagarPix({ uid, perfil }: { uid: string; perfil: Usuario
         PIX.atraso && conta && <p className="text-xs text-slate-400">Após o vencimento: multa de {PIX.atraso.multa}% e juros de {PIX.atraso.jurosMes}% ao mês.</p>
       )}
       <img src={qrDataUrl(codigo)} alt="QR Code Pix" width={200} height={200} className="mx-auto size-[200px] rounded-xl bg-white p-3" />
-      <Botao type="button" className="w-full" onClick={copiar}>Copiar código Pix</Botao>
+      <Botao type="button" tipo="vidro" className="w-full" onClick={copiar}>Copiar código Pix</Botao>
       {mostrar && (
         <textarea readOnly rows={4} value={codigo} aria-label="Código Pix" onFocus={(e) => e.currentTarget.select()} className="w-full break-all rounded-lg bg-white/10 p-2 text-xs" />
       )}
@@ -85,6 +85,7 @@ export default function PagarPix({ uid, perfil }: { uid: string; perfil: Usuario
         <Botao
           type="button"
           tipo="primario"
+          tamanho="lg"
           className="w-full"
           onClick={() => {
             setErro('')

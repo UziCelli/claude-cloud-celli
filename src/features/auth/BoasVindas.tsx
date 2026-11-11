@@ -3,6 +3,7 @@ import { saida, suave } from '../../movimento'
 import { useState } from 'react'
 import Logo from '@marca/Logo'
 import { Brilho, IconeQuadrado } from '../../vidro'
+import { Botao } from '../../ui'
 import { IcBaixar, IcCompartilhar, IcGrafico, IcHaltere, IcMais, IcNuvem, IcPontos, IcSeta } from '../../icones'
 import { eAndroid, eIOS, navegadorEmbutido, useEventoInstalar } from '../instalar/Instalar'
 
@@ -71,7 +72,7 @@ function FolhaIPhone({ onFechar }: { onFechar: () => void }) {
         </div>
         <p className="mt-4 text-base leading-snug text-white">O menu do iPhone vai cobrir esta tela. Siga: Compartilhar → Adicionar à Tela de Início → Adicionar.</p>
         {navegadorEmbutido() && <p className="mt-2 text-[15px] leading-snug text-marca-300">Só funciona no Safari. Se abriu por outro app, copie o link e cole no Safari.</p>}
-        <button type="button" className="mt-3 h-11 w-full text-[16px] font-semibold text-slate-200 underline underline-offset-4" onClick={onFechar}>Agora não</button>
+        <Botao type="button" tipo="fantasma" className="mt-3 w-full" onClick={onFechar}>Agora não</Botao>
       </m.section>
     </>
   )
@@ -96,7 +97,7 @@ export function CartaoInstalar({ titulo = 'Instale o app no celular', dica: text
             <p className="text-[15px] text-slate-200">{textoDica ?? 'Leva 30 segundos'}</p>
           </div>
         </div>
-        <button type="button" className="mt-3 h-12 w-full rounded-xl border border-white/20 bg-white/15 text-[16px] font-bold text-white" onClick={instalar}>Como instalar</button>
+        <Botao type="button" tipo="vidro" className="mt-3 w-full" onClick={instalar}>Como instalar</Botao>
         {dica && !evento && <p className="mt-2 text-[15px] text-slate-200">No Chrome, toque em <strong>⋮</strong> e escolha <strong>Instalar app</strong>.</p>}
       </div>
       <AnimatePresence>{folha && <FolhaIPhone onFechar={() => setFolha(false)} />}</AnimatePresence>
@@ -128,8 +129,8 @@ export default function BoasVindas({ onCriar, onEntrar }: { onCriar: () => void;
         </ul>
 
         <div className="mt-6 space-y-3">
-          <button type="button" className="h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg" onClick={escolher(onCriar)}>Criar minha conta</button>
-          <button type="button" className="vidro-escuro border border-white/20 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={escolher(onEntrar)}>Já tenho conta</button>
+          <Botao type="button" tipo="primario" tamanho="lg" className="w-full" onClick={escolher(onCriar)}>Criar minha conta</Botao>
+          <Botao type="button" tipo="vidro" tamanho="lg" className="w-full" onClick={escolher(onEntrar)}>Já tenho conta</Botao>
         </div>
 
         <CartaoInstalar />
