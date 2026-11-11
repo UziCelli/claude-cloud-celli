@@ -224,10 +224,14 @@ export const Centro = ({ children }: { children: ReactNode }) => (
 // Mesmo nível (troca de aba) = só fade, sem deslize.
 // Modo "wait" (saída curta, depois a entrada): com as duas telas sobrepostas (popLayout) o texto da tela que
 // sai repete na página e quebra o e2e (getByText estrito), então a sobreposição ficou de fora.
+// `transform` (e não `x`): o Motion só passa para a GPU (WAAPI) opacity/transform. Com `x` o deslize rodava quadro a
+// quadro na linha principal, junto com a montagem da tela nova, e engasgava sempre no Android (11/11/2026).
+// Termina em `none`: transform parado vira bloco de contenção e desloca os `fixed` de dentro da tela (folhas, descanso).
+const desloca = (pct: number) => `translateX(${pct}%)`
 const camada: Variants = {
-  entra: (d: number) => (d ? { x: d > 0 ? '100%' : '-25%', opacity: d > 0 ? 1 : 0.5 } : { opacity: 0 }),
-  fica: (d: number) => ({ x: 0, opacity: 1, transition: d ? suave : saida }),
-  sai: (d: number) => ({ opacity: 0, x: d > 0 ? '-25%' : d < 0 ? '25%' : 0, transition: saida }),
+  entra: (d: number) => (d ? { transform: desloca(d > 0 ? 100 : -25), opacity: d > 0 ? 1 : 0.5 } : { opacity: 0 }),
+  fica: (d: number) => ({ transform: desloca(0), opacity: 1, transition: d ? suave : saida, transitionEnd: { transform: 'none' } }),
+  sai: (d: number) => ({ opacity: 0, transform: d ? desloca(d > 0 ? -25 : 25) : 'none', transition: saida }),
 }
 const reduzida: Variants = { entra: { opacity: 0 }, fica: { opacity: 1, transition: saida }, sai: { opacity: 0, transition: saida } }
 

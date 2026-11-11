@@ -1554,9 +1554,9 @@
     "semantic_hash": ""
   },
   "src/ui.tsx": {
-    "mtime": 1794419842.1374857,
-    "seen": 1794419887.027931,
-    "ast_hash": "95f6fc556ce323bb463362c356d1220b",
+    "mtime": 1794425751.3922677,
+    "seen": 1794425818.6609159,
+    "ast_hash": "6d473befe46d10f49d9c19d8a0cccfc4",
     "semantic_hash": ""
   },
   "src/versao.d.ts": {
@@ -1902,9 +1902,9 @@
     "semantic_hash": ""
   },
   "docs/mapa.md": {
-    "mtime": 1794424200.7106252,
-    "seen": 1794424221.0049787,
-    "ast_hash": "bb6f3f77af9e1f444476610b7ce81292",
+    "mtime": 1794425796.1130733,
+    "seen": 1794425818.6609674,
+    "ast_hash": "6a6a1c5c1504627e572d0854ee73659f",
     "semantic_hash": ""
   },
   "docs/peso-corporal.md": {
