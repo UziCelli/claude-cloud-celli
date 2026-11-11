@@ -45,7 +45,7 @@ export default function NovoAluno() {
   }
 
   const aba = (ativo: boolean) => `relative flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${ativo ? 'text-white' : ''}`
-  const pilula = <m.span layoutId="novo-aba" className="absolute inset-0 z-0 rounded-lg bg-marca-500" transition={agil} />
+  const pilula = <m.span layoutId="novo-aba" className="pointer-events-none absolute inset-0 z-0 rounded-lg bg-marca-500" transition={agil} />
   return (
     <Pagina titulo="Novo aluno" voltar={<BotaoVoltar para="/alunos" />}>
       <Cartao className="max-w-md">

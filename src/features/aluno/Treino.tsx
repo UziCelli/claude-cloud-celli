@@ -26,7 +26,7 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, classesBotao, cascata, Centro, item, Painel } from '../../ui'
+import { Botao, classesBotao, cascata, Centro, item, Painel, useMontou } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
@@ -218,6 +218,7 @@ function AvisoAdaptado({ chave }: { chave: string }) {
 function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
+  const montou = useMontou()
   const conteudo = editando ? (
       <div className="mb-2">
         <textarea
@@ -260,18 +261,15 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     </Botao>
   )
   return (
-    <AnimatePresence initial={false} mode="wait">
-      <m.div
-        key={editando ? 'e' : 'v'}
-        // sem animar altura (travava no iPhone): só opacidade + deslize, como o Painel
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8, transition: saida }}
-        transition={suave}
-      >
-        {conteudo ?? fechado}
-      </m.div>
-    </AnimatePresence>
+    <m.div
+      key={editando ? 'e' : 'v'}
+      // sem animar altura (travava no iPhone) e troca na hora: só opacidade + deslize ao entrar, como o Painel
+      initial={montou ? { opacity: 0, y: -8 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={suave}
+    >
+      {conteudo ?? fechado}
+    </m.div>
   )
 }
 

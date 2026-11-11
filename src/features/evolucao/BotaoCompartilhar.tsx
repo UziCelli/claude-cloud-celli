@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Botao } from '../../ui'
 import { compartilharArquivo, gerarCartao, type DadosCartao } from './cartaoStory'
 
+// Tempo da entrada da tela (mola `suave`, 0,5 s) com folga.
+const ESPERA_GERAR_MS = 900
+
 export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução', aoGerar, aoErro }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string; aoGerar?: (blob: Blob) => void; aoErro?: () => void }) {
   const [gerando, setGerando] = useState(false)
   const [msg, setMsg] = useState('')
@@ -12,19 +15,24 @@ export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gera
   const chave = JSON.stringify(dados, (_, v) => (typeof v === 'string' && v.length > 1000 ? `${v.length}:${v.slice(-64)}` : v))
 
   // Gera a imagem antes do toque: no clique o share sai na hora (exigência do Safari).
+  // Espera a tela parar de deslizar: gerar PNG/PDF durante a animação travava a troca de tela no iPhone.
+  // A espera também evita gerar de novo a cada letra digitada (comentário do relatório).
   useEffect(() => {
     let vivo = true
-    gerar(dadosRef.current)
-      .then((blob) => {
-        if (!vivo) return
-        setPronta({ chave, blob })
-        aoGerar?.(blob)
-      })
-      .catch(() => {
-        if (vivo) aoErro?.()
-      })
+    const t = setTimeout(() => {
+      gerar(dadosRef.current)
+        .then((blob) => {
+          if (!vivo) return
+          setPronta({ chave, blob })
+          aoGerar?.(blob)
+        })
+        .catch(() => {
+          if (vivo) aoErro?.()
+        })
+    }, ESPERA_GERAR_MS)
     return () => {
       vivo = false
+      clearTimeout(t)
     }
   }, [chave, gerar])
 

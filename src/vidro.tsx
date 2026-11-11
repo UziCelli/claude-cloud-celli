@@ -5,7 +5,7 @@ import { agil } from './movimento'
 
 // Bolha da aba ativa: desliza até a aba tocada (layoutId) com mola ágil, como no iOS 26.
 export const Bolha = ({ id, className = 'rounded-full' }: { id: string; className?: string }) => (
-  <m.span aria-hidden layoutId={id} transition={agil} className={`lente absolute inset-0 -z-10 ${className}`} />
+  <m.span aria-hidden layoutId={id} transition={agil} className={`lente pointer-events-none absolute inset-0 -z-10 ${className}`} />
 )
 
 // Peças do visual "vidro" (aluno e coach): barra de abas embaixo, fundo com brilho e cartão.

@@ -41,7 +41,7 @@ function Abas({ nomes, id }: { nomes: string[]; id: string }) {
     <div className="flex gap-1 rounded-xl bg-slate-800 p-1">
       {nomes.map((n, k) => (
         <span key={n} className={`relative flex-1 rounded-lg px-2 py-2 text-center text-[13px] font-semibold ${k === at ? 'text-white' : 'text-slate-400'}`}>
-          {k === at && <m.span layoutId={id} transition={agil} className="absolute inset-0 rounded-lg bg-marca-500" />}
+          {k === at && <m.span layoutId={id} transition={agil} className="pointer-events-none absolute inset-0 rounded-lg bg-marca-500" />}
           <span className="relative">{n}</span>
         </span>
       ))}

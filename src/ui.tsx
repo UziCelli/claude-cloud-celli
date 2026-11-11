@@ -158,23 +158,21 @@ export const Aviso = ({ children }: { children: ReactNode }) => (
 )
 
 // Mensagem que aparece e some suave (erro, sucesso, aviso). `chave` muda = anima de novo.
-export const Msg = ({ children, className = '' }: { children?: ReactNode; className?: string }) => (
-  <AnimatePresence initial={false}>
-    {children ? (
-      <m.div
-        key={typeof children === 'string' ? children : 'msg'}
-        // sem animar altura (travava no iPhone): só opacidade + deslize
-        initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -4, transition: saida }}
-        transition={agil}
-        className={className}
-      >
-        {children}
-      </m.div>
-    ) : null}
-  </AnimatePresence>
-)
+export const Msg = ({ children, className = '' }: { children?: ReactNode; className?: string }) => {
+  const montou = useMontou()
+  return children ? (
+    <m.div
+      key={typeof children === 'string' ? children : 'msg'}
+      // sem animar altura (travava no iPhone) e sem saída (como o Painel): só opacidade + deslize ao entrar
+      initial={montou ? { opacity: 0, y: -4 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={agil}
+      className={className}
+    >
+      {children}
+    </m.div>
+  ) : null
+}
 
 // Tela de abertura: logo entra, pulsa de leve enquanto carrega.
 export const Abertura = ({ texto, children }: { texto?: string; children?: ReactNode }) => {
@@ -262,23 +260,27 @@ export const Tela = ({ chave, abrir = false, children }: { chave: string; abrir?
   )
 }
 
-// Painel que abre/fecha com opacidade + deslize (use no lugar de `{aberto && <X/>}`).
+// Painel que abre com opacidade + deslize e fecha na hora (use no lugar de `{aberto && <X/>}`).
 // Sem animar altura: altura recalcula a página a cada quadro e, sob o vidro (backdrop-filter), travava no iPhone.
-export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => (
-  <AnimatePresence initial={false}>
-    {aberto && (
-      <m.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8, transition: saida }}
-        transition={suave}
-        className={className}
-      >
-        {children}
-      </m.div>
-    )}
-  </AnimatePresence>
-)
+// Sem animação de saída: o que está embaixo sobe no toque; com saída, subia 0,15 s depois e o próximo toque errava o botão.
+export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => {
+  const montou = useMontou()
+  return aberto ? (
+    <m.div initial={montou ? { opacity: 0, y: -8 } : false} animate={{ opacity: 1, y: 0 }} transition={suave} className={className}>
+      {children}
+    </m.div>
+  ) : null
+}
+
+// Falso só na 1ª renderização: o que já aparece ao montar não anima (como AnimatePresence initial={false}).
+// Sem AnimatePresence onde não há saída: sem `exit`, ele não remontava o painel ao reabrir.
+export const useMontou = () => {
+  const r = useRef(false)
+  useEffect(() => {
+    r.current = true
+  }, [])
+  return r.current
+}
 
 // Cascata: <Cascata> (container) + <Item> (filhos diretos). Sem delay em campos de digitação.
 export const cascata = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } }

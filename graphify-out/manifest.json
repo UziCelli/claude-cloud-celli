@@ -600,9 +600,9 @@
     "semantic_hash": ""
   },
   "src/features/aluno/Treino.tsx": {
-    "mtime": 1794412164.306697,
-    "seen": 1794412567.777824,
-    "ast_hash": "1545b3715867b7d00367fe7b0319fb9e",
+    "mtime": 1794418661.4592586,
+    "seen": 1794419186.9420736,
+    "ast_hash": "a02c0b3f8fb856a0004d078e25a22416",
     "semantic_hash": ""
   },
   "src/features/aluno/Tutorial.tsx": {
@@ -708,9 +708,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/TutorialCoach.tsx": {
-    "mtime": 1794412045.1386926,
-    "seen": 1794412567.7778494,
-    "ast_hash": "4544ae4290d050a115713010c4211a26",
+    "mtime": 1794418942.8295174,
+    "seen": 1794419186.9421,
+    "ast_hash": "f9369bbf741fe80e2e43b397c4354931",
     "semantic_hash": ""
   },
   "src/features/coach/alertas/Alertas.tsx": {
@@ -744,9 +744,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/alunos/NovoAluno.tsx": {
-    "mtime": 1794360824.8466837,
-    "seen": 1794398567.0674,
-    "ast_hash": "bb7f24b1dea3bcf3c161dead27019a87",
+    "mtime": 1794418935.066382,
+    "seen": 1794419186.942106,
+    "ast_hash": "2fa1d69f486a3d0569e07a31495d5c46",
     "semantic_hash": ""
   },
   "src/features/coach/feedbacks/Feedbacks.tsx": {
@@ -780,9 +780,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/meso/EditorMeso.tsx": {
-    "mtime": 1794360824.8470297,
-    "seen": 1794398567.067412,
-    "ast_hash": "cfa9c7b1c3643343f6e4e9634f931d0e",
+    "mtime": 1794418942.8275998,
+    "seen": 1794419186.942113,
+    "ast_hash": "2a01c6bd471a19b312251a70adfc99ff",
     "semantic_hash": ""
   },
   "src/features/coach/meso/ImportarPlanilha.tsx": {
@@ -918,15 +918,15 @@
     "semantic_hash": ""
   },
   "src/features/evolucao/BotaoCompartilhar.tsx": {
-    "mtime": 1794360824.848258,
-    "seen": 1794398567.067448,
-    "ast_hash": "c1ae9be52d33f78f9cfc81833de461c3",
+    "mtime": 1794418084.675238,
+    "seen": 1794419186.9421334,
+    "ast_hash": "a4c8233ef1a8accc32639cc098dc6607",
     "semantic_hash": ""
   },
   "src/features/evolucao/PainelEvolucao.tsx": {
-    "mtime": 1794412045.1426926,
-    "seen": 1794412567.7778828,
-    "ast_hash": "cccd6531fda1b3ea41138950f314948e",
+    "mtime": 1794418232.259243,
+    "seen": 1794419186.9421346,
+    "ast_hash": "db8f6c5a11259cdc7a55ff3de357e9a7",
     "semantic_hash": ""
   },
   "src/features/evolucao/cartaoStory.test.ts": {
@@ -1554,9 +1554,9 @@
     "semantic_hash": ""
   },
   "src/ui.tsx": {
-    "mtime": 1794412171.142697,
-    "seen": 1794412567.7779782,
-    "ast_hash": "c7abea70617a06287b7a9359f7d3235b",
+    "mtime": 1794418645.6796455,
+    "seen": 1794419186.942264,
+    "ast_hash": "1de4570ca948f0a9ebbfd6552cd1b609",
     "semantic_hash": ""
   },
   "src/versao.d.ts": {
@@ -1566,9 +1566,9 @@
     "semantic_hash": ""
   },
   "src/vidro.tsx": {
-    "mtime": 1794360824.8495214,
-    "seen": 1794398567.0676236,
-    "ast_hash": "167a4819e173719a6afdaca197a06bfd",
+    "mtime": 1794418942.8232687,
+    "seen": 1794419186.9422657,
+    "ast_hash": "8e091a7061e36d84aae8012311912b34",
     "semantic_hash": ""
   },
   "src/voltar.tsx": {
@@ -1902,9 +1902,9 @@
     "semantic_hash": ""
   },
   "docs/mapa.md": {
-    "mtime": 1794412563.3570065,
-    "seen": 1794412567.7780275,
-    "ast_hash": "ebc0d7abd168ae9ab6b76413989964b9",
+    "mtime": 1794419161.8632765,
+    "seen": 1794419186.942315,
+    "ast_hash": "be12ec893a45c1389e7d036782997a82",
     "semantic_hash": ""
   },
   "docs/peso-corporal.md": {
