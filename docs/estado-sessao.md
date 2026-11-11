@@ -13,6 +13,8 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - A evolução ficou enxuta: um bloco "Sua evolução" com um cartão por parte do corpo.
 - Cada cartão cruza medida × carga do mesmo segmento (`src/lib/segmentos.ts`). Janela = entre a avaliação anterior e a atual; usa a mediana das variações. Exercício fora do catálogo é ignorado; `conta:false` fica de fora.
 - Desenho do corpo, frente e costas, no app e no PDF. As formas vêm de `corpoPaths.ts` (fonte única); o PDF desenha com `Path2D`.
+- Novo desenho: uma imagem anatômica andrógina (gerada por IA, enviada pelo Victor) serve de arte-linha, com as regiões coloridas por baixo, cortadas pela silhueta (`corpo-frente.png`, `corpo-costas.png`, `corpoPaths.ts`). No app o corpo fica num painel claro.
+- Limitações: cortes retos entre regiões; pescoço sem cor. Ideia futura: imagem em resolução maior (a original tem 1024 px).
 - PRs: #142 (lógica por segmento) e este (desenho do corpo).
 - **Pendência do Victor:** abrir uma avaliação com 2 avaliações e treinos entre elas e conferir no celular o desenho, os cartões e o PDF.
 - **Ideias para depois (não fazer sem pedido):** alerta de assimetria D/E.
