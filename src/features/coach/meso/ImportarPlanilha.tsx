@@ -10,6 +10,7 @@ import { nomeImportado } from './util'
 export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: string; qtdMesos: number; onFechar: () => void }) {
   const [planilha, setPlanilha] = useState<Planilha | null>(null)
   const [aba, setAba] = useState('')
+  const [nomeArquivo, setNomeArquivo] = useState('')
   const [nome, setNome] = useState('')
   const [previa, setPrevia] = useState<{ ok: Importado } | { erro: string } | null>(null)
   const [erro, setErro] = useState<string | null>(null)
@@ -21,6 +22,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
     setPrevia(null)
     setAba('')
     setErro(null)
+    setNomeArquivo(arquivo?.name ?? '')
     if (!arquivo) return
     if (arquivo.size > 15e6) return setPrevia({ erro: 'Arquivo grande demais (máximo 15 MB).' })
     try {
@@ -75,13 +77,17 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
 
   return (
     <Cartao className="mb-4 max-w-xl space-y-3">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate-400">Planilha (.xlsx)</span>
+      <label className="flex cursor-pointer flex-wrap items-center gap-3 rounded-xl border-2 border-dashed border-white/20 px-4 py-4 text-sm transition-colors hover:border-marca-400 hover:bg-white/5 focus-within:border-marca-400">
+        <span className="rounded-lg bg-white/10 px-3 py-2 font-medium text-white">Escolher arquivo</span>
+        <span className="min-w-0 flex-1 break-words text-slate-300">
+          <span className="block text-xs text-slate-400">Planilha (.xlsx)</span>
+          {nomeArquivo || 'Nenhum arquivo escolhido'}
+        </span>
         <input
           type="file"
           accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={(e) => escolher(e.target.files?.[0])}
-          className="text-base text-slate-300"
+          className="sr-only"
         />
       </label>
       <p className="text-xs text-slate-500">A planilha é lida só neste aparelho.</p>
