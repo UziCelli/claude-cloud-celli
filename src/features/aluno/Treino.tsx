@@ -26,7 +26,7 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, classesBotao, cascata, Centro, item, Painel, useDepoisDaEntrada, useMontou } from '../../ui'
+import { Botao, classesBotao, cascata, Centro, item, Painel, sobe, useDepoisDaEntrada, useMontou } from '../../ui'
 import { BrilhoBorda } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
@@ -265,8 +265,8 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     <m.div
       key={editando ? 'e' : 'v'}
       // sem animar altura (travava no iPhone) e troca na hora: só opacidade + deslize ao entrar, como o Painel
-      initial={montou ? { opacity: 0, y: -8 } : false}
-      animate={{ opacity: 1, y: 0 }}
+      initial={montou ? { opacity: 0, transform: 'translateY(-8px)' } : false}
+      animate={sobe}
       transition={suave}
     >
       {conteudo ?? fechado}
@@ -815,9 +815,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
           <div className="mx-auto mb-2 h-1.5 max-w-md overflow-hidden rounded bg-slate-800">
             <m.div
               key={descanso.ciclo}
-              className="h-full rounded bg-marca-500"
-              initial={{ width: `${(descanso.restante / descanso.total) * 100}%` }}
-              animate={{ width: descanso.pausado ? `${(descanso.restante / descanso.total) * 100}%` : '0%' }}
+              className="h-full w-full origin-left rounded bg-marca-500" // scaleX (GPU), não width: corre o descanso inteiro
+              initial={{ transform: `scaleX(${descanso.restante / descanso.total})` }}
+              animate={{ transform: descanso.pausado ? `scaleX(${descanso.restante / descanso.total})` : 'scaleX(0)' }}
               transition={{ duration: descanso.pausado ? 0 : descanso.restante, ease: 'linear' }}
             />
           </div>

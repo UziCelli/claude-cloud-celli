@@ -173,9 +173,7 @@ function SemanaCarregada({ base, coach, abrirHoje, meso, mesoId, nome, registros
               <m.button
                 key={treino}
                 type="button"
-                variants={item}
-                whileTap={{ scale: 0.98 }}
-                transition={agil}
+                variants={item} // toque: o scale do CSS (button:active) já afunda; whileTap somava e rodava em JS
                 onClick={() => (trava ? bloqueado(semana) : ir(`${base}/treino/${mesoId}/${semana}/${treino}`))}
                 className="block w-full text-left"
               >

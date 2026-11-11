@@ -68,7 +68,8 @@ const desenhos = (parado: boolean): Record<Metodo, ReactNode> => ({
 })
 
 export default function IconeMetodo({ metodo, tamanho = 24 }: { metodo: Metodo; tamanho?: number }) {
-  const parado = !!useReducedMotion()
+  // Pequeno (lista do treino, um por exercício) fica parado: laço de SVG roda na linha principal o tempo todo.
+  const parado = !!useReducedMotion() || tamanho < 40
   return (
     <svg aria-hidden viewBox="0 0 24 24" width={tamanho} height={tamanho} className="shrink-0">
       {desenhos(parado)[metodo]}
