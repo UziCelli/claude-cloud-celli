@@ -54,6 +54,8 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
     }
   }, [planilha, aba])
 
+  const pronto = !!previa && 'ok' in previa && !!nome.trim()
+
   async function importar() {
     if (enviando || !previa || !('ok' in previa) || !nome.trim()) return
     setEnviando(true)
@@ -105,8 +107,9 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
       )}
       {previa && 'ok' in previa && <Previa {...previa.ok} comoFeitos={comoFeitos} onComoFeitos={setComoFeitos} />}
       <Msg>{erro && <p role="alert" className="text-sm text-red-400">{erro}</p>}</Msg>
+      {pronto && !enviando && <p className="text-sm text-marca-300">Prévia pronta. Toque em <strong>Importar</strong> para salvar o treino.</p>}
       <div className="flex flex-wrap gap-2">
-        <Botao tipo="primario" disabled={!previa || !('ok' in previa) || !nome.trim() || enviando} carregando={enviando} onClick={importar}>
+        <Botao tipo="primario" className={pronto && !enviando ? 'borda-brilho' : ''} disabled={!pronto || enviando} carregando={enviando} onClick={importar}>
           Importar
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
