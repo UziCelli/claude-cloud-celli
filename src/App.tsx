@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { aceitouPrivacidade } from './lib/privacidade'
+import { aceitouPrivacidade, senhaJaConferida } from './lib/privacidade'
+import { estadoSenha, EVENTO_SENHA } from './lib/senha'
 import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
 import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
@@ -43,6 +44,7 @@ import AcaoEmail from './features/auth/AcaoEmail'
 import Politica from './features/privacidade/Politica'
 import PagarPix, { PIX } from './features/aluno/PagarPix'
 import Aceite from './features/privacidade/Aceite'
+import SenhaSegura from './features/auth/SenhaSegura'
 import marca from '@marca/marca.json'
 import { IcBalao, IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
 import { BarraAbas, Bolha, Brilho } from './vidro'
@@ -56,7 +58,17 @@ export default function App() {
 
 function Principal() {
   const { user, perfil, carregando } = useUsuarioAtual()
-  const [adiouAceite, setAdiouAceite] = useState(false) // sem internet no aceite: vale até fechar o app
+  const [adiouSenha, setAdiouSenha] = useState(false) // sem internet na tela da senha: vale até fechar o app
+  const [, senhaMudou] = useState(0) // login e tela da senha gravam no aparelho (lembrarSenha): só re-renderiza
+  useEffect(() => {
+    const f = () => senhaMudou((n) => n + 1)
+    addEventListener(EVENTO_SENHA, f)
+    return () => removeEventListener(EVENTO_SENHA, f)
+  }, [])
+  // Senha: fraca no login deste aparelho, ou nunca conferida (sessão antiga, aceite de antes de 2026-11-09). Só uma vez.
+  // O Firebase avisa do login antes de `entrar()` gravar o resultado: `key` remonta a tela quando ele chega.
+  const senha = user ? estadoSenha(user.uid) : null
+  const precisaSenha = !!perfil && !adiouSenha && (senha === 'fraca' || (senha !== 'ok' && !senhaJaConferida(perfil)))
   let estagio = 'app'
   let tela: ReactNode
   if (carregando) [estagio, tela] = ['abertura', <Abertura />]
@@ -64,8 +76,10 @@ function Principal() {
   else if (!perfil) [estagio, tela] = ['abertura', <PerfilDemora />]
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso uid={user.uid} perfil={perfil} />]
-  else if (!aceitouPrivacidade(perfil) && !adiouAceite)
-    [estagio, tela] = ['privacidade', <Aceite uid={user.uid} adiar={perfil.privacidadeVersao ? () => setAdiouAceite(true) : undefined} />]
+  else if (precisaSenha)
+    [estagio, tela] = ['senha', <SenhaSegura key={senha ?? '?'} uid={user.uid} fraca={senha === 'fraca'} adiar={perfil.privacidadeVersao ? () => setAdiouSenha(true) : undefined} />]
+  // Adiou a senha (sem internet): também não aceita agora, senão a versão nova marcaria a senha como conferida.
+  else if (!aceitouPrivacidade(perfil) && !adiouSenha) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} atualizou={!!perfil.privacidadeVersao} />]
   else tela = <AlunoApp uid={user.uid} perfil={perfil} />
   // Cadastro pelo QR Code concluído (ou aluno já logado que abriu o link): tira /cadastro do endereço.
   useEffect(() => {

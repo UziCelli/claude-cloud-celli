@@ -54,6 +54,7 @@ import { auth, authCadastro, db } from './firebase'
 import type { Importado } from './planilha'
 import { inicioJanela } from './resumo'
 import { VERSAO_PRIVACIDADE } from './privacidade'
+import { problemaSenha } from './senha'
 import { desinscreverAvisos } from './push'
 import marca from '@marca/marca.json'
 
@@ -455,10 +456,12 @@ export async function reautenticar(senhaAtual: string) {
   return user
 }
 
-// Aceite dos termos (Aceite.tsx): confere a senha atual e, se vier `nova`, troca a senha.
-export async function confirmarSenha(senhaAtual: string, nova?: string) {
-  const user = await reautenticar(senhaAtual)
-  if (nova) await updatePassword(user, nova)
+// Senha fraca (SenhaSegura.tsx): logo depois de entrar troca direto; login antigo dá auth/requires-recent-login
+// e a tela pede a senha atual (`atual`) para conferir antes.
+export async function trocarSenha(nova: string, atual?: string) {
+  const user = atual ? await reautenticar(atual) : auth.currentUser
+  if (!user) throw new Error('Sem login')
+  await updatePassword(user, nova)
 }
 
 export async function alterarEmail(senhaAtual: string, novoEmail: string) {
@@ -520,6 +523,8 @@ const perfilCadastro = (nome: string, email: string) => ({
 })
 
 export async function cadastrar(nome: string, email: string, senha: string) {
+  // A tela já confere; aqui é a última barreira antes do Firebase (o servidor também exige, ver senha-minima).
+  if (problemaSenha(senha)) throw new FirebaseError('auth/weak-password', problemaSenha(senha))
   email = email.trim()
   const { user } = await createUserWithEmailAndPassword(auth, email, senha)
   await setDoc(doc(db, 'usuarios', user.uid), perfilCadastro(nome, user.email ?? email))
