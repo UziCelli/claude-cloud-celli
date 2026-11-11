@@ -26,7 +26,8 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, classesBotao, cascata, Centro, item, Painel, useMontou } from '../../ui'
+import { Botao, classesBotao, cascata, Centro, item, Painel, useDepoisDaEntrada, useMontou } from '../../ui'
+import { BrilhoBorda } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
@@ -298,8 +299,8 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     const d = duracaoTreino(inicio, fim) // acima de 3 h é treino esquecido aberto: sem duração falsa
     return d != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(d)}</span> · previsto {previsto}</p> : null
   }
-  if (inicio == null && anamnese) return <a href="#/anamnese" className={classesBotao('primario', 'lg', 'borda-brilho mb-3 flex w-full items-center justify-center gap-2')}>Responda a anamnese (3 min)</a>
-  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" tamanho="lg" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
+  if (inicio == null && anamnese) return <a href="#/anamnese" className={classesBotao('primario', 'lg', 'borda-brilho mb-3 flex w-full items-center justify-center gap-2')}><BrilhoBorda />Responda a anamnese (3 min)</a>
+  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" tamanho="lg" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><BrilhoBorda /><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
@@ -383,8 +384,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const jaIniciou = useRef(false)
   // Festa no recorde: só leitura do histórico inteiro do aluno.
   const quieto = useReducedMotion()
-  const qTodos = useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid])
-  const qMesos = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
+  // Histórico inteiro só depois que a tela entrou: carregar e calcular tudo durante o deslize travava a abertura no iPhone.
+  const depois = useDepoisDaEntrada()
+  const qTodos = useMemo(() => (depois ? query(collection(db, 'registros'), where('alunoId', '==', uid)) : null), [uid, depois])
+  const qMesos = useMemo(() => (depois ? query(collection(db, 'mesos'), where('alunoId', '==', uid)) : null), [uid, depois])
   const { dados: todosRegistros } = useLista<RegistroEvolucao>(qTodos)
   const { dados: todosMesos } = useLista<MesoSalvo>(qMesos)
   const historico = useMemo(

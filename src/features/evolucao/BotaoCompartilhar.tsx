@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Botao } from '../../ui'
+import { ESPERA_ENTRADA_MS } from '../../movimento'
 import { compartilharArquivo, gerarCartao, type DadosCartao } from './cartaoStory'
-
-// Tempo da entrada da tela (mola `suave`, 0,5 s) com folga.
-const ESPERA_GERAR_MS = 900
 
 export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução', aoGerar, aoErro }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string; aoGerar?: (blob: Blob) => void; aoErro?: () => void }) {
   const [gerando, setGerando] = useState(false)
@@ -29,7 +27,7 @@ export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gera
         .catch(() => {
           if (vivo) aoErro?.()
         })
-    }, ESPERA_GERAR_MS)
+    }, ESPERA_ENTRADA_MS)
     return () => {
       vivo = false
       clearTimeout(t)

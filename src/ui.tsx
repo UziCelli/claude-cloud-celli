@@ -1,7 +1,7 @@
 import { AnimatePresence, m, useIsPresent, useReducedMotion, type Variants } from 'motion/react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 import Logo from '@marca/Logo'
-import { agil, saida, suave } from './movimento'
+import { agil, ESPERA_ENTRADA_MS, saida, suave } from './movimento'
 
 // Peças visuais compartilhadas (tema escuro). Use estas em vez de reinventar estilos.
 
@@ -272,7 +272,18 @@ export const Painel = ({ aberto, children, className }: { aberto: boolean; child
   ) : null
 }
 
+// Vira true depois que a tela terminou de entrar (ESPERA_ENTRADA_MS): para adiar o que é pesado e não é urgente.
+export const useDepoisDaEntrada = () => {
+  const [ok, setOk] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setOk(true), ESPERA_ENTRADA_MS)
+    return () => clearTimeout(t)
+  }, [])
+  return ok
+}
+
 // Falso só na 1ª renderização: o que já aparece ao montar não anima (como AnimatePresence initial={false}).
+// Lê a ref no render de propósito: só importa na montagem do filho (initial), não precisa re-renderizar.
 // Sem AnimatePresence onde não há saída: sem `exit`, ele não remontava o painel ao reabrir.
 export const useMontou = () => {
   const r = useRef(false)

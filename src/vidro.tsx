@@ -60,6 +60,9 @@ export const Brilho = () => (
   </div>
 )
 
+// Brilho que corre pela borda: ponha dentro de um elemento com a classe `borda-brilho` (ver index.css).
+export const BrilhoBorda = () => <span aria-hidden className="brilho-borda" />
+
 // Cartão de vidro escuro.
 export const Quadro = ({ children, className = '' }: { children: ReactNode; className?: string }) => (
   <div className={`vidro-escuro rounded-3xl p-4 ${className}`}>{children}</div>
