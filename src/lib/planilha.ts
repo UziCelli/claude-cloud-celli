@@ -11,7 +11,8 @@ export interface RegistroImportado {
 export interface Importado {
   meso: Meso
   registros: RegistroImportado[] // só treinos realizados
-  deFora: number // treinos "Não realizado" com carga (ficam de fora: carga costuma ser copiada)
+  naoMarcados: RegistroImportado[] // treinos com carga e "Realizado" desmarcado (carga costuma ser copiada: só entram se o coach quiser)
+  deFora: number // = naoMarcados.length
 }
 
 const METODO_COLS = ['id', 'ativo', 'semana', 'treino', 'exercicio', 'nomeExercicio', 'metodo', 'escopo', 'serie', 'grupo',
@@ -69,17 +70,40 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
         break busca
       }
   const nSemanas = num(c(cr, cc + 1))
-  if (nSemanas === null) throw new Error('Esta aba não tem a Configuração do Meso (número de semanas). Use uma aba do modelo atual.')
-  const semanas = Math.trunc(nSemanas)
-  const serial = num(c(cr + 1, cc + 1))
-  const inicio = serial === null ? null : dataSerial(serial)
-  if (inicio === null) throw new Error(`A data inicial (${ref(cr + 1, cc + 1)}) não é uma data.`)
-  const nFreq = num(c(cr + 2, cc + 1))
-  if (nFreq === null) throw new Error(`A frequência semanal (${ref(cr + 2, cc + 1)}) não é um número.`)
-  const frequencia = Math.trunc(nFreq)
+  // Modelo antigo ("Elaboração dos Treinamentos" em S1): sem config; semanas = números em S18↓, frequência = T3→,
+  // início = P da 1ª "Semana" em B, auxiliares e pausa 2 linhas abaixo de "Exercícios Auxiliares" (T), sem métodos.
+  const antigo = nSemanas === null && rotulo(c(1, 'S')).startsWith('elaboracao dos treinamentos')
+  if (nSemanas === null && !antigo) throw new Error('Esta aba não tem a Configuração do Meso (número de semanas). Use uma aba do modelo atual.')
+  const contar = (r: number, k: number, passo: 'r' | 'k') => {
+    let n = 0
+    while (num(passo === 'r' ? c(r + n, k) : c(r, k + n)) !== null) n++
+    return n
+  }
+  let rAux = 33
+  let inicio: string | null
+  let semanas: number
+  let frequencia: number
+  if (antigo) {
+    const rSem = Array.from({ length: maxRow }, (_, i) => i + 1).find((r) => rotulo(c(r, 'B')) === 'semana') ?? 2
+    const rEx = Array.from({ length: maxRow }, (_, i) => i + 1).find((r) => rotulo(c(r, 'T')) === 'exercicios auxiliares') ?? 24
+    rAux = rEx + 2
+    semanas = contar(18, colNum('S'), 'r')
+    frequencia = contar(3, T, 'k')
+    const serial = num(c(rSem, 'P'))
+    inicio = serial === null ? null : dataSerial(serial)
+    if (inicio === null) throw new Error(`A data inicial (${ref(rSem, 'P')}) não é uma data.`)
+  } else {
+    semanas = Math.trunc(nSemanas!)
+    const serial = num(c(cr + 1, cc + 1))
+    inicio = serial === null ? null : dataSerial(serial)
+    if (inicio === null) throw new Error(`A data inicial (${ref(cr + 1, cc + 1)}) não é uma data.`)
+    const nFreq = num(c(cr + 2, cc + 1))
+    if (nFreq === null) throw new Error(`A frequência semanal (${ref(cr + 2, cc + 1)}) não é um número.`)
+    frequencia = Math.trunc(nFreq)
+  }
   if (semanas < 1 || semanas > 52) throw new Error(`Número de semanas fora do esperado (${semanas}).`)
   if (frequencia < 1 || frequencia > 7) throw new Error(`Treinos por semana fora do esperado (${frequencia}).`)
-  const pausa = Math.trunc(num(c(33, 'Z')) || 120)
+  const pausa = Math.trunc(num(c(antigo ? rAux : 33, 'Z')) || 120)
 
   // Divisão: T4:Y13 (coluna = treino, linha = posição).
   const divisao: Slot[][] = []
@@ -96,13 +120,13 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
   const linha = (r: number) => Array.from({ length: 6 }, (_, s) => num(c(r, T + s))).map((v) => (v !== null ? Math.trunc(v) : null))
   const progressao = {
     principais: Array.from({ length: semanas }, (_, w) => linha(18 + w)),
-    auxiliares: Array.from({ length: semanas }, (_, w) => linha(33 + w)),
+    auxiliares: Array.from({ length: semanas }, (_, w) => linha(rAux + w)),
   }
 
   // Métodos: tabela 7 linhas abaixo do rótulo. Linhas repetidas (mesmo conteúdo) entram uma vez.
   const metodos: AplicacaoMetodo[] = []
   const vistos = new Set<string>()
-  for (let r = cr + 7; r < cr + 107; r++) {
+  for (let r = cr + 7; !antigo && r < cr + 107; r++) {
     const m: Record<string, Valor | undefined> = {}
     METODO_COLS.forEach((nome, i) => (m[nome] = c(r, cc + i)))
     const semana = num(m.semana)
@@ -141,7 +165,7 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
   const bloco = achado - 2
   const trocas: Record<string, Slot> = {}
   const registros: RegistroImportado[] = []
-  let deFora = 0
+  const naoMarcados: RegistroImportado[] = []
   for (let w = 1; w <= semanas; w++)
     for (let t = 1; t <= frequencia; t++) {
       const topo = 3 + bloco * (w - 1) + 13 * (t - 1)
@@ -162,10 +186,10 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
       })
       const realizado = c(topo, 'B') === true
       if (realizado) registros.push({ semana: w, treino: t, realizado, cargas })
-      else if (Object.keys(cargas).length) deFora++
+      else if (Object.keys(cargas).length) naoMarcados.push({ semana: w, treino: t, realizado, cargas })
     }
 
-  return { meso: { frequencia, semanas, inicio, pausaS: pausa, divisao, trocas, progressao, metodos }, registros, deFora }
+  return { meso: { frequencia, semanas, inicio, pausaS: pausa, divisao, trocas, progressao, metodos }, registros, naoMarcados, deFora: naoMarcados.length }
 }
 
 export function abaSugerida(abas: string[]): string | undefined {

@@ -5,7 +5,7 @@ import { FirebaseError } from 'firebase/app'
 import type { MultiFactorResolver } from 'firebase/auth'
 import { cadastrar, confirmarLoginTotp, entrar, resolverMfa } from '../../lib/acoes'
 import { codigoCompleto, limparCodigo, mensagemMfa } from '../../lib/mfa'
-import { Aviso, Msg, Painel } from '../../ui'
+import { Aviso, Botao, Msg, Painel } from '../../ui'
 import { Brilho } from '../../vidro'
 import { ir, useRota } from '../../rota'
 import EsqueciSenha, { campo, rotulo } from './EsqueciSenha'
@@ -19,7 +19,8 @@ import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
 import { atualizarNaEntrada } from '../../lib/atualizar'
 import marca from '@marca/marca.json'
-import { problemaSenha, REGRA_SENHA } from '../../lib/senha'
+import { lembrarSenha, problemaSenha, REGRA_SENHA } from '../../lib/senha'
+import RequisitosSenha from './RequisitosSenha'
 
 const SENHA_ERRADA = 'E-mail ou senha incorretos. Primeiro acesso ou esqueceu a senha? Toque em Esqueci minha senha.'
 
@@ -103,9 +104,10 @@ export default function Entrar() {
       if (resolver) {
         await confirmarLoginTotp(resolver, codigo)
         zerarFalhas()
-      } else if (cadastro) await cadastrar(nome, email, senha)
+      } else if (cadastro) lembrarSenha((await cadastrar(nome, email, senha)).uid, 'ok')
       else {
-        await entrar(email, senha)
+        // Senha antiga fraca: o app pede para criar uma nova logo depois (SenhaSegura.tsx), sem pedir a atual de novo.
+        lembrarSenha((await entrar(email, senha)).user.uid, problemaSenha(senha) ? 'fraca' : 'ok')
         zerarFalhas()
       }
     } catch (e) {
@@ -196,9 +198,9 @@ export default function Entrar() {
                   onChange={(e) => setCodigo(limparCodigo(e.target.value))}
                   required
                 />
-                <button type="button" className="text-[15px] text-slate-200" onClick={() => voltar()}>
+                <Botao type="button" tipo="fantasma" onClick={() => voltar()}>
                   Voltar
-                </button>
+                </Botao>
               </div>
             ) : (
               <>
@@ -237,7 +239,7 @@ export default function Entrar() {
                       </svg>
                     </button>
                   </span>
-                  {cadastro && <p className="mt-1.5 text-sm text-slate-300">{REGRA_SENHA}</p>}
+                  {cadastro && <RequisitosSenha senha={senha} />}
                 </div>
               </>
             )}
@@ -247,19 +249,21 @@ export default function Entrar() {
             <Msg>{saiu && <Aviso>Você saiu por inatividade.</Aviso>}</Msg>
             <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
             <Msg>{!cadastro && espera > 0 && <Aviso>Aguarde {espera} s para tentar de novo.</Aviso>}</Msg>
-            <button
-              className="h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50"
+            <Botao
+              tipo="primario"
+              tamanho="lg"
+              className="w-full"
               disabled={enviando || (cadastro && !aceito) || (!cadastro && espera > 0) || (!!resolver && !codigoCompleto(codigo))}
             >
               {enviando ? 'Enviando…' : !cadastro && espera > 0 ? `Aguarde ${espera} s` : cadastro ? 'Criar conta' : resolver ? 'Confirmar' : 'Entrar'}
-            </button>
+            </Botao>
           </form>
 
           <Painel aberto={!cadastro && !resolver}>
             <p className="mt-4 text-center">
-              <button type="button" className="text-[15px] font-semibold text-marca-300" onClick={() => { setErro(''); ir('/esqueci-senha') }}>
+              <Botao type="button" tipo="fantasma" onClick={() => { setErro(''); ir('/esqueci-senha') }}>
                 Esqueci minha senha
-              </button>
+              </Botao>
             </p>
           </Painel>
 
@@ -268,9 +272,9 @@ export default function Entrar() {
             {cadastro ? 'Já tem conta?' : 'Primeira vez aqui?'}
             <span className="h-px flex-1 bg-white/20" />
           </div>
-          <button type="button" className="vidro-escuro border border-white/20 mt-4 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={() => trocarModo(!cadastro)}>
+          <Botao type="button" tipo="vidro" tamanho="lg" className="mt-4 w-full" onClick={() => trocarModo(!cadastro)}>
             {cadastro ? 'Já tenho conta' : 'Criar minha conta'}
-          </button>
+          </Botao>
 
           <footer className="mt-auto pt-6 text-center text-xs leading-relaxed text-slate-300">
             <p>

@@ -18,6 +18,7 @@ import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
 import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
+import { useAnamnese } from '../anamnese/useAnamnese'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
@@ -25,7 +26,8 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, cascata, Centro, item, Modal, Painel } from '../../ui'
+import { Botao, classesBotao, cascata, Centro, item, Modal, Painel, sobe, useDepoisDaEntrada, useMontou, mexe } from '../../ui'
+import { BrilhoBorda } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
@@ -72,7 +74,7 @@ function Novidades() {
           <li key={t} className="flex gap-2"><IcCheck className="mt-0.5 size-4 shrink-0 text-marca-300" />{t}</li>
         ))}
       </ul>
-      <Botao tipo="primario" className="w-full" onClick={fechar}>Entendi</Botao>
+      <Botao tipo="primario" tamanho="lg" className="w-full" onClick={fechar}>Entendi</Botao>
     </div>
     </Painel>
   )
@@ -98,7 +100,7 @@ function ExplicacaoMetodo({ metodo, fechar }: { metodo: Metodo; fechar: () => vo
       <a href="#/metodos" className="mb-4 block text-sm text-marca-500 underline">
         Ver todos os métodos
       </a>
-      <Botao tipo="primario" className="w-full" onClick={fechar}>
+      <Botao tipo="primario" tamanho="lg" className="w-full" onClick={fechar}>
         Fechar
       </Botao>
     </Modal>
@@ -126,10 +128,11 @@ function NotaMetodos({ metodos }: { metodos: Metodo[] }) {
           </div>
           <p className="mb-4 text-xs text-slate-400">Toque no selo colorido do exercício para ver esta explicação de novo.</p>
           <div className="flex flex-col gap-2">
-            <Botao tipo="primario" className="w-full" onClick={() => setVer(false)}>
+            <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => setVer(false)}>
               Entendi
             </Botao>
             <Botao
+              tipo="fantasma"
               className="w-full"
               onClick={() => {
                 metodos.forEach(dispensarNota)
@@ -171,17 +174,17 @@ function AvisoAdaptado({ chave }: { chave: string }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: saida }}
           transition={suave}
-          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/85 p-4"
         >
           <m.div
-            initial={{ y: 48, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 48, opacity: 0, transition: saida }}
+            initial={{ ...mexe('translateY(48px)'), opacity: 0 }}
+            animate={sobe}
+            exit={{ ...mexe('translateY(48px)'), opacity: 0, transition: saida }}
             transition={suave}
             className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5"
           >
             <p className="mb-4 text-sm text-slate-300">Seu coach adaptou seu treino para você progredir dentro do seu tempo.</p>
-            <Botao tipo="primario" className="w-full" onClick={fechar}>
+            <Botao tipo="primario" tamanho="lg" className="w-full" onClick={fechar}>
               Entendi
             </Botao>
           </m.div>
@@ -194,6 +197,7 @@ function AvisoAdaptado({ chave }: { chave: string }) {
 function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
+  const montou = useMontou()
   const conteudo = editando ? (
       <div className="mb-2">
         <textarea
@@ -217,7 +221,7 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
           >
             Salvar
           </Botao>
-          <Botao onClick={() => setEditando(false)}>Cancelar</Botao>
+          <Botao tipo="fantasma" onClick={() => setEditando(false)}>Cancelar</Botao>
         </div>
       </div>
     ) : null
@@ -231,23 +235,20 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
       <IcLapis className="size-4 shrink-0 text-slate-500" />
     </button>
   ) : (
-    <button onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 py-1 text-sm text-slate-400">
+    <Botao tipo="fantasma" onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 !px-2">
       <IcMais className="size-4" /> Anotação
-    </button>
+    </Botao>
   )
   return (
-    <AnimatePresence initial={false} mode="wait">
-      <m.div
-        key={editando ? 'e' : 'v'}
-        initial={{ height: 0, opacity: 0 }}
-        animate={{ height: 'auto', opacity: 1 }}
-        exit={{ height: 0, opacity: 0, transition: saida }}
-        transition={suave}
-        className="overflow-hidden"
-      >
-        {conteudo ?? fechado}
-      </m.div>
-    </AnimatePresence>
+    <m.div
+      key={editando ? 'e' : 'v'}
+      // sem animar altura (travava no iPhone) e troca na hora: só opacidade + deslize ao entrar, como o Painel
+      initial={montou ? { opacity: 0, ...mexe('translateY(-8px)') } : false}
+      animate={sobe}
+      transition={suave}
+    >
+      {conteudo ?? fechado}
+    </m.div>
   )
 }
 
@@ -259,7 +260,7 @@ const hms = (ms: number) => {
 }
 
 // Tempo corrido do treino: conta de inicioEm até "Concluir treino"; concluído mostra a duração final parada.
-function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar }: { inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
+function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, onCancelar, anamnese }: { anamnese: boolean; inicio: number | null; fim: number | null; realizado: boolean; quieto: boolean | null; previsto: string; onIniciar: () => void; onCancelar: () => void }) {
   const [agora, setAgora] = useState(Date.now)
   // Parado: concluído, ou "Desfazer" (mantém a hora do fim desta sessão): o relógio não volta a contar de um início antigo.
   const parado = realizado || fim != null
@@ -276,7 +277,8 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
     const d = duracaoTreino(inicio, fim) // acima de 3 h é treino esquecido aberto: sem duração falsa
     return d != null ? <p className="mb-3 text-sm text-slate-400">Duração do treino · <span className="font-semibold tabular-nums text-slate-100">{hms(d)}</span> · previsto {previsto}</p> : null
   }
-  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" className="borda-brilho mb-3 min-h-11 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><IcPlay className="size-5" /> Iniciar treino</Botao>
+  if (inicio == null && anamnese) return <a href="#/anamnese" className={classesBotao('primario', 'lg', 'borda-brilho mb-3 flex w-full items-center justify-center gap-2')}><BrilhoBorda />Responda a anamnese (3 min)</a>
+  if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" tamanho="lg" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><BrilhoBorda /><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
@@ -284,7 +286,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
         Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{agora - inicio > TETO_TREINO_MS ? 'mais de 3 h' : hms(agora - inicio)}</span>
         <span className="text-slate-500">· previsto {previsto}</span>
       </p>
-      <Botao tipo="alerta" className="min-h-11 whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
+      <Botao tipo="alerta" className="whitespace-nowrap" onClick={onCancelar}>Cancelar treino</Botao>
     </div>
   )
 }
@@ -349,6 +351,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const sair = () => (coach ? ir(base) : voltar('/treino'))
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
+  const an = useAnamnese(uid)
+  const pedirAnamnese = !coach && an.travar // coach/presencial nunca trava
   const descanso = useDescanso()
   const semInternet = useSemInternet()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
@@ -358,8 +362,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const jaIniciou = useRef(false)
   // Festa no recorde: só leitura do histórico inteiro do aluno.
   const quieto = useReducedMotion()
-  const qTodos = useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid])
-  const qMesos = useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid])
+  // Histórico inteiro só depois que a tela entrou: carregar e calcular tudo durante o deslize travava a abertura no iPhone.
+  const depois = useDepoisDaEntrada()
+  const qTodos = useMemo(() => (depois ? query(collection(db, 'registros'), where('alunoId', '==', uid)) : null), [uid, depois])
+  const qMesos = useMemo(() => (depois ? query(collection(db, 'mesos'), where('alunoId', '==', uid)) : null), [uid, depois])
   const { dados: todosRegistros } = useLista<RegistroEvolucao>(qTodos)
   const { dados: todosMesos } = useLista<MesoSalvo>(qMesos)
   const historico = useMemo(
@@ -377,11 +383,11 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     <Centro>
       <div className="flex flex-col items-center gap-3 text-center">
         <p className="text-lg font-semibold">{semInternet ? TEXTO_SEM_INTERNET : 'Treino não encontrado.'}</p>
-        <button onClick={sair} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">Voltar</button>
+        <Botao tipo="fantasma" onClick={sair}>Voltar</Botao>
       </div>
     </Centro>
   )
-  if (carregando || carregandoReg) return <Centro>Carregando…</Centro> // registros também: senão treino já iniciado aparece como "Iniciar treino"
+  if (carregando || carregandoReg || (!coach && an.carregando)) return <Centro>Carregando…</Centro> // registros também: senão treino já iniciado aparece como "Iniciar treino"
   if (!dados || !(Number.isInteger(semana) && semana >= 1 && Number.isInteger(treino) && treino >= 1)) return naoEncontrado // NaN faria prescreverSessao lançar
 
   const hoje = new Date()
@@ -430,7 +436,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         <div className="flex flex-col items-center gap-3 text-center">
           <IcCadeado className="size-10 text-slate-400" />
           <p className="text-lg font-semibold">Semana {semana} já passou.</p>
-          <button onClick={sair} className="inline-flex min-h-11 items-center pr-4 text-sm text-marca-400 underline">Voltar</button>
+          <Botao tipo="fantasma" onClick={sair}>Voltar</Botao>
         </div>
       </Centro>
     )
@@ -522,10 +528,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         {pendente && <span className="max-w-[40%] text-right text-xs text-amber-400">salvo no celular · envia quando tiver internet</span>}
       </div>
 
-      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} />
+      <RelogioTreino inicio={inicioMs} fim={fimMs} realizado={realizado} quieto={quieto} previsto={fmtMin(sessao.tempoMin)} onIniciar={iniciou} onCancelar={cancelar} anamnese={pedirAnamnese} />
       {!comecou && !realizado && (coach
         ? <p className="mb-3 text-sm text-slate-400">Sem iniciar: as cargas ficam salvas, mas o treino não conta como feito.</p>
-        : <p className="mb-3 text-sm text-amber-300">Toque em Iniciar treino para anotar as cargas.</p>)}
+        : <p className="mb-3 text-sm text-amber-300">{pedirAnamnese ? 'Responda a anamnese para liberar o treino.' : 'Toque em Iniciar treino para anotar as cargas.'}</p>)}
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
@@ -601,7 +607,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                 </div>
                 <div className="flex shrink-0 gap-1">
                   {coach && <EditarExercicio meso={meso} mesoId={mesoId} semana={semana} treino={treino} pos={e.pos} nome={e.slot.nome} n={e.n} temCarga={colunasCargas.some((v) => v != null)} />}
-                  <Botao aria-label="Som do cronômetro" className="min-h-11" onClick={descanso.alternarSom}>
+                  <Botao aria-label="Som do cronômetro" className="min-w-11" onClick={descanso.alternarSom}>
                     {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
                   </Botao>
                   {(!gk || ordem === membros.length - 1) && (
@@ -609,13 +615,13 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   <Botao
                     tipo={descanso.slot === slot ? 'primario' : undefined}
                     aria-label={descanso.slot === slot ? `${descanso.rodando ? 'Pausar' : 'Continuar'} ${mmss(descanso.restante)}` : `Descansar ${e.pausaS} s`}
-                    className="inline-flex min-h-11 items-center gap-1"
+                    className="inline-flex items-center gap-1"
                     onClick={() => descanso.alternar(e.pausaS, slot)}
                   >
                     {descanso.slot === slot ? <>{descanso.rodando ? <IcPausa className="size-4" /> : <IcPlay className="size-4" />} {mmss(descanso.restante)}</> : <><IcPlay className="size-4" /> {e.pausaS} s</>}
                   </Botao>
                   {descanso.slot === slot && (
-                    <Botao aria-label="Reiniciar" className="min-h-11" onClick={() => descanso.iniciar(e.pausaS, slot)}>
+                    <Botao aria-label="Reiniciar" className="min-w-11" onClick={() => descanso.iniciar(e.pausaS, slot)}>
                       <IcReiniciar className="size-4" />
                     </Botao>
                   )}
@@ -751,10 +757,10 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               </m.span>
             </p>
             <div className="flex justify-center gap-2">
-              <Botao tipo="primario" onClick={abrirResumo}>
+              <Botao tipo="primario" tamanho="lg" onClick={abrirResumo}>
                 Ver resumo
               </Botao>
-              <Botao onClick={desfazer}>Desfazer</Botao>
+              <Botao tipo="fantasma" onClick={desfazer}>Desfazer</Botao>
             </div>
           </div>
         ) : (
@@ -763,12 +769,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               <p className="font-semibold">Concluir o treino?</p>
               <p className="text-sm text-slate-400">Confira se anotou todas as cargas.</p>
               <div className="flex gap-2">
-                <Botao className="min-h-11 flex-1" onClick={() => setConfirmarFim(false)}>Continuar treinando</Botao>
-                <Botao tipo="primario" className="min-h-11 flex-1" onClick={concluir}>Sim, concluir</Botao>
+                <Botao tipo="vidro" tamanho="lg" className="flex-1" onClick={() => setConfirmarFim(false)}>Continuar treinando</Botao>
+                <Botao tipo="primario" tamanho="lg" className="flex-1" onClick={concluir}>Sim, concluir</Botao>
               </div>
             </div>
           ) : (
-            <Botao tipo="primario" className="w-full py-4 text-base" onClick={() => setConfirmarFim(true)}>
+            <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => setConfirmarFim(true)}>
               Concluir treino
             </Botao>
           ))
@@ -778,18 +784,18 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       <AnimatePresence>
       {descanso.visivel && (
         <m.div
-          initial={{ y: 24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 24, opacity: 0, transition: saida }}
+          initial={{ ...mexe('translateY(24px)'), opacity: 0 }}
+          animate={sobe}
+          exit={{ ...mexe('translateY(24px)'), opacity: 0, transition: saida }}
           transition={suave}
           className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
         >
           <div className="mx-auto mb-2 h-1.5 max-w-md overflow-hidden rounded bg-slate-800">
             <m.div
               key={descanso.ciclo}
-              className="h-full rounded bg-marca-500"
-              initial={{ width: `${(descanso.restante / descanso.total) * 100}%` }}
-              animate={{ width: descanso.pausado ? `${(descanso.restante / descanso.total) * 100}%` : '0%' }}
+              className="h-full w-full origin-left rounded bg-marca-500" // scaleX (GPU), não width: corre o descanso inteiro
+              initial={{ transform: `scaleX(${descanso.restante / descanso.total})` }}
+              animate={{ transform: descanso.pausado ? `scaleX(${descanso.restante / descanso.total})` : 'scaleX(0)' }}
               transition={{ duration: descanso.pausado ? 0 : descanso.restante, ease: 'linear' }}
             />
           </div>
@@ -798,7 +804,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
               <div className="text-xs text-slate-400">Descanso</div>
               <div className="font-display text-2xl font-bold tabular-nums">{mmss(descanso.restante)}</div>
             </div>
-            <Botao className="min-h-11" onClick={descanso.parar}>Pular</Botao>
+            <Botao onClick={descanso.parar}>Pular</Botao>
           </div>
         </m.div>
       )}

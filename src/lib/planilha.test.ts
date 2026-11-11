@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { abaSugerida, planilhaParaMeso } from './planilha'
 import { abrirPlanilha, type Valor } from './xlsx'
-import { abaMesoFalsa as aba, criarXlsx } from './__fixtures__/xlsxFalso'
+import { abaAntigaFalsa, abaMesoFalsa as aba, criarXlsx } from './__fixtures__/xlsxFalso'
 
 type Cel = Record<string, Valor>
 const ids = () => {
@@ -25,12 +25,13 @@ describe('planilhaParaMeso', () => {
   })
 
   it('trunca progressão, troca de exercício vira slot novo e leva a carga', () => {
-    const { meso, registros, deFora } = planilhaParaMeso(new Map(Object.entries(aba())), ids())
+    const { meso, registros, deFora, naoMarcados } = planilhaParaMeso(new Map(Object.entries(aba())), ids())
     expect(meso.progressao.principais[1]).toEqual([5, null, null, null, null, null])
     expect(meso.trocas).toEqual({ '2-1-1': { slotId: 'id4', nome: 'Voador' } })
     // Semana 2, treino 1 não foi realizado, mas tem carga (Voador 10): fica de fora e é contado.
     expect(registros).toEqual([expect.objectContaining({ semana: 1, treino: 1, realizado: true })])
     expect(deFora).toBe(1)
+    expect(naoMarcados).toEqual([{ semana: 2, treino: 1, realizado: false, cargas: { id4: { s1: 10 } } }])
     // Realizado: a carga vai para o slot da troca, não para o da divisão.
     const feito = planilhaParaMeso(new Map(Object.entries(aba(false, { B82: true, C82: 'Realizado' }))), ids())
     expect(feito.registros[1]).toEqual({ semana: 2, treino: 1, realizado: true, cargas: { id4: { s1: 10 } } })
@@ -80,6 +81,38 @@ describe('planilhaParaMeso', () => {
     const { meso, registros } = planilhaParaMeso(await p.ler('M1'))
     expect(meso.divisao[0][0].nome).toBe('Supino')
     expect(registros[0].realizado).toBe(true)
+  })
+})
+
+describe('modelo antigo (Elaboração dos Treinamentos)', () => {
+  const ler = (extra: Cel = {}) => planilhaParaMeso(new Map(Object.entries(abaAntigaFalsa(extra))), ids())
+
+  it('lê semanas, frequência, início, pausa, divisão e auxiliares sem a Configuração do Meso', () => {
+    const { meso } = ler()
+    expect(meso).toMatchObject({ frequencia: 2, semanas: 2, inicio: '2024-01-01', pausaS: 90, metodos: [] })
+    expect(meso.divisao.map((d) => d.map((s) => s.nome))).toEqual([['Supino', 'Crucifixo'], ['Agachamento']])
+    expect(meso.progressao.principais[0]).toEqual([4, 3, null, null, null, null])
+    expect(meso.progressao.auxiliares[0]).toEqual([2, 2, null, null, null, null])
+  })
+
+  it('treino com carga e Realizado desmarcado vai para naoMarcados', () => {
+    const { registros, naoMarcados, deFora } = ler()
+    expect(registros).toEqual([expect.objectContaining({ semana: 1, treino: 1 })])
+    expect(naoMarcados).toEqual([{ semana: 2, treino: 1, realizado: false, cargas: { id1: { s1: 30 } } }])
+    expect(deFora).toBe(1)
+  })
+
+  it('sem a configuração e sem o título no S1, o erro continua', () => {
+    const sem = abaAntigaFalsa()
+    delete sem.S1
+    expect(() => planilhaParaMeso(new Map(Object.entries(sem)))).toThrow('Esta aba não tem a Configuração do Meso')
+  })
+
+  it('funciona de ponta a ponta a partir de um .xlsx', async () => {
+    const p = await abrirPlanilha(await criarXlsx({ M13: abaAntigaFalsa() }))
+    const { meso, naoMarcados } = planilhaParaMeso(await p.ler('M13'))
+    expect(meso.semanas).toBe(2)
+    expect(naoMarcados).toHaveLength(1)
   })
 })
 

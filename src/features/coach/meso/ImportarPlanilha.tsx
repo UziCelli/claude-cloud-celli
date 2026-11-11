@@ -6,20 +6,24 @@ import { abrirPlanilha, type Planilha } from '../../../lib/xlsx'
 import { ir } from '../../../rota'
 import { Botao, campoBase, Campo, Cartao, Msg } from '../../../ui'
 import { nomeImportado } from './util'
+import { BrilhoBorda } from '../../../vidro'
 
 export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: string; qtdMesos: number; onFechar: () => void }) {
   const [planilha, setPlanilha] = useState<Planilha | null>(null)
   const [aba, setAba] = useState('')
+  const [nomeArquivo, setNomeArquivo] = useState('')
   const [nome, setNome] = useState('')
   const [previa, setPrevia] = useState<{ ok: Importado } | { erro: string } | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [comoFeitos, setComoFeitos] = useState(false)
 
   async function escolher(arquivo?: File) {
     setPlanilha(null)
     setPrevia(null)
     setAba('')
     setErro(null)
+    setNomeArquivo(arquivo?.name ?? '')
     if (!arquivo) return
     if (arquivo.size > 15e6) return setPrevia({ erro: 'Arquivo grande demais (máximo 15 MB).' })
     try {
@@ -42,6 +46,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
     if (!planilha || !aba) return
     let vivo = true
     setPrevia(null)
+    setComoFeitos(false)
     planilha
       .ler(aba)
       .then((c) => planilhaParaMeso(c))
@@ -52,12 +57,17 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
     }
   }, [planilha, aba])
 
+  const pronto = !!previa && 'ok' in previa && !!nome.trim()
+
   async function importar() {
     if (enviando || !previa || !('ok' in previa) || !nome.trim()) return
     setEnviando(true)
     setErro(null)
     try {
-      const { id, gravado } = await importarMeso(uid, nome.trim(), previa.ok)
+      const { id, gravado } = await importarMeso(uid, nome.trim(), {
+        ...previa.ok,
+        registros: [...previa.ok.registros, ...(comoFeitos ? previa.ok.naoMarcados.map((r) => ({ ...r, realizado: true })) : [])],
+      })
       ir(`/meso/${id}`)
       gravado.catch((e) => registrarErro('gravacao', `importar meso: ${e?.code ?? e}`, e))
     } catch (e) {
@@ -68,13 +78,17 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
 
   return (
     <Cartao className="mb-4 max-w-xl space-y-3">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-slate-400">Planilha (.xlsx)</span>
+      <label className="flex cursor-pointer flex-wrap items-center gap-3 rounded-xl border-2 border-dashed border-white/20 px-4 py-4 text-sm transition-colors hover:border-marca-400 hover:bg-white/5 focus-within:border-marca-400">
+        <span className="rounded-lg bg-white/10 px-3 py-2 font-medium text-white">Escolher arquivo</span>
+        <span className="min-w-0 flex-1 break-words text-slate-300">
+          <span className="block text-xs text-slate-400">Planilha (.xlsx)</span>
+          {nomeArquivo || 'Nenhum arquivo escolhido'}
+        </span>
         <input
           type="file"
           accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={(e) => escolher(e.target.files?.[0])}
-          className="text-base text-slate-300"
+          className="sr-only"
         />
       </label>
       <p className="text-xs text-slate-500">A planilha é lida só neste aparelho.</p>
@@ -98,10 +112,12 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
           {previa.erro}
         </p>
       )}
-      {previa && 'ok' in previa && <Previa {...previa.ok} />}
+      {previa && 'ok' in previa && <Previa {...previa.ok} comoFeitos={comoFeitos} onComoFeitos={setComoFeitos} />}
       <Msg>{erro && <p role="alert" className="text-sm text-red-400">{erro}</p>}</Msg>
+      {pronto && !enviando && <p className="text-sm text-marca-300">Prévia pronta. Toque em <strong>Importar</strong> para salvar o treino.</p>}
       <div className="flex flex-wrap gap-2">
-        <Botao tipo="primario" disabled={!previa || !('ok' in previa) || !nome.trim() || enviando} carregando={enviando} onClick={importar}>
+        <Botao tipo="primario" className={pronto && !enviando ? 'borda-brilho' : ''} disabled={!pronto || enviando} carregando={enviando} onClick={importar}>
+          {pronto && !enviando && <BrilhoBorda />}
           Importar
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>
@@ -110,7 +126,8 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
   )
 }
 
-function Previa({ meso, registros, deFora }: Importado) {
+function Previa({ meso, registros, deFora, comoFeitos, onComoFeitos }: Importado & { comoFeitos: boolean; onComoFeitos: (v: boolean) => void }) {
+  const n = registros.length + (comoFeitos ? deFora : 0)
   return (
     <div className="space-y-1 rounded-lg bg-slate-950 p-3 text-sm" data-testid="previa">
       <p>Início: {meso.inicio.split('-').reverse().join('/')}</p>
@@ -125,13 +142,16 @@ function Previa({ meso, registros, deFora }: Importado) {
         ))}
       </ul>
       <p>
-        {registros.length} {registros.length === 1 ? 'treino realizado' : 'treinos realizados'} com carga
+        {n} {n === 1 ? 'treino realizado' : 'treinos realizados'} com carga
       </p>
       {deFora > 0 && (
-        <p className="text-xs text-slate-500">
-          {deFora} {deFora === 1 ? 'treino com carga marcado como Não realizado fica' : 'treinos com carga marcados como Não realizado ficam'} de
-          fora. Se foi feito, marque Realizado na planilha e importe de novo.
-        </p>
+        <label className="flex items-start gap-2 text-xs text-slate-400">
+          <input type="checkbox" checked={comoFeitos} onChange={(e) => onComoFeitos(e.target.checked)} className="mt-0.5" />
+          <span>
+            {deFora} {deFora === 1 ? 'treino com carga não está marcado como realizado' : 'treinos com carga não estão marcados como realizados'}.
+            Importar também como feitos (confira: a carga pode ter sido copiada)
+          </span>
+        </label>
       )}
     </div>
   )

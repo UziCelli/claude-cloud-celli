@@ -1,4 +1,3 @@
-import catalogo from '../../../data/exercicios.json'
 import {
   emGrupo,
   linhaPrescrita,
@@ -23,8 +22,6 @@ export function redimensionar<T>(arr: T[], n: number, fabrica: () => T): T[] {
   if (arr.length > n) return arr.slice(0, n)
   return [...arr, ...Array.from({ length: n - arr.length }, fabrica)]
 }
-
-export const nomesCatalogo: string[] = catalogo.flatMap((g) => g.exercicios.map((e) => e.nome))
 
 // Semanas (1..meso.semanas) em que a posição `pos` do treino `t` tem alguma carga registrada,
 // considerando o slotId vigente naquela semana (troca pontual, se houver).

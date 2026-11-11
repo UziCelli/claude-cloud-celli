@@ -1,7 +1,93 @@
 import marca from '@marca/marca.json'
-import { dataBR, fmtDelta, fmtMedida, NOME_FONTE, type RelatorioAvaliacao } from '../../lib/avaliacao'
+import { dataBR, fmtDeltaUn, fmtMedida, NOME_FONTE, type RelatorioAvaliacao, type Seta, type Tom } from '../../lib/avaliacao'
+import { textoCarga } from '../../lib/segmentos'
 import { primeiroNome } from '../../lib/contato'
+import { ARTE, corParte, LEGENDA, LEGENDA_FRACA, REGIOES, SILHUETA, TAMANHO, VISTAS } from './corpoPaths'
 import { criarFolhas, LARG, M, MUDO, PW, sans, TEXTO, TRILHA } from '../relatorio/folhasPdf'
+
+const COR_TOM: Record<Tom, string> = { bom: '#16a34a', atencao: '#d97706', neutro: '#6b7280' }
+
+// Seta desenhada em traço (sem glifos): sobe, desce ou traço de "igual". `x` é a borda esquerda, `y` a linha de base.
+function seta(ctx: CanvasRenderingContext2D, s: Seta, x: number, y: number, cor: string) {
+  ctx.save()
+  ctx.strokeStyle = cor
+  ctx.lineWidth = 4
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  const cx = x + 11
+  if (s === 'igual') {
+    ctx.moveTo(x, y - 11)
+    ctx.lineTo(x + 22, y - 11)
+  } else {
+    const [a, b] = s === 'sobe' ? [y - 2, y - 22] : [y - 22, y - 2]
+    ctx.moveTo(cx, a)
+    ctx.lineTo(cx, b)
+    const d = s === 'sobe' ? 8 : -8
+    ctx.moveTo(cx - 8, b + d)
+    ctx.lineTo(cx, b)
+    ctx.lineTo(cx + 8, b + d)
+  }
+  ctx.stroke()
+  ctx.restore()
+}
+
+// Corpo de frente e de costas (mesma geometria da tela) e legenda em texto. `ESC` converte pixels do PNG em pixels da folha.
+const ESC = 0.38
+const carregar = (url: string) =>
+  new Promise<HTMLImageElement>((ok, erro) => {
+    const i = new Image()
+    i.onload = () => ok(i)
+    i.onerror = () => erro(new Error('corpo'))
+    i.src = url
+  })
+async function corpo(f: Awaited<ReturnType<typeof criarFolhas>>, segmentos: RelatorioAvaliacao['segmentos']) {
+  const artes = await Promise.all(VISTAS.map((v) => carregar(ARTE[v]))).catch(() => null) // sem a imagem, o PDF segue sem a figura
+  const { ctx } = f
+  const [w, h] = [TAMANHO.w * ESC, TAMANHO.h * ESC]
+  const folga = 70
+  const x0 = M + (LARG - 2 * w - folga) / 2
+  if (artes) {
+    f.espaco(h + 140)
+    VISTAS.forEach((v, i) => {
+      ctx.save()
+      ctx.translate(x0 + i * (w + folga), f.y + 10)
+      ctx.scale(ESC, ESC)
+      ctx.save()
+      ctx.clip(new Path2D(SILHUETA[v]))
+      ctx.globalAlpha = 0.7
+      for (const s of segmentos) {
+        const d = REGIOES[s.id][v]
+        if (!d) continue
+        ctx.fillStyle = corParte(s.veredito, !!s.fraca, true)
+        ctx.fill(new Path2D(d))
+      }
+      ctx.restore()
+      ctx.drawImage(artes[i], 0, 0, TAMANHO.w, TAMANHO.h)
+      ctx.restore()
+    })
+    f.y += h + 50
+    f.texto('Frente', x0 + w / 2, sans(24), MUDO, 'center')
+    f.texto('Costas', x0 + w + folga + w / 2, sans(24), MUDO, 'center')
+  } else f.espaco(100)
+  f.y += 46
+  ctx.font = sans(26)
+  const itens = LEGENDA.map((l) => ({ ...l, w: 36 + ctx.measureText(l.texto).width }))
+  let x = M + (LARG - itens.reduce((t, i) => t + i.w + 40, -40)) / 2
+  for (const i of itens) {
+    ctx.fillStyle = corParte(i.veredito, false, true)
+    ctx.beginPath()
+    ctx.arc(x + 11, f.y - 9, 11, 0, Math.PI * 2)
+    ctx.fill()
+    f.texto(i.texto, x + 36, sans(26), TEXTO)
+    x += i.w + 40
+  }
+  if (segmentos.some((s) => s.fraca)) {
+    f.y += 38
+    f.texto(LEGENDA_FRACA, PW / 2, sans(24), MUDO, 'center')
+  }
+  f.y += 40
+}
 
 export type EntradaPdfAvaliacao = { r: RelatorioAvaliacao; aluno: string; comentario?: string }
 
@@ -15,10 +101,13 @@ export async function gerarPdfAvaliacao({ r, aluno, comentario }: EntradaPdfAval
   f.numeros(r.destaques)
 
   f.titulo('Sua evolução')
-  for (const p of r.texto) {
-    f.paragrafo(p)
-    f.y += 14
+  f.paragrafo(r.resumo.frase)
+  if (r.anterior && r.segmentos.length) await corpo(f, r.segmentos)
+  for (const s of r.segmentos) {
+    const carga = s.carga ? ` Carga: ${textoCarga(s.carga.melhor)}.` : ''
+    f.paragrafo(`${s.rotulo}: ${s.texto}.${s.medida ? ` Medida ${s.medida.delta}.` : ''}${carga}`, sans(28), TEXTO, 40)
   }
+  f.y += 14
 
   // Colunas da tabela: medida à esquerda; anterior, atual e diferença alinhadas à direita.
   const xAnt = M + LARG * 0.62
@@ -31,18 +120,30 @@ export async function gerarPdfAvaliacao({ r, aluno, comentario }: EntradaPdfAval
     f.texto('atual', r.anterior ? xAtual : PW - M, sans(24), MUDO, 'right')
     if (r.anterior) f.texto('diferença', PW - M, sans(24), MUDO, 'right')
     for (const l of g.linhas) {
-      f.espaco(58)
+      f.espaco(58 + 34)
       f.y += 14
       f.caixa(M, LARG, 2, 1, TRILHA)
       f.y += 44
       f.texto(l.rotulo, M, sans(30), TEXTO)
       if (r.anterior) f.texto(l.anterior == null ? '—' : fmtMedida(l.anterior, l.un), xAnt, sans(30), MUDO, 'right')
       f.texto(fmtMedida(l.atual, l.un), r.anterior ? xAtual : PW - M, sans(30, 700), TEXTO, 'right')
-      if (r.anterior) f.texto(l.delta == null ? '—' : fmtDelta(l.delta), PW - M, sans(30), TEXTO, 'right')
+      if (r.anterior) {
+        if (l.delta == null) f.texto('—', PW - M, sans(30), MUDO, 'right')
+        else {
+          const cor = COR_TOM[l.leitura?.tom ?? 'neutro']
+          const t = fmtDeltaUn(l)
+          f.ctx.font = sans(30, 700)
+          const w = f.ctx.measureText(t).width
+          f.texto(t, PW - M, sans(30, 700), cor, 'right')
+          seta(f.ctx, l.seta ?? 'igual', PW - M - w - 34, f.y, cor)
+        }
+      }
+      if (l.leitura) f.paragrafo(l.leitura.texto, sans(24), MUDO, 34)
     }
   }
 
   f.y += 30
+  for (const t of r.texto) f.paragrafo(t, sans(24), MUDO, 36)
   f.paragrafo(`${r.res.fonte ? `Percentual de gordura: ${NOME_FONTE[r.res.fonte]}. ` : ''}Estimativa; não substitui avaliação médica.`, sans(24), MUDO, 36)
   return f.fechar()
 }

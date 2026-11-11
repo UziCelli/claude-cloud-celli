@@ -10,7 +10,7 @@ export async function limparEmuladores() {
 }
 
 // Cria um usuário no Auth emulator e devolve o uid.
-async function criarConta(email: string, senha: string): Promise<string> {
+export async function criarConta(email: string, senha: string): Promise<string> {
   const r = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -76,11 +76,27 @@ export async function criarCoach(nome: string, email: string, senha: string): Pr
   return uid
 }
 
-// Cria a conta do aluno (Auth + Firestore), já ativa e paga por 30 dias.
-export async function criarAluno(nome: string, email: string, senha: string, pesoKg?: number, aceitou = true): Promise<string> {
+// Respostas mínimas de uma anamnese (PAR-Q todo "não" e a declaração).
+export const ANAMNESE_MINIMA = { coracao: false, dorPeito: false, tontura: false, doencaCronica: false, remedio: false, ossoArticulacao: false, supervisaoMedica: false, declaracao: true }
+
+// Anamnese já respondida pelo aluno (sem ela, o aluno novo vê a trava no "Iniciar treino").
+export const criarAnamnese = (alunoId: string, r: Record<string, unknown> = ANAMNESE_MINIMA, em = new Date()) =>
+  gravarDoc(`anamneses/${Math.random().toString(36).slice(2, 12)}`, { alunoId, versao: 1, origem: 'aluno', r, em, atualizadoEm: em })
+
+// Documentos de uma coleção (campos no formato REST do Firestore).
+export async function listarDocs(colecao: string): Promise<{ fields: Record<string, any> }[]> {
+  const r = await fetch(`${FIRESTORE}/v1/projects/${PROJETO}/databases/(default)/documents/${colecao}`, { headers: { Authorization: 'Bearer owner' } })
+  if (!r.ok) throw new Error(`listar ${colecao} falhou: ${r.status} ${await r.text()}`)
+  return (await r.json()).documents ?? []
+}
+
+// Cria a conta do aluno (Auth + Firestore), já ativa e paga por 30 dias, com a anamnese respondida.
+// extra.anamnese=false: aluno que ainda não respondeu. extra.criadoEm: data de criação da conta (conta nova = a partir de 11/11/2026).
+export async function criarAluno(nome: string, email: string, senha: string, pesoKg?: number, aceitou = true, extra: { anamnese?: boolean; criadoEm?: Date } = {}): Promise<string> {
   const uid = await criarConta(email, senha)
   const pagoAte = new Date(Date.now() + 30 * 86_400_000)
-  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte, ...(aceitou ? { privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date() } : {}), ...(pesoKg ? { pesoKg } : {}) })
+  await gravarDoc(`usuarios/${uid}`, { papel: 'aluno', status: 'ativo', nome, email, pagoAte, ...(aceitou ? { privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date() } : {}), ...(pesoKg ? { pesoKg } : {}), ...(extra.criadoEm ? { criadoEm: extra.criadoEm } : {}) })
+  if (extra.anamnese !== false) await criarAnamnese(uid)
   return uid
 }
 

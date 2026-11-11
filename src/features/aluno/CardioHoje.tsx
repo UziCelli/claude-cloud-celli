@@ -38,7 +38,7 @@ export default function CardioHoje({ uid, hoje }: { uid: string; hoje: Date }) {
       <div className="flex items-center gap-3">
         <IconeQuadrado cor="bg-teal-500/15 text-teal-300"><IcCardio className="size-5" /></IconeQuadrado>
         <p className="min-w-0 flex-1 text-sm font-semibold">{feito ? `Hoje: ${detalhe || 'feito'}` : 'Fez cardio hoje? Marque aqui.'}</p>
-        <Botao aria-label={feito ? 'Editar cardio' : 'Registrar cardio'} aria-expanded={aberto} onClick={alternar}>
+        <Botao tipo="vidro" aria-label={feito ? 'Editar cardio' : 'Registrar cardio'} aria-expanded={aberto} onClick={alternar}>
           {feito ? 'Editar' : 'Registrar'}
         </Botao>
       </div>

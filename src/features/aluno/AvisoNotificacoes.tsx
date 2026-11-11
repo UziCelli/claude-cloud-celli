@@ -33,7 +33,7 @@ export default function AvisoNotificacoes() {
           Para liberar: {ios ? `Ajustes → Notificações → ${marca.nome}.` : 'segure o ícone do app → Informações do app → Notificações.'}
         </p>
       ) : (
-        <Botao tipo="primario" className="mt-2 w-full" onClick={pedir}>
+        <Botao tipo="primario" tamanho="lg" className="mt-2 w-full" onClick={pedir}>
           Permitir notificações
         </Botao>
       )}

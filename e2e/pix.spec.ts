@@ -1,6 +1,6 @@
 import { expect, test, devices } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { criarAluno, criarCoach, definirPagoAte, gravarDoc, limparEmuladores } from './seed'
+import { criarAluno, criarCoach, criarMeso, definirPagoAte, hojeSaoPaulo, gravarDoc, limparEmuladores } from './seed'
 import { VERSAO_PRIVACIDADE } from '../src/lib/privacidade'
 
 const marca = JSON.parse(readFileSync(`marcas/${process.env.MARCA ?? 'vfit'}/marca.json`, 'utf8'))
@@ -21,10 +21,10 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
   await limparEmuladores()
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
   const uid = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
-  // Aluno vencido ontem.
+  // Aluno vencido há 8 dias (além da tolerância de 7).
   await gravarDoc(`usuarios/${uid}`, {
     papel: 'aluno', status: 'ativo', nome: ALUNO.nome, email: ALUNO.email,
-    pagoAte: new Date(Date.now() - 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
+    pagoAte: new Date(Date.now() - 8 * 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
   })
 
   const ctx = await browser.newContext({ ...devices['Pixel 7'] })
@@ -45,6 +45,7 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
   await test.step('aluno vencido vê o QR e o copia e cola e toca em "Já paguei"', async () => {
     await entrar(page, ALUNO.email, ALUNO.senha)
     await expect(page.getByRole('heading', { name: 'Acesso pausado' })).toBeVisible()
+    await expect(page.getByText('a mensalidade venceu há mais de 7 dias')).toBeVisible()
     await expect(page.getByText('Mensalidade R$ 150,00')).toBeVisible()
     await expect(page.getByRole('img', { name: 'QR Code Pix' })).toBeVisible()
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
@@ -52,7 +53,7 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
     await expect(page.getByText('Código copiado')).toBeVisible()
     const texto = await page.evaluate(() => navigator.clipboard.readText())
     expect(texto).toContain('br.gov.bcb.pix')
-    expect(texto).toContain(marca.pix.atraso ? '5406153.05' : '5406150.00') // 1 dia vencido: multa 3,00 + juros 0,05
+    expect(texto).toContain(marca.pix.atraso ? '5406153.40' : '5406150.00') // 8 dias vencido: multa 3,00 + juros 0,40
     await page.getByRole('button', { name: 'Já paguei' }).click()
     await expect(page.getByText(/Aviso enviado em \d{2}\/\d{2}/)).toBeVisible()
   })
@@ -151,4 +152,36 @@ test('Pix vencido: QR com multa e juros do dia; o coach vê o valor com atraso',
   await coach.goto('/#/alunos')
   await expect(coach.getByText('Com atraso: R$ 153,50').filter({ visible: true })).toBeVisible()
   await ctx.close()
+})
+
+test('Tolerância: vencido há 3 dias vê o aviso 1x por dia e "Ciente" leva ao treino; há 8 dias cai em Acesso pausado', async ({ page }) => {
+  await limparEmuladores()
+  await criarCoach(COACH.nome, COACH.email, COACH.senha)
+  const uid = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  const perfil = (dias: number) => ({
+    papel: 'aluno', status: 'ativo', nome: ALUNO.nome, email: ALUNO.email, mensalidade: 150,
+    pagoAte: new Date(Date.now() - dias * 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
+  })
+  await gravarDoc(`usuarios/${uid}`, perfil(3))
+  const prog = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null], w3: [8, 8, 8, null, null, null], w4: [8, 8, 8, null, null, null] }
+  const mesoId = await criarMeso({
+    alunoId: uid, nome: 'Meso Atraso', frequencia: 7, semanas: 4, inicio: hojeSaoPaulo(), pausaS: 60,
+    divisao: Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((n) => [`t${n}`, [{ slotId: 'a', nome: 'Agachamento Livre Halter' }]])),
+    progressao: { principais: prog, auxiliares: prog },
+  })
+
+  await entrar(page, ALUNO.email, ALUNO.senha)
+  const aviso = page.getByRole('dialog', { name: 'Mensalidade vencida' })
+  await expect(aviso.getByRole('heading', { name: 'Mensalidade vencida há 3 dias' })).toBeVisible()
+  await expect(aviso.getByText('Seu acesso pausa em 4 dias')).toBeVisible()
+  await aviso.getByRole('button', { name: 'Ciente, ir para o treino' }).click()
+  await expect(aviso).toHaveCount(0)
+  await expect(page).toHaveURL(new RegExp(`#/treino/${mesoId}/1/1$`)) // frequência 7: tem treino todo dia
+
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Treino 1' })).toBeVisible()
+  await expect(aviso).toHaveCount(0) // já viu hoje
+
+  await definirPagoAte(uid, new Date(Date.now() - 8 * 86_400_000))
+  await expect(page.getByRole('heading', { name: 'Acesso pausado' })).toBeVisible({ timeout: 15_000 })
 })

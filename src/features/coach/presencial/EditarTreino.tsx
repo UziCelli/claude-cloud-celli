@@ -51,7 +51,7 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
   }
   return (
     <>
-      <Botao aria-label={`Editar ${nome}`} className="min-h-11" onClick={() => setAberto(true)}><IcLapis className="size-5" /></Botao>
+      <Botao aria-label={`Editar ${nome}`} onClick={() => setAberto(true)}><IcLapis className="size-5" /></Botao>
       {aberto && (
         <Folha titulo={nome} onFechar={fechar}>
           <div>
@@ -77,7 +77,7 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {Array.from({ length: n }, (_, k) => k + 1).map((k) => {
                   const ativo = atuais.some((x) => x.metodo === 'Dropset' && serieDoDrop(x, n) === k)
-                  return <Botao key={k} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={() => aplicar(alternarSerieDropset(s, pos, k, n))}>S{k}</Botao>
+                  return <Botao key={k} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} onClick={() => aplicar(alternarSerieDropset(s, pos, k, n))}>S{k}</Botao>
                 })}
               </div>
             )}
@@ -86,13 +86,13 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
                 {opcoesSeries(n).map(([rotulo, escopo, serie]) => {
                   const a = atuais.find((x) => x.metodo === seriesDe)
                   const ativo = a?.escopo === escopo && (escopo !== 'Série específica' || a.serie === serie)
-                  return <Botao key={rotulo} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={() => aplicar(mudarSeries(s, pos, seriesDe, escopo, serie))}>{rotulo}</Botao>
+                  return <Botao key={rotulo} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} onClick={() => aplicar(mudarSeries(s, pos, seriesDe, escopo, serie))}>{rotulo}</Botao>
                 })}
               </div>
             )}
             <div className="flex flex-wrap gap-1.5">
               {[...DIRETOS, ...SEQUENCIA].filter((m) => !nomesAtuais.includes(m)).map((m) => (
-                <Botao key={m} aria-label={`Adicionar ${m}`} tipo={juntando === m ? 'primario' : undefined} className="min-h-11" onClick={() => escolher(m)}>+ {m}</Botao>
+                <Botao key={m} aria-label={`Adicionar ${m}`} tipo={juntando === m ? 'primario' : undefined} onClick={() => escolher(m)}>+ {m}</Botao>
               ))}
             </div>
             {juntando && (
@@ -104,11 +104,11 @@ export function EditarExercicio({ meso, mesoId, semana, treino, pos, nome, n, te
                     {e.nome}
                   </label>
                 ))}
-                <Botao tipo="primario" className="min-h-11 w-full" disabled={!totalCerto(juntando, parceiros.length + 1)} onClick={() => { aplicar(adicionarMetodo(s, pos, juntando, n, parceiros)); setJuntando(null); setParceiros([]) }}>Juntar</Botao>
+                <Botao tipo="primario" className="w-full" disabled={!totalCerto(juntando, parceiros.length + 1)} onClick={() => { aplicar(adicionarMetodo(s, pos, juntando, n, parceiros)); setJuntando(null); setParceiros([]) }}>Juntar</Botao>
               </div>
             )}
           </div>
-          {s.exercicios.length > 1 && <Botao tipo="perigo" className="min-h-11 w-full" onClick={tirar}>Tirar do treino de hoje</Botao>}
+          {s.exercicios.length > 1 && <Botao tipo="perigo" className="w-full" onClick={tirar}>Tirar do treino de hoje</Botao>}
         </Folha>
       )}
     </>
@@ -121,7 +121,7 @@ export function AdicionarExercicio({ meso, mesoId, semana, treino }: Base) {
   if (s.exercicios.length >= MAX_EXERCICIOS) return null
   return (
     <>
-      <Botao className="min-h-11 w-full" onClick={() => setAberto(true)}>+ Adicionar exercício</Botao>
+      <Botao className="w-full" onClick={() => setAberto(true)}>+ Adicionar exercício</Botao>
       {aberto && (
         <Folha titulo="Adicionar exercício" onFechar={() => setAberto(false)}>
           <CampoExercicio placeholder="Nome do exercício" onConfirmar={(t) => { grava(mesoId, adicionarExercicio(s, t, crypto.randomUUID())); setAberto(false) }} />
@@ -138,7 +138,7 @@ export function FaixaAjustado({ mesoId, semana, treino }: Omit<Base, 'meso'>) {
   return (
     <div className="mb-3 flex items-center justify-between gap-2 rounded-lg bg-amber-400/10 px-3 py-2 text-sm text-amber-300">
       <span>Treino ajustado só hoje</span>
-      <Botao className="min-h-11" onClick={voltar}>Voltar ao planejado</Botao>
+      <Botao onClick={voltar}>Voltar ao planejado</Botao>
     </div>
   )
 }

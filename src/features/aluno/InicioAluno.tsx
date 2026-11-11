@@ -8,6 +8,7 @@ import type { RegistroAlerta } from '../../lib/alertas'
 import type { MesoSalvo } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useHoje, useLista, useSemInternet } from '../../lib/hooks'
+import { dataBR } from '../../lib/avaliacao'
 import { fmtMin } from '../../lib/tempo'
 import { IcCartao, IcCheck, IcFogo, IcGrafico, IcLivro, IcPrancheta, IcRelogio, IcSeta } from '../../icones'
 import { ir } from '../../rota'
@@ -21,6 +22,7 @@ import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
 import { useAvaliacoesLiberadas } from '../avaliacao/AvaliacaoAluno'
 import { FaixaFeedback } from '../feedback/ConviteFeedback'
+import { useAnamnese } from '../anamnese/useAnamnese'
 import BotaoSair from '../auth/BotaoSair'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
@@ -50,6 +52,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
     setVisto(dia)
     marcarPopup(dia)
   }, [auto, dia])
+  const anamnese = useAnamnese(uid)
   if (carregando || carregandoReg) return <Centro>Carregando…</Centro>
 
   const data = hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })
@@ -65,16 +68,17 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
           <Avatar img={foto?.img} nome={nome} selo={perfil?.selo} tamanho={44} />
         </a>
       </div>
+      {anamnese.motivo && <AnamnesePendente primeira={anamnese.motivo === 'primeira'} />}
       {!atual && <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>}
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
+      <FaixaFeedback />
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
-      <AvaliacaoPronta id={avaliacoes.dados[0]?.id} />
-      <Quadros pagoAte={perfil?.pagoAte?.toMillis()} aoPagar={perfil?.status === 'ativo' && perfil.pagoAte ? () => setPix(true) : undefined} />
+      <AvaliacaoPronta a={avaliacoes.dados[0]} />
+      <Quadros pagoAte={perfil?.pagoAte?.toMillis()} ultima={avaliacoes.dados[0]} aoPagar={perfil?.status === 'ativo' && perfil.pagoAte ? () => setPix(true) : undefined} />
       <AnimatePresence>{pix && perfil && <PixPopup uid={uid} perfil={perfil} hoje={hoje} fechar={() => setPix(false)} />}</AnimatePresence>
-      <FaixaFeedback />
     </main>
   )
 }
@@ -187,11 +191,27 @@ function RelatorioPronto({ relatorios, mesos }: { relatorios: { mesoId: string; 
   )
 }
 
-// Avaliação física liberada mais recente (a lista já vem da mais nova para a mais antiga).
-function AvaliacaoPronta({ id }: { id?: string }) {
-  if (!id) return null
+// Lembrete da anamnese: primeira vez ou confirmação de fim de ciclo (só lembra; a trava é só no "Iniciar treino" do aluno novo).
+function AnamnesePendente({ primeira }: { primeira: boolean }) {
   return (
-    <a href={`#/avaliacao/${id}`} className="toque block">
+    <a href="#/anamnese" className="toque block">
+      <Quadro className="flex items-center gap-3 ring-1 ring-marca-400/40">
+        <IconeQuadrado><IcPrancheta className="size-5" /></IconeQuadrado>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{primeira ? 'Responda a anamnese (3 min)' : 'Confirme sua anamnese'}</p>
+          <p className="text-xs text-slate-400">{primeira ? 'Seu coach precisa conhecer sua saúde' : 'Um ciclo terminou: nada mudou?'}</p>
+        </div>
+        <IcSeta className="size-5 text-slate-400" />
+      </Quadro>
+    </a>
+  )
+}
+
+// Avaliação física liberada mais recente (a lista já vem da mais nova para a mais antiga).
+function AvaliacaoPronta({ a }: { a?: { id: string; liberadoEmMs?: number } }) {
+  if (!a?.liberadoEmMs || Date.now() - a.liberadoEmMs > 7 * 86400000) return null
+  return (
+    <a href={`#/avaliacao/${a.id}`} className="toque block">
       <Quadro className="flex items-center gap-3">
         <IconeQuadrado><IcGrafico className="size-5" /></IconeQuadrado>
         <div className="min-w-0 flex-1">
@@ -233,7 +253,7 @@ function PixPopup({ uid, perfil, hoje, fechar }: { uid: string; perfil: Usuario;
   )
 }
 
-function Quadros({ pagoAte, aoPagar }: { pagoAte?: number; aoPagar?: () => void }) {
+function Quadros({ pagoAte, ultima, aoPagar }: { pagoAte?: number; ultima?: { id: string; data: string }; aoPagar?: () => void }) {
   const emDia = pagoAte != null && pagoAte > Date.now()
   const pagamento = (
     <Quadro className="h-full space-y-3">
@@ -258,14 +278,18 @@ function Quadros({ pagoAte, aoPagar }: { pagoAte?: number; aoPagar?: () => void 
         </Quadro>
       </a>
       {PIX && aoPagar ? <a href="#/" role="button" onClick={(e) => { e.preventDefault(); aoPagar() }} className="toque block">{pagamento}</a> : pagamento}
-      <Quadro className="space-y-3 opacity-80">
-        <IconeQuadrado cor="bg-white/8 text-slate-300"><IcPrancheta className="size-5" /></IconeQuadrado>
-        <div>
-          <Chip>Em breve</Chip>
-          <p className="mt-2 text-sm font-semibold">Avaliações</p>
-          <p className="text-xs text-slate-400">peso, medidas e % de gordura</p>
-        </div>
-      </Quadro>
+      {(() => {
+        const q = (
+          <Quadro className="h-full space-y-3">
+            <IconeQuadrado cor="bg-white/8 text-slate-300"><IcPrancheta className="size-5" /></IconeQuadrado>
+            <div>
+              <p className="text-sm font-semibold">{ultima ? 'Avaliações' : 'Ainda sem avaliação'}</p>
+              <p className="text-xs text-slate-400">{ultima ? `última: ${dataBR(ultima.data).slice(0, 5)}` : 'peso, medidas e % de gordura'}</p>
+            </div>
+          </Quadro>
+        )
+        return ultima ? <a href={`#/avaliacao/${ultima.id}`} className="toque block">{q}</a> : q
+      })()}
       <a href="#/metodos" className="toque block">
         <Quadro className="h-full space-y-3">
           <IconeQuadrado cor="bg-fuchsia-500/15 text-fuchsia-300"><IcLivro className="size-5" /></IconeQuadrado>

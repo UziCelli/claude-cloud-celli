@@ -49,7 +49,7 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
       ))}
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: meso.frequencia }, (_, i) => i + 1).map((t) => (
-          <Botao key={t} aria-pressed={t === sel} tipo={t === sel ? 'primario' : undefined} className="min-h-11" onClick={() => setTreino(t)}>
+          <Botao key={t} aria-pressed={t === sel} tipo={t === sel ? 'primario' : undefined} onClick={() => setTreino(t)}>
             Treino {t}
           </Botao>
         ))}
@@ -63,7 +63,7 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
                 {exercicios[pos - 1] ? `${pos}. ${nome(pos)}` : adicionada(pos) ? `${pos}. ${nome(pos)} (adicionado · ${semanasTexto(adicionada(pos)!.semanas, meso.semanas)})` : `Posição ${pos} (sem exercício)`}
               </span>
               {(exercicios[pos - 1] || adicionada(pos)) && (
-                <Botao aria-label={`Adicionar método em ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => setAberta({ pos })}>
+                <Botao aria-label={`Adicionar método em ${nome(pos)}`} className="shrink-0" onClick={() => setAberta({ pos })}>
                   + Método
                 </Botao>
               )}
@@ -77,7 +77,7 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
                     <IconeMetodo metodo={l.metodo} tamanho={16} />
                     <span className="min-w-0 break-words">{texto}</span>
                   </button>
-                  <Botao aria-label={`Tirar ${l.metodo} de ${nome(pos)}`} className="min-h-11 shrink-0" onClick={() => window.confirm(`Tirar ${l.metodo} de ${nome(pos)}?${emGrupo(l.metodo) ? ' O grupo inteiro sai.' : ''}`) && onAtualizar({ metodos: removerLinha(metodos, sel, pos, l) })}>
+                  <Botao aria-label={`Tirar ${l.metodo} de ${nome(pos)}`} className="shrink-0" onClick={() => window.confirm(`Tirar ${l.metodo} de ${nome(pos)}?${emGrupo(l.metodo) ? ' O grupo inteiro sai.' : ''}`) && onAtualizar({ metodos: removerLinha(metodos, sel, pos, l) })}>
                     ✕
                   </Botao>
                 </div>
@@ -118,7 +118,7 @@ function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, o
   const etapas = m0?.etapas ?? 1
   const lista = (v?: (number | null)[]) => [...(v ?? [])]
   const chip = (ativo: boolean, rotulo: string, onClick: () => void) => (
-    <Botao key={rotulo} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} className="min-h-11" onClick={onClick}>{rotulo}</Botao>
+    <Botao key={rotulo} aria-pressed={ativo} tipo={ativo ? 'primario' : undefined} onClick={onClick}>{rotulo}</Botao>
   )
   const titulo = linha ? `${linha.metodo} · ${nome(pos)}` : `Novo método · ${nome(pos)}`
   const pronto = metodo != null && r.semanas.length > 0 && (!emGrupo(metodo) || totalCerto(metodo, r.parceiros.length + 1))
@@ -187,7 +187,7 @@ function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, o
             </section>
           )}
           <section className="space-y-2">
-            <Botao aria-expanded={mais} className="min-h-11 w-full" onClick={() => setMais(!mais)}>Mais ajustes</Botao>
+            <Botao aria-expanded={mais} className="w-full" onClick={() => setMais(!mais)}>Mais ajustes</Botao>
             <Painel aberto={mais} className="space-y-3">
               <label className="flex min-h-11 items-center gap-2 text-sm">
                 <input type="checkbox" checked={m0.ativo} onChange={(e) => todos({ ativo: e.target.checked })} />
@@ -214,11 +214,11 @@ function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, o
         </>
       )}
       <div className="flex gap-2">
-        <Botao tipo="primario" className="min-h-11 flex-1" disabled={!pronto} onClick={() => gravar(salvarLinha(meso.metodos, { treino, pos, metodo: metodo!, semanas: r.semanas, modelo: r.modelo, parceiros: r.parceiros }, linha?.semanas ?? []))}>
+        <Botao tipo="primario" className="flex-1" disabled={!pronto} onClick={() => gravar(salvarLinha(meso.metodos, { treino, pos, metodo: metodo!, semanas: r.semanas, modelo: r.modelo, parceiros: r.parceiros }, linha?.semanas ?? []))}>
           Pronto
         </Botao>
         {linha && (
-          <Botao tipo="perigo" className="min-h-11" onClick={() => gravar(removerLinha(meso.metodos, treino, pos, linha))}>
+          <Botao tipo="perigo" onClick={() => gravar(removerLinha(meso.metodos, treino, pos, linha))}>
             Tirar
           </Botao>
         )}

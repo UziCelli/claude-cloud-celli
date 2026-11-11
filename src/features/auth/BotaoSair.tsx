@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sair } from '../../lib/acoes'
 import { IcSair } from '../../icones'
+import { Botao } from '../../ui'
 
 // Sair com retorno: desativa e avisa enquanto espera as gravações pendentes.
 export function useSair() {
@@ -12,12 +13,13 @@ export function useSair() {
 export default function BotaoSair() {
   const [saindo, sairAgora] = useSair()
   return (
-    <button
+    <Botao
+      tipo="fantasma"
       disabled={saindo}
       onClick={() => { if (confirm('Sair da conta?')) sairAgora() }}
-      className="flex min-h-11 items-center gap-2 px-2 text-base font-semibold text-slate-300 hover:text-white disabled:opacity-50"
+      className="flex items-center gap-2"
     >
       <IcSair className="size-5" /> {saindo ? 'Saindo…' : 'Sair'}
-    </button>
+    </Botao>
   )
 }

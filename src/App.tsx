@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { aceitouPrivacidade } from './lib/privacidade'
-import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
-import { collection, query, where } from 'firebase/firestore'
+import { aceitouPrivacidade, senhaJaConferida } from './lib/privacidade'
+import { estadoSenha, EVENTO_SENHA } from './lib/senha'
+import { CARENCIA_DIAS, faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
+import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
-import { consultaRegistrosRecentes } from './lib/acoes'
+import { consultaRegistrosRecentes, pedirAcesso, temTotp } from './lib/acoes'
+import { CaixaAceite } from './features/privacidade/Politica'
 import { useLista, useUsuarioAtual } from './lib/hooks'
 import { inscreverAvisos } from './lib/push'
 import { inicioJanela, type AlunoComId } from './lib/resumo'
@@ -30,6 +32,7 @@ import Grupo from './features/coach/presencial/Presencial'
 import RelatorioCoach from './features/relatorio/RelatorioCoach'
 import AvaliacoesCoach from './features/avaliacao/AvaliacoesCoach'
 import AvaliacaoCoach from './features/avaliacao/AvaliacaoCoach'
+import AnamneseCoach from './features/anamnese/AnamneseCoach'
 import { EvolucaoCoach } from './features/evolucao/PainelEvolucao'
 import AlunoApp from './features/aluno/AlunoApp'
 import TutorialCoach, { tutorialCoachNaoVisto } from './features/coach/TutorialCoach'
@@ -41,6 +44,7 @@ import AcaoEmail from './features/auth/AcaoEmail'
 import Politica from './features/privacidade/Politica'
 import PagarPix, { PIX } from './features/aluno/PagarPix'
 import Aceite from './features/privacidade/Aceite'
+import SenhaSegura from './features/auth/SenhaSegura'
 import marca from '@marca/marca.json'
 import { IcBalao, IcCasa, IcGrupo, IcLivro, IcPessoa, IcSair, IcSino, IcTrofeu } from './icones'
 import { BarraAbas, Bolha, Brilho } from './vidro'
@@ -54,7 +58,17 @@ export default function App() {
 
 function Principal() {
   const { user, perfil, carregando } = useUsuarioAtual()
-  const [adiouAceite, setAdiouAceite] = useState(false) // sem internet no aceite: vale até fechar o app
+  const [adiouSenha, setAdiouSenha] = useState(false) // sem internet na tela da senha: vale até fechar o app
+  const [, senhaMudou] = useState(0) // login e tela da senha gravam no aparelho (lembrarSenha): só re-renderiza
+  useEffect(() => {
+    const f = () => senhaMudou((n) => n + 1)
+    addEventListener(EVENTO_SENHA, f)
+    return () => removeEventListener(EVENTO_SENHA, f)
+  }, [])
+  // Senha: fraca no login deste aparelho, ou nunca conferida (sessão antiga, aceite de antes de 2026-11-09). Só uma vez.
+  // O Firebase avisa do login antes de `entrar()` gravar o resultado: `key` remonta a tela quando ele chega.
+  const senha = user ? estadoSenha(user.uid) : null
+  const precisaSenha = !!perfil && !adiouSenha && (senha === 'fraca' || (senha !== 'ok' && !senhaJaConferida(perfil)))
   let estagio = 'app'
   let tela: ReactNode
   if (carregando) [estagio, tela] = ['abertura', <Abertura />]
@@ -62,8 +76,10 @@ function Principal() {
   else if (!perfil) [estagio, tela] = ['abertura', <PerfilDemora />]
   else if (perfil.papel === 'coach') tela = <Coach uid={user.uid} email={perfil.email} nome={perfil.nome} />
   else if (!liberado(perfil, new Date())) [estagio, tela] = ['sem-acesso', <SemAcesso uid={user.uid} perfil={perfil} />]
-  else if (!aceitouPrivacidade(perfil) && !adiouAceite)
-    [estagio, tela] = ['privacidade', <Aceite uid={user.uid} adiar={perfil.privacidadeVersao ? () => setAdiouAceite(true) : undefined} />]
+  else if (precisaSenha)
+    [estagio, tela] = ['senha', <SenhaSegura key={senha ?? '?'} uid={user.uid} fraca={senha === 'fraca'} adiar={perfil.privacidadeVersao ? () => setAdiouSenha(true) : undefined} />]
+  // Adiou a senha (sem internet): também não aceita agora, senão a versão nova marcaria a senha como conferida.
+  else if (!aceitouPrivacidade(perfil) && !adiouSenha) [estagio, tela] = ['privacidade', <Aceite uid={user.uid} atualizou={!!perfil.privacidadeVersao} />]
   else tela = <AlunoApp uid={user.uid} perfil={perfil} />
   // Cadastro pelo QR Code concluído (ou aluno já logado que abriu o link): tira /cadastro do endereço.
   useEffect(() => {
@@ -73,8 +89,8 @@ function Principal() {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
     else telaPronta()
   }, [estagio, carregando, user])
-  // Aluno aberto além do vencimento: força nova avaliação em pagoAte, senão ele ainda vê o treino e o servidor recusa as gravações.
-  const venceEm = perfil?.papel === 'coach' ? 0 : perfil?.pagoAte?.toMillis() ?? 0
+  // Aluno aberto além da tolerância: força nova avaliação em pagoAte + 7 dias, senão ele ainda vê o treino e o servidor recusa as gravações.
+  const venceEm = perfil?.papel === 'coach' || !perfil?.pagoAte ? 0 : perfil.pagoAte.toMillis() + CARENCIA_DIAS * 86400_000
   const [tique, atualizar] = useState(0)
   useEffect(() => {
     const falta = venceEm - Date.now()
@@ -90,19 +106,63 @@ function Principal() {
   )
 }
 
-// Perfil que não chega: depois de 10 s oferece a saída em vez de girar para sempre.
+// Perfil que não chega: depois de 10 s confere no servidor. Existe: segue esperando.
+// Não existe: deixa pedir acesso. Erro (offline/negado): oferece tentar de novo ou sair.
 function PerfilDemora() {
   const [saindo, sairAgora] = useSair()
   const [demora, setDemora] = useState(false)
+  const [estado, setEstado] = useState<'conferindo' | 'existe' | 'falta' | 'erro'>('conferindo')
+  const [tentativa, setTentativa] = useState(0)
+  const [nome, setNome] = useState(auth.currentUser?.displayName?.slice(0, 80) ?? '')
+  const [aceito, setAceito] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
   useEffect(() => {
     const t = setTimeout(() => setDemora(true), 10_000)
     return () => clearTimeout(t)
   }, [])
+  useEffect(() => {
+    const u = auth.currentUser
+    if (!demora || !u) return
+    setEstado('conferindo')
+    getDocFromServer(doc(db, 'usuarios', u.uid)).then((d) => setEstado(d.exists() ? 'existe' : 'falta'), () => setEstado('erro'))
+  }, [demora, tentativa])
+  const pode = estado === 'falta' && !!auth.currentUser?.email && !temTotp()
+  function pedir() {
+    setErro('')
+    setEnviando(true)
+    pedirAcesso(nome.trim()).catch((e) => {
+      setEnviando(false)
+      setErro(
+        e?.message === 'ja-existe' ? 'Sua conta já existe. Feche e abra o app.'
+        : e?.code === 'unavailable' || e?.code === 'failed-precondition' || e?.code === 'aborted' || !navigator.onLine ? 'Sem internet. Conecte-se e tente de novo.'
+        : 'Não deu para pedir acesso. Fale com seu coach.',
+      )
+    })
+  }
   return (
     <Abertura texto="Preparando sua conta…">
       {demora && (
         <div className="max-w-xs space-y-3 text-center text-sm text-slate-300">
-          <p>Não conseguimos abrir sua conta. Confira a internet ou fale com seu coach.</p>
+          {pode ? (
+            <>
+              <p>Não encontramos seu cadastro. Peça acesso ao seu coach.</p>
+              <input
+                aria-label="Seu nome"
+                placeholder="Seu nome"
+                maxLength={80}
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className="h-14 w-full rounded-2xl bg-white/10 px-4 text-base text-white"
+              />
+              <CaixaAceite marcada={aceito} onChange={setAceito} />
+              {erro && <Aviso>{erro}</Aviso>}
+              <Botao disabled={enviando || !aceito || !nome.trim()} onClick={pedir}>{enviando ? 'Enviando…' : 'Pedir acesso'}</Botao>
+            </>
+          ) : (
+            <p>Não conseguimos abrir sua conta. Confira a internet ou fale com seu coach.</p>
+          )}
+          {estado === 'erro' && <Botao onClick={() => setTentativa((n) => n + 1)}>Tentar de novo</Botao>}
           <Botao disabled={saindo} onClick={sairAgora}>{saindo ? 'Saindo…' : 'Sair'}</Botao>
         </div>
       )}
@@ -161,7 +221,7 @@ function Menu({ rota }: { rota: string }) {
               aria-current={at === id ? 'page' : undefined}
               className={`relative flex h-12 items-center gap-3 rounded-2xl px-4 text-base font-semibold ${at === id ? 'text-white' : 'text-slate-300 hover:text-white'}`}
             >
-              {at === id && <Bolha id="bolha-lateral" className="rounded-2xl" />}
+              {at === id && <Bolha className="rounded-2xl" />}
               <Icone className={`size-5 ${at === id ? 'text-marca-400' : ''}`} /> <span className="flex-1">{rotulo}</span>
               {selo ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-xs font-bold text-white">{selo}</span> : null}
             </a>
@@ -204,6 +264,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if ((p = casar('/aluno/:uid/evolucao', rota))) tela = <EvolucaoCoach key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/avaliacoes', rota))) tela = <AvaliacoesCoach key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/avaliacao/:id', rota))) tela = <AvaliacaoCoach key={p.uid} uid={p.uid} id={p.id} />
+  else if ((p = casar('/aluno/:uid/anamnese', rota))) tela = <AnamneseCoach key={p.uid} uid={p.uid} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if (rota === '/feedbacks') tela = <Feedbacks />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
@@ -249,7 +310,9 @@ function SemAcesso({ uid, perfil }: { uid: string; perfil: Usuario }) {
       <p className="text-slate-400">
         {aguardando
           ? 'Seu coach vai liberar seu acesso em breve.'
-          : 'Seu acesso está pausado. Fale com seu coach para reativar.'}
+          : perfil.status === 'ativo'
+            ? 'Seu acesso está pausado: a mensalidade venceu há mais de 7 dias.'
+            : 'Seu acesso está pausado. Fale com seu coach para reativar.'}
       </p>
       {vencido && <PagarPix uid={uid} perfil={perfil} />}
       <Botao disabled={saindo} onClick={sairAgora}>{saindo ? 'Saindo…' : 'Sair'}</Botao>

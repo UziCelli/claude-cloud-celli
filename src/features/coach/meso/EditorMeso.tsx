@@ -196,9 +196,9 @@ export default function EditorMeso({ id }: { id: string }) {
         <div className="mb-3">
           <Aviso>
             Este mesociclo foi alterado em outra aba ou aparelho. Salvar agora substitui aquela versão.{' '}
-            <button className="underline" onClick={() => setDirty(false)}>
+            <Botao tipo="fantasma" className="mt-2 !text-amber-100 underline" onClick={() => setDirty(false)}>
               Descartar minhas mudanças e carregar a versão atual
-            </button>
+            </Botao>
           </Aviso>
         </div>
       )}
@@ -225,12 +225,12 @@ export default function EditorMeso({ id }: { id: string }) {
           <button
             key={a}
             onClick={() => setAba(a)}
-            className={`relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold ${aba === a ? 'text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            className={`relative min-h-11 shrink-0 rounded-lg px-3 text-sm font-semibold ${aba === a ? 'text-white' : 'text-slate-300 hover:bg-slate-800'}`}
           >
             {aba === a && (
               <m.span
                 layoutId="aba-ativa"
-                className="absolute inset-0 rounded-lg bg-marca-500"
+                className="pointer-events-none absolute inset-0 rounded-lg bg-marca-500"
                 transition={agil}
               />
             )}

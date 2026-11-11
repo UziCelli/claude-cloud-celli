@@ -115,7 +115,7 @@ function Mensalidade({ uid, perfil }: { uid: string; perfil: Usuario }) {
       {perfil.pagoAte && <p className="text-sm text-slate-300">Vence em {dataCurta(perfil.pagoAte.toDate())}</p>}
       {PIX && (
         <>
-          <Botao type="button" className="w-full" aria-expanded={aberto} onClick={() => setAberto((v) => !v)}>Pagar com Pix</Botao>
+          <Botao type="button" tipo="vidro" className="w-full" aria-expanded={aberto} onClick={() => setAberto((v) => !v)}>Pagar com Pix</Botao>
           <Painel aberto={aberto}><PagarPix uid={uid} perfil={perfil} /></Painel>
         </>
       )}
@@ -189,20 +189,20 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
             <Campo rotulo="Nome" value={nome} maxLength={80} autoFocus onChange={(e) => setNome(e.target.value)} />
             <div className="flex gap-2">
               <Botao tipo="primario" className="flex-1" disabled={!nomeValido}>Salvar</Botao>
-              <Botao type="button" className="flex-1" onClick={() => setEditando(false)}>Cancelar</Botao>
+              <Botao type="button" tipo="fantasma" className="flex-1" onClick={() => setEditando(false)}>Cancelar</Botao>
             </div>
           </form>
         ) : (
           <div className="flex items-center gap-2">
             <h1 className="text-[28px] leading-tight">{perfil.nome}</h1>
-            <Botao type="button" onClick={() => { setNome(perfil.nome); setEditando(true) }}>Editar</Botao>
+            <Botao type="button" tipo="vidro" onClick={() => { setNome(perfil.nome); setEditando(true) }}>Editar</Botao>
           </div>
         )}
         <p className="break-all text-sm text-slate-400">{perfil.email}</p>
         {perfil.criadoEm && <p className="text-sm text-slate-500">Aluno desde {desde(perfil.criadoEm.toDate())}</p>}
         <div className="flex gap-2">
-          <Botao type="button" disabled={enviandoFoto} carregando={enviandoFoto} onClick={() => arquivo.current?.click()}>Trocar foto</Botao>
-          {foto && <Botao type="button" onClick={() => window.confirm('Remover sua foto?') && apagarFoto(uid).catch(falhou)}>Remover foto</Botao>}
+          <Botao type="button" tipo="vidro" disabled={enviandoFoto} carregando={enviandoFoto} onClick={() => arquivo.current?.click()}>Trocar foto</Botao>
+          {foto && <Botao type="button" tipo="fantasma" onClick={() => window.confirm('Remover sua foto?') && apagarFoto(uid).catch(falhou)}>Remover foto</Botao>}
         </div>
         {!foto && <p className="text-sm text-slate-400">Sua foto aparece só para você e seu coach. Remova quando quiser.</p>}
         <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
@@ -220,7 +220,7 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
       <AvisoDescanso />
 
       <Quadro className="space-y-3">
-        <Botao type="button" className="w-full" disabled={enviandoSenha} onClick={trocarSenha}>{enviandoSenha ? 'Enviando…' : 'Trocar senha'}</Botao>
+        <Botao type="button" tipo="vidro" className="w-full" disabled={enviandoSenha} onClick={trocarSenha}>{enviandoSenha ? 'Enviando…' : 'Trocar senha'}</Botao>
         <Msg>{senhaOk && <p className="text-sm text-emerald-400">{senhaOk}</p>}</Msg>
       </Quadro>
 
@@ -231,6 +231,9 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
         <a href="#/metodos" className="toque block py-2">
           <Linha icone={<IcLivro className="size-5" />}>Guia de métodos</Linha>
         </a>
+        <a href="#/anamnese" className="toque block py-2">
+          <Linha icone={<IcPrancheta className="size-5" />}>Minha anamnese</Linha>
+        </a>
         <a href="#/feedback" className="toque block py-2">
           <Linha icone={<IcBalao className="size-5" />}>Sua opinião</Linha>
         </a>
@@ -238,9 +241,9 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
           <Linha icone={<IcPessoa className="size-5" />}>Política de Privacidade</Linha>
         </a>
       </Quadro>
-      <button type="button" disabled={saindo} onClick={sairAgora} className="vidro-escuro border border-white/20 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-rose-300">
+      <Botao type="button" tipo="vidro" tamanho="lg" disabled={saindo} onClick={sairAgora} className="flex w-full items-center justify-center gap-2 !text-rose-300">
         <IcSair className="size-5" /> {saindo ? 'Saindo…' : 'Sair'}
-      </button>
+      </Botao>
     </main>
   )
 }

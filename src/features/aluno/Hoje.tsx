@@ -9,8 +9,8 @@ import { TEXTO_SEM_INTERNET, useHoje, useLista, useSemInternet } from '../../lib
 import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
 import { agil, elastico, saida } from '../../movimento'
-import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
-import { Chip, Quadro } from '../../vidro'
+import { Botao, cascata, Centro, Deslizar, item, sobe, mexe } from '../../ui'
+import { BrilhoBorda, Chip, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { semanaParaAbrir } from '../../lib/semana'
 import { semanaAtual } from '../../lib/treino'
@@ -70,7 +70,7 @@ function AvisoReps({ meso, mesoId, registros }: { meso: Meso; mesoId: string; re
         <b>Reps abaixo da meta:</b> nos últimos 7 dias você fez menos reps que o previsto em {a.abaixo} séries (ex.: {a.exercicios[0].nome}).
         Pode ser descanso curto, sono ou alimentação. No próximo treino, diminua um pouco o peso para completar as reps.
       </p>
-      <Botao onClick={entendi}>Entendi</Botao>
+      <Botao tipo="vidro" onClick={entendi}>Entendi</Botao>
     </div>
   )
 }
@@ -112,7 +112,7 @@ function SemanaCarregada({ base, coach, abrirHoje, meso, mesoId, nome, registros
       {/* fora do wrapper que treme: com transform ele viraria o referencial do `fixed` */}
       <AnimatePresence>
       {aviso != null && (
-        <m.div role="alert" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -80, transition: saida }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
+        <m.div role="alert" initial={{ ...mexe('translateY(-80px)'), opacity: 0 }} animate={sobe} exit={{ opacity: 0, ...mexe('translateY(-80px)'), transition: saida }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-rose-500/20 text-rose-400"><IcCadeado className="size-6" /></span>
           <p className="text-[15px] leading-snug text-slate-100">Semana {aviso} já passou. Faça o treino desta semana.</p>
         </m.div>
@@ -173,13 +173,12 @@ function SemanaCarregada({ base, coach, abrirHoje, meso, mesoId, nome, registros
               <m.button
                 key={treino}
                 type="button"
-                variants={item}
-                whileTap={{ scale: 0.98 }}
-                transition={agil}
+                variants={item} // toque: o scale do CSS (button:active) já afunda; whileTap somava e rodava em JS
                 onClick={() => (trava ? bloqueado(semana) : ir(`${base}/treino/${mesoId}/${semana}/${treino}`))}
                 className="block w-full text-left"
               >
                 <Quadro className={`!rounded-[22px] !p-3.5 ${borda}`}>
+                  {destaque && <BrilhoBorda />}
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

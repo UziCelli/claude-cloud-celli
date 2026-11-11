@@ -9,7 +9,7 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks
 import { inicioJanela } from '../../../lib/resumo'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../../lib/contato'
 import { saida, suave } from '../../../movimento'
-import { Botao, Painel, Pagina } from '../../../ui'
+import { Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
@@ -69,15 +69,13 @@ const Saindo = ({ children }: { children: ReactNode }) => (
   </m.div>
 )
 
-const btn = 'inline-flex min-h-11 items-center justify-center rounded-lg border border-current/40 px-3 text-xs font-semibold opacity-90 active:scale-95'
-
 // Arquivar, WhatsApp e E-mail com a mensagem pronta. Sem telefone guardado: o WhatsApp abre sem contato.
 function Acoes({ chave, email, assunto, texto }: { chave: string; email: string; assunto: string; texto: string }) {
   return (
     <div className="flex flex-wrap gap-2 pt-1">
-      <button type="button" className={btn} onClick={() => arquivarAlerta(chave).catch(() => {})}>Arquivar</button>
-      <a className={btn} href={linkWhatsApp(texto)} target="_blank" rel="noopener">WhatsApp</a>
-      {email && <a className={btn} href={linkEmail(email, `${marca.nome}: ${assunto}`, texto)}>E-mail</a>}
+      <Botao type="button" tipo="vidro" onClick={() => arquivarAlerta(chave).catch(() => {})}>Arquivar</Botao>
+      <a className={classesBotao('vidro', 'md', 'inline-flex items-center justify-center')} href={linkWhatsApp(texto)} target="_blank" rel="noopener">WhatsApp</a>
+      {email && <a className={classesBotao('vidro', 'md', 'inline-flex items-center justify-center')} href={linkEmail(email, `${marca.nome}: ${assunto}`, texto)}>E-mail</a>}
     </div>
   )
 }
@@ -183,15 +181,15 @@ export default function Alertas() {
           </Grupo>
           {nArq > 0 && (
             <m.section layout="position" transition={suave} className="space-y-2">
-              <button type="button" aria-expanded={verArq} onClick={() => setVerArq((v) => !v)} className="rounded-lg border border-slate-600 px-3 py-1.5 font-semibold text-slate-300">
+              <Botao type="button" aria-expanded={verArq} onClick={() => setVerArq((v) => !v)}>
                 Arquivados ({nArq}) <IcVoltar className={`inline size-4 align-[-2px] ${verArq ? '-rotate-90' : 'rotate-180'}`} />
-              </button>
+              </Botao>
               {verArq && (
-                <m.ul className="space-y-2 pt-1" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+                <m.ul className="space-y-2 pt-1" initial={{ opacity: 0, ...mexe('translateY(-8px)') }} animate={sobe} transition={suave}>
                   {linhas.map((l) => (
                     <li key={l.chave} className="flex items-center justify-between gap-3 rounded-xl border border-slate-700 p-3 text-sm text-slate-300">
                       <span className="min-w-0"><b>{l.nome}</b> · {l.desc}</span>
-                      <button type="button" className={btn} onClick={() => desarquivarAlerta(l.chave).catch(() => {})}>Desarquivar</button>
+                      <Botao type="button" onClick={() => desarquivarAlerta(l.chave).catch(() => {})}>Desarquivar</Botao>
                     </li>
                   ))}
                 </m.ul>

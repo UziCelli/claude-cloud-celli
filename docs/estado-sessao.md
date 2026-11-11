@@ -1,6 +1,53 @@
-# Estado da sessão (retomada) — atualizado em 10/11/2026
+# Estado da sessão (retomada) — atualizado em 11/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
+
+## 11/11/2026 — Pagamento com tolerância, PAR-Q que pausa, feedback e evolução (PR #150)
+- **Pagamento (CDC):** o acesso só pausa 7 dias depois do vencimento (`CARENCIA_DIAS` em `acesso.ts`; regra e Worker iguais). Nesses 7 dias, aviso 1x por dia com valor + Pix e "Ciente, ir para o treino". O coach continua vendo quem venceu.
+- **Anamnese:** todo aluno que nunca respondeu tem o "Iniciar treino" travado até responder.
+- **PAR-Q grave** (coração, dor no peito, tontura, supervisão médica): dupla confirmação; o app pausa até o coach tocar "Liberar treino" na ficha (`liberadoEm`). Quem já tinha "sim" grave também ficou pausado (decisão do Victor). Cartão "Pausados por saúde" no Início do coach. A pausa é só na tela (risco aceito).
+- **Ficha da anamnese** em cartões pergunta/resposta. **Feedback** em destaque, assunto "App" já marcado. **Evolução do aluno** resumida; detalhes em "Ver mais detalhes".
+- Política: `VERSAO_PRIVACIDADE` = `2026-11-11` (todos aceitam de novo, 1 toque).
+- **Pendência do Victor:** liberar no Início do coach os alunos em "Pausados por saúde" depois de conversar com eles.
+
+## 11/11/2026 — Entrada do aluno: senha e termos sem laço
+- **Bug do "laço":** cada atualização dos termos pedia a senha atual de novo (foram 4 versões em 2 dias). Agora o aceite é um **pop-up** só com "Li e aceito" + Aceitar ou "Não aceito, sair".
+- **Senha fraca:** o app vê no próprio login. Se for fraca, pede uma senha nova **uma vez** (sem digitar a atual). Forte = nunca mais pergunta.
+- **Lista ao vivo** debaixo da senha nova (cadastro, link do e-mail e troca): ✓ 8 caracteres, letra, número, "Senha forte", senhas iguais.
+- **Conta com 123456:** foi um app antigo em cache + a trava do servidor (`senha-minima`) **nunca tinha sido ligada**. O cadastro agora recusa também por dentro (`cadastrar`).
+- **Trava do servidor ligada** nas 2 marcas em 11/11/2026 (workflow "2 etapas do coach" → `senha-minima`, vfit e gislane): app antigo em cache também não cria mais senha fraca.
+
+## 11/11/2026 — Avaliação física v3 (evolução por parte do corpo e desenho)
+- A evolução ficou enxuta: um bloco "Sua evolução" com um cartão por parte do corpo.
+- Cada cartão cruza medida × carga do mesmo segmento (`src/lib/segmentos.ts`). Janela = entre a avaliação anterior e a atual; usa a mediana das variações. Exercício fora do catálogo é ignorado; `conta:false` fica de fora.
+- Desenho do corpo, frente e costas, no app e no PDF. As formas vêm de `corpoPaths.ts` (fonte única); o PDF desenha com `Path2D`.
+- Novo desenho: uma imagem anatômica andrógina (gerada por IA, enviada pelo Victor) serve de arte-linha, com as regiões coloridas por baixo, cortadas pela silhueta (`corpo-frente.png`, `corpo-costas.png`, `corpoPaths.ts`). No app o corpo fica num painel claro.
+- Limitações: cortes retos entre regiões; pescoço sem cor. Ideia futura: imagem em resolução maior (a original tem 1024 px).
+- PRs: #142 (lógica por segmento) e este (desenho do corpo).
+- **Pendência do Victor:** abrir uma avaliação com 2 avaliações e treinos entre elas e conferir no celular o desenho, os cartões e o PDF.
+- **Ideias para depois (não fazer sem pedido):** alerta de assimetria D/E.
+
+## 10/11/2026 — Avaliação física v2 (tela do aluno, cores e lipedema)
+- Pedido do Victor depois de testar no celular. Plano em `docs/plano-avaliacao.md` (seção v2).
+- Início do aluno: o quadro "Avaliações" não diz mais "Em breve" (vira link); o banner "pronta" some depois de 7 dias.
+- Tela da avaliação resumida: frase + 4 cartões com seta e cor, "O que mais mudou", regiões recolhidas e texto escrito recolhido.
+- Leitura de evolução: seta e cor por medida; cruza perímetro x dobra (braço maior com tríceps estável = massa; com tríceps maior = gordura). Peso e IMC ficam cinza.
+- **Lipedema** (braços e/ou pernas): o coach marca na avaliação e a região passa a ser lida como "não deveria subir". Dado de saúde novo: Política atualizada, `VERSAO_PRIVACIDADE` = `2026-11-10b` (**todos os alunos aceitam de novo**).
+- **Pendências do Victor:** ver numa avaliação real se as leituras fazem sentido para o caso dele (limiares 0,5 cm e 1 mm; quadril/coxa dividem a dobra da coxa); abrir o PDF novo no celular.
+## 10/11/2026 — Anamnese
+- **O aluno vê:** questionário em 5 etapas (~3 min, quase tudo toque): saúde (PAR-Q+), gestação e cirurgia, dores, rotina e treino. Funciona offline e sincroniza depois. Cartão no Início e "Minha anamnese" na Conta.
+- **O coach vê:** ficha com as respostas, selo Atenção quando há sinal (PAR-Q "sim", gestante, cirurgia recente, dor), histórico, anotação (o aluno também lê) e "Lançar pelo aluno" no presencial. Cartão "Anamneses" no Início.
+- **Travas:** só aluno novo (conta criada a partir de 11/11) tem o "Iniciar treino" travado até responder. Alunos atuais e fim de ciclo recebem só lembrete.
+- **Aviso médico neutro:** se algum "sim" no PAR-Q, o aluno vê "procure seu médico antes de treinar forte". Não bloqueia.
+- **Menores:** a anamnese pede a autorização do responsável. O aceite geral ainda não mudou (fica para depois, com o advogado).
+- **Política:** `VERSAO_PRIVACIDADE = '2026-11-10'`, então todos aceitam de novo uma vez.
+- **Sem IA:** nenhuma resposta sai do Firebase.
+- **Pendências do Victor:**
+  - testar no celular: aluno responde offline e sincroniza; coach vê o selo Atenção;
+  - pedir ao advogado para revisar a Política (anamnese e menores);
+  - decidir se quer a autorização do responsável também no aceite geral;
+  - conferir as opções do questionário.
+- **Ideias para depois (não fazer sem pedido):** notas privadas do coach (coleção separada); avisar o coach por notificação quando chegar anamnese nova; gráfico ou histórico comparativo.
 
 ## 10/11/2026 — QR Code de cadastro
 - Coach: Início → botão **"QR Code de cadastro"** (QR grande + link + Copiar link). Vale para as duas marcas (usa o `dominio` de cada `marca.json`).
@@ -60,7 +107,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 
 ## Regras combinadas com o Victor
 - **Linguagem:** respostas curtas, em tópicos, pt-BR (ele tem TDAH e não programa).
-- **Hierarquia (14/10/2026, `CLAUDE.md`):** Opus é o **arquiteto** (decisões e questões difíceis passam por ele), Sonnet **executa** (`dev`, `revisor`), Haiku faz o **operacional** (`auxiliar`, `explorador`: commit, PR, merge, CI, deploy, testes).
+- **Hierarquia (14/10/2026, `CLAUDE.md`):** Opus é o **arquiteto e o revisor** (`arquiteto`, `revisor`: decisões, questões difíceis e revisão do diff; revisor virou Opus em 10/11/2026 a pedido do Victor), Sonnet **executa** (`dev`), Haiku faz o **operacional** (`auxiliar`, `explorador`: commit, PR, merge, CI, deploy, testes).
 - **Merge (desde 07/10/2026):** automático depois de revisão própria + CI verde, sem pedir ao Victor (fluxo em `CLAUDE.md`, "PRs: fluxo automático"). Depois de juntar, conferir o workflow "Publicar".
 
 ## Entregas

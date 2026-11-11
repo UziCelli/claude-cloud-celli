@@ -3,11 +3,12 @@ import { useMemo, useState } from 'react'
 import { diaSP, type Usuario } from '../../lib/acesso'
 import { apagarAvaliacao, novaAvaliacaoId, recolherAvaliacao, salvarAvaliacao } from '../../lib/acoes'
 import {
-  BIO, cicloDaAvaliacao, DOBRAS, FAIXA, lerAvaliacao, PERIMETROS, relatorioAvaliacao,
-  type Avaliacao as Av, type AvaliacaoForm,
+  BIO, cicloDaAvaliacao, DOBRAS, FAIXA, lerAvaliacao, LIPEDEMA, PERIMETROS, relatorioAvaliacao,
+  type Avaliacao as Av, type AvaliacaoForm, type Lipedema,
 } from '../../lib/avaliacao'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../lib/contato'
 import { db } from '../../lib/firebase'
+import { historicoExercicios } from '../../lib/evolucao'
 import { useDoc } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { ir, trocarRota } from '../../rota'
@@ -71,6 +72,7 @@ export default function AvaliacaoCoach({ uid, id: idRota }: { uid: string; id: s
 }
 
 function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: string; aluno: Usuario; ficha: Av | null; outras: Av[]; dados: ReturnType<typeof useDadosAluno> }) {
+  const cargas = useMemo(() => historicoExercicios(dados.mesos, dados.registros), [dados.mesos, dados.registros])
   const base = ficha ?? outras[0] // nova: sexo, idade e altura vêm da avaliação mais recente
   const [v, setV] = useState<Textos>(() => ({
     data: ficha?.data ?? hoje(),
@@ -85,6 +87,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
       ...BIO.map((b) => ['b_' + b.id, txt(ficha?.bio[b.id])]),
     ]),
   }))
+  const [lipedema, setLipedema] = useState<Lipedema[]>(base?.lipedema ?? [])
   const [existe, setExiste] = useState(!!ficha)
   const [liberado, setLiberado] = useState(!!ficha?.liberado)
   // Trocar a rota remonta a tela: a mensagem do 1º salvar atravessa pelo `flash`.
@@ -120,13 +123,15 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
         perimetros: pega('p_', PERIMETROS),
         dobras: pega('d_', DOBRAS),
         bio: pega('b_', BIO),
+        lipedema,
         comentario: v.comentario,
       }
     : null
 
   const cicloId = form ? cicloDaAvaliacao(dados.mesos, form.data) : null
-  const ciclo = cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null
-  const r = form ? relatorioAvaliacao([...outras.filter((a) => a.id !== id), { ...form, id, liberado }], id, ciclo) : null
+  // Memo: sem ele, cada número digitado na ficha recalculava o ciclo inteiro.
+  const ciclo = useMemo(() => (cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null), [cicloId, dados.mesos, dados.registros])
+  const r = form ? relatorioAvaliacao([...outras.filter((a) => a.id !== id), { ...form, id, liberado }], id, ciclo, cargas) : null
 
   // Não espera o servidor (offline a promessa só resolve na volta da internet): o estado vem do que o aparelho já sabe.
   const rodar = (p: Promise<void>, ok: string) => {
@@ -176,6 +181,20 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
           <Num rotulo="Peso (kg)" v={v.peso} onChange={set('peso')} ruim={ruim('peso')} />
           <Num rotulo="Altura (cm)" v={v.altura} onChange={set('altura')} ruim={ruim('altura')} />
         </div>
+        <fieldset className="space-y-1">
+          <legend className="sr-only">Lipedema</legend>
+          {LIPEDEMA.map((l) => (
+            <label key={l.id} className="flex min-h-11 items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={lipedema.includes(l.id)}
+                onChange={(e) => setLipedema((x) => (e.target.checked ? [...x, l.id] : x.filter((i) => i !== l.id)))}
+                className="size-6 shrink-0 accent-marca-500"
+              />
+              {l.rotulo}
+            </label>
+          ))}
+        </fieldset>
         {secao('Perímetros (cm)', [...PERIMETROS], 'p_')}
         {secao('Dobras cutâneas (mm)', [...DOBRAS], 'd_')}
         {secao('Bioimpedância', BIO.map((b) => ({ id: b.id, rotulo: `${b.rotulo}${b.un ? ` (${b.un})` : ''}` })), 'b_')}
@@ -196,7 +215,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
         {aluno.presencial ? (
           <>
             <p className="text-sm text-slate-400">Aluno sem app: envie o PDF.</p>
-            <Botao tipo="primario" className="min-h-11 w-full" disabled={!form} onClick={() => gravar(false, 'Salvo.')}>Salvar</Botao>
+            <Botao tipo="primario" className="w-full" disabled={!form} onClick={() => gravar(false, 'Salvo.')}>Salvar</Botao>
           </>
         ) : (
           <>
@@ -204,13 +223,13 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
             <div className="flex flex-wrap gap-2">
               {liberado ? (
                 <>
-                  <Botao tipo="primario" className="min-h-11 flex-1" disabled={!form} onClick={() => gravar(true, 'Avaliação atualizada.')}>Atualizar</Botao>
-                  <Botao className="min-h-11 flex-1" onClick={() => { rodar(recolherAvaliacao(id), 'Avaliação recolhida: o aluno não vê mais.'); setLiberado(false) }}>Recolher</Botao>
+                  <Botao tipo="primario" className="flex-1" disabled={!form} onClick={() => gravar(true, 'Avaliação atualizada.')}>Atualizar</Botao>
+                  <Botao className="flex-1" onClick={() => { rodar(recolherAvaliacao(id), 'Avaliação recolhida: o aluno não vê mais.'); setLiberado(false) }}>Recolher</Botao>
                 </>
               ) : (
                 <>
-                  <Botao className="min-h-11 flex-1" disabled={!form} onClick={() => gravar(false, 'Rascunho salvo.')}>Salvar rascunho</Botao>
-                  <Botao tipo="primario" className="min-h-11 flex-1" disabled={!form} onClick={() => gravar(true, 'Liberada para o aluno.')}>Liberar para o aluno</Botao>
+                  <Botao className="flex-1" disabled={!form} onClick={() => gravar(false, 'Rascunho salvo.')}>Salvar rascunho</Botao>
+                  <Botao tipo="primario" className="flex-1" disabled={!form} onClick={() => gravar(true, 'Liberada para o aluno.')}>Liberar para o aluno</Botao>
                 </>
               )}
             </div>
@@ -231,7 +250,6 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
               <div className="flex flex-wrap gap-2">
                 <Botao
                   tipo="perigo"
-                  className="min-h-11"
                   onClick={() => {
                     apagarAvaliacao(id).catch(() => setMsg('Não foi possível apagar. Confira a internet e tente de novo.'))
                     ir(`/aluno/${uid}/avaliacoes`)
@@ -239,11 +257,11 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
                 >
                   Sim, apagar
                 </Botao>
-                <Botao className="min-h-11" onClick={() => setApagando(false)}>Cancelar</Botao>
+                <Botao onClick={() => setApagando(false)}>Cancelar</Botao>
               </div>
             </div>
           ) : (
-            <Botao tipo="alerta" className="min-h-11 w-full" onClick={() => setApagando(true)}>Apagar avaliação</Botao>
+            <Botao tipo="alerta" className="w-full" onClick={() => setApagando(true)}>Apagar avaliação</Botao>
           ))}
       </section>
     </div>

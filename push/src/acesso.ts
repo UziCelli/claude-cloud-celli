@@ -2,16 +2,17 @@ import type { Projeto } from './jwt'
 import { nomeLimpo, uidOk, type TipoCoach } from './validar'
 
 const CACHE_MS = 10 * 60_000
+const CARENCIA_MS = 7 * 86_400_000
 const LIMITE = 30
 const JANELA_MS = 60_000
 
 type Campos = { papel?: { stringValue?: string }; status?: { stringValue?: string }; pagoAte?: { timestampValue?: string }; nome?: { stringValue?: string } }
 
-// Coach sempre pode; aluno só com status 'ativo' e pagoAte no futuro (mesma regra do firestore.rules).
+// Coach sempre pode; aluno só com status 'ativo' e pagoAte + 7 dias de tolerância no futuro (mesma regra do firestore.rules).
 const liberado = (campos: Campos | undefined, agora: number): boolean => {
   if (campos?.papel?.stringValue === 'coach') return true
   const ate = Date.parse(campos?.pagoAte?.timestampValue ?? '')
-  return campos?.status?.stringValue === 'ativo' && ate > agora
+  return campos?.status?.stringValue === 'ativo' && ate + CARENCIA_MS > agora
 }
 
 // Token do App Check repassado ao Firestore: string simples, sem espaços/quebras, até 4096. Inválido = ignorado.

@@ -5,7 +5,7 @@ import { enviarFeedback } from '../../lib/acoes'
 import { ASSUNTOS, TEXTO_MAX, TIPOS, marcarConvite, montarFeedback, podeDepoimento, primeiroNome, type Assunto, type TipoFeedback } from '../../lib/feedback'
 import { registrarErro } from '../../lib/log'
 import { voltar } from '../../rota'
-import { Botao, Pagina } from '../../ui'
+import { Botao, classesBotao, Pagina } from '../../ui'
 import { Quadro } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
 
@@ -34,6 +34,10 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
   const [enviado, setEnviado] = useState<number>()
   const [, atualizar] = useState(0)
   const faltaTrava = travaAte - Date.now()
+  // A tela de origem (Conta, fim do treino) costuma estar rolada até embaixo, e a troca de rota mantém a rolagem:
+  // sem isto a tela abre já na caixa de texto e as estrelas ficam escondidas lá em cima.
+  // Chaves no corpo: o efeito não pode devolver nada (o React chamaria o retorno ao sair da tela).
+  useEffect(() => { window.scrollTo(0, 0) }, [])
   useEffect(() => {
     if (faltaTrava <= 0) return
     const t = setTimeout(() => atualizar((n) => n + 1), faltaTrava)
@@ -65,18 +69,18 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
                 : 'Obrigado pela sua opinião. Ela ajuda o app a crescer.'}
           </p>
           {enviado === 5 && marca.avaliarGoogle && (
-            <a href={marca.avaliarGoogle} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-center rounded-lg border border-marca-400 bg-marca-500 text-sm font-semibold text-white">
+            <a href={marca.avaliarGoogle} target="_blank" rel="noopener noreferrer" className={classesBotao('primario', 'lg', 'flex items-center justify-center')}>
               Avaliar no Google
             </a>
           )}
-          <Botao className="w-full" onClick={() => voltar('/')}>{enviado === 5 && marca.avaliarGoogle ? 'Agora não' : 'Fechar'}</Botao>
+          <Botao tipo={enviado === 5 && marca.avaliarGoogle ? 'fantasma' : 'primario'} tamanho={enviado === 5 && marca.avaliarGoogle ? 'md' : 'lg'} className="w-full" onClick={() => voltar('/')}>{enviado === 5 && marca.avaliarGoogle ? 'Agora não' : 'Fechar'}</Botao>
         </Quadro>
       </Pagina>
     )
   }
 
   return (
-    <Pagina titulo="Sua opinião" voltar={<BotaoVoltar para="/conta" />}>
+    <Pagina titulo="Sua opinião sobre o app" voltar={<BotaoVoltar para="/conta" />}>
       <form
         className="mx-auto max-w-md space-y-5"
         onSubmit={(e) => {
@@ -84,8 +88,9 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
           if (nota && faltaTrava <= 0) enviar()
         }}
       >
-        <p className="-mt-3 text-slate-400">Como está sendo treinar com {marca.nome}?</p>
-        <div role="group" aria-label="Nota" className="flex justify-between">
+        <p className="-mt-3 text-slate-400">Conte o que falta, o que atrapalha ou o que você adoraria ter no app. Leva 1 minuto.</p>
+        <p aria-live="polite" className="text-center font-semibold text-slate-100">{nota ? `Sua nota: ${nota} de 5` : 'Quantas estrelas o app merece? Toque para escolher.'}</p>
+        <div role="group" aria-label="Nota" className="-mt-3 flex justify-between">
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} type="button" aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`} aria-pressed={n === nota} onClick={() => setNota(n)} className={`grid size-14 place-items-center ${n <= nota ? 'text-amber-400' : 'text-slate-500'}`}>
               <IcEstrela cheia={n <= nota} className="size-10" />
@@ -130,8 +135,8 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
           )}
         </div>
 
-        <Botao tipo="primario" type="submit" className="h-12 w-full text-base" disabled={!nota || faltaTrava > 0}>
-          {faltaTrava > 0 ? 'Enviado. Aguarde um minuto' : 'Enviar'}
+        <Botao tipo="primario" type="submit" tamanho="lg" className="w-full" disabled={!nota || faltaTrava > 0}>
+          {faltaTrava > 0 ? 'Enviado. Aguarde um minuto' : nota ? 'Enviar' : 'Escolha as estrelas lá em cima'}
         </Botao>
       </form>
     </Pagina>

@@ -1,5 +1,7 @@
 # Plano — Fase 3: avaliação física e relatório escrito de evolução (09/11/2026)
 
+> **v3 (11/11/2026):** a evolução virou um cartão por parte do corpo, com medida × carga do mesmo segmento (`src/lib/segmentos.ts`, janela entre as duas avaliações, mediana das variações). Desenho do corpo frente/costas no app e no PDF (`CorpoSvg.tsx`, `corpoPaths.ts`). Detalhes em `docs/estado-sessao.md`.
+
 Vale para as duas marcas (mesmo código). Escolhas do Victor:
 - **Medidas:** peso e altura (sempre), perímetros, dobras cutâneas (Pollock 7 dobras) e bioimpedância.
 - **Quem preenche:** só o coach. O aluno só vê depois de "Liberar" (igual ao relatório do ciclo).
@@ -68,6 +70,15 @@ Decisões do arquiteto:
 - O backup já leva todas as coleções (criptografado, 30 dias).
 - Política de Privacidade: item novo e seção "Dados de saúde"; `VERSAO_PRIVACIDADE` nova (todos aceitam de novo uma vez).
 - Sem nome, e-mail ou medida em log, resumo de robô ou alerta.
+
+## v2 (10/11/2026): tela do aluno resumida, cores de evolução e leitura medida x dobra
+Pedido do Victor depois de testar no celular: o quadro "Avaliações · Em breve" contradizia o banner "avaliação pronta"; a tela tinha informação demais; os números não mostravam quem evoluiu; a coluna Diferença era cortada.
+- **Leitura** (motor, `src/lib/avaliacao.ts`): seta + cor por medida; braço x tríceps, cintura x supra-ilíaca etc. (`PAR_DOBRA`); esperado subir, exceto cintura e abdômen; limiares 0,5 cm e 1 mm. Detalhes na linha "Avaliação física" de "Pontos sensíveis".
+- **Lipedema** (decidido pelo Victor): campo `lipedema` (`bracos`/`pernas`) na avaliação, só o coach marca, inverte a expectativa da região. Dado de saúde novo: Política e `VERSAO_PRIVACIDADE` = `2026-11-10b`.
+- **Peso e IMC neutros** (decidido pelo Victor): seta cinza; a cor vem da composição (gordura %, massa magra).
+- **Tela** (7 leis de UX): resumo no topo (frase + 4 cartões com delta), "O que mais mudou" (até 3 ganhos e 3 a observar), grupos recolhidos por região, linha de medida sem tabela, texto escrito recolhido.
+- **Início do aluno:** o quadro vira link para a última avaliação; o banner "pronta" só nos 7 dias seguintes à liberação.
+- **PDF:** delta colorido com seta desenhada e a linha da leitura.
 
 ## Critério de pronto
 - `npm run typecheck`, `npm test`, `npm run test:rules`, `npm run build` e `build:gislane` verdes.

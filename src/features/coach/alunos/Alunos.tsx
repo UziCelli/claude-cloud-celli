@@ -1,7 +1,7 @@
 import { AnimatePresence, m } from 'motion/react'
 import { agil, saida, suave } from '../../../movimento'
 import { useState } from 'react'
-import { collection, query, where } from 'firebase/firestore'
+import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { diasParaVencer, hojeMaisDias, type Usuario } from '../../../lib/acesso'
 import { apagarAluno, confirmarPagamento, definirAcesso, salvarMensalidade } from '../../../lib/acoes'
 import { registrarErro } from '../../../lib/log'
@@ -13,7 +13,7 @@ import type { Foto } from '../../../lib/acesso'
 import { contaDoDia, PIX, reais } from '../../aluno/PagarPix'
 import EnviarAviso from './EnviarAviso'
 import { IcEngrenagem, IcPlay } from '../../../icones'
-import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina, sobe, mexe } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
 
@@ -86,8 +86,21 @@ export default function Alunos() {
     .filter((a) => a.nome.toLowerCase().includes(busca.toLowerCase()) || a.email.toLowerCase().includes(busca.toLowerCase()))
     .sort(comparar)
 
-  function liberar(uid: string, pagoAte: string) {
+  async function liberar(uid: string, pagoAte: string) {
     setErro('')
+    const a = alunos.find((x) => x.id === uid)
+    if (a?.status === 'aguardando') {
+      // Aluno apagado hoje: o login só some na limpeza da madrugada; liberar agora ressuscitaria o perfil.
+      // Sem conseguir conferir (offline/erro), não libera: melhor tentar de novo do que ressuscitar um aluno apagado.
+      const apagado = await getDocFromServer(doc(db, 'exclusoes', uid)).then((d) => d.exists() ? 'sim' : 'nao', () => 'erro')
+      if (apagado !== 'nao') {
+        setEditando(null)
+        setErro(apagado === 'sim'
+          ? 'Este aluno foi apagado hoje. O login some na limpeza da madrugada; peça para ele criar a conta de novo amanhã.'
+          : 'Sem conexão para conferir. Tente de novo.')
+        return
+      }
+    }
     definirAcesso(uid, { status: 'ativo', pagoAte }).catch((e) => {
       registrarErro('gravacao', `definir acesso: ${e?.code ?? e}`, e)
       setErro('Não deu para gravar. Tente de novo.')
@@ -178,7 +191,7 @@ export default function Alunos() {
           </button>
         </div>
         {aberto === a.id && (
-          <m.div className="pt-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+          <m.div className="pt-2" initial={{ opacity: 0, ...mexe('translateY(-8px)') }} animate={sobe} transition={suave}>
             {confirmando?.id === a.id ? (
               <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />
             ) : avisando === a.id ? (
@@ -335,7 +348,7 @@ function ConfirmarAluno({ id, nome, tipo, onFechar, onErro }: { id: string; nome
   }
 
   return (
-    <m.div className="w-full space-y-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+    <m.div className="w-full space-y-2" initial={{ opacity: 0, ...mexe('translateY(-8px)') }} animate={sobe} transition={suave}>
       <p className="text-sm">
         {apagar
           ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas, anotações e o login. A limpeza automática apaga também os registros de erro e as cópias de segurança em até 24 h. Não dá para desfazer.`

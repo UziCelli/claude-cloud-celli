@@ -12,13 +12,14 @@ import { inicioJanela, resumoCoach, type AlunoComId } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
 import { calcularAlertas, useArquivados, type Reg } from '../alertas/Alertas'
-import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
+import { Botao, Cartao, classesBotao, cascata, Contar, item, Pagina } from '../../../ui'
 import { PIX } from '../../aluno/PagarPix'
 import { mediaTexto, useFeedbacks } from '../feedbacks/Feedbacks'
 import { resumoNotas } from '../../../lib/feedback'
 import { IcBalao, IcMais, IcPlay, IcQr } from '../../../icones'
 import QrCadastro from '../alunos/QrCadastro'
 import { EscolherAluno } from '../presencial/Presencial'
+import { anamnesesNovas, anamnesesPendentes, lerAnamnese, pausadoSaude, sinaisAtencao, type Anamnese } from '../../../lib/anamnese'
 import { Quadro } from '../../../vidro'
 
 const saudacao = (d: Date) => {
@@ -42,13 +43,14 @@ export default function Inicio({ nome }: { nome: string }) {
   const corte = corteAvaliacoes(agora)
   const avaliacoes = useLista<{ alunoId: string; data: string }>(useMemo(() => query(collection(db, 'avaliacoes'), where('data', '>=', corte)), [corte]))
   const fb = useFeedbacks()
+  const anamneses = useLista<object>(useMemo(() => query(collection(db, 'anamneses')), [])) // uma consulta só: coleção pequena
   const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves)
   if (!alunos.carregando && alunos.dados.length === 0)
     return (
       <Pagina titulo="Início">
         <Cartao className="space-y-4 text-center">
           <p className="text-slate-400">{semInternet ? TEXTO_SEM_INTERNET : 'Nenhum aluno ainda.'}</p>
-          <Botao tipo="primario" className="w-full py-4 text-base" onClick={() => ir('/alunos/novo')}>
+          <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => ir('/alunos/novo')}>
             Cadastrar primeiro aluno
           </Botao>
         </Cartao>
@@ -59,6 +61,10 @@ export default function Inicio({ nome }: { nome: string }) {
   const mesosAtivos = mesos.dados.filter((d) => nomeDe.has(d.alunoId)).map((d) => ({ id: d.id, alunoId: d.alunoId, meso: docParaMeso(d), nome: d.nome }))
   const paraRevisar = relatoriosParaRevisar(mesosAtivos, new Set(liberados.dados.map((x) => x.id)), agora)
   const paraAvaliar = avaliacoesParaFazer(mesosAtivos, avaliacoes.dados, agora)
+  const docsAnam = anamneses.dados.map((d) => lerAnamnese(d.id, d)).filter((a): a is Anamnese => !!a && nomeDe.has(a.alunoId))
+  const novasAnam = anamnesesNovas(docsAnam) // uma por aluno
+  const pausados = alunos.dados.filter((a) => nomeDe.has(a.id) && pausadoSaude(docsAnam.filter((d) => d.alunoId === a.id)))
+  const pendentesAnam = anamnesesPendentes(alunos.dados.map((a) => ({ id: a.id, nome: a.nome, status: a.status, presencial: a.presencial })), docsAnam, mesosAtivos, agora)
   const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial).length
   const blocos: [string, AlunoComId[], string][] = [
     ['Aguardando aprovação', r.aguardando, 'Ninguém aguardando.'],
@@ -85,19 +91,19 @@ export default function Inicio({ nome }: { nome: string }) {
         ))}
       </div>
       {/* Atalho do dia a dia: escolher o aluno e cair no treino de hoje (2 toques). */}
-      <Botao tipo="destaque" className="mb-3 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold lg:max-w-md" onClick={() => setEscolher(true)}>
+      <Botao tipo="destaque" tamanho="lg" className="mb-3 flex w-full items-center justify-center gap-2 lg:max-w-md" onClick={() => setEscolher(true)}>
         <IcPlay className="size-5" /> Treino presencial
       </Botao>
       {escolher && <EscolherAluno titulo="Treino presencial: qual aluno?" onEscolher={(uid) => ir(`/aluno/${uid}/presencial`)} onFechar={() => setEscolher(false)} />}
       <div className="mb-3 grid grid-cols-2 gap-3 lg:max-w-md">
-        <Botao tipo="primario" className="flex h-12 min-w-0 items-center justify-center gap-2 rounded-2xl text-base font-bold" onClick={() => ir('/alunos/novo')}>
+        <Botao tipo="primario" className="flex min-w-0 items-center justify-center gap-2" onClick={() => ir('/alunos/novo')}>
           <IcMais className="size-5" /> Novo aluno
         </Botao>
-        <a href="#/ranking" className="grid min-h-12 min-w-0 place-items-center rounded-2xl bg-white/10 px-3 text-center text-base font-bold leading-tight ring-1 ring-white/20">
+        <a href="#/ranking" className={classesBotao('vidro', 'md', 'grid min-w-0 place-items-center text-center leading-tight')}>
           Ranking de evolução
         </a>
       </div>
-      <Botao className="mb-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold lg:max-w-md" onClick={() => setQr(true)}>
+      <Botao className="mb-3 flex w-full items-center justify-center gap-2 lg:max-w-md" onClick={() => setQr(true)}>
         <IcQr className="size-5" /> QR Code de cadastro
       </Botao>
       {qr && <QrCadastro onFechar={() => setQr(false)} />}
@@ -150,6 +156,43 @@ export default function Inicio({ nome }: { nome: string }) {
           </ul>
         </section>
       )}
+      {pausados.length > 0 && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-amber-400/60 bg-amber-950/40 p-4">
+          <h2 className="font-semibold">
+            Pausados por saúde <span className="font-display text-lg font-bold text-amber-300">({pausados.length})</span>
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {pausados.map((a) => (
+              <li key={a.id} className="max-w-full min-w-0">
+                <a href={`#/aluno/${a.id}/anamnese`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-amber-400/40 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">{a.nome}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {(novasAnam.length > 0 || pendentesAnam.length > 0) && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-marca-500/60 bg-marca-900/40 p-4">
+          <h2 className="font-semibold">
+            Anamneses <span className="font-display text-lg font-bold text-marca-300">{novasAnam.length + pendentesAnam.length}</span>
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {novasAnam.map((a) => (
+              <li key={a.id} className="max-w-full min-w-0">
+                <a href={`#/aluno/${a.alunoId}/anamnese`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
+                  {nomeDe.get(a.alunoId)} · nova{sinaisAtencao(a.r).length > 0 && ' · Atenção'}
+                </a>
+              </li>
+            ))}
+            {pendentesAnam.map((x) => (
+              <li key={x.alunoId} className="max-w-full min-w-0">
+                <a href={`#/aluno/${x.alunoId}/anamnese`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/15">
+                  {x.nome} · {x.motivo === 'primeira' ? 'não respondeu' : 'atualizar'}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {alertas.total > 0 && (
         <a href="#/alertas" className="mb-3 flex items-center justify-between gap-3 rounded-3xl border border-rose-500/60 bg-rose-950/70 p-4 text-rose-100">
           <span className="font-semibold">
@@ -184,7 +227,7 @@ export default function Inicio({ nome }: { nome: string }) {
                         {l.texto}
                       </a>
                       {titulo === 'Aguardando aprovação' && (
-                        <a href="#/alunos" className="grid h-11 shrink-0 place-items-center rounded-full border border-marca-400 bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
+                        <a href="#/alunos" className={classesBotao('primario', 'md', 'grid shrink-0 place-items-center')}>Liberar</a>
                       )}
                     </li>
                   ))

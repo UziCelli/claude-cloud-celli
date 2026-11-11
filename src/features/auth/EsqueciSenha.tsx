@@ -3,7 +3,7 @@ import { FirebaseError } from 'firebase/app'
 import { recuperarSenha } from '../../lib/acoes'
 import { voltar } from '../../rota'
 import { registrarErro } from '../../lib/log'
-import { Aviso, Msg } from '../../ui'
+import { Aviso, Botao, Msg } from '../../ui'
 import { Brilho } from '../../vidro'
 import Logo from '@marca/Logo'
 
@@ -84,16 +84,13 @@ export default function EsqueciSenha({ email, setEmail }: { email: string; setEm
           </div>
           <Msg>{ok && <Aviso>{SUCESSO}</Aviso>}</Msg>
           <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
-          <button
-            className="h-14 w-full rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg disabled:opacity-50"
-            disabled={enviando}
-          >
+          <Botao tipo="primario" tamanho="lg" className="w-full" disabled={enviando}>
             {enviando ? 'Enviando…' : 'Enviar link'}
-          </button>
+          </Botao>
         </form>
-        <button type="button" className="vidro-escuro border border-white/20 mt-6 h-14 w-full rounded-2xl text-[17px] font-bold text-white" onClick={() => voltar('/')}>
+        <Botao type="button" tipo="vidro" tamanho="lg" className="mt-6 w-full" onClick={() => voltar('/')}>
           Voltar para entrar
-        </button>
+        </Botao>
       </main>
     </div>
   )

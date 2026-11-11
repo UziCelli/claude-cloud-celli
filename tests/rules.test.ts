@@ -15,6 +15,7 @@ import {
   getDoc,
   getDocs,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -28,7 +29,7 @@ let env: RulesTestEnvironment;
 
 const DIA = 24 * 60 * 60 * 1000;
 const futuro = Timestamp.fromMillis(Date.now() + 30 * DIA);
-const passado = Timestamp.fromMillis(Date.now() - DIA);
+const passado = Timestamp.fromMillis(Date.now() - 8 * DIA); // além da tolerância de 7 dias
 
 // ana e bia: alunas liberadas. exp: pagamento vencido. blq: bloqueada. agu: aguardando.
 const usuarios: Record<string, object> = {
@@ -36,11 +37,12 @@ const usuarios: Record<string, object> = {
   ana: { papel: 'aluno', nome: 'Ana', email: 'a@x.com', status: 'ativo', pagoAte: futuro },
   bia: { papel: 'aluno', nome: 'Bia', email: 'b@x.com', status: 'ativo', pagoAte: futuro },
   exp: { papel: 'aluno', nome: 'Exp', email: 'e@x.com', status: 'ativo', pagoAte: passado },
+  car: { papel: 'aluno', nome: 'Car', email: 'k@x.com', status: 'ativo', pagoAte: Timestamp.fromMillis(Date.now() - 3 * DIA) }, // vencida, dentro da tolerância
   blq: { papel: 'aluno', nome: 'Blq', email: 'l@x.com', status: 'bloqueado', pagoAte: futuro },
   agu: { papel: 'aluno', nome: 'Agu', email: 'g@x.com', status: 'aguardando' },
   arq: { papel: 'aluno', nome: 'Arq', email: 'q@x.com', status: 'arquivado', pagoAte: futuro },
 };
-const ALUNOS = ['ana', 'bia', 'exp', 'blq', 'agu', 'arq'];
+const ALUNOS = ['ana', 'bia', 'exp', 'car', 'blq', 'agu', 'arq'];
 
 const registro = (aluno: string, semana = 1, treino = 1) => ({
   alunoId: aluno,
@@ -169,6 +171,20 @@ describe('usuarios', () => {
     const criar = (dados: object, id = 'novo') => setDoc(doc(dbEmail('novo', 'n@x.com'), 'usuarios', id), dados);
 
     it('permite aluno aguardando', () => assertSucceeds(criar(novo)));
+    it('transação cria o perfil quando não existe (pedirAcesso)', () => {
+      const conta = dbEmail('novo', 'n@x.com'); // uma instância só: a transação e a referência precisam ser da mesma
+      return assertSucceeds(
+        runTransaction(conta, async (tx) => {
+          const ref = doc(conta, 'usuarios', 'novo');
+          if ((await tx.get(ref)).exists()) throw new Error('ja-existe');
+          tx.set(ref, novo);
+        }),
+      );
+    });
+    it('nega gravar cadastro sobre perfil existente (ativo, bloqueado, aguardando)', async () => {
+      for (const [uid, email] of [['ana', 'a@x.com'], ['blq', 'l@x.com'], ['agu', 'g@x.com']])
+        await assertFails(setDoc(doc(dbEmail(uid, email), 'usuarios', uid), { ...novo, email }));
+    });
     it('nega papel coach', () => assertFails(criar({ ...novo, papel: 'coach' })));
     it('nega status ativo', () => assertFails(criar({ ...novo, status: 'ativo' })));
     it('nega pagoAte', () => assertFails(criar({ ...novo, pagoAte: futuro })));
@@ -426,6 +442,11 @@ describe('mesos', () => {
     await assertFails(getDocs(collection(db('ana'), 'mesos')));
   });
 
+  it('vencido há 3 dias (tolerância de 7) ainda lê; há 8 dias (exp) não', async () => {
+    await assertSucceeds(getDoc(doc(db('car'), 'mesos', 'm_car')));
+    await assertFails(getDoc(doc(db('exp'), 'mesos', 'm_exp')));
+  });
+
   it('vencido, bloqueado, aguardando ou sem cadastro não lê', async () => {
     for (const uid of ['exp', 'blq', 'agu']) await assertFails(getDoc(doc(db(uid), 'mesos', `m_${uid}`)));
     await assertFails(getDocs(query(collection(db('novo'), 'mesos'), where('alunoId', '==', 'novo'))));
@@ -460,6 +481,12 @@ describe('registros', () => {
       await assertFails(setDoc(reg(uid, `m_${uid}_s01_t2`), { ...registro(uid, 1, 2), atualizadoEm: serverTimestamp() }));
       await assertFails(updateDoc(reg(uid, `m_${uid}_s01_t1`), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
     }
+  });
+
+  it('vencido há 3 dias ainda grava e lê o registro; há 8 dias (exp) não', async () => {
+    await assertSucceeds(getDoc(reg('car', 'm_car_s01_t1')));
+    await assertSucceeds(updateDoc(reg('car', 'm_car_s01_t1'), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
+    await assertFails(updateDoc(reg('exp', 'm_exp_s01_t1'), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
   });
 
   it('aluno grava registro de semana passada (sync atrasado) → permitido', async () => {
@@ -1430,6 +1457,14 @@ describe('avaliacoes', () => {
       await assertSucceeds(setDoc(av('coach'), valida({ perimetros: {}, dobras: {}, bio: {} })));
     });
 
+    it('lipedema: só braços e/ou pernas, em lista de até 2', async () => {
+      await assertSucceeds(setDoc(av('coach'), valida({ lipedema: ['bracos'] })));
+      await assertSucceeds(setDoc(av('coach'), valida({ lipedema: ['bracos', 'pernas'] })));
+      await assertSucceeds(setDoc(av('coach'), valida({ lipedema: [] })));
+      for (const lipedema of [['rosto'], ['bracos', 'pernas', 'bracos'], 'pernas', 'bracos', true, [1], { bracos: true }])
+        await assertFails(setDoc(av('coach'), valida({ lipedema })));
+    });
+
     it('coach sem 2º fator não lê nem escreve', async () => {
       await existente('ana', true);
       const r = doc(contexto('coach', SEM_FATOR).firestore() as unknown as Firestore, 'avaliacoes', 'av_ana');
@@ -1478,6 +1513,180 @@ describe('avaliacoes', () => {
       await assertFails(getDoc(av(undefined)));
       await assertFails(getDocs(collection(db(), 'avaliacoes')));
       await assertFails(setDoc(av(undefined, 'nova'), valida()));
+    });
+  });
+});
+
+// Anamnese (dado de saúde): anamneses/{id automático}. Primeira coleção de saúde que o ALUNO cria.
+// Uma versão nova por envio; o aluno não altera nem apaga. Chaves e limites: src/lib/anamnese.ts.
+describe('anamneses', () => {
+  const an = (uid: string | undefined, id = 'an_ana') => doc(db(uid), 'anamneses', id);
+  const respostas = (extra: object = {}) => ({
+    coracao: false, dorPeito: false, tontura: false, doencaCronica: false,
+    remedio: false, ossoArticulacao: false, supervisaoMedica: false, declaracao: true,
+    ...extra,
+  });
+  const nova = (extra: object = {}, r: object = {}) => ({
+    alunoId: 'ana',
+    versao: 1,
+    origem: 'aluno',
+    r: respostas(r),
+    em: serverTimestamp(),
+    atualizadoEm: serverTimestamp(),
+    ...extra,
+  });
+  const existente = (aluno: string, id = `an_${aluno}`) =>
+    env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore() as unknown as Firestore, 'anamneses', id), {
+        alunoId: aluno, versao: 1, origem: 'aluno', r: respostas(), em: Timestamp.now(), atualizadoEm: Timestamp.now(),
+      }),
+    );
+  const minhas = (uid: string) => getDocs(query(collection(db(uid), 'anamneses'), where('alunoId', '==', uid)));
+
+  describe('aluno', () => {
+    it('cria a própria (mínima e completa), lê pelo id e pela consulta alunoId == uid', async () => {
+      await assertSucceeds(setDoc(an('ana', 'a1'), nova()));
+      await assertSucceeds(
+        setDoc(an('ana', 'a2'), nova({}, {
+          coracao: true, parqQual: 'Pressão alta', gestante: 'naoSeAplica', cirurgia12m: false, fuma: true,
+          dores: ['ombro', 'joelho'], lesoes: 'Menisco 2019', sono: '5a7', trabalho: 'emPe', estresse: 'alto',
+          objetivo: 'saude', experiencia: 'nunca', tempoParado: 'mais1a', diasSemana: 3, minutos: 'ate30',
+          outrasAtividades: 'Pilates', algoMais: '', responsavelConfirmou: true,
+        })),
+      );
+      await assertSucceeds(getDoc(an('ana', 'a1')));
+      await assertSucceeds(minhas('ana'));
+    });
+
+    it('aceita os limites de texto e número (texto conta caracteres, não bytes)', async () => {
+      await assertSucceeds(setDoc(an('ana', 'a1'), nova({}, { parqQual: 'é'.repeat(500), algoMais: 'x'.repeat(1000), diasSemana: 7, dores: [] })));
+      await assertSucceeds(setDoc(an('ana', 'a2'), nova({}, { diasSemana: 1, outrasAtividades: 'x'.repeat(300), lesoes: 'x'.repeat(500) })));
+    });
+
+    it('nega PAR-Q faltando, declaração falsa ou faltando, responsável falso', async () => {
+      const { coracao: _c, ...semCoracao } = respostas();
+      const { declaracao: _d, ...semDeclaracao } = respostas();
+      await assertFails(setDoc(an('ana', 'x'), { ...nova(), r: semCoracao }));
+      await assertFails(setDoc(an('ana', 'x'), { ...nova(), r: semDeclaracao }));
+      await assertFails(setDoc(an('ana', 'x'), nova({}, { declaracao: false })));
+      await assertFails(setDoc(an('ana', 'x'), nova({}, { declaracao: 'sim' })));
+      await assertFails(setDoc(an('ana', 'x'), nova({}, { responsavelConfirmou: false })));
+    });
+
+    it('nega tipo, opção, lista, texto e número inválidos', async () => {
+      for (const r of [
+        { coracao: 'nao' }, { fuma: 1 }, { gestante: 'talvez' }, { sono: 8 },
+        { dores: ['nariz'] }, { dores: 'ombro' }, { dores: Array(10).fill('ombro') },
+        { parqQual: 'x'.repeat(501) }, { lesoes: 5 }, { outrasAtividades: 'x'.repeat(301) }, { algoMais: 'x'.repeat(1001) },
+        { diasSemana: 0 }, { diasSemana: 8 }, { diasSemana: 3.5 }, { diasSemana: '3' },
+        { hack: true },
+      ])
+        await assertFails(setDoc(an('ana', 'x'), nova({}, r)));
+    });
+
+    it('nega documento malformado: campo a mais/faltando, origem, versão, r, horas forjadas', async () => {
+      const { em: _e, ...semEm } = nova();
+      await assertFails(setDoc(an('ana', 'x'), semEm));
+      await assertFails(setDoc(an('ana', 'x'), nova({ obsCoach: 'eu' })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ vistaEm: serverTimestamp() })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ extra: 1 })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ origem: 'coach' })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ versao: 0 })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ versao: '1' })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ r: 'tudo ok' })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ em: passado })));
+      await assertFails(setDoc(an('ana', 'x'), nova({ atualizadoEm: futuro })));
+    });
+
+    it('não altera nem apaga a própria', async () => {
+      await existente('ana');
+      await assertFails(updateDoc(an('ana'), { 'r.fuma': true, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('ana'), { obsCoach: 'x', atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(an('ana'), nova()));
+      await assertFails(deleteDoc(an('ana')));
+    });
+
+    it('não grava liberadoEm (nem ao criar nem ao atualizar)', async () => {
+      await assertFails(setDoc(an('ana', 'x'), nova({ liberadoEm: serverTimestamp() })));
+      await existente('ana');
+      await assertFails(updateDoc(an('ana'), { liberadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() }));
+    });
+
+    it('não lê a de outro aluno nem lista tudo', async () => {
+      await existente('bia');
+      await assertFails(getDoc(an('ana', 'an_bia')));
+      await assertFails(getDocs(query(collection(db('ana'), 'anamneses'), where('alunoId', '==', 'bia'))));
+      await assertFails(getDocs(collection(db('ana'), 'anamneses')));
+    });
+
+    it('vencido, bloqueado, aguardando e arquivado não leem nem criam', async () => {
+      for (const uid of ['exp', 'blq', 'agu', 'arq']) {
+        await existente(uid);
+        await assertFails(getDoc(an(uid, `an_${uid}`)));
+        await assertFails(minhas(uid));
+        await assertFails(setDoc(an(uid, 'x'), nova({ alunoId: uid })));
+      }
+    });
+
+    it('sem login não lê nem escreve', async () => {
+      await existente('ana');
+      await assertFails(getDoc(an(undefined)));
+      await assertFails(getDocs(collection(db(), 'anamneses')));
+      await assertFails(setDoc(an(undefined, 'x'), nova()));
+    });
+  });
+
+  describe('coach', () => {
+    it('lê, lista, cria pelo aluno (com anotação), anota, marca vista, troca o aluno e apaga', async () => {
+      await existente('ana');
+      await assertSucceeds(getDoc(an('coach')));
+      await assertSucceeds(getDocs(collection(db('coach'), 'anamneses')));
+      await assertSucceeds(setDoc(an('coach', 'c1'), nova({ origem: 'coach' })));
+      await assertSucceeds(setDoc(an('coach', 'c2'), nova({ origem: 'coach', obsCoach: 'Lançada no presencial', vistaEm: serverTimestamp() })));
+      await assertSucceeds(updateDoc(an('coach'), { obsCoach: 'x'.repeat(2000), atualizadoEm: serverTimestamp() }));
+      await assertSucceeds(updateDoc(an('coach'), { vistaEm: serverTimestamp(), atualizadoEm: serverTimestamp() }));
+      await assertSucceeds(updateDoc(an('coach'), { alunoId: 'bia', atualizadoEm: serverTimestamp() }));
+      await assertSucceeds(deleteDoc(an('coach')));
+    });
+
+    it('liberadoEm: só com a hora do servidor; do aparelho é negado', async () => {
+      await existente('ana');
+      await assertSucceeds(updateDoc(an('coach'), { liberadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { liberadoEm: passado, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { liberadoEm: Timestamp.now(), atualizadoEm: serverTimestamp() }));
+    });
+
+    it('nega mexer nas respostas, na origem, na versão ou nas horas', async () => {
+      await existente('ana');
+      await assertFails(updateDoc(an('coach'), { 'r.fuma': true, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { r: respostas({ coracao: true }), atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { origem: 'coach', atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { versao: 2, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { em: serverTimestamp(), atualizadoEm: serverTimestamp() }));
+    });
+
+    it('nega anotação longa, vista forjada, sem atualizadoEm do servidor, aluno que não existe', async () => {
+      await existente('ana');
+      await assertFails(updateDoc(an('coach'), { obsCoach: 'x'.repeat(2001), atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { obsCoach: 5, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { vistaEm: passado, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { obsCoach: 'x' }));
+      await assertFails(updateDoc(an('coach'), { alunoId: 'fantasma', atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { alunoId: 'coach', atualizadoEm: serverTimestamp() }));
+      await assertFails(setDoc(an('coach', 'x'), nova({ origem: 'coach', alunoId: 'fantasma' })));
+      await assertFails(setDoc(an('coach', 'x'), nova({ origem: 'aluno' })));
+      await assertFails(setDoc(an('coach', 'x'), nova({ origem: 'coach' }, { declaracao: false })));
+      await assertFails(setDoc(an('coach', 'x'), nova({ origem: 'coach', em: passado })));
+    });
+
+    it('coach sem 2º fator não lê, não cria, não anota, não apaga', async () => {
+      await existente('ana');
+      const d = contexto('coach', SEM_FATOR).firestore() as unknown as Firestore;
+      await assertFails(getDoc(doc(d, 'anamneses', 'an_ana')));
+      await assertFails(getDocs(collection(d, 'anamneses')));
+      await assertFails(setDoc(doc(d, 'anamneses', 'x'), nova({ origem: 'coach' })));
+      await assertFails(updateDoc(doc(d, 'anamneses', 'an_ana'), { obsCoach: 'x', atualizadoEm: serverTimestamp() }));
+      await assertFails(deleteDoc(doc(d, 'anamneses', 'an_ana')));
     });
   });
 });
