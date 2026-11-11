@@ -1,5 +1,7 @@
 # Plano — Fase 3: avaliação física e relatório escrito de evolução (09/11/2026)
 
+> **v3 (11/11/2026):** a evolução virou um cartão por parte do corpo, com medida × carga do mesmo segmento (`src/lib/segmentos.ts`, janela entre as duas avaliações, mediana das variações). Desenho do corpo frente/costas no app e no PDF (`CorpoSvg.tsx`, `corpoPaths.ts`). Detalhes em `docs/estado-sessao.md`.
+
 Vale para as duas marcas (mesmo código). Escolhas do Victor:
 - **Medidas:** peso e altura (sempre), perímetros, dobras cutâneas (Pollock 7 dobras) e bioimpedância.
 - **Quem preenche:** só o coach. O aluno só vê depois de "Liberar" (igual ao relatório do ciclo).

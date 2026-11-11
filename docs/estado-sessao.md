@@ -1,6 +1,14 @@
-# Estado da sessão (retomada) — atualizado em 10/11/2026
+# Estado da sessão (retomada) — atualizado em 11/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
+
+## 11/11/2026 — Avaliação física v3 (evolução por parte do corpo e desenho)
+- A evolução ficou enxuta: um bloco "Sua evolução" com um cartão por parte do corpo.
+- Cada cartão cruza medida × carga do mesmo segmento (`src/lib/segmentos.ts`). Janela = entre a avaliação anterior e a atual; usa a mediana das variações. Exercício fora do catálogo é ignorado; `conta:false` fica de fora.
+- Desenho do corpo, frente e costas, no app e no PDF. As formas vêm de `corpoPaths.ts` (fonte única); o PDF desenha com `Path2D`.
+- PRs: #142 (lógica por segmento) e este (desenho do corpo).
+- **Pendência do Victor:** abrir uma avaliação com 2 avaliações e treinos entre elas e conferir no celular o desenho, os cartões e o PDF.
+- **Ideias para depois (não fazer sem pedido):** alerta de assimetria D/E.
 
 ## 10/11/2026 — Avaliação física v2 (tela do aluno, cores e lipedema)
 - Pedido do Victor depois de testar no celular. Plano em `docs/plano-avaliacao.md` (seção v2).
