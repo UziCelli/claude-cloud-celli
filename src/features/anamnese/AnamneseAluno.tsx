@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { avisoMedico, CHAVE_RASCUNHO, PERGUNTAS, resumoAnamnese, TODAS, validarRespostas, type Pergunta, type Respostas } from '../../lib/anamnese'
+import { avisoMedico, CHAVE_RASCUNHO, parqGrave, PARQ_GRAVES, PERGUNTAS, TODAS, validarRespostas, type Pergunta, type Respostas } from '../../lib/anamnese'
 import { enviarAnamnese, novaVersaoCoach } from '../../lib/acoes'
 import { registrarErro } from '../../lib/log'
 import { IcCheck } from '../../icones'
@@ -7,6 +7,7 @@ import { ir } from '../../rota'
 import { Aviso, Botao, Centro } from '../../ui'
 import { Quadro } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
+import FichaAnamnese from './FichaAnamnese'
 import { useAnamnese } from './useAnamnese'
 
 type Rascunho = { r: Respostas; menor: boolean; etapa: number; t: number }
@@ -92,6 +93,7 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
   const [menor, setMenor] = useState(rasc?.menor ?? ultima?.r.responsavelConfirmou === true)
   const [r, setR] = useState<Respostas>(() => rasc?.r ?? (({ declaracao: _d, ...resto }) => resto)(ultima?.r ?? {}))
   const [erro, setErro] = useState('')
+  const [confirma, setConfirma] = useState<{ p: Pergunta; passo: 1 | 2 } | null>(null) // dupla confirmação do sim grave
   const [enviando, setEnviando] = useState(false)
   const topo = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -102,6 +104,8 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
     PERGUNTAS[e].perguntas.filter(
       (p) => !('soMenor' in p) && !(p.id === 'parqQual' && !avisoMedico(r)) && !(p.id === 'tempoParado' && r.experiencia === 'nunca'),
     )
+  // "Sim" numa pergunta grave (do aluno; o coach lança direto) só vale depois de 2 confirmações; mudar para "Não" é direto.
+  const pedir = (p: Pergunta, v: unknown) => (!coach && v === true && PARQ_GRAVES.includes(p.id) && r[p.id] !== true ? setConfirma({ p, passo: 1 }) : mudar(p.id, v))
   const mudar = (id: string, v: unknown) => {
     const n = { ...r }
     if (v === undefined) delete n[id]
@@ -160,7 +164,11 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
           <h1 className="text-[24px] leading-tight">Anamnese enviada</h1>
           <p className="text-sm text-slate-400">Obrigado! Só você e seu coach veem estas respostas.</p>
         </Quadro>
-        {avisoMedico(enviado) && <Aviso>Procure seu médico antes de treinar forte.</Aviso>}
+        {parqGrave(enviado) ? (
+          <Aviso>Seu treino está pausado pela sua saúde. Seu coach vai conversar com você e liberar o treino. Procure seu médico antes de treinar forte.</Aviso>
+        ) : (
+          avisoMedico(enviado) && <Aviso>Procure seu médico antes de treinar forte.</Aviso>
+        )}
         <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => ir('/')}>Ir para o início</Botao>
       </main>
     )
@@ -171,11 +179,7 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
         <BotaoVoltar para="/conta" />
         <h1 className="text-[24px] leading-tight">{motivo === 'ciclo' ? 'Confirme sua anamnese' : 'Minha anamnese'}</h1>
         {motivo === 'ciclo' && <p className="text-sm text-slate-400">Um ciclo terminou. Se nada mudou na sua saúde, confirme. Se mudou, atualize.</p>}
-        <Quadro>
-          <ul className="space-y-2 text-sm">
-            {resumoAnamnese(ultima.r).map((l) => <li key={l} className="break-words">{l}</li>)}
-          </ul>
-        </Quadro>
+        <FichaAnamnese r={ultima.r} />
         {anotacao && (
           <Quadro className="space-y-1">
             <h2 className="text-sm font-semibold text-slate-300">Anotação do seu coach</h2>
@@ -215,11 +219,36 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
         {ativas(etapa).map((p) => (
           <section key={p.id} className="space-y-2">
             {p.tipo !== 'aceite' && <p className="text-[15px] font-semibold">{p.rotulo}</p>}
-            <Campo p={coach && p.tipo === 'aceite' ? { ...p, rotulo: 'Lancei conforme o aluno informou.' } : p} v={r[p.id]} mudar={(v) => mudar(p.id, v)} />
+            <Campo p={coach && p.tipo === 'aceite' ? { ...p, rotulo: 'Lancei conforme o aluno informou.' } : p} v={r[p.id]} mudar={(v) => pedir(p, v)} />
           </section>
         ))}
       </div>
       {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
+      {confirma && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-30 flex flex-col justify-end bg-slate-950/90 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="mx-auto w-full max-w-md space-y-4">
+            {confirma.passo === 1 ? (
+              <>
+                <h2 className="text-[22px] leading-tight">Leia de novo com atenção</h2>
+                <Quadro><p className="text-[15px] font-semibold">{confirma.p.rotulo}</p></Quadro>
+                <div className="flex gap-2">
+                  <Botao tamanho="lg" className="flex-1" onClick={() => setConfirma(null)}>Voltar</Botao>
+                  <Botao tipo="primario" tamanho="lg" className="flex-[2]" onClick={() => setConfirma({ ...confirma, passo: 2 })}>Li, continuar</Botao>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-[22px] leading-tight">Tem certeza?</h2>
+                <Aviso>Com esse "sim", seu treino fica pausado até seu coach conversar com você.</Aviso>
+                <div className="flex gap-2">
+                  <Botao tamanho="lg" className="flex-1" onClick={() => setConfirma(null)}>Não, corrigir</Botao>
+                  <Botao tipo="primario" tamanho="lg" className="flex-[2]" onClick={() => { mudar(confirma.p.id, true); setConfirma(null) }}>Sim, tenho certeza</Botao>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <div className={coach ? 'sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 rounded-2xl bg-slate-950/90 p-2 backdrop-blur lg:bottom-2' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
         <div className="mx-auto flex max-w-md gap-2">
           {etapa > 0 && <Botao tamanho="lg" className="flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}

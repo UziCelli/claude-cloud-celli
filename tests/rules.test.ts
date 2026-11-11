@@ -29,7 +29,7 @@ let env: RulesTestEnvironment;
 
 const DIA = 24 * 60 * 60 * 1000;
 const futuro = Timestamp.fromMillis(Date.now() + 30 * DIA);
-const passado = Timestamp.fromMillis(Date.now() - DIA);
+const passado = Timestamp.fromMillis(Date.now() - 8 * DIA); // além da tolerância de 7 dias
 
 // ana e bia: alunas liberadas. exp: pagamento vencido. blq: bloqueada. agu: aguardando.
 const usuarios: Record<string, object> = {
@@ -37,11 +37,12 @@ const usuarios: Record<string, object> = {
   ana: { papel: 'aluno', nome: 'Ana', email: 'a@x.com', status: 'ativo', pagoAte: futuro },
   bia: { papel: 'aluno', nome: 'Bia', email: 'b@x.com', status: 'ativo', pagoAte: futuro },
   exp: { papel: 'aluno', nome: 'Exp', email: 'e@x.com', status: 'ativo', pagoAte: passado },
+  car: { papel: 'aluno', nome: 'Car', email: 'k@x.com', status: 'ativo', pagoAte: Timestamp.fromMillis(Date.now() - 3 * DIA) }, // vencida, dentro da tolerância
   blq: { papel: 'aluno', nome: 'Blq', email: 'l@x.com', status: 'bloqueado', pagoAte: futuro },
   agu: { papel: 'aluno', nome: 'Agu', email: 'g@x.com', status: 'aguardando' },
   arq: { papel: 'aluno', nome: 'Arq', email: 'q@x.com', status: 'arquivado', pagoAte: futuro },
 };
-const ALUNOS = ['ana', 'bia', 'exp', 'blq', 'agu', 'arq'];
+const ALUNOS = ['ana', 'bia', 'exp', 'car', 'blq', 'agu', 'arq'];
 
 const registro = (aluno: string, semana = 1, treino = 1) => ({
   alunoId: aluno,
@@ -441,6 +442,11 @@ describe('mesos', () => {
     await assertFails(getDocs(collection(db('ana'), 'mesos')));
   });
 
+  it('vencido há 3 dias (tolerância de 7) ainda lê; há 8 dias (exp) não', async () => {
+    await assertSucceeds(getDoc(doc(db('car'), 'mesos', 'm_car')));
+    await assertFails(getDoc(doc(db('exp'), 'mesos', 'm_exp')));
+  });
+
   it('vencido, bloqueado, aguardando ou sem cadastro não lê', async () => {
     for (const uid of ['exp', 'blq', 'agu']) await assertFails(getDoc(doc(db(uid), 'mesos', `m_${uid}`)));
     await assertFails(getDocs(query(collection(db('novo'), 'mesos'), where('alunoId', '==', 'novo'))));
@@ -475,6 +481,12 @@ describe('registros', () => {
       await assertFails(setDoc(reg(uid, `m_${uid}_s01_t2`), { ...registro(uid, 1, 2), atualizadoEm: serverTimestamp() }));
       await assertFails(updateDoc(reg(uid, `m_${uid}_s01_t1`), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
     }
+  });
+
+  it('vencido há 3 dias ainda grava e lê o registro; há 8 dias (exp) não', async () => {
+    await assertSucceeds(getDoc(reg('car', 'm_car_s01_t1')));
+    await assertSucceeds(updateDoc(reg('car', 'm_car_s01_t1'), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
+    await assertFails(updateDoc(reg('exp', 'm_exp_s01_t1'), { 'cargas.sup.s2': 50, atualizadoEm: serverTimestamp() }));
   });
 
   it('aluno grava registro de semana passada (sync atrasado) → permitido', async () => {
@@ -1594,6 +1606,12 @@ describe('anamneses', () => {
       await assertFails(deleteDoc(an('ana')));
     });
 
+    it('não grava liberadoEm (nem ao criar nem ao atualizar)', async () => {
+      await assertFails(setDoc(an('ana', 'x'), nova({ liberadoEm: serverTimestamp() })));
+      await existente('ana');
+      await assertFails(updateDoc(an('ana'), { liberadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() }));
+    });
+
     it('não lê a de outro aluno nem lista tudo', async () => {
       await existente('bia');
       await assertFails(getDoc(an('ana', 'an_bia')));
@@ -1629,6 +1647,13 @@ describe('anamneses', () => {
       await assertSucceeds(updateDoc(an('coach'), { vistaEm: serverTimestamp(), atualizadoEm: serverTimestamp() }));
       await assertSucceeds(updateDoc(an('coach'), { alunoId: 'bia', atualizadoEm: serverTimestamp() }));
       await assertSucceeds(deleteDoc(an('coach')));
+    });
+
+    it('liberadoEm: só com a hora do servidor; do aparelho é negado', async () => {
+      await existente('ana');
+      await assertSucceeds(updateDoc(an('coach'), { liberadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { liberadoEm: passado, atualizadoEm: serverTimestamp() }));
+      await assertFails(updateDoc(an('coach'), { liberadoEm: Timestamp.now(), atualizadoEm: serverTimestamp() }));
     });
 
     it('nega mexer nas respostas, na origem, na versão ou nas horas', async () => {

@@ -2,6 +2,14 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 11/11/2026 — Pagamento com tolerância, PAR-Q que pausa, feedback e evolução (PR #150)
+- **Pagamento (CDC):** o acesso só pausa 7 dias depois do vencimento (`CARENCIA_DIAS` em `acesso.ts`; regra e Worker iguais). Nesses 7 dias, aviso 1x por dia com valor + Pix e "Ciente, ir para o treino". O coach continua vendo quem venceu.
+- **Anamnese:** todo aluno que nunca respondeu tem o "Iniciar treino" travado até responder.
+- **PAR-Q grave** (coração, dor no peito, tontura, supervisão médica): dupla confirmação; o app pausa até o coach tocar "Liberar treino" na ficha (`liberadoEm`). Quem já tinha "sim" grave também ficou pausado (decisão do Victor). Cartão "Pausados por saúde" no Início do coach. A pausa é só na tela (risco aceito).
+- **Ficha da anamnese** em cartões pergunta/resposta. **Feedback** em destaque, assunto "App" já marcado. **Evolução do aluno** resumida; detalhes em "Ver mais detalhes".
+- Política: `VERSAO_PRIVACIDADE` = `2026-11-11` (todos aceitam de novo, 1 toque).
+- **Pendência do Victor:** liberar no Início do coach os alunos em "Pausados por saúde" depois de conversar com eles.
+
 ## 11/11/2026 — Entrada do aluno: senha e termos sem laço
 - **Bug do "laço":** cada atualização dos termos pedia a senha atual de novo (foram 4 versões em 2 dias). Agora o aceite é um **pop-up** só com "Li e aceito" + Aceitar ou "Não aceito, sair".
 - **Senha fraca:** o app vê no próprio login. Se for fraca, pede uma senha nova **uma vez** (sem digitar a atual). Forte = nunca mais pergunta.

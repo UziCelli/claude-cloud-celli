@@ -33,7 +33,7 @@ let env: RulesTestEnvironment;
 
 const DIA = 24 * 60 * 60 * 1000;
 const futuro = Timestamp.fromMillis(Date.now() + 30 * DIA);
-const passado = Timestamp.fromMillis(Date.now() - DIA);
+const passado = Timestamp.fromMillis(Date.now() - 8 * DIA); // além da tolerância de 7 dias
 
 // Contadores: quantos ataques foram tentados e negados (impresso no fim).
 let negados = 0;

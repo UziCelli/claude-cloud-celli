@@ -58,7 +58,7 @@ test('coach vê selo e cartão, marca vista, anota e o aluno lê', async ({ page
 
   const ctx = await browser.newContext({ ...devices['Pixel 7'] })
   const aluno = await ctx.newPage()
-  await entrar(aluno, email('lia'), /Olá/)
+  await entrar(aluno, email('lia'), /Treino pausado pela sua saúde/) // PAR-Q grave (coração): pausada, mas lê a anamnese
   await aluno.goto('/#/anamnese')
   await expect(aluno.getByText('Procure um médico e me avise.')).toBeVisible()
   await ctx.close()

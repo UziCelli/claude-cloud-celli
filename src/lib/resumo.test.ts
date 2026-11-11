@@ -56,7 +56,8 @@ describe('resumoCoach', () => {
   it('vencidos: ativo sem acesso (pagoAte passado ou ausente), sem presencial', () => {
     const r = resumoCoach(
       [
-        aluno('ontem', { pagoAte: paga('2026-10-09') }),
+        aluno('ontem', { pagoAte: paga('2026-10-09') }), // na tolerância de 7 dias: o coach ainda vê
+        aluno('velho', { pagoAte: paga('2026-09-20') }),
         aluno('sem', { pagoAte: undefined }),
         aluno('ok'),
         aluno('blq', { status: 'bloqueado', pagoAte: paga('2026-10-01') }),
@@ -65,7 +66,7 @@ describe('resumoCoach', () => {
       [],
       agora,
     )
-    expect(ids(r.vencidos)).toEqual(['ontem', 'sem'])
+    expect(ids(r.vencidos)).toEqual(['ontem', 'velho', 'sem'])
   })
 
   it('treinaramHoje: sessão de hoje em São Paulo (concluída em realizadoEm ou iniciada em inicioEm; inclui presencial)', () => {

@@ -7,7 +7,10 @@ import {
   ultimaAnotacao,
   avisoMedico,
   lerAnamnese,
-  contaNovaParaAnamnese,
+  fichaAnamnese,
+  pausadoSaude,
+  parqGrave,
+  PARQ_GRAVES,
   maisRecente,
   motivoAnamnese,
   PERGUNTAS,
@@ -123,6 +126,7 @@ describe('lerAnamnese (leitura com desconfiança)', () => {
       r: completa(),
       em: 1000,
       obsCoach: 'ok',
+      liberadoEm: null,
       vistaEm: 2000,
     })
   })
@@ -173,7 +177,7 @@ describe('firestore.rules (anamneses)', () => {
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const meso = (inicio: string, semanas = 4): Meso => ({ frequencia: 2, semanas, inicio, pausaS: 60, divisao: [[], []], progressao: { principais: [], auxiliares: [] }, metodos: [] })
 const doc = (id: string, alunoId: string, r: Record<string, unknown> = {}, extra: Partial<Anamnese> = {}): Anamnese => ({
-  id, alunoId, versao: 1, origem: 'aluno', r: { ...minima(), ...r } as Anamnese['r'], em: 1000, obsCoach: '', vistaEm: null, ...extra,
+  id, alunoId, versao: 1, origem: 'aluno', r: { ...minima(), ...r } as Anamnese['r'], em: 1000, obsCoach: '', vistaEm: null, liberadoEm: null, ...extra,
 })
 
 describe('sono', () => {
@@ -305,15 +309,49 @@ describe('anamnesesPendentes', () => {
   })
 })
 
-describe('motivoAnamnese / contaNovaParaAnamnese', () => {
+describe('motivoAnamnese', () => {
   it('sem resposta: primeira; com resposta de hoje: nada', () => {
     const agora = sp('2026-11-09T08:00')
     expect(motivoAnamnese([], [], agora)).toBe('primeira')
     expect(motivoAnamnese([doc('a', 'x', {}, { em: agora.getTime() })], [], agora)).toBeNull()
   })
-  it('conta nova = criada a partir de 11/11/2026; sem data = antiga', () => {
-    expect(contaNovaParaAnamnese(sp('2026-11-11T00:30').getTime())).toBe(true)
-    expect(contaNovaParaAnamnese(sp('2026-11-10T23:30').getTime())).toBe(false)
-    expect(contaNovaParaAnamnese(undefined)).toBe(false)
+})
+
+describe('pausa por saúde', () => {
+  const an = (r: object, extra: object = {}) => lerAnamnese('a', { alunoId: 'x', versao: 1, origem: 'aluno', r: { ...minima(), ...r }, em: ts(1000), ...extra })!
+  it('PARQ_GRAVES e parqGrave', () => {
+    expect(PARQ_GRAVES).toEqual(['coracao', 'dorPeito', 'tontura', 'supervisaoMedica'])
+    expect(parqGrave(minima())).toBe(false)
+    expect(parqGrave({ ...minima(), remedio: true })).toBe(false)
+    expect(parqGrave({ ...minima(), tontura: true })).toBe(true)
+  })
+  it('lê liberadoEm', () => {
+    expect(an({}, { liberadoEm: ts(5) }).liberadoEm).toBe(5)
+    expect(an({}, { liberadoEm: 'x' }).liberadoEm).toBeNull()
+    expect(an({}).liberadoEm).toBeNull()
+  })
+  it('pausado: grave sem liberação, mesmo antiga; responder de novo não desfaz', () => {
+    expect(pausadoSaude([])).toBe(false)
+    expect(pausadoSaude([an({})])).toBe(false)
+    expect(pausadoSaude([an({ coracao: true })])).toBe(true)
+    expect(pausadoSaude([an({ coracao: true }), an({}, { em: ts(9000) })])).toBe(true)
+    expect(pausadoSaude([an({ coracao: true }, { liberadoEm: ts(2000) }), an({})])).toBe(false)
+  })
+})
+
+describe('fichaAnamnese', () => {
+  it('agrupa por etapa, pula não respondidas e marca o sim grave', () => {
+    const f = fichaAnamnese({ ...minima(), tontura: true, remedio: true })
+    expect(f).toHaveLength(1)
+    expect(f[0].etapa).toBe(PERGUNTAS[0].titulo)
+    const por = Object.fromEntries(f[0].itens.map((i) => [i.pergunta, i]))
+    expect(por[TODAS.find((p) => p.id === 'tontura')!.rotulo]).toMatchObject({ resposta: 'Sim', alerta: true })
+    expect(por[TODAS.find((p) => p.id === 'remedio')!.rotulo]).toMatchObject({ resposta: 'Sim', alerta: false })
+    expect(por[TODAS.find((p) => p.id === 'coracao')!.rotulo]).toMatchObject({ resposta: 'Não', alerta: false })
+  })
+  it('completa: várias etapas, sem declaração', () => {
+    const f = fichaAnamnese(completa())
+    expect(f.length).toBe(5)
+    expect(f.flatMap((e) => e.itens).some((i) => i.pergunta.startsWith('Respondi'))).toBe(false)
   })
 })

@@ -30,8 +30,12 @@ describe('lerPermissao', () => {
   it('coach: permitido, mesmo sem status nem pagoAte', async () => {
     expect(await lerPermissao('u', 't', AGORA, 'forca--app', buscaCom(perfil({ papel: 'coach' })))).toBe(true)
   })
-  it('pagamento vencido: bloqueado', async () => {
-    const b = buscaCom(perfil({ papel: 'aluno', status: 'ativo', pagoAte: '2026-09-30T00:00:00Z' }))
+  it('vencido há 3 dias: ainda permitido (tolerância de 7 dias)', async () => {
+    const b = buscaCom(perfil({ papel: 'aluno', status: 'ativo', pagoAte: '2026-09-28T12:00:00Z' }))
+    expect(await lerPermissao('u', 't', AGORA, 'forca--app', b)).toBe(true)
+  })
+  it('pagamento vencido há mais de 7 dias: bloqueado', async () => {
+    const b = buscaCom(perfil({ papel: 'aluno', status: 'ativo', pagoAte: '2026-09-24T12:00:00Z' }))
     expect(await lerPermissao('u', 't', AGORA, 'forca--app', b)).toBe(false)
   })
   it('aluno inativo, sem pagoAte ou aguardando: bloqueado', async () => {

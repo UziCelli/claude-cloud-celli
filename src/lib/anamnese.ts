@@ -188,6 +188,7 @@ export type Anamnese = {
   em: number | null // ms; null = gravação ainda pendente (offline)
   obsCoach: string
   vistaEm: number | null
+  liberadoEm: number | null // o coach liberou o treino pausado por saúde
 }
 
 // Mesmas condições de respostasValidas em firestore.rules, por pergunta.
@@ -235,6 +236,7 @@ export function lerAnamnese(id: string, d: unknown): Anamnese | null {
     em: ms(x.em),
     obsCoach: typeof x.obsCoach === 'string' ? x.obsCoach : '',
     vistaEm: ms(x.vistaEm),
+    liberadoEm: ms(x.liberadoEm),
   }
 }
 
@@ -248,6 +250,13 @@ const FRASE_PARQ: Record<string, string> = {
   remedio: 'Remédio de uso contínuo',
   ossoArticulacao: 'Problema de osso, articulação ou coluna',
 }
+
+// "Sim" nestas 4 pausa o treino até o coach liberar.
+export const PARQ_GRAVES = ['coracao', 'dorPeito', 'tontura', 'supervisaoMedica']
+export const parqGrave = (r: Respostas) => PARQ_GRAVES.some((k) => r[k] === true)
+
+// Pausado: alguma anamnese (de qualquer data) com sim grave e sem liberação. Responder de novo não desfaz.
+export const pausadoSaude = (docs: Anamnese[]) => docs.some((d) => parqGrave(d.r) && d.liberadoEm === null)
 
 export const avisoMedico = (r: Respostas) => PARQ_ORDEM.some((k) => r[k] === true)
 
@@ -276,6 +285,15 @@ const rotuloDe = (p: Pergunta, v: Resposta): string => {
 export const resumoAnamnese = (r: Respostas): string[] =>
   TODAS.filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '').map((p) => `${p.rotulo}${p.rotulo.endsWith('?') ? '' : ':'} ${rotuloDe(p, r[p.id])}`)
 
+// Ficha por etapa, a partir de PERGUNTAS: só o respondido (sem a declaração e sem texto vazio). `alerta` = sim grave.
+export const fichaAnamnese = (r: Respostas) =>
+  PERGUNTAS.map((e) => ({
+    etapa: e.titulo,
+    itens: e.perguntas
+      .filter((p) => p.tipo !== 'aceite' && p.id in r && r[p.id] !== '')
+      .map((p) => ({ pergunta: p.rotulo, resposta: rotuloDe(p, r[p.id]), alerta: PARQ_GRAVES.includes(p.id) && r[p.id] === true })),
+  })).filter((e) => e.itens.length > 0)
+
 // Não vistas pelo coach: com atenção primeiro, depois as mais recentes.
 // Só conta a versão mais recente de cada aluno (se é do coach ou já foi vista, o aluno não está "novo").
 export const anamnesesNovas = (docs: Anamnese[]) =>
@@ -300,11 +318,6 @@ export function motivoAnamnese(docs: Anamnese[], mesos: Meso[], agora: Date) {
   const dia = ult && new Date(diaSP(ult.em ?? agora.getTime()) * 86400_000).toISOString().slice(0, 10)
   return precisaAtualizar(dia, mesos, agora)
 }
-
-// Contas criadas a partir deste dia (São Paulo) travam o "Iniciar treino" até responder; as anteriores só recebem o cartão.
-export const ANAMNESE_TRAVA_DESDE = '2026-11-11'
-export const contaNovaParaAnamnese = (criadoEmMs: number | undefined) =>
-  criadoEmMs != null && diaSP(criadoEmMs) >= diaSP(new Date(`${ANAMNESE_TRAVA_DESDE}T12:00:00-03:00`).getTime())
 
 type AlunoAnam = { id: string; nome: string; status: string; presencial?: boolean }
 

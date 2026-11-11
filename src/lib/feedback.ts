@@ -44,10 +44,10 @@ export function montarFeedback(e: Entrada, uid: string): NovoFeedback {
 export const rotuloAssunto = (id: string) => ASSUNTOS.find((a) => a.id === id)?.rotulo ?? id
 export const rotuloTipo = (id: string) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
 
-// Convite em bons momentos (recorde, fim do ciclo): no máximo 1 vez a cada 60 dias neste aparelho.
+// Convite em bons momentos (fim do treino, relatório): no máximo 1 vez a cada 7 dias neste aparelho.
 // Conta tanto o convite mostrado quanto o feedback enviado.
 export const CHAVE_CONVITE = 'forca-feedback-convite'
-export const DIAS_CONVITE = 60
+export const DIAS_CONVITE = 7
 
 export const podeConvidar = (agoraMs: number, ultimoMs: number | null) =>
   ultimoMs == null || agoraMs - ultimoMs >= DIAS_CONVITE * 86_400_000

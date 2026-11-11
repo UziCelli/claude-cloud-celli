@@ -31,9 +31,9 @@ describe('montarFeedback', () => {
 describe('podeConvidar', () => {
   const DIA = 86_400_000
   it('nunca convidado: pode', () => expect(podeConvidar(1e12, null)).toBe(true))
-  it('59 dias: não; 60 dias: sim', () => {
-    expect(podeConvidar(1e12, 1e12 - 59 * DIA)).toBe(false)
-    expect(podeConvidar(1e12, 1e12 - 60 * DIA)).toBe(true)
+  it('6 dias: não; 7 dias: sim', () => {
+    expect(podeConvidar(1e12, 1e12 - 6 * DIA)).toBe(false)
+    expect(podeConvidar(1e12, 1e12 - 7 * DIA)).toBe(true)
   })
 })
 
