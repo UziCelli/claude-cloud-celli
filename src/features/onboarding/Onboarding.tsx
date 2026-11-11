@@ -4,6 +4,7 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { agil, saida, suave } from '../../movimento'
 import { Brilho, IconeQuadrado } from '../../vidro'
 import { IcSeta } from '../../icones'
+import { Botao } from '../../ui'
 import type { Icone } from '../../icones'
 
 // Onboarding em tela cheia (aluno e coach, as duas marcas): passos curtos, barra de progresso estilo story,
@@ -153,18 +154,14 @@ export default function Onboarding({
         <p className="mb-2 text-center text-xs text-slate-400">{i + 1} de {total}</p>
         <div className="flex items-center gap-2">
           {i > 0 && (
-            <button type="button" onClick={() => ir(i - 1)} className="vidro-escuro h-14 rounded-2xl border border-white/20 px-5 text-[15px] font-bold text-white">Voltar</button>
+            <Botao type="button" tipo="vidro" tamanho="lg" onClick={() => ir(i - 1)} className="text-[15px]!">Voltar</Botao>
           )}
-          <button
-            type="button"
-            onClick={ultimo ? sair : () => ir(i + 1)}
-            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl border border-marca-400 bg-marca-500 text-[17px] font-bold text-white shadow-lg"
-          >
+          <Botao type="button" tipo="primario" tamanho="lg" onClick={ultimo ? sair : () => ir(i + 1)} className="flex flex-1 items-center justify-center gap-2">
             {ultimo ? 'Começar' : 'Próximo'} {!ultimo && <IcSeta className="size-5" />}
-          </button>
+          </Botao>
         </div>
         {/* Sempre o mesmo lugar (o botão principal não pula de posição); no último passo fica só o espaço. */}
-        <button type="button" onClick={sair} className={`mt-1 h-11 w-full text-[15px] font-semibold text-slate-400 hover:text-white ${ultimo ? 'invisible' : ''}`}>Pular</button>
+        <Botao type="button" tipo="fantasma" onClick={sair} className={`mt-1 w-full ${ultimo ? 'invisible' : ''}`}>Pular</Botao>
       </div>
     </m.div>,
     document.body,
