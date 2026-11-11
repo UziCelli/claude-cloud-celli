@@ -230,7 +230,7 @@ export default function EditorMeso({ id }: { id: string }) {
             {aba === a && (
               <m.span
                 layoutId="aba-ativa"
-                className="absolute inset-0 rounded-lg bg-marca-500"
+                className="pointer-events-none absolute inset-0 rounded-lg bg-marca-500"
                 transition={agil}
               />
             )}

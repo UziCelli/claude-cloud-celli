@@ -52,8 +52,26 @@ export function Painel({ uid, nome, voltar, compartilhar = false, resumido = fal
   const atual = useMemo(() => mesoAtual(mesosL.dados), [mesosL.dados])
   const mesoId = soMeso ? atual?.doc.id : undefined
   const agora = new Date()
-  const p = painelEvolucao(mesos, regsL.dados, agora, mesoId)
-  const historico = historicoExercicios(mesoId ? mesos.filter((x) => x.id === mesoId) : mesos, regsL.dados)
+  const hoje = diaSP(agora.getTime())
+  // Cálculos pesados só quando os dados mudam: antes rodavam a cada render (cada lista que chegava,
+  // cada toque) e travavam a entrada da tela no iPhone.
+  // `hoje` nas dependências: recalcula quando vira o dia.
+  const p = useMemo(() => painelEvolucao(mesos, regsL.dados, new Date(), mesoId), [mesos, regsL.dados, mesoId, hoje])
+  const historico = useMemo(() => historicoExercicios(mesoId ? mesos.filter((x) => x.id === mesoId) : mesos, regsL.dados), [mesos, regsL.dados, mesoId])
+  const nomes = useMemo(() => Object.keys(historico).sort((a, b) => a.localeCompare(b)), [historico])
+  const nomeSel = nomes.includes(exercicio) ? exercicio : (nomes[0] ?? '')
+  const pontos = useMemo(
+    () =>
+      (mesoId ? mesos.filter((x) => x.id === mesoId) : [...mesos]) // cópia: o sort não mexe na lista memorizada
+        .sort((a, b) => a.meso.inicio.localeCompare(b.meso.inicio))
+        .flatMap(({ id, meso, nome: nm }) => {
+          const docs = regsL.dados.filter((r) => r.mesoId === id) as RegistroDoc[]
+          return evolucaoExercicio(meso, docsParaRegistros(docs, meso), nomeSel, docsParaRegistrosReps(docs))
+            .filter((x) => x.cargaMax != null)
+            .map((x) => ({ ...x, id: `${id}-${x.ocorrencia}`, meso: nm }))
+        }),
+    [mesos, regsL.dados, mesoId, nomeSel],
+  )
 
   const cabeca = (
     <>
@@ -84,21 +102,10 @@ export function Painel({ uid, nome, voltar, compartilhar = false, resumido = fal
   const comp = comparacaoToneladas(p.volumeKg)
   const compTexto = comp ? `≈ ${comp.qtd} ${comp.qtd === 1 ? comp.objeto : comp.plural}` : undefined
   const top = p.topEvolucao[0]
-  const hoje = diaSP(agora.getTime())
   const inicioGrade = segunda(hoje) - 77
   const treinou = new Set(p.dias)
   const cardio = new Set(cardiosL.dados.map((c) => diaNumero(c.dia)).filter((d) => d >= inicioGrade && d <= hoje))
   const maxSemana = Math.max(1, p.meta ?? 0, ...p.porSemana.map((s) => s.feitos))
-  const nomes = Object.keys(historico).sort((a, b) => a.localeCompare(b))
-  const nomeSel = nomes.includes(exercicio) ? exercicio : (nomes[0] ?? '')
-  const pontos = (mesoId ? mesos.filter((x) => x.id === mesoId) : mesos)
-    .sort((a, b) => a.meso.inicio.localeCompare(b.meso.inicio))
-    .flatMap(({ id, meso, nome: nm }) => {
-      const docs = regsL.dados.filter((r) => r.mesoId === id) as RegistroDoc[]
-      return evolucaoExercicio(meso, docsParaRegistros(docs, meso), nomeSel, docsParaRegistrosReps(docs))
-        .filter((x) => x.cargaMax != null)
-        .map((x) => ({ ...x, id: `${id}-${x.ocorrencia}`, meso: nm }))
-    })
   const maxCarga = Math.max(1, ...pontos.map((x) => x.cargaMax ?? 0))
   const grupos = (Object.keys({ treinos: 0, sequencia: 0, recordes: 0, toneladas: 0, semanasCompletas: 0 }) as Conquista['categoria'][]).map((c) => {
     const lista = p.conquistas.filter((q) => q.categoria === c)

@@ -105,33 +105,41 @@ button:not(:disabled), select, summary, input[type='checkbox'] { cursor: pointer
   }
 }
 
-/* Brilho que corre pela borda do cartão (treino de hoje). Fica dentro do cartão: a lista que desliza
-   (`Deslizar`, overflow-hidden) corta o que passa da borda. Giro linear porque é um laço contínuo. */
-@property --giro {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
+/* Brilho que corre pela borda do cartão (treino de hoje, Iniciar treino). Fica dentro do cartão: a lista que desliza
+   (`Deslizar`, overflow-hidden) corta o que passa da borda. Giro linear porque é um laço contínuo.
+   Peça própria (`<BrilhoBorda />` de vidro.tsx) dentro de um pai `.borda-brilho`: a máscara do anel fica parada e
+   o gradiente gira por transform, que a GPU anima sozinha. Antes girava o ângulo do gradiente (@property): repintava
+   o botão a cada quadro na linha principal e travava a entrada da tela do treino no iPhone (11/11/2026). */
 @keyframes giro {
-  to { --giro: 360deg; }
+  to { rotate: 360deg; }
 }
 @layer components {
   .borda-brilho { position: relative; }
-  .borda-brilho::before {
-    content: '';
+  .brilho-borda {
     position: absolute;
     inset: 0;
     padding: 2px;
     border-radius: inherit;
-    background: conic-gradient(from var(--giro), transparent 0 60%, var(--color-marca-400) 82%, #fff 90%, var(--color-marca-400) 95%, transparent);
+    overflow: hidden;
+    pointer-events: none;
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    pointer-events: none;
+  }
+  /* Quadrado maior que a diagonal do cartão, centrado: girando, sempre cobre o anel inteiro. */
+  .brilho-borda::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 150%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: conic-gradient(transparent 0 60%, var(--color-marca-400) 82%, #fff 90%, var(--color-marca-400) 95%, transparent);
     animation: giro 4s linear infinite;
   }
   @media (prefers-reduced-motion: reduce) {
-    .borda-brilho::before { animation: none; }
+    .brilho-borda::before { animation: none; }
   }
 }
 

@@ -6,6 +6,7 @@ import { abrirPlanilha, type Planilha } from '../../../lib/xlsx'
 import { ir } from '../../../rota'
 import { Botao, campoBase, Campo, Cartao, Msg } from '../../../ui'
 import { nomeImportado } from './util'
+import { BrilhoBorda } from '../../../vidro'
 
 export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: string; qtdMesos: number; onFechar: () => void }) {
   const [planilha, setPlanilha] = useState<Planilha | null>(null)
@@ -116,6 +117,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
       {pronto && !enviando && <p className="text-sm text-marca-300">Prévia pronta. Toque em <strong>Importar</strong> para salvar o treino.</p>}
       <div className="flex flex-wrap gap-2">
         <Botao tipo="primario" className={pronto && !enviando ? 'borda-brilho' : ''} disabled={!pronto || enviando} carregando={enviando} onClick={importar}>
+          {pronto && !enviando && <BrilhoBorda />}
           Importar
         </Botao>
         <Botao onClick={onFechar}>Cancelar</Botao>

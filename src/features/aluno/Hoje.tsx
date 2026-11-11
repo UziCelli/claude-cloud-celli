@@ -10,7 +10,7 @@ import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
 import { agil, elastico, saida } from '../../movimento'
 import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
-import { Chip, Quadro } from '../../vidro'
+import { BrilhoBorda, Chip, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { semanaParaAbrir } from '../../lib/semana'
 import { semanaAtual } from '../../lib/treino'
@@ -180,6 +180,7 @@ function SemanaCarregada({ base, coach, abrirHoje, meso, mesoId, nome, registros
                 className="block w-full text-left"
               >
                 <Quadro className={`!rounded-[22px] !p-3.5 ${borda}`}>
+                  {destaque && <BrilhoBorda />}
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
