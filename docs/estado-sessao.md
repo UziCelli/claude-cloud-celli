@@ -2,6 +2,13 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 11/11/2026 — Entrada do aluno: senha e termos sem laço
+- **Bug do "laço":** cada atualização dos termos pedia a senha atual de novo (foram 4 versões em 2 dias). Agora o aceite é um **pop-up** só com "Li e aceito" + Aceitar ou "Não aceito, sair".
+- **Senha fraca:** o app vê no próprio login. Se for fraca, pede uma senha nova **uma vez** (sem digitar a atual). Forte = nunca mais pergunta.
+- **Lista ao vivo** debaixo da senha nova (cadastro, link do e-mail e troca): ✓ 8 caracteres, letra, número, "Senha forte", senhas iguais.
+- **Conta com 123456:** foi um app antigo em cache + a trava do servidor (`senha-minima`) **nunca tinha sido ligada**. O cadastro agora recusa também por dentro (`cadastrar`).
+- **Pendência:** ligar a trava do servidor nas 2 marcas (workflow "2 etapas do coach" → `senha-minima`, vfit e gislane).
+
 ## 11/11/2026 — Avaliação física v3 (evolução por parte do corpo e desenho)
 - A evolução ficou enxuta: um bloco "Sua evolução" com um cartão por parte do corpo.
 - Cada cartão cruza medida × carga do mesmo segmento (`src/lib/segmentos.ts`). Janela = entre a avaliação anterior e a atual; usa a mediana das variações. Exercício fora do catálogo é ignorado; `conta:false` fica de fora.

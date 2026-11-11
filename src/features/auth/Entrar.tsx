@@ -19,7 +19,8 @@ import { AVISO_SAIU, marcar } from '../../lib/inatividade'
 import { registrarErro } from '../../lib/log'
 import { atualizarNaEntrada } from '../../lib/atualizar'
 import marca from '@marca/marca.json'
-import { problemaSenha, REGRA_SENHA } from '../../lib/senha'
+import { lembrarSenha, problemaSenha, REGRA_SENHA } from '../../lib/senha'
+import RequisitosSenha from './RequisitosSenha'
 
 const SENHA_ERRADA = 'E-mail ou senha incorretos. Primeiro acesso ou esqueceu a senha? Toque em Esqueci minha senha.'
 
@@ -103,9 +104,10 @@ export default function Entrar() {
       if (resolver) {
         await confirmarLoginTotp(resolver, codigo)
         zerarFalhas()
-      } else if (cadastro) await cadastrar(nome, email, senha)
+      } else if (cadastro) lembrarSenha((await cadastrar(nome, email, senha)).uid, 'ok')
       else {
-        await entrar(email, senha)
+        // Senha antiga fraca: o app pede para criar uma nova logo depois (SenhaSegura.tsx), sem pedir a atual de novo.
+        lembrarSenha((await entrar(email, senha)).user.uid, problemaSenha(senha) ? 'fraca' : 'ok')
         zerarFalhas()
       }
     } catch (e) {
@@ -237,7 +239,7 @@ export default function Entrar() {
                       </svg>
                     </button>
                   </span>
-                  {cadastro && <p className="mt-1.5 text-sm text-slate-300">{REGRA_SENHA}</p>}
+                  {cadastro && <RequisitosSenha senha={senha} />}
                 </div>
               </>
             )}

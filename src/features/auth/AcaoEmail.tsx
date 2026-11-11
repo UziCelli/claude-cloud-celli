@@ -7,7 +7,8 @@ import { Brilho } from '../../vidro'
 import Logo from '@marca/Logo'
 import { campo, rotulo } from './EsqueciSenha'
 import { SENHA_FRACA } from './Entrar'
-import { problemaSenha, REGRA_SENHA } from '../../lib/senha'
+import { problemaSenha } from '../../lib/senha'
+import RequisitosSenha from './RequisitosSenha'
 
 const VENCIDO = "Este link venceu ou já foi usado. Peça um novo em 'Esqueci minha senha'."
 const ACOES: Record<string, string> = {
@@ -93,11 +94,11 @@ export default function AcaoEmail() {
             <div>
               <label htmlFor="senha" className={rotulo}>Nova senha</label>
               <input id="senha" name="password" type="password" autoComplete="new-password" className={`${campo} mt-1.5`} value={senha} onChange={(e) => { setSenha(e.target.value); setErro('') }} required />
-              <p className="mt-1.5 text-sm text-slate-300">{REGRA_SENHA}</p>
             </div>
             <div>
               <label htmlFor="repete" className={rotulo}>Repetir senha</label>
               <input id="repete" type="password" autoComplete="new-password" className={`${campo} mt-1.5`} value={repete} onChange={(e) => { setRepete(e.target.value); setErro('') }} required />
+              <RequisitosSenha senha={senha} repete={repete} />
             </div>
             <Msg>{erro && <Aviso>{erro}</Aviso>}</Msg>
             <Botao type="submit" tipo="primario" tamanho="lg" className="w-full" disabled={enviando}>{enviando ? 'Salvando…' : 'Salvar senha'}</Botao>
