@@ -128,8 +128,8 @@ describe('relatorioAvaliacao', () => {
     const r = relatorioAvaliacao([primeira], 'a0')!
     expect(r.anterior).toBeNull()
     expect(r.texto[0]).toMatch(/primeira avaliação/)
-    expect(r.texto.join(' ')).toContain('Peso: 85 kg')
-    expect(r.texto.join(' ')).toContain('25% (bioimpedância)')
+    expect(r.texto).toHaveLength(1)
+    expect(r.segmentos).toEqual([])
     expect(r.grupos[0].linhas.find((l) => l.rotulo === 'Peso')).toMatchObject({ rotulo: 'Peso', un: 'kg', atual: 85, anterior: null, delta: null, seta: null, leitura: null })
   })
 
@@ -141,29 +141,18 @@ describe('relatorioAvaliacao', () => {
     expect(cintura).toMatchObject({ rotulo: 'Cintura', un: 'cm', atual: 87, anterior: 90, delta: -3 })
   })
 
-  it('texto: peso, gordura, massas, medidas que mais mudaram e total desde a primeira', () => {
-    const t = relatorioAvaliacao([primeira, anterior, atual], 'a2')!.texto.join('\n')
-    expect(t).toContain('Desde a avaliação de 10/08/2026 (91 dias)')
-    expect(t).toContain('Peso: 82 kg → 80,5 kg (−1,5 kg)')
-    expect(t).toMatch(/Gordura corporal: [\d,]+% → [\d,]+% \(−[\d,]+ pontos?\)/)
-    expect(t).toMatch(/Massa magra: [\d,]+ kg → [\d,]+ kg/)
-    expect(t).toContain('cintura −3 cm')
-    expect(t).toContain('braço direito +1 cm')
-    expect(t).not.toContain('coxa direita') // 0,2 cm: não é mudança
-    expect(t).toContain('Desde a primeira avaliação (04/05/2026): peso −4,5 kg')
+  it('texto enxuto: período e total desde a primeira; sem repetir peso, gordura e medidas', () => {
+    const t = relatorioAvaliacao([primeira, anterior, atual], 'a2')!.texto
+    expect(t).toHaveLength(1)
+    expect(t[0]).toContain('Desde 10/08/2026 (91 dias).')
+    expect(t[0]).toContain('Desde a primeira avaliação (04/05/2026): peso −4,5 kg')
+    expect(t.join('\n')).not.toMatch(/Peso: |Gordura corporal|Massa magra:|cintura −3/)
   })
 
   it('métodos diferentes de gordura não são comparados', () => {
     const r = relatorioAvaliacao([primeira, anterior], 'a1')!
-    const t = r.texto.join('\n')
-    expect(t).toContain('outro método')
-    expect(t).not.toMatch(/Gordura corporal: .*→/)
+    expect(r.texto.join('\n')).toContain('O % de gordura desta avaliação veio de outro método; por isso não é comparado com o anterior.')
     expect(r.grupos[0].linhas.find((l) => l.rotulo === 'Gordura')!.delta).toBeNull()
-  })
-
-  it('sem mudança de peso: diz que manteve', () => {
-    const t = relatorioAvaliacao([anterior, { ...atual, pesoKg: 82 }], 'a2')!.texto.join('\n')
-    expect(t).toContain('Peso: 82 kg (igual à avaliação anterior)')
   })
 
   it('nunca julga (sem "piorou") e resume o ciclo', () => {
@@ -172,7 +161,6 @@ describe('relatorioAvaliacao', () => {
     const t = relatorioAvaliacao([atual, pior], 'a3', ciclo)!.texto.join('\n')
     expect(t).not.toMatch(/piorou|pior|ruim/i)
     expect(t).toContain('No ciclo M7 você fez 34 de 36 treinos (94%) e bateu 2 recordes.')
-    expect(t).toContain('Maior evolução: Supino, de 60 para 70 kg (+17%).')
   })
 
   it('só mostra linhas com medida e a soma das dobras', () => {
@@ -337,18 +325,20 @@ describe('resumo do relatório', () => {
   it('primeira avaliação: ponto de partida, sem cor', () => {
     const r = relatorioAvaliacao([ant], 'a1')!
     expect(r.resumo.frase).toMatch(/primeira avaliação/)
-    expect(r.resumo.ganhos).toEqual([])
-    expect(r.resumo.observar).toEqual([])
     expect(r.destaques.every((d) => d.tom == null && d.delta == null)).toBe(true)
   })
 
-  it('ganhos e a observar: composição primeiro, até 3 de cada, com o motivo', () => {
-    const r = relatorioAvaliacao([ant, atu], 'a2')!
-    expect(r.resumo.ganhos[0]).toMatchObject({ rotulo: 'Massa magra', delta: '+2,8 kg' })
-    expect(r.resumo.ganhos.some((g) => g.rotulo === 'Braço direito' && g.texto === 'provável ganho de massa')).toBe(true)
-    expect(r.resumo.observar.map((o) => o.rotulo)).toEqual(expect.arrayContaining(['Cintura', 'Coxa direita']))
-    expect(r.resumo.ganhos.length).toBeLessThanOrEqual(3)
-    expect(r.resumo.observar.length).toBeLessThanOrEqual(3)
+  it('segmentos: medida x carga, ordem melhorou, observar, estável; omite o que não tem nada', () => {
+    const dia = (iso: string) => Math.floor(Date.parse(`${iso}T12:00Z`) / 86400_000)
+    const oc = (iso: string, c: number) => ({ mesoId: 'm', semana: 1, treino: 1, dia: dia(iso), conta: true, cargaMax: c, volume: null, movimentos: 0 })
+    const cargas = { 'Rosca Direta Barra': [oc('2026-09-01', 20), oc('2026-10-01', 25)], 'Leg Press 45': [oc('2026-09-01', 200), oc('2026-10-01', 200)] }
+    const s = relatorioAvaliacao([ant, atu], 'a2', null, cargas)!.segmentos
+    expect(s.map((x) => x.id)).toEqual(['bracos', 'abdomen', 'coxas'])
+    expect(s[0]).toMatchObject({ veredito: 'melhorou', tom: 'bom', texto: expect.stringContaining('ganho de massa'), medida: { delta: '+2 cm' } })
+    expect(s[0].carga).toMatchObject({ n: 1, melhor: { de: 20, ate: 25 } })
+    expect(s[1]).toMatchObject({ veredito: 'observar', carga: null })
+    expect(s[2]).toMatchObject({ veredito: 'observar', carga: { n: 1 } })
+    expect(relatorioAvaliacao([ant, atu], 'a2')!.segmentos.map((x) => x.id)).toEqual(['bracos', 'abdomen', 'coxas'])
   })
 
   it('destaques levam o delta, a seta e o tom (peso neutro)', () => {
@@ -366,7 +356,7 @@ describe('resumo do relatório', () => {
 
   it('nunca julga com palavra dura: nada de "piorou", "pior" ou "ruim"', () => {
     const r = relatorioAvaliacao([atu, { ...ant, id: 'a3', data: '2026-12-09', pesoKg: 95, bio: { gorduraPct: 25 }, perimetros: { bracoD: 28, cintura: 95 }, dobras: { triceps: 20, suprailiaca: 30 } }], 'a3')!
-    const tudo = [r.resumo.frase, ...r.resumo.ganhos.map((x) => x.texto), ...r.resumo.observar.map((x) => x.texto), ...r.grupos.flatMap((g) => [g.resumo?.texto ?? '', ...g.linhas.map((l) => l.leitura?.texto ?? '')])].join(' ')
+    const tudo = [r.resumo.frase, ...r.segmentos.map((x) => x.texto), ...r.grupos.flatMap((g) => [g.resumo?.texto ?? '', ...g.linhas.map((l) => l.leitura?.texto ?? '')])].join(' ')
     expect(tudo).not.toMatch(/piorou|pior|ruim/i)
   })
 })

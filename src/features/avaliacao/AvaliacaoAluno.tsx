@@ -4,6 +4,7 @@ import { cicloDaAvaliacao, dataBR, lerAvaliacao, relatorioAvaliacao, type Avalia
 import { primeiroNome } from '../../lib/contato'
 import { db } from '../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../lib/hooks'
+import { historicoExercicios } from '../../lib/evolucao'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { Centro } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
@@ -27,7 +28,7 @@ export default function AvaliacaoAluno({ uid, nome, id }: { uid: string; nome: s
   const a = avs.dados.find((x) => x.id === id)
   const cicloId = a ? cicloDaAvaliacao(dados.mesos, a.data) : null
   const ciclo = cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null
-  const r = a ? relatorioAvaliacao(avs.dados, id, ciclo) : null
+  const r = a ? relatorioAvaliacao(avs.dados, id, ciclo, historicoExercicios(dados.mesos, dados.registros)) : null
   const outras = avs.dados.filter((x) => x.id !== id)
   return (
     <main className="mx-auto max-w-md px-4 py-4">

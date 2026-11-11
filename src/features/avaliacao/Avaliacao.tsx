@@ -2,7 +2,8 @@ import marca from '@marca/marca.json'
 import { m, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 import { IcSeta } from '../../icones'
-import { dataBR, fmtDeltaUn, fmtMedida, NOME_FONTE, type Grupo, type Linha, type RelatorioAvaliacao, type Seta, type Tom } from '../../lib/avaliacao'
+import { dataBR, fmtDeltaUn, fmtMedida, NOME_FONTE, type Grupo, type Linha, type RelatorioAvaliacao, type ResultadoSegmento, type Seta, type Tom } from '../../lib/avaliacao'
+import { textoCarga } from '../../lib/segmentos'
 import { cascata, item, Painel } from '../../ui'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
 import { gerarPdfAvaliacao } from './pdfAvaliacao'
@@ -12,7 +13,7 @@ const COR: Record<Tom, string> = {
   atencao: 'bg-amber-500/15 text-amber-300',
   neutro: 'bg-slate-700/60 text-slate-300',
 }
-const TEXTO_COR: Record<Tom, string> = { bom: 'text-emerald-300', atencao: 'text-amber-300', neutro: 'text-slate-300' }
+const SETA_VEREDITO: Record<ResultadoSegmento['veredito'], Seta> = { melhorou: 'sobe', observar: 'igual', estavel: 'igual' }
 
 // Seta com texto ao lado: a cor nunca fala sozinha.
 const SetaIc = ({ seta }: { seta?: Seta | null }) =>
@@ -78,24 +79,6 @@ function GrupoCartao({ g, aberto: inicio, quieto }: { g: Grupo; aberto: boolean;
 export default function Avaliacao({ r, aluno, comentario }: { r: RelatorioAvaliacao; aluno: string; comentario?: string }) {
   const quieto = useReducedMotion()
   const [lendo, setLendo] = useState(false)
-  const { ganhos, observar } = r.resumo
-  const mudou = (titulo: string, itens: typeof ganhos, tom: Tom, seta: Seta) =>
-    itens.length > 0 && (
-      <div>
-        <h3 className={`text-xs font-bold uppercase tracking-widest ${TEXTO_COR[tom]}`}>{titulo}</h3>
-        <ul className="mt-1 space-y-2">
-          {itens.map((i) => (
-            <li key={i.rotulo} className="flex items-start gap-2">
-              <span className={`mt-0.5 ${TEXTO_COR[tom]}`}><SetaIc seta={seta} /></span>
-              <p className="min-w-0 break-words text-sm">
-                <span className="font-semibold">{i.rotulo}</span> <span className={`font-semibold tabular-nums ${TEXTO_COR[tom]}`}>{i.delta}</span>
-                <span className="block text-xs text-slate-400">{i.texto}</span>
-              </p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    )
   return (
     <article className="relatorio space-y-3">
       <div>
@@ -127,11 +110,22 @@ export default function Avaliacao({ r, aluno, comentario }: { r: RelatorioAvalia
         </m.div>
       </section>
 
-      {(ganhos.length > 0 || observar.length > 0) && (
-        <section className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <h2 className="font-semibold">O que mais mudou</h2>
-          {mudou('Ganhos', ganhos, 'bom', 'sobe')}
-          {mudou('A observar', observar, 'atencao', 'igual')}
+      {r.segmentos.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="font-semibold">Sua evolução</h2>
+          {/* O desenho do corpo (PR 2) entra aqui, antes dos cartões. */}
+          <ul className="space-y-2">
+            {r.segmentos.map((s) => (
+              <li key={s.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-semibold">{s.rotulo}</h3>
+                  <Chipe tom={s.tom} seta={SETA_VEREDITO[s.veredito]} fraca={s.fraca}>{s.texto}</Chipe>
+                </div>
+                {s.medida && <p className="mt-1 text-sm text-slate-300">{s.medida.rotulo} <span className="font-semibold tabular-nums">{s.medida.delta}</span></p>}
+                {s.carga && <p className="mt-1 break-words text-sm text-slate-300">Carga: {textoCarga(s.carga.melhor)}</p>}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

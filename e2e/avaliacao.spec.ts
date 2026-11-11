@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
-import { criarAluno, criarCoach, hojeSaoPaulo, limparEmuladores } from './seed'
+import { criarAluno, criarCoach, criarMeso, criarRegistro, gravarDoc, hojeSaoPaulo, limparEmuladores } from './seed'
 
 const COACH = { nome: 'Victor', email: 'victor.av-e2e@teste.com', senha: 'senha123' }
 const ALUNO = { nome: 'Carla Aluna', email: 'carla.av-e2e@teste.com', senha: 'senha123' }
@@ -81,7 +81,9 @@ test('coach lança, libera e recolhe; o aluno vê a evolução', async ({ browse
   await cartao.click()
   await expect(aluno.getByRole('heading', { name: `Avaliação de ${dataBR(amanha())}` })).toBeVisible()
   await aluno.getByRole('button', { name: 'Ler o relatório escrito' }).click()
-  await expect(aluno.getByText('Peso: 80 kg → 78 kg (−2 kg)')).toBeVisible()
+  await expect(aluno.getByText(/^Desde \d\d\/\d\d\/\d{4} \(1 dia\)\.$/)).toBeVisible()
+  await expect(aluno.getByRole('heading', { name: 'Sua evolução' })).toBeVisible()
+  await expect(aluno.getByRole('heading', { name: 'O que mais mudou' })).toHaveCount(0)
   await aluno.getByRole('button', { name: /^Braços/ }).click()
   await expect(aluno.getByText(/provável ganho de massa/).first()).toBeVisible()
   await expect(aluno.getByText('+2 cm').first()).toBeVisible()
@@ -103,4 +105,33 @@ test('coach lança, libera e recolhe; o aluno vê a evolução', async ({ browse
   await cartao.click()
   await expect(aluno.getByRole('heading', { name: `Avaliação de ${dataBR(hojeSaoPaulo())}` })).toBeVisible()
   await expect(aluno.getByText(/78 kg/)).toHaveCount(0)
+})
+
+test('treinos entre duas avaliações viram um cartão do segmento com a carga', async ({ page }) => {
+  await limparEmuladores()
+  await criarCoach(COACH.nome, COACH.email, COACH.senha)
+  const alunoId = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  const dia = (n: number) => new Date(Date.now() - 3 * 3600_000 - n * 86_400_000).toISOString().slice(0, 10)
+  const w = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null] }
+  const mesoId = await criarMeso({
+    alunoId, nome: 'Meso', frequencia: 2, semanas: 2, inicio: dia(30), pausaS: 60,
+    divisao: { t1: [{ slotId: 'a', nome: 'Leg Press 45' }], t2: [{ slotId: 'a', nome: 'Leg Press 45' }] },
+    progressao: { principais: w, auxiliares: w },
+  })
+  const feito = (semana: number, treino: number, carga: number, dias: number) =>
+    criarRegistro(mesoId, alunoId, semana, treino, { cargas: { a: { s1: carga, s2: carga, s3: carga } }, realizado: true, realizadoEm: new Date(Date.now() - dias * 86_400_000) })
+  await feito(1, 1, 200, 20)
+  await feito(1, 2, 230, 12)
+  const av = (id: string, data: string, coxa: number) =>
+    gravarDoc(`avaliacoes/${id}`, { alunoId, data, pesoKg: 70, perimetros: { coxaD: coxa }, dobras: { coxa: 15 }, comentario: '', liberado: true, liberadoEm: new Date() })
+  await av('av-1', dia(25), 55)
+  await av('av-2', dia(5), 57)
+
+  await entrar(page, ALUNO.email, ALUNO.senha)
+  await page.goto('/#/avaliacao/av-2')
+  await expect(page.getByRole('heading', { name: 'Sua evolução' })).toBeVisible()
+  const cartao = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Coxas' }) })
+  await expect(cartao).toContainText('Leg Press 45: 200 → 230 kg (+15%)')
+  await expect(cartao).toContainText('ganho de massa, confirmado pela carga')
+  expect(await cabeNaTela(page)).toBe(true)
 })
