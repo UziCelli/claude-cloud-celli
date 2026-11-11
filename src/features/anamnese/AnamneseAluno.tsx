@@ -161,7 +161,7 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
           <p className="text-sm text-slate-400">Obrigado! Só você e seu coach veem estas respostas.</p>
         </Quadro>
         {avisoMedico(enviado) && <Aviso>Procure seu médico antes de treinar forte.</Aviso>}
-        <Botao tipo="primario" className="min-h-12 w-full" onClick={() => ir('/')}>Ir para o início</Botao>
+        <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => ir('/')}>Ir para o início</Botao>
       </main>
     )
 
@@ -184,8 +184,8 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
         )}
         {erro && <Aviso>{erro}</Aviso>}
         <div className="space-y-2">
-          {motivo === 'ciclo' && <Botao tipo="primario" className="min-h-12 w-full" onClick={() => enviar({ ...ultima.r, declaracao: true })}>Nada mudou</Botao>}
-          <Botao tipo={motivo === 'ciclo' ? 'secundario' : 'primario'} className="min-h-12 w-full" onClick={() => setEditando(true)}>Atualizar minhas respostas</Botao>
+          {motivo === 'ciclo' && <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => enviar({ ...ultima.r, declaracao: true })}>Nada mudou</Botao>}
+          <Botao tipo={motivo === 'ciclo' ? 'vidro' : 'primario'} tamanho={motivo === 'ciclo' ? 'md' : 'lg'} className="w-full" onClick={() => setEditando(true)}>Atualizar minhas respostas</Botao>
         </div>
       </main>
     )
@@ -222,10 +222,11 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
       {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
       <div className={coach ? 'sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 rounded-2xl bg-slate-950/90 p-2 backdrop-blur lg:bottom-2' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
         <div className="mx-auto flex max-w-md gap-2">
-          {etapa > 0 && <Botao className="min-h-12 flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}
+          {etapa > 0 && <Botao tamanho="lg" className="flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}
           <Botao
             tipo="primario"
-            className="min-h-12 flex-[2]"
+            tamanho="lg"
+            className="flex-[2]"
             disabled={falta(etapa) || enviando}
             onClick={() => (ultimaEtapa ? enviar(r) : irPara(etapa + 1))}
           >

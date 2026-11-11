@@ -140,16 +140,16 @@ export default function VozTreino({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Montar o meso por voz</h2>
-          <button
+          <Botao
             type="button"
-            className="min-h-11 px-2 text-sm text-slate-400 hover:text-slate-200"
+            tipo="fantasma"
             onClick={() => {
               limpar()
               setAberto(false)
             }}
           >
             Fechar
-          </button>
+          </Botao>
         </div>
         {erroLeitura ? (
           <Aviso>Ative a verificação em 2 etapas em Minha conta para usar o assistente.</Aviso>
@@ -179,16 +179,16 @@ export default function VozTreino({
                 <Botao
                   type="button"
                   tipo={ouvindo ? 'alerta' : 'secundario'}
-                  className="flex min-h-11 flex-1 items-center justify-center gap-2"
+                  className="flex flex-1 items-center justify-center gap-2"
                   onClick={falar}
                 >
                   <IcMicrofone className="size-5" /> {ouvindo ? 'Parar' : 'Falar'}
                 </Botao>
               )}
-              <Botao type="button" className="min-h-11 px-4" disabled={!texto && !proposta} onClick={limpar}>
+              <Botao type="button" disabled={!texto && !proposta} onClick={limpar}>
                 Limpar
               </Botao>
-              <Botao type="button" tipo="primario" className="min-h-11 flex-1" disabled={pensando || !texto.trim()} carregando={pensando} onClick={montar}>
+              <Botao type="button" tipo="primario" className="flex-1" disabled={pensando || !texto.trim()} carregando={pensando} onClick={montar}>
                 {pensando ? 'Montando…' : 'Montar'}
               </Botao>
             </div>
@@ -235,10 +235,10 @@ export default function VozTreino({
               <p key={i} className="text-xs text-amber-300">{a}</p>
             ))}
             <div className="flex gap-2">
-              <Botao type="button" className="min-h-11 flex-1" onClick={() => setProposta(null)}>
+              <Botao type="button" className="flex-1" onClick={() => setProposta(null)}>
                 Descartar
               </Botao>
-              <Botao type="button" tipo="primario" className="min-h-11 flex-1" disabled={!proposta.acoes.length} onClick={aplicar}>
+              <Botao type="button" tipo="primario" className="flex-1" disabled={!proposta.acoes.length} onClick={aplicar}>
                 Aplicar no editor
               </Botao>
             </div>

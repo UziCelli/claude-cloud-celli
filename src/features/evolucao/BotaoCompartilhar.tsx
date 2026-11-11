@@ -43,7 +43,7 @@ export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gera
 
   return (
     <div className={`flex flex-col gap-2 ${className ?? ''}`}>
-      <Botao tipo="primario" onClick={clicar} disabled={gerando} carregando={gerando}>
+      <Botao tipo="vidro" onClick={clicar} disabled={gerando} carregando={gerando}>
         {gerando ? 'Gerando…' : rotulo}
       </Botao>
       {msg && (

@@ -87,7 +87,7 @@ export default function Aceite({ uid, adiar }: { uid: string; adiar?: () => void
               <Campo rotulo="Repetir nova senha" type="password" autoComplete="new-password" value={repete} onChange={(e) => { setRepete(e.target.value); setErro('') }} required />
             </>
           )}
-          <button type="button" className="text-sm font-semibold underline disabled:opacity-50" disabled={enviandoLink} onClick={esqueci}>Esqueci minha senha</button>
+          <Botao type="button" tipo="fantasma" className="underline" disabled={enviandoLink} onClick={esqueci}>Esqueci minha senha</Botao>
         </Cartao>
         <Cartao className="space-y-3 text-left">
           <h2 className="font-semibold">Sua privacidade</h2>

@@ -107,7 +107,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
   const chipsSemana = (semanas: number[], marcadas: number[], onClick: (w: number) => void) => (
     <div className="flex flex-wrap gap-1.5">
       {semanas.map((w) => (
-        <Botao key={w} aria-pressed={marcadas.includes(w)} tipo={marcadas.includes(w) ? 'primario' : undefined} className="min-h-11" onClick={() => onClick(w)}>
+        <Botao key={w} aria-pressed={marcadas.includes(w)} tipo={marcadas.includes(w) ? 'primario' : undefined} onClick={() => onClick(w)}>
           S{w}
         </Botao>
       ))}

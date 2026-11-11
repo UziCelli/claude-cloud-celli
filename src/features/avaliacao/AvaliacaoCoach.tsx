@@ -212,7 +212,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
         {aluno.presencial ? (
           <>
             <p className="text-sm text-slate-400">Aluno sem app: envie o PDF.</p>
-            <Botao tipo="primario" className="min-h-11 w-full" disabled={!form} onClick={() => gravar(false, 'Salvo.')}>Salvar</Botao>
+            <Botao tipo="primario" className="w-full" disabled={!form} onClick={() => gravar(false, 'Salvo.')}>Salvar</Botao>
           </>
         ) : (
           <>
@@ -220,13 +220,13 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
             <div className="flex flex-wrap gap-2">
               {liberado ? (
                 <>
-                  <Botao tipo="primario" className="min-h-11 flex-1" disabled={!form} onClick={() => gravar(true, 'Avaliação atualizada.')}>Atualizar</Botao>
-                  <Botao className="min-h-11 flex-1" onClick={() => { rodar(recolherAvaliacao(id), 'Avaliação recolhida: o aluno não vê mais.'); setLiberado(false) }}>Recolher</Botao>
+                  <Botao tipo="primario" className="flex-1" disabled={!form} onClick={() => gravar(true, 'Avaliação atualizada.')}>Atualizar</Botao>
+                  <Botao className="flex-1" onClick={() => { rodar(recolherAvaliacao(id), 'Avaliação recolhida: o aluno não vê mais.'); setLiberado(false) }}>Recolher</Botao>
                 </>
               ) : (
                 <>
-                  <Botao className="min-h-11 flex-1" disabled={!form} onClick={() => gravar(false, 'Rascunho salvo.')}>Salvar rascunho</Botao>
-                  <Botao tipo="primario" className="min-h-11 flex-1" disabled={!form} onClick={() => gravar(true, 'Liberada para o aluno.')}>Liberar para o aluno</Botao>
+                  <Botao className="flex-1" disabled={!form} onClick={() => gravar(false, 'Rascunho salvo.')}>Salvar rascunho</Botao>
+                  <Botao tipo="primario" className="flex-1" disabled={!form} onClick={() => gravar(true, 'Liberada para o aluno.')}>Liberar para o aluno</Botao>
                 </>
               )}
             </div>
@@ -247,7 +247,6 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
               <div className="flex flex-wrap gap-2">
                 <Botao
                   tipo="perigo"
-                  className="min-h-11"
                   onClick={() => {
                     apagarAvaliacao(id).catch(() => setMsg('Não foi possível apagar. Confira a internet e tente de novo.'))
                     ir(`/aluno/${uid}/avaliacoes`)
@@ -255,11 +254,11 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
                 >
                   Sim, apagar
                 </Botao>
-                <Botao className="min-h-11" onClick={() => setApagando(false)}>Cancelar</Botao>
+                <Botao onClick={() => setApagando(false)}>Cancelar</Botao>
               </div>
             </div>
           ) : (
-            <Botao tipo="alerta" className="min-h-11 w-full" onClick={() => setApagando(true)}>Apagar avaliação</Botao>
+            <Botao tipo="alerta" className="w-full" onClick={() => setApagando(true)}>Apagar avaliação</Botao>
           ))}
       </section>
     </div>
