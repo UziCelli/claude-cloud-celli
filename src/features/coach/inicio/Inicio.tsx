@@ -12,7 +12,7 @@ import { inicioJanela, resumoCoach, type AlunoComId } from '../../../lib/resumo'
 import { ir } from '../../../rota'
 import { m } from 'motion/react'
 import { calcularAlertas, useArquivados, type Reg } from '../alertas/Alertas'
-import { Botao, Cartao, cascata, Contar, item, Pagina } from '../../../ui'
+import { Botao, Cartao, classesBotao, cascata, Contar, item, Pagina } from '../../../ui'
 import { PIX } from '../../aluno/PagarPix'
 import { mediaTexto, useFeedbacks } from '../feedbacks/Feedbacks'
 import { resumoNotas } from '../../../lib/feedback'
@@ -50,7 +50,7 @@ export default function Inicio({ nome }: { nome: string }) {
       <Pagina titulo="Início">
         <Cartao className="space-y-4 text-center">
           <p className="text-slate-400">{semInternet ? TEXTO_SEM_INTERNET : 'Nenhum aluno ainda.'}</p>
-          <Botao tipo="primario" className="w-full py-4 text-base" onClick={() => ir('/alunos/novo')}>
+          <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => ir('/alunos/novo')}>
             Cadastrar primeiro aluno
           </Botao>
         </Cartao>
@@ -90,19 +90,19 @@ export default function Inicio({ nome }: { nome: string }) {
         ))}
       </div>
       {/* Atalho do dia a dia: escolher o aluno e cair no treino de hoje (2 toques). */}
-      <Botao tipo="destaque" className="mb-3 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold lg:max-w-md" onClick={() => setEscolher(true)}>
+      <Botao tipo="destaque" tamanho="lg" className="mb-3 flex w-full items-center justify-center gap-2 lg:max-w-md" onClick={() => setEscolher(true)}>
         <IcPlay className="size-5" /> Treino presencial
       </Botao>
       {escolher && <EscolherAluno titulo="Treino presencial: qual aluno?" onEscolher={(uid) => ir(`/aluno/${uid}/presencial`)} onFechar={() => setEscolher(false)} />}
       <div className="mb-3 grid grid-cols-2 gap-3 lg:max-w-md">
-        <Botao tipo="primario" className="flex h-12 min-w-0 items-center justify-center gap-2 rounded-2xl text-base font-bold" onClick={() => ir('/alunos/novo')}>
+        <Botao tipo="primario" className="flex min-w-0 items-center justify-center gap-2" onClick={() => ir('/alunos/novo')}>
           <IcMais className="size-5" /> Novo aluno
         </Botao>
-        <a href="#/ranking" className="grid min-h-12 min-w-0 place-items-center rounded-2xl bg-white/10 px-3 text-center text-base font-bold leading-tight ring-1 ring-white/20">
+        <a href="#/ranking" className={classesBotao('vidro', 'md', 'grid min-w-0 place-items-center text-center leading-tight')}>
           Ranking de evolução
         </a>
       </div>
-      <Botao className="mb-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold lg:max-w-md" onClick={() => setQr(true)}>
+      <Botao className="mb-3 flex w-full items-center justify-center gap-2 lg:max-w-md" onClick={() => setQr(true)}>
         <IcQr className="size-5" /> QR Code de cadastro
       </Botao>
       {qr && <QrCadastro onFechar={() => setQr(false)} />}
@@ -212,7 +212,7 @@ export default function Inicio({ nome }: { nome: string }) {
                         {l.texto}
                       </a>
                       {titulo === 'Aguardando aprovação' && (
-                        <a href="#/alunos" className="grid h-11 shrink-0 place-items-center rounded-full border border-marca-400 bg-marca-500 px-5 text-sm font-bold text-white">Liberar</a>
+                        <a href="#/alunos" className={classesBotao('primario', 'md', 'grid shrink-0 place-items-center')}>Liberar</a>
                       )}
                     </li>
                   ))

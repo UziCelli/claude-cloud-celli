@@ -175,7 +175,7 @@ export default function TabDivisao({
               key={t}
               type="button"
               onClick={() => setTreinoSel(t)}
-              className={`shrink-0 rounded-lg border border-slate-600 px-3 py-1.5 text-sm font-semibold ${sel === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+              className={`min-h-11 shrink-0 rounded-lg border border-slate-600 px-3 text-sm font-semibold ${sel === t ? 'bg-marca-500 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               Treino {t}
             </button>
@@ -232,7 +232,7 @@ function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registro
 
   const grupos = agruparTrocas(meso)
   const botaoTipo = (v: 'troca' | 'adicao', texto: string) => (
-    <Botao tipo={tipo === v ? 'primario' : 'secundario'} className="min-h-11 flex-1" aria-pressed={tipo === v} onClick={() => setTipo(v)}>
+    <Botao tipo={tipo === v ? 'primario' : 'secundario'} className="flex-1" aria-pressed={tipo === v} onClick={() => setTipo(v)}>
       {texto}
     </Botao>
   )
@@ -252,7 +252,7 @@ function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registro
                 <b className="text-base">{g.slot.nome}</b>
                 <span className="block text-slate-400">{semanas}</span>
               </span>
-              <Botao tipo="perigo" className="min-h-11" onClick={() => remover(g)}>
+              <Botao tipo="perigo" onClick={() => remover(g)}>
                 Remover
               </Botao>
             </li>
@@ -283,10 +283,10 @@ function TrocasEAdicoes({ meso, registros, onAtualizar }: { meso: Meso; registro
       <div className="flex flex-wrap items-end gap-2">
         <Seletor rotulo="Semana de" valor={de} max={meso.semanas} onChange={mudarDe} />
         <Seletor rotulo="até" valor={ate} max={meso.semanas} onChange={(v) => setAte(Math.max(v, de))} />
-        <Botao className="min-h-11" onClick={() => setAte(meso.semanas)}>
+        <Botao onClick={() => setAte(meso.semanas)}>
           Até o fim
         </Botao>
-        <Botao tipo="primario" className="min-h-11" disabled={semPosicao} onClick={salvar}>
+        <Botao tipo="primario" disabled={semPosicao} onClick={salvar}>
           {tipo === 'troca' ? 'Salvar troca' : 'Adicionar'}
         </Botao>
       </div>

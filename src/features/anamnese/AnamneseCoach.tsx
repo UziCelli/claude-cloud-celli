@@ -86,9 +86,9 @@ export default function AnamneseCoach({ uid }: { uid: string }) {
       <div className="sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 lg:bottom-2"> {/* acima das abas do coach (66px) no celular */}
         <div className="flex gap-2 rounded-2xl bg-slate-950/90 p-2 backdrop-blur">
           {atual && atual.origem === 'aluno' && atual.vistaEm == null && (
-            <Botao className="min-h-12 flex-1" onClick={() => marcarAnamneseVista(atual.id).catch((e) => { falhou(e); setErro(`Não foi possível marcar como vista (${codigo(e)}).`) })}>Marcar como vista</Botao>
+            <Botao className="flex-1" onClick={() => marcarAnamneseVista(atual.id).catch((e) => { falhou(e); setErro(`Não foi possível marcar como vista (${codigo(e)}).`) })}>Marcar como vista</Botao>
           )}
-          <Botao tipo="primario" className="min-h-12 flex-1" disabled={an.carregando} onClick={() => setNovaVersao(true)}>{rotuloAcao}</Botao>
+          <Botao tipo="primario" className="flex-1" disabled={an.carregando} onClick={() => setNovaVersao(true)}>{rotuloAcao}</Botao>
         </div>
       </div>
     </main>
@@ -113,7 +113,7 @@ function Anotacao({ a }: { a: Anamnese }) {
       />
       {estado === 'erro' && <Aviso>Não foi possível salvar a anotação. Tente de novo.</Aviso>}
       <Botao
-        className="min-h-11 w-full"
+        className="w-full"
         disabled={txt === a.obsCoach || estado === 'salvando'}
         onClick={() => {
           setEstado('salvando')

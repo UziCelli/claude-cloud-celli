@@ -26,7 +26,7 @@ export default function AvaliacoesCoach({ uid }: { uid: string }) {
     <main className="mx-auto max-w-md px-4 py-4 lg:max-w-3xl">
       <BotaoVoltar para={`/aluno/${uid}`} />
       <h1 className="mb-4 break-words text-2xl">Avaliação física de {aluno.dados?.nome ?? '…'}</h1>
-      <Botao tipo="primario" className="mb-4 min-h-11 w-full" onClick={() => ir(`/aluno/${uid}/avaliacao/nova`)}>Nova avaliação</Botao>
+      <Botao tipo="primario" className="mb-4 w-full" onClick={() => ir(`/aluno/${uid}/avaliacao/nova`)}>Nova avaliação</Botao>
       {avs.carregando ? (
         <Centro>Carregando…</Centro>
       ) : avs.dados.length === 0 ? (

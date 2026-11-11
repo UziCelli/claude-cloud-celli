@@ -255,9 +255,9 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
       <IcLapis className="size-4 shrink-0 text-slate-500" />
     </button>
   ) : (
-    <button onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 py-1 text-sm text-slate-400">
+    <Botao tipo="fantasma" onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 !px-2">
       <IcMais className="size-4" /> Anotação
-    </button>
+    </Botao>
   )
   return (
     <AnimatePresence initial={false} mode="wait">
