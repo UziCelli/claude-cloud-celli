@@ -185,7 +185,7 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
         {erro && <Aviso>{erro}</Aviso>}
         <div className="space-y-2">
           {motivo === 'ciclo' && <Botao tipo="primario" tamanho="lg" className="w-full" onClick={() => enviar({ ...ultima.r, declaracao: true })}>Nada mudou</Botao>}
-          <Botao tipo={motivo === 'ciclo' ? 'secundario' : 'primario'} tamanho="lg" className="w-full" onClick={() => setEditando(true)}>Atualizar minhas respostas</Botao>
+          <Botao tipo={motivo === 'ciclo' ? 'vidro' : 'primario'} tamanho={motivo === 'ciclo' ? 'md' : 'lg'} className="w-full" onClick={() => setEditando(true)}>Atualizar minhas respostas</Botao>
         </div>
       </main>
     )

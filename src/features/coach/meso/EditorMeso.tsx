@@ -172,7 +172,7 @@ export default function EditorMeso({ id }: { id: string }) {
       acoes={
         <>
           <span className="self-center text-sm text-slate-400">{status}</span>
-          <Botao tipo="primario" tamanho="lg" disabled={!dirty || !nome.trim() || !meso.inicio} onClick={() => salvar()}>
+          <Botao tipo="primario" disabled={!dirty || !nome.trim() || !meso.inicio} onClick={() => salvar()}>
             Salvar
           </Botao>
           <Botao onClick={() => ir(`/meso/${id}/semana/1`)}>Ver semanas</Botao>

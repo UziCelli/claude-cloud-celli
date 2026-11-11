@@ -90,7 +90,7 @@ export default function Inicio({ nome }: { nome: string }) {
         ))}
       </div>
       {/* Atalho do dia a dia: escolher o aluno e cair no treino de hoje (2 toques). */}
-      <Botao tipo="destaque" className="mb-3 flex w-full items-center justify-center gap-2 lg:max-w-md" onClick={() => setEscolher(true)}>
+      <Botao tipo="destaque" tamanho="lg" className="mb-3 flex w-full items-center justify-center gap-2 lg:max-w-md" onClick={() => setEscolher(true)}>
         <IcPlay className="size-5" /> Treino presencial
       </Botao>
       {escolher && <EscolherAluno titulo="Treino presencial: qual aluno?" onEscolher={(uid) => ir(`/aluno/${uid}/presencial`)} onFechar={() => setEscolher(false)} />}
