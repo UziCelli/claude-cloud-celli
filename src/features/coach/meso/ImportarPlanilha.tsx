@@ -14,6 +14,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
   const [previa, setPrevia] = useState<{ ok: Importado } | { erro: string } | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [comoFeitos, setComoFeitos] = useState(false)
 
   async function escolher(arquivo?: File) {
     setPlanilha(null)
@@ -42,6 +43,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
     if (!planilha || !aba) return
     let vivo = true
     setPrevia(null)
+    setComoFeitos(false)
     planilha
       .ler(aba)
       .then((c) => planilhaParaMeso(c))
@@ -57,7 +59,10 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
     setEnviando(true)
     setErro(null)
     try {
-      const { id, gravado } = await importarMeso(uid, nome.trim(), previa.ok)
+      const { id, gravado } = await importarMeso(uid, nome.trim(), {
+        ...previa.ok,
+        registros: [...previa.ok.registros, ...(comoFeitos ? previa.ok.naoMarcados.map((r) => ({ ...r, realizado: true })) : [])],
+      })
       ir(`/meso/${id}`)
       gravado.catch((e) => registrarErro('gravacao', `importar meso: ${e?.code ?? e}`, e))
     } catch (e) {
@@ -98,7 +103,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
           {previa.erro}
         </p>
       )}
-      {previa && 'ok' in previa && <Previa {...previa.ok} />}
+      {previa && 'ok' in previa && <Previa {...previa.ok} comoFeitos={comoFeitos} onComoFeitos={setComoFeitos} />}
       <Msg>{erro && <p role="alert" className="text-sm text-red-400">{erro}</p>}</Msg>
       <div className="flex flex-wrap gap-2">
         <Botao tipo="primario" disabled={!previa || !('ok' in previa) || !nome.trim() || enviando} carregando={enviando} onClick={importar}>
@@ -110,7 +115,8 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
   )
 }
 
-function Previa({ meso, registros, deFora }: Importado) {
+function Previa({ meso, registros, deFora, comoFeitos, onComoFeitos }: Importado & { comoFeitos: boolean; onComoFeitos: (v: boolean) => void }) {
+  const n = registros.length + (comoFeitos ? deFora : 0)
   return (
     <div className="space-y-1 rounded-lg bg-slate-950 p-3 text-sm" data-testid="previa">
       <p>Início: {meso.inicio.split('-').reverse().join('/')}</p>
@@ -125,13 +131,16 @@ function Previa({ meso, registros, deFora }: Importado) {
         ))}
       </ul>
       <p>
-        {registros.length} {registros.length === 1 ? 'treino realizado' : 'treinos realizados'} com carga
+        {n} {n === 1 ? 'treino realizado' : 'treinos realizados'} com carga
       </p>
       {deFora > 0 && (
-        <p className="text-xs text-slate-500">
-          {deFora} {deFora === 1 ? 'treino com carga marcado como Não realizado fica' : 'treinos com carga marcados como Não realizado ficam'} de
-          fora. Se foi feito, marque Realizado na planilha e importe de novo.
-        </p>
+        <label className="flex items-start gap-2 text-xs text-slate-400">
+          <input type="checkbox" checked={comoFeitos} onChange={(e) => onComoFeitos(e.target.checked)} className="mt-0.5" />
+          <span>
+            {deFora} {deFora === 1 ? 'treino com carga não está marcado como realizado' : 'treinos com carga não estão marcados como realizados'}.
+            Importar também como feitos (confira: a carga pode ter sido copiada)
+          </span>
+        </label>
       )}
     </div>
   )

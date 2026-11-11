@@ -114,3 +114,21 @@ export function abaMesoFalsa(novo = false, extra: Cel = {}): Cel {
   }
   return c
 }
+
+// Aba falsa do modelo antigo ("Elaboração dos Treinamentos"): sem Configuração do Meso; 2 semanas x 2 treinos, bloco de 40 linhas.
+export function abaAntigaFalsa(extra: Cel = {}): Cel {
+  return {
+    S1: 'Elaboração dos Treinamentos',
+    S18: 1, S19: 2, T3: 1, U3: 2,
+    T4: 'Supino', T5: 'Crucifixo', U4: 'Agachamento',
+    T18: 4, U18: 3, T19: 5,
+    T24: 'Exercícios Auxiliares', T26: 2, U26: 2, Z26: 90,
+    B2: 'Semana', P2: 45292, // 2024-01-01
+    B3: true, C3: 'Realizado', C5: 'Supino', J5: 20, L5: 22.5, C6: 'Crucifixo',
+    B16: false, C16: 'Não realizado', C18: 'Agachamento',
+    B42: 'Semana',
+    C43: 'Não realizado', C45: 'Supino', J45: 30, // carga, mas "Realizado" desmarcado
+    C56: 'Não realizado', C58: 'Agachamento',
+    ...extra,
+  }
+}
