@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { Icone } from './icones'
 
 // Bolha da aba ativa. Sem layoutId (11/11/2026): o deslize media o layout no mesmo quadro em que a tela nova monta.
-export const Bolha = ({ className = 'rounded-full' }: { id?: string; className?: string }) => (
+export const Bolha = ({ className = 'rounded-full' }: { className?: string }) => (
   <span aria-hidden className={`lente pointer-events-none absolute inset-0 -z-10 ${className}`} />
 )
 
@@ -23,7 +23,7 @@ export function BarraAbas({ abas, className = '' }: { abas: Aba[]; className?: s
             aria-current={ativo ? 'page' : undefined}
             className={`relative flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold tracking-wide ${ativo ? 'text-white' : 'text-slate-300/85'}`}
           >
-            {ativo && <Bolha id="bolha-barra" />}
+            {ativo && <Bolha />}
             <Icone className={`size-[22px] ${ativo ? 'text-marca-400' : ''}`} />
             <span className="truncate">{rotulo}</span>
             {selo ? (

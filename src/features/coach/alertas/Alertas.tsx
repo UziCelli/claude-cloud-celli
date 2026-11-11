@@ -9,7 +9,7 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks
 import { inicioJanela } from '../../../lib/resumo'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../../lib/contato'
 import { saida, suave } from '../../../movimento'
-import { Botao, classesBotao, Painel, Pagina } from '../../../ui'
+import { Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
@@ -185,7 +185,7 @@ export default function Alertas() {
                 Arquivados ({nArq}) <IcVoltar className={`inline size-4 align-[-2px] ${verArq ? '-rotate-90' : 'rotate-180'}`} />
               </Botao>
               {verArq && (
-                <m.ul className="space-y-2 pt-1" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+                <m.ul className="space-y-2 pt-1" initial={{ opacity: 0, ...mexe('translateY(-8px)') }} animate={sobe} transition={suave}>
                   {linhas.map((l) => (
                     <li key={l.chave} className="flex items-center justify-between gap-3 rounded-xl border border-slate-700 p-3 text-sm text-slate-300">
                       <span className="min-w-0"><b>{l.nome}</b> · {l.desc}</span>

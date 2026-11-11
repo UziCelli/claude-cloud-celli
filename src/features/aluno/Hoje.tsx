@@ -9,7 +9,7 @@ import { TEXTO_SEM_INTERNET, useHoje, useLista, useSemInternet } from '../../lib
 import { IcCadeado, IcCheck, IcRaio, IcRelogio } from '../../icones'
 import { ir } from '../../rota'
 import { agil, elastico, saida } from '../../movimento'
-import { Botao, cascata, Centro, Deslizar, item } from '../../ui'
+import { Botao, cascata, Centro, Deslizar, item, sobe, mexe } from '../../ui'
 import { BrilhoBorda, Chip, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { semanaParaAbrir } from '../../lib/semana'
@@ -112,7 +112,7 @@ function SemanaCarregada({ base, coach, abrirHoje, meso, mesoId, nome, registros
       {/* fora do wrapper que treme: com transform ele viraria o referencial do `fixed` */}
       <AnimatePresence>
       {aviso != null && (
-        <m.div role="alert" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -80, transition: saida }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
+        <m.div role="alert" initial={{ ...mexe('translateY(-80px)'), opacity: 0 }} animate={sobe} exit={{ opacity: 0, ...mexe('translateY(-80px)'), transition: saida }} transition={agil} className="vidro !bg-slate-900/95 fixed inset-x-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] mx-auto flex max-w-[398px] items-center gap-3 rounded-3xl p-2.5 shadow-2xl">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-rose-500/20 text-rose-400"><IcCadeado className="size-6" /></span>
           <p className="text-[15px] leading-snug text-slate-100">Semana {aviso} já passou. Faça o treino desta semana.</p>
         </m.div>

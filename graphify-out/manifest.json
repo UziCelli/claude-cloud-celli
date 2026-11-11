@@ -402,9 +402,9 @@
     "semantic_hash": ""
   },
   "src/App.tsx": {
-    "mtime": 1794412045.1346924,
-    "seen": 1794412567.77779,
-    "ast_hash": "ac270dd9219cb46c028c6252ba1bfe03",
+    "mtime": 1794426661.6332333,
+    "seen": 1794427254.8606522,
+    "ast_hash": "cd071cfd3655ca5dec5903de055b2b92",
     "semantic_hash": ""
   },
   "src/avatar.tsx": {
@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "src/features/aluno/Hoje.tsx": {
-    "mtime": 1794426494.2117357,
-    "seen": 1794426561.8310134,
-    "ast_hash": "46cfe4a06f881c12fb222ce0a56b7356",
+    "mtime": 1794426661.632472,
+    "seen": 1794427254.8606951,
+    "ast_hash": "5a7fd3b9226e323835aa87722b9678ed",
     "semantic_hash": ""
   },
   "src/features/aluno/InicioAluno.tsx": {
@@ -600,9 +600,9 @@
     "semantic_hash": ""
   },
   "src/features/aluno/Treino.tsx": {
-    "mtime": 1794426494.2117357,
-    "seen": 1794426561.8310168,
-    "ast_hash": "1c92bdcf24a3508e3166bf4b30068ccd",
+    "mtime": 1794426661.6321998,
+    "seen": 1794427254.8606992,
+    "ast_hash": "5254e7e46097a28d28440afc7e4cd1f4",
     "semantic_hash": ""
   },
   "src/features/aluno/Tutorial.tsx": {
@@ -624,15 +624,15 @@
     "semantic_hash": ""
   },
   "src/features/anamnese/AnamneseAluno.tsx": {
-    "mtime": 1794412045.1386926,
-    "seen": 1794412567.777828,
-    "ast_hash": "b0db26e2cfb54843d749dd9fea4d5c4f",
+    "mtime": 1794426680.1767113,
+    "seen": 1794427254.8607044,
+    "ast_hash": "0537c14ec2f216439848c6d610b95fe6",
     "semantic_hash": ""
   },
   "src/features/anamnese/AnamneseCoach.tsx": {
-    "mtime": 1794412045.1386926,
-    "seen": 1794412567.7778292,
-    "ast_hash": "ef668276da4245c434462d58f687f7b2",
+    "mtime": 1794426680.1760528,
+    "seen": 1794427254.8607059,
+    "ast_hash": "40c532b61102f0e8906e53f91f113614",
     "semantic_hash": ""
   },
   "src/features/anamnese/useAnamnese.ts": {
@@ -714,9 +714,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/alertas/Alertas.tsx": {
-    "mtime": 1794360824.8462536,
-    "seen": 1794398567.0673916,
-    "ast_hash": "9da99c4536b7f90b9d75e2041711e84d",
+    "mtime": 1794426661.6329036,
+    "seen": 1794427254.8607357,
+    "ast_hash": "dc68b85358636b8fb8390a47bec76874",
     "semantic_hash": ""
   },
   "src/features/coach/alertas/calcularAlertas.test.ts": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/alunos/Alunos.tsx": {
-    "mtime": 1794360824.8464878,
-    "seen": 1794398567.0673969,
-    "ast_hash": "f72d472a65ca68f46ec67f5ad794cae2",
+    "mtime": 1794426661.6327052,
+    "seen": 1794427254.8607392,
+    "ast_hash": "ac79d7542d26e0d540138f27f468aa79",
     "semantic_hash": ""
   },
   "src/features/coach/alunos/EnviarAviso.tsx": {
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/presencial/Presencial.tsx": {
-    "mtime": 1794360824.8479362,
-    "seen": 1794398567.0674322,
-    "ast_hash": "eb7e5fc75fd8dc2b0c1367ecee6bd987",
+    "mtime": 1794426680.1758378,
+    "seen": 1794427254.8607678,
+    "ast_hash": "f844a817ada030855991b72a8f7b8f5f",
     "semantic_hash": ""
   },
   "src/features/coach/semana/EvolucaoCoach.tsx": {
@@ -1554,9 +1554,9 @@
     "semantic_hash": ""
   },
   "src/ui.tsx": {
-    "mtime": 1794426494.2117357,
-    "seen": 1794426561.8311996,
-    "ast_hash": "bff54f4cc8d728374f9ccf8d41bbab8a",
+    "mtime": 1794426654.0878327,
+    "seen": 1794427254.8609185,
+    "ast_hash": "d4596565ec3345e679ccc9eaef2f5a6d",
     "semantic_hash": ""
   },
   "src/versao.d.ts": {
@@ -1566,9 +1566,9 @@
     "semantic_hash": ""
   },
   "src/vidro.tsx": {
-    "mtime": 1794426494.2117357,
-    "seen": 1794426561.8312013,
-    "ast_hash": "4d502529296b8b61dfeb438a7d6f5d5c",
+    "mtime": 1794426661.6330779,
+    "seen": 1794427254.860921,
+    "ast_hash": "21636f4c6ec625e97f0d0b94fa1f494a",
     "semantic_hash": ""
   },
   "src/voltar.tsx": {
@@ -1902,9 +1902,9 @@
     "semantic_hash": ""
   },
   "docs/mapa.md": {
-    "mtime": 1794426535.57647,
-    "seen": 1794426561.8312507,
-    "ast_hash": "0e1d329e13411c5e5181d0db9308b704",
+    "mtime": 1794427238.167132,
+    "seen": 1794427254.8609939,
+    "ast_hash": "b64d3e7dba8fd58a2b7c263ab598d51f",
     "semantic_hash": ""
   },
   "docs/peso-corporal.md": {

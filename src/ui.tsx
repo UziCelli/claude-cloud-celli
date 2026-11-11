@@ -154,6 +154,10 @@ export const Aviso = ({ children }: { children: ReactNode }) => (
 // Leve de propósito: só `transform` (string) e `opacity`, que o Motion passa para a GPU (WAAPI). `x`/`y`/`scale`
 // soltos rodam quadro a quadro na linha principal e engasgam no Android ao abrir as telas (11/11/2026).
 // Termina em `none`: transform parado vira bloco de contenção para `fixed` de dentro.
+// Reduzir movimento: o MotionConfig só corta x/y/scale soltos, não `transform` em string. Use `...mexe(...)` no
+// initial/exit: com a preferência ligada, sem deslocamento (fica só a opacidade).
+const pedeQuieto = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+export const mexe = (transform: string) => (pedeQuieto() ? {} : { transform })
 export const sobe = { opacity: 1, transform: 'translateY(0px)', transitionEnd: { transform: 'none' } }
 
 // Mensagem que aparece e some suave (erro, sucesso, aviso). `chave` muda = anima de novo.
@@ -163,7 +167,7 @@ export const Msg = ({ children, className = '' }: { children?: ReactNode; classN
     <m.div
       key={typeof children === 'string' ? children : 'msg'}
       // sem animar altura (travava no iPhone) e sem saída (como o Painel): só opacidade + deslize ao entrar
-      initial={montou ? { opacity: 0, transform: 'translateY(-4px)' } : false}
+      initial={montou ? { opacity: 0, ...mexe('translateY(-4px)') } : false}
       animate={sobe}
       transition={agil}
       className={className}
@@ -189,7 +193,7 @@ export const Abertura = ({ texto, children }: { texto?: string; children?: React
       <m.div
         aria-hidden
         className="h-0.5 w-24 origin-left rounded bg-marca-500"
-        initial={{ transform: 'scaleX(0)', opacity: 0 }}
+        initial={{ ...mexe('scaleX(0)'), opacity: 0 }}
         animate={{ transform: 'scaleX(1)', opacity: 1 }}
         transition={{ ...suave, delay: 0.2 }}
       />
@@ -208,7 +212,7 @@ export const Abertura = ({ texto, children }: { texto?: string; children?: React
 
 export const Centro = ({ children }: { children: ReactNode }) => (
   <div className="flex min-h-dvh items-center justify-center px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] text-center">
-    <m.div className="w-full max-w-sm min-w-0 space-y-4" initial={{ opacity: 0, transform: 'translateY(6px)' }} animate={sobe} transition={suave}>
+    <m.div className="w-full max-w-sm min-w-0 space-y-4" initial={{ opacity: 0, ...mexe('translateY(6px)') }} animate={sobe} transition={suave}>
       {children}
     </m.div>
   </div>
@@ -265,7 +269,7 @@ export const Tela = ({ chave, abrir = false, children }: { chave: string; abrir?
 export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => {
   const montou = useMontou()
   return aberto ? (
-    <m.div initial={montou ? { opacity: 0, transform: 'translateY(-8px)' } : false} animate={sobe} transition={suave} className={className}>
+    <m.div initial={montou ? { opacity: 0, ...mexe('translateY(-8px)') } : false} animate={sobe} transition={suave} className={className}>
       {children}
     </m.div>
   ) : null
@@ -301,7 +305,7 @@ export const Barra = ({ frac }: { frac: number }) => (
   <m.div
     className="mt-1 h-1 origin-left rounded bg-marca-500"
     style={{ width: `${Math.max(2, Math.round(frac * 100))}%` }}
-    initial={{ transform: 'scaleX(0)' }}
+    initial={{ ...mexe('scaleX(0)') }}
     animate={{ transform: 'scaleX(1)' }}
     transition={suave}
   />
@@ -309,9 +313,9 @@ export const Barra = ({ frac }: { frac: number }) => (
 
 // Troca com deslize na direção da seta: `chave` numérica (ex.: semana). Maior = desliza para a esquerda.
 const desliza = {
-  entra: (d: number) => ({ opacity: 0, transform: `translateX(${d * 20}px)` }),
+  entra: (d: number) => ({ opacity: 0, ...mexe(`translateX(${d * 20}px)`) }),
   fica: { opacity: 1, transform: 'translateX(0px)', transition: suave, transitionEnd: { transform: 'none' } },
-  sai: (d: number) => ({ opacity: 0, transform: `translateX(${-d * 20}px)`, transition: saida }),
+  sai: (d: number) => ({ opacity: 0, ...mexe(`translateX(${-d * 20}px)`), transition: saida }),
 }
 export const Deslizar = ({ chave, children }: { chave: number; children: ReactNode }) => {
   const ant = useRef(chave)

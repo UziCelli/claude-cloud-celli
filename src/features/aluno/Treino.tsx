@@ -26,7 +26,7 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, classesBotao, cascata, Centro, item, Painel, sobe, useDepoisDaEntrada, useMontou } from '../../ui'
+import { Botao, classesBotao, cascata, Centro, item, Painel, sobe, useDepoisDaEntrada, useMontou, mexe } from '../../ui'
 import { BrilhoBorda } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
@@ -89,12 +89,12 @@ const Modal = ({ rotulo, children }: { rotulo: string; children: ReactNode }) =>
     animate={{ opacity: 1 }}
     exit={{ opacity: 0, transition: saida }}
     transition={suave}
-    className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+    className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/85 p-4"
   >
     <m.div
-      initial={{ y: 48, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 48, opacity: 0, transition: saida }}
+      initial={{ ...mexe('translateY(48px)'), opacity: 0 }}
+      animate={sobe}
+      exit={{ ...mexe('translateY(48px)'), opacity: 0, transition: saida }}
       transition={suave}
       className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
     >
@@ -196,12 +196,12 @@ function AvisoAdaptado({ chave }: { chave: string }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: saida }}
           transition={suave}
-          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/85 p-4"
         >
           <m.div
-            initial={{ y: 48, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 48, opacity: 0, transition: saida }}
+            initial={{ ...mexe('translateY(48px)'), opacity: 0 }}
+            animate={sobe}
+            exit={{ ...mexe('translateY(48px)'), opacity: 0, transition: saida }}
             transition={suave}
             className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5"
           >
@@ -265,7 +265,7 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     <m.div
       key={editando ? 'e' : 'v'}
       // sem animar altura (travava no iPhone) e troca na hora: só opacidade + deslize ao entrar, como o Painel
-      initial={montou ? { opacity: 0, transform: 'translateY(-8px)' } : false}
+      initial={montou ? { opacity: 0, ...mexe('translateY(-8px)') } : false}
       animate={sobe}
       transition={suave}
     >
@@ -806,9 +806,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       <AnimatePresence>
       {descanso.visivel && (
         <m.div
-          initial={{ y: 24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 24, opacity: 0, transition: saida }}
+          initial={{ ...mexe('translateY(24px)'), opacity: 0 }}
+          animate={sobe}
+          exit={{ ...mexe('translateY(24px)'), opacity: 0, transition: saida }}
           transition={suave}
           className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
         >
