@@ -14,7 +14,7 @@ import { Avatar } from '../../avatar'
 import { Chip, IconeQuadrado, Quadro } from '../../vidro'
 import { fmtData } from '../coach/semana/format'
 import { dataSP, diaCurto, mesoAtual, quando } from './mesoAtual'
-import { Centro } from '../../ui'
+import { Botao, Centro } from '../../ui'
 import PagarPix, { dataCurta, PIX } from './PagarPix'
 import CardioHoje from './CardioHoje'
 import { useRelatoriosLiberados } from '../relatorio/RelatorioAluno'
@@ -113,9 +113,9 @@ function Treinos({ mesoId, meso, registros, hoje }: { mesoId: string; meso: Meso
               {sessao.exercicios.slice(0, 2).map((e) => e.slot.nome).join(' · ')}
               {sessao.exercicios.length > 2 && <span className="text-white/60"> +{sessao.exercicios.length - 2}</span>}
             </p>
-            <button type="button" onClick={abrir} className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-white text-base font-bold text-marca-900 shadow-lg">
+            <Botao type="button" tipo="vidro" tamanho="lg" onClick={abrir} className="mt-4 flex w-full items-center justify-center gap-2">
               {'feito' in h && h.feito ? 'Ver treino' : ehHoje ? 'Ver treino de hoje' : 'Ver próximo treino'} <IcSeta className="size-5" />
-            </button>
+            </Botao>
           </div>
         </section>
       ) : (

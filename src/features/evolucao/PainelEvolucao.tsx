@@ -116,7 +116,7 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
               key={String(v)}
               aria-pressed={soMeso === v}
               onClick={() => setSoMeso(v)}
-              className={`rounded-md px-3 py-1 ${soMeso === v ? 'bg-marca-500 text-white' : 'text-slate-300'}`}
+              className={`min-h-11 rounded-md px-4 ${soMeso === v ? 'bg-marca-500 text-white' : 'text-slate-300'}`}
             >
               {v ? 'Este meso' : 'Tudo'}
             </button>

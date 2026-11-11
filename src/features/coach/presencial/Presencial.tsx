@@ -6,7 +6,7 @@ import type { Usuario } from '../../../lib/acesso'
 import { db } from '../../../lib/firebase'
 import { useDoc, useLista } from '../../../lib/hooks'
 import { IcMais, IcSair } from '../../../icones'
-import { Campo } from '../../../ui'
+import { Botao, Campo } from '../../../ui'
 import { casar, ir, posicaoNaPilha, rotaAnterior, trocarRota, voltarAte } from '../../../rota'
 import { agil } from '../../../movimento'
 import Hoje from '../../aluno/Hoje'
@@ -121,12 +121,12 @@ function Barra({ uid, grupo, onAdicionar, onSair }: { uid: string; grupo: boolea
           <div className="text-[11px] uppercase tracking-wider text-slate-400">Presencial</div>
           <div className="truncate text-sm font-semibold">{nome || '…'}</div>
         </div>
-        <button onClick={onAdicionar} aria-label="Adicionar aluno" className="flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm text-slate-200 ring-1 ring-white/15">
+        <Botao tipo="vidro" onClick={onAdicionar} aria-label="Adicionar aluno" className="flex shrink-0 items-center gap-1 !px-3">
           <IcMais className="size-4" /> Aluno
-        </button>
-        <button onClick={onSair} aria-label={grupo ? `Tirar ${nome} do grupo` : undefined} className="flex h-11 shrink-0 items-center gap-1 text-sm text-slate-400">
+        </Botao>
+        <Botao tipo="fantasma" onClick={onSair} aria-label={grupo ? `Tirar ${nome} do grupo` : undefined} className="flex shrink-0 items-center gap-1 !px-2">
           <IcSair className="size-4" /> {grupo ? 'Tirar' : 'Encerrar'}
-        </button>
+        </Botao>
       </div>
     </div>
   )

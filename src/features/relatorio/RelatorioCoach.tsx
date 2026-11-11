@@ -64,13 +64,13 @@ function Editor({ r, mesoId, alunoId, aluno, rel }: { r: RelatorioCiclo; mesoId:
         <div className="flex flex-wrap gap-2">
           {liberado ? (
             <>
-              <Botao tipo="primario" className="min-h-11 flex-1" onClick={() => rodar(liberarRelatorio(mesoId, alunoId, texto), 'Comentário atualizado.')}>Atualizar comentário</Botao>
-              <Botao className="min-h-11 flex-1" onClick={() => rodar(recolherRelatorio(mesoId), 'Relatório recolhido: o aluno não vê mais.')}>Recolher</Botao>
+              <Botao tipo="primario" className="flex-1" onClick={() => rodar(liberarRelatorio(mesoId, alunoId, texto), 'Comentário atualizado.')}>Atualizar comentário</Botao>
+              <Botao className="flex-1" onClick={() => rodar(recolherRelatorio(mesoId), 'Relatório recolhido: o aluno não vê mais.')}>Recolher</Botao>
             </>
           ) : (
             <>
-              <Botao className="min-h-11 flex-1" onClick={() => rodar(salvarRelatorio(mesoId, alunoId, texto), 'Rascunho salvo.')}>Salvar rascunho</Botao>
-              <Botao tipo="primario" className="min-h-11 flex-1" onClick={() => rodar(liberarRelatorio(mesoId, alunoId, texto), 'Liberado para o aluno.')}>Liberar para o aluno</Botao>
+              <Botao className="flex-1" onClick={() => rodar(salvarRelatorio(mesoId, alunoId, texto), 'Rascunho salvo.')}>Salvar rascunho</Botao>
+              <Botao tipo="primario" className="flex-1" onClick={() => rodar(liberarRelatorio(mesoId, alunoId, texto), 'Liberado para o aluno.')}>Liberar para o aluno</Botao>
             </>
           )}
         </div>
