@@ -1,17 +1,17 @@
 # Graph Report - claude-cloud-celli  (2026-11-11)
 
 ## Corpus Check
-- 319 files · ~319,709 words
+- 319 files · ~319,697 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
 ## Summary
-- 3106 nodes · 8622 edges · 174 communities (156 shown, 18 thin omitted)
+- 3106 nodes · 8625 edges · 174 communities (156 shown, 18 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 393 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `92e23fa7`
+- Built from commit: `489dfbf2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -185,7 +185,7 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `Pontos sensíveis (leia antes de auditar ou mexer)` - 137 edges
-2. `Botao()` - 122 edges
+2. `Botao()` - 124 edges
 3. `Treino()` - 79 edges
 4. `react` - 71 edges
 5. `vitest` - 68 edges
