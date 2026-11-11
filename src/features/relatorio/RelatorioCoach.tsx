@@ -21,7 +21,8 @@ export default function RelatorioCoach({ mesoId }: { mesoId: string }) {
   const rel = useDoc<RelatorioDoc>(useMemo(() => doc(db, 'relatorios', mesoId), [mesoId]))
   const dados = useDadosAluno(meso.dados?.alunoId)
   const voltar = meso.dados ? `/aluno/${meso.dados.alunoId}` : '/alunos'
-  const r = dados.carregando ? null : relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date())
+  // Memo: sem ele, cada letra do comentário recalculava o ciclo inteiro.
+  const r = useMemo(() => (dados.carregando ? null : relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date())), [dados.carregando, dados.mesos, dados.registros, mesoId])
   return (
     <main className="mx-auto max-w-md px-4 py-4 lg:max-w-3xl">
       <BotaoVoltar para={voltar} />

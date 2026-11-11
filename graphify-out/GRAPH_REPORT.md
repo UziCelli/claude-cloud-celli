@@ -1,17 +1,17 @@
 # Graph Report - claude-cloud-celli  (2026-11-11)
 
 ## Corpus Check
-- 329 files · ~340,221 words
+- 329 files · ~340,554 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
 ## Summary
-- 3192 nodes · 8999 edges · 162 communities (145 shown, 17 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 418 edges (avg confidence: 0.94)
+- 3192 nodes · 9000 edges · 162 communities (145 shown, 17 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 419 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `440aef32`
+- Built from commit: `4a6b2cf0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -172,7 +172,7 @@
 - registrarErro
 
 ## God Nodes (most connected - your core abstractions)
-1. `Pontos sensíveis (leia antes de auditar ou mexer)` - 150 edges
+1. `Pontos sensíveis (leia antes de auditar ou mexer)` - 151 edges
 2. `Botao()` - 130 edges
 3. `Treino()` - 80 edges
 4. `react` - 74 edges
@@ -790,8 +790,8 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Pontos sensíveis (leia antes de auditar ou mexer)` connect `Pontos sensíveis (leia antes de auditar ou mexer)` to `AcaoEmail.tsx`, `ataques.test.ts`, `Hoje.tsx`, `ui.tsx`, `montarPdf`, `TabProgressao.tsx`, `avaliacao.ts`, `metricas.ts`, `util.ts`, `App.tsx`, ``src/lib/` — Firestore, estado, cálculos com dados`, `AvisoIOS`, `Treino.tsx`, `prescreverSessao`, `seriesDoRotulo`, `pix.ts`, `FimTreino.tsx`, `Coleções Firestore`, `Alunos.tsx`, `cartaoStory.ts`, `Entrar.tsx`, `Botao`, `Onde fica cada coisa`, `registrarErro`, `src/index.ts`, `iaTreino.ts`, `evolucao.ts`, `src/acesso.ts`, `Cartao`, `App.tsx`, `Avaliacao.tsx`, `acoes.ts`, `Árvore por pasta`, `inatividade.ts`, `push.ts`, `AnamneseCoach.tsx`, `conversores.ts`, `ContaAluno.tsx`, `AvisoDescanso`, `Presencial.tsx`, `react`, `react`, `MesosDoAluno.tsx`?**
   _High betweenness centrality (0.097) - this node is a cross-community bridge._
-- **Are the 149 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `nadaPassaDaTela()` and `versao()`) actually correct?**
-  _`Pontos sensíveis (leia antes de auditar ou mexer)` has 149 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 150 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `nadaPassaDaTela()` and `versao()`) actually correct?**
+  _`Pontos sensíveis (leia antes de auditar ou mexer)` has 150 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `@cloudflare/workers-types`, `@types/react`, `@types/react-dom` to the rest of the system?**
   _10 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `AcaoEmail.tsx` be split into smaller, more focused modules?**

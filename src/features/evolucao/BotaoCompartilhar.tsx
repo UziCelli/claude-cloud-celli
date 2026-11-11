@@ -3,7 +3,12 @@ import { Botao } from '../../ui'
 import { ESPERA_ENTRADA_MS } from '../../movimento'
 import { compartilharArquivo, gerarCartao, type DadosCartao } from './cartaoStory'
 
-export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução', aoGerar, aoErro }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string; aoGerar?: (blob: Blob) => void; aoErro?: () => void }) {
+// Safari (iPhone, iPad, Mac) só compartilha direto no toque: lá o arquivo é gerado antes, depois da entrada da tela.
+// Nos outros (Android), o toque vale por alguns segundos: gerar no toque não pesa ao abrir a tela.
+const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent
+const PRECISA_ANTES = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && !/Chrome|Chromium|Edg|Firefox/.test(ua))
+
+export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gerarCartao as unknown as (d: T) => Promise<Blob>, className, rotulo = 'Compartilhar no story', arquivo = 'minha-evolucao.png', titulo = 'Minha evolução', aoGerar, aoErro, antecipar = PRECISA_ANTES }: { dados: T; gerar?: (d: T) => Promise<Blob>; className?: string; rotulo?: string; arquivo?: string; titulo?: string; aoGerar?: (blob: Blob) => void; aoErro?: () => void; antecipar?: boolean }) {
   const [gerando, setGerando] = useState(false)
   const [msg, setMsg] = useState('')
   const [pronta, setPronta] = useState<{ chave: string; blob: Blob } | null>(null)
@@ -16,6 +21,7 @@ export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gera
   // Espera a tela parar de deslizar: gerar PNG/PDF durante a animação travava a troca de tela no iPhone.
   // A espera também evita gerar de novo a cada letra digitada (comentário do relatório).
   useEffect(() => {
+    if (!antecipar) return
     let vivo = true
     const t = setTimeout(() => {
       gerar(dadosRef.current)
@@ -32,7 +38,7 @@ export default function BotaoCompartilhar<T = DadosCartao>({ dados, gerar = gera
       vivo = false
       clearTimeout(t)
     }
-  }, [chave, gerar])
+  }, [chave, gerar, antecipar])
 
   async function clicar() {
     setGerando(true)
