@@ -7,7 +7,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - **Senha fraca:** o app vê no próprio login. Se for fraca, pede uma senha nova **uma vez** (sem digitar a atual). Forte = nunca mais pergunta.
 - **Lista ao vivo** debaixo da senha nova (cadastro, link do e-mail e troca): ✓ 8 caracteres, letra, número, "Senha forte", senhas iguais.
 - **Conta com 123456:** foi um app antigo em cache + a trava do servidor (`senha-minima`) **nunca tinha sido ligada**. O cadastro agora recusa também por dentro (`cadastrar`).
-- **Pendência:** ligar a trava do servidor nas 2 marcas (workflow "2 etapas do coach" → `senha-minima`, vfit e gislane).
+- **Trava do servidor ligada** nas 2 marcas em 11/11/2026 (workflow "2 etapas do coach" → `senha-minima`, vfit e gislane): app antigo em cache também não cria mais senha fraca.
 
 ## 11/11/2026 — Avaliação física v3 (evolução por parte do corpo e desenho)
 - A evolução ficou enxuta: um bloco "Sua evolução" com um cartão por parte do corpo.
