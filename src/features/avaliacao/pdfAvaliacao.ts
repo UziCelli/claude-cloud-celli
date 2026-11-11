@@ -1,5 +1,6 @@
 import marca from '@marca/marca.json'
 import { dataBR, fmtDeltaUn, fmtMedida, NOME_FONTE, type RelatorioAvaliacao, type Seta, type Tom } from '../../lib/avaliacao'
+import { textoCarga } from '../../lib/segmentos'
 import { primeiroNome } from '../../lib/contato'
 import { criarFolhas, LARG, M, MUDO, PW, sans, TEXTO, TRILHA } from '../relatorio/folhasPdf'
 
@@ -41,19 +42,13 @@ export async function gerarPdfAvaliacao({ r, aluno, comentario }: EntradaPdfAval
   f.recado(comentario)
   f.numeros(r.destaques)
 
-  f.titulo('Resumo')
-  f.paragrafo(r.resumo.frase)
-  const mudou = [...r.resumo.ganhos.map((i) => ['Ganho', i] as const), ...r.resumo.observar.map((i) => ['A observar', i] as const)]
-  if (mudou.length) {
-    f.titulo('O que mais mudou')
-    for (const [tipo, i] of mudou) f.paragrafo(`${tipo}: ${i.rotulo} ${i.delta}. ${i.texto}`, sans(28), TEXTO, 40)
-  }
-
   f.titulo('Sua evolução')
-  for (const p of r.texto) {
-    f.paragrafo(p)
-    f.y += 14
+  f.paragrafo(r.resumo.frase)
+  for (const s of r.segmentos) {
+    const carga = s.carga ? ` Carga: ${textoCarga(s.carga.melhor)}.` : ''
+    f.paragrafo(`${s.rotulo}: ${s.texto}.${s.medida ? ` Medida ${s.medida.delta}.` : ''}${carga}`, sans(28), TEXTO, 40)
   }
+  f.y += 14
 
   // Colunas da tabela: medida à esquerda; anterior, atual e diferença alinhadas à direita.
   const xAnt = M + LARG * 0.62
@@ -89,6 +84,7 @@ export async function gerarPdfAvaliacao({ r, aluno, comentario }: EntradaPdfAval
   }
 
   f.y += 30
+  for (const t of r.texto) f.paragrafo(t, sans(24), MUDO, 36)
   f.paragrafo(`${r.res.fonte ? `Percentual de gordura: ${NOME_FONTE[r.res.fonte]}. ` : ''}Estimativa; não substitui avaliação médica.`, sans(24), MUDO, 36)
   return f.fechar()
 }

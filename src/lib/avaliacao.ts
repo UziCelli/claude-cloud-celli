@@ -3,7 +3,9 @@
 // As listas de chaves abaixo existem também em firestore.rules (o teste compara as duas).
 import type { Meso } from '../engine'
 import { diaSP } from './acesso'
+import type { Ocorrencia } from './evolucao'
 import { cicloTerminou, diasDesdeFim, fimISO, RELATORIO_DIAS, type RelatorioCiclo } from './relatorio'
+import { cargaPorSegmento, cruzar, medidaSegmento, SEGMENTOS, type SegmentoId, type Veredito } from './segmentos'
 
 export const PERIMETROS = [
   { id: 'ombro', rotulo: 'Ombro' },
@@ -187,16 +189,26 @@ export type Seta = 'sobe' | 'desce' | 'igual'
 export type Leitura = { tom: Tom; texto: string; fraca?: boolean }
 export type Linha = { rotulo: string; un: string; atual: number; anterior: number | null; delta: number | null; seta: Seta | null; leitura: Leitura | null }
 export type Grupo = { titulo: string; linhas: Linha[]; resumo?: { tom: Tom; texto: string } }
-export type ItemResumo = { rotulo: string; delta: string; texto: string }
+export type ResultadoSegmento = {
+  id: SegmentoId
+  rotulo: string
+  veredito: Veredito
+  tom: Tom
+  fraca?: boolean
+  medida: { rotulo: string; delta: string } | null
+  carga: { pct: number; n: number; melhor: { nome: string; de: number; ate: number } } | null
+  texto: string
+}
 export type Destaque = { rotulo: string; valor: string; delta?: string; seta?: Seta; tom?: Tom }
 export type RelatorioAvaliacao = {
   atual: Avaliacao
   res: Resultado
   anterior: { data: string; dias: number } | null
   destaques: Destaque[]
-  resumo: { frase: string; ganhos: ItemResumo[]; observar: ItemResumo[] }
+  resumo: { frase: string }
+  segmentos: ResultadoSegmento[]
   grupos: Grupo[]
-  texto: string[] // parágrafos do relatório escrito
+  texto: string[] // relatório escrito: no máximo 2 linhas curtas (+ aviso de método de gordura)
 }
 type Ciclo = Pick<RelatorioCiclo, 'nome' | 'feitos' | 'previstos' | 'aderenciaPct' | 'recordes' | 'evolucoes'>
 
@@ -211,14 +223,14 @@ export const PAR_DOBRA: Partial<Record<PerimetroId, DobraId>> = {
   torax: 'peitoral', cintura: 'suprailiaca', abdomen: 'abdominal', quadril: 'coxa', coxaD: 'coxa', coxaE: 'coxa', bracoD: 'triceps', bracoE: 'triceps',
 }
 // Região de exibição e, quando houver, o lipedema que a atinge.
-const REGIAO: Record<PerimetroId, { grupo: 'Tronco' | 'Braços' | 'Pernas'; lipedema?: Lipedema }> = {
+export const REGIAO: Record<PerimetroId, { grupo: 'Tronco' | 'Braços' | 'Pernas'; lipedema?: Lipedema }> = {
   ombro: { grupo: 'Tronco' }, torax: { grupo: 'Tronco' }, cintura: { grupo: 'Tronco' }, abdomen: { grupo: 'Tronco' },
   bracoD: { grupo: 'Braços', lipedema: 'bracos' }, bracoE: { grupo: 'Braços', lipedema: 'bracos' },
   antebracoD: { grupo: 'Braços', lipedema: 'bracos' }, antebracoE: { grupo: 'Braços', lipedema: 'bracos' },
   quadril: { grupo: 'Pernas', lipedema: 'pernas' }, coxaD: { grupo: 'Pernas', lipedema: 'pernas' }, coxaE: { grupo: 'Pernas', lipedema: 'pernas' },
   panturrilhaD: { grupo: 'Pernas', lipedema: 'pernas' }, panturrilhaE: { grupo: 'Pernas', lipedema: 'pernas' },
 }
-const DESCE = new Set<PerimetroId>(['cintura', 'abdomen']) // esperado cair; os demais, subir
+export const DESCE = new Set<PerimetroId>(['cintura', 'abdomen']) // esperado cair; os demais, subir
 
 // Medida x dobra do mesmo segmento. `dPerim` em cm, `dDobra` em mm (null = sem dobra para confirmar).
 // Esperado "subir": medida maior sem dobra maior = massa; com dobra maior = gordura. Esperado "descer" (cintura,
@@ -266,14 +278,11 @@ function resumoGrupo(linhas: Linha[]): Grupo['resumo'] {
   return { tom, texto: `${l.rotulo} ${fmtDeltaUn(l)}: ${l.leitura!.texto}` }
 }
 
-const mudou = (rotulo: string, un: string, de: number, ate: number) =>
-  de === ate ? `${rotulo}: ${fmtNum(ate)}${un} (igual à avaliação anterior).` : `${rotulo}: ${fmtNum(de)}${un} → ${fmtNum(ate)}${un} (${fmtDelta(r1(ate - de))}${un}).`
-
 // Relatório de uma avaliação: números, tabelas e o texto de evolução. `avs`: todas as avaliações que
 // quem está vendo pode ler (o aluno só tem as liberadas). Compara com a anterior por data e, havendo
 // mais de duas, com a primeira. `ciclo`: relatorioCiclo do ciclo de referência (cicloDaAvaliacao).
 // O texto só descreve: o app não sabe se o objetivo é ganhar ou perder peso.
-export function relatorioAvaliacao(avs: Avaliacao[], id: string, ciclo?: Ciclo | null): RelatorioAvaliacao | null {
+export function relatorioAvaliacao(avs: Avaliacao[], id: string, ciclo?: Ciclo | null, cargas?: Record<string, Ocorrencia[]>): RelatorioAvaliacao | null {
   const ordem = [...avs].sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id))
   const i = ordem.findIndex((a) => a.id === id)
   if (i < 0) return null
@@ -321,13 +330,7 @@ export function relatorioAvaliacao(avs: Avaliacao[], id: string, ciclo?: Ciclo |
     .filter(([, linhas]) => linhas.length > 0)
     .map(([titulo, linhas]) => ({ titulo, linhas, resumo: resumoGrupo(linhas) }))
 
-  // Resumo do topo: composição primeiro (massa magra, gordura), depois as medidas que mais mexeram. Até 3 de cada.
   const doGrupo = (t: string) => grupos.find((g) => g.titulo === t)?.linhas ?? []
-  const candidatas = [
-    ...['Massa magra', 'Gordura'].flatMap((r) => doGrupo('Composição corporal').filter((l) => l.rotulo === r)),
-    ...['Tronco', 'Braços', 'Pernas'].flatMap(doGrupo).sort((a, b) => (b.delta == null ? 0 : forca(b)) - (a.delta == null ? 0 : forca(a))),
-  ].filter((l) => l.leitura && l.leitura.tom !== 'neutro')
-  const item = (l: Linha): ItemResumo => ({ rotulo: l.rotulo, delta: fmtDeltaUn(l), texto: l.leitura!.texto })
   const magra = doGrupo('Composição corporal').find((l) => l.rotulo === 'Massa magra')
   const gorda = doGrupo('Composição corporal').find((l) => l.rotulo === 'Massa gorda')
   const partesFrase = [
@@ -336,39 +339,32 @@ export function relatorioAvaliacao(avs: Avaliacao[], id: string, ciclo?: Ciclo |
   ].filter(Boolean)
   const resumo: RelatorioAvaliacao['resumo'] = {
     frase: !ant ? 'Esta é a sua primeira avaliação: o ponto de partida.' : partesFrase.length ? `Você ${partesFrase.join(' e ')}.` : `Veja o que mudou desde ${dataBR(ant.data)}.`,
-    ganhos: ant ? candidatas.filter((l) => l.leitura!.tom === 'bom').slice(0, 3).map(item) : [],
-    observar: ant ? candidatas.filter((l) => l.leitura!.tom === 'atencao').slice(0, 3).map(item) : [],
   }
+
+  // Segmentos do corpo: medida x carga entre a avaliação anterior e esta. Ordem: melhorou, observar, estável.
+  const carga = ant && cargas ? cargaPorSegmento(cargas, ant.data, atual.data) : {}
+  const ORDEM = { melhorou: 0, observar: 1, estavel: 2 }
+  const segmentos = (ant ? SEGMENTOS : [])
+    .flatMap((seg): ResultadoSegmento[] => {
+      const medida = medidaSegmento(seg, atual, ant!)
+      const c = carga[seg.id] ?? null
+      const x = cruzar(medida?.leitura ?? null, c?.classe ?? null)
+      if (!x) return []
+      return [{
+        id: seg.id, rotulo: seg.rotulo, veredito: x.veredito, tom: x.tom, ...(x.fraca ? { fraca: true } : {}),
+        medida: medida && { rotulo: medida.rotulo, delta: medida.delta },
+        carga: c && { pct: c.pct, n: c.n, melhor: c.melhor },
+        texto: x.texto,
+      }]
+    })
+    .sort((a, b) => ORDEM[a.veredito] - ORDEM[b.veredito])
 
   const gordura = res.gorduraPct != null && res.fonte ? `${fmtNum(res.gorduraPct)}% (${NOME_FONTE[res.fonte]})` : null
   const texto: string[] = []
-  if (!ant || !rAnt) {
-    texto.push('Esta é a sua primeira avaliação: o ponto de partida para acompanhar a sua evolução.')
-    texto.push(
-      [`Peso: ${fmtNum(atual.pesoKg)} kg.`, gordura && `Gordura corporal: ${gordura}.`, res.massaMagraKg != null && `Massa magra: ${fmtNum(res.massaMagraKg)} kg.`, res.imc != null && `IMC: ${fmtNum(res.imc)}.`]
-        .filter(Boolean)
-        .join(' '),
-    )
-  } else {
+  if (!ant || !rAnt) texto.push('Esta é a sua primeira avaliação: o ponto de partida para acompanhar a sua evolução.')
+  else {
     const dias = Math.round((Date.parse(atual.data) - Date.parse(ant.data)) / DIA)
-    texto.push(`Desde a avaliação de ${dataBR(ant.data)} (${dias} ${dias === 1 ? 'dia' : 'dias'}), veja o que mudou.`)
-    texto.push(mudou('Peso', ' kg', ant.pesoKg, atual.pesoKg))
-    if (res.gorduraPct != null && mesmaFonte(rAnt)) {
-      const d = r1(res.gorduraPct - rAnt.gorduraPct!)
-      texto.push(
-        d === 0
-          ? `Gordura corporal: ${fmtNum(res.gorduraPct)}% (igual à avaliação anterior).`
-          : `Gordura corporal: ${fmtNum(rAnt.gorduraPct!)}% → ${fmtNum(res.gorduraPct)}% (${fmtDelta(d)} ${Math.abs(d) === 1 ? 'ponto' : 'pontos'}).`,
-      )
-      texto.push(`${mudou('Massa magra', ' kg', rAnt.massaMagraKg!, res.massaMagraKg!)} ${mudou('Massa gorda', ' kg', rAnt.massaGordaKg!, res.massaGordaKg!)}`)
-    } else if (gordura) {
-      texto.push(rAnt.fonte ? `O % de gordura desta avaliação, ${gordura}, veio de outro método; por isso não é comparado com o anterior.` : `Gordura corporal: ${gordura}.`)
-    }
-    const perimetros = ['Tronco', 'Braços', 'Pernas'].flatMap(doGrupo).filter((l) => l.delta != null)
-    const maiores = perimetros.filter((l) => Math.abs(l.delta!) >= 0.5).sort((a, b) => Math.abs(b.delta!) - Math.abs(a.delta!)).slice(0, 4)
-    if (maiores.length) texto.push(`Medidas que mais mudaram: ${maiores.map((l) => `${l.rotulo.toLowerCase()} ${fmtDelta(l.delta!)} cm`).join(', ')}.`)
-    else if (perimetros.length) texto.push('Perímetros: sem mudança relevante.')
-
+    let periodo = `Desde ${dataBR(ant.data)} (${dias} ${dias === 1 ? 'dia' : 'dias'}).`
     const prim = i > 1 ? ordem[0] : null
     if (prim) {
       const rPrim = resultado(prim)
@@ -377,16 +373,14 @@ export function relatorioAvaliacao(avs: Avaliacao[], id: string, ciclo?: Ciclo |
         mesmaFonte(rPrim) && rPrim.gorduraPct !== res.gorduraPct && `gordura ${fmtDelta(r1(res.gorduraPct! - rPrim.gorduraPct!))} pontos`,
         mesmaFonte(rPrim) && rPrim.massaMagraKg !== res.massaMagraKg && `massa magra ${fmtDelta(r1(res.massaMagraKg! - rPrim.massaMagraKg!))} kg`,
       ].filter(Boolean)
-      if (partes.length) texto.push(`Desde a primeira avaliação (${dataBR(prim.data)}): ${partes.join(', ')}.`)
+      if (partes.length) periodo += ` Desde a primeira avaliação (${dataBR(prim.data)}): ${partes.join(', ')}.`
     }
+    texto.push(periodo)
+    if (gordura && rAnt.fonte && !mesmaFonte(rAnt)) texto.push('O % de gordura desta avaliação veio de outro método; por isso não é comparado com o anterior.')
   }
-  if (ciclo && ciclo.previstos > 0) {
+  if (ant && ciclo && ciclo.previstos > 0) {
     const k = ciclo.recordes.length
-    const e = ciclo.evolucoes[0]
-    texto.push(
-      `No ciclo ${ciclo.nome || 'atual'} você fez ${ciclo.feitos} de ${ciclo.previstos} treinos (${ciclo.aderenciaPct}%)${k ? ` e bateu ${k} ${k === 1 ? 'recorde' : 'recordes'}` : ''}.` +
-        (e ? ` Maior evolução: ${e.nome}, de ${fmtNum(e.de)} para ${fmtNum(e.ate)} kg (+${Math.round(e.pct)}%).` : ''),
-    )
+    texto.splice(1, 0, `No ciclo ${ciclo.nome || 'atual'} você fez ${ciclo.feitos} de ${ciclo.previstos} treinos (${ciclo.aderenciaPct}%)${k ? ` e bateu ${k} ${k === 1 ? 'recorde' : 'recordes'}` : ''}.`)
   }
 
   return {
@@ -403,6 +397,7 @@ export function relatorioAvaliacao(avs: Avaliacao[], id: string, ciclo?: Ciclo |
       return l?.delta == null ? { rotulo, valor } : { rotulo, valor, delta: fmtDelta(l.delta), seta: l.seta ?? 'igual', tom: l.leitura?.tom ?? 'neutro' }
     }),
     resumo,
+    segmentos,
     grupos,
     texto,
   }
