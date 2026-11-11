@@ -129,7 +129,8 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
     : null
 
   const cicloId = form ? cicloDaAvaliacao(dados.mesos, form.data) : null
-  const ciclo = cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null
+  // Memo: sem ele, cada número digitado na ficha recalculava o ciclo inteiro.
+  const ciclo = useMemo(() => (cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null), [cicloId, dados.mesos, dados.registros])
   const r = form ? relatorioAvaliacao([...outras.filter((a) => a.id !== id), { ...form, id, liberado }], id, ciclo, cargas) : null
 
   // Não espera o servidor (offline a promessa só resolve na volta da internet): o estado vem do que o aparelho já sabe.

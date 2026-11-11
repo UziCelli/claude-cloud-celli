@@ -21,7 +21,8 @@ export default function RelatorioAluno({ uid, nome, mesoId }: { uid: string; nom
   const dados = useDadosAluno(uid)
   const semInternet = useSemInternet()
   const doc = rels.dados.find((x) => x.mesoId === mesoId)
-  const r = doc ? relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date()) : null
+  // Uma vez por mudança de dados (antes: a cada render, ~1 por lista que chegava, durante a entrada da tela).
+  const r = useMemo(() => (doc ? relatorioCiclo(dados.mesos, dados.registros, mesoId, new Date()) : null), [doc, dados.mesos, dados.registros, mesoId])
   return (
     <main className="mx-auto max-w-md px-4 py-4">
       <BotaoVoltar para="/" />

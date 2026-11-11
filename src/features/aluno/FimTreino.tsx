@@ -175,6 +175,7 @@ export default function FimTreino({
         <BotaoCompartilhar
           dados={dados}
           gerar={gerarCartaoTreino}
+          antecipar // a prévia na tela é a própria imagem gerada
           aoGerar={pronta}
           aoErro={foto ? () => { setErro(true); setFoto(undefined) } : undefined}
         />

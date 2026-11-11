@@ -128,5 +128,5 @@ export default function Relatorio({ r, aluno, comentario, compartilhar = false }
 const gerarPdf = (d: { r: RelatorioCiclo; aluno: string; comentario?: string }) => gerarPdfRelatorio(d)
 
 export const BotaoPdf = ({ r, aluno, comentario }: { r: RelatorioCiclo; aluno: string; comentario?: string }) => (
-  <BotaoCompartilhar dados={{ r, aluno, comentario }} gerar={gerarPdf} rotulo="Baixar PDF" arquivo="relatorio-do-ciclo.pdf" titulo="Relatório do ciclo" />
+  <BotaoCompartilhar dados={{ r, aluno, comentario }} gerar={gerarPdf} antecipar={false} rotulo="Baixar PDF" arquivo="relatorio-do-ciclo.pdf" titulo="Relatório do ciclo" />
 )

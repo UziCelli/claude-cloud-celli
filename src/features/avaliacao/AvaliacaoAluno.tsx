@@ -26,9 +26,13 @@ export default function AvaliacaoAluno({ uid, nome, id }: { uid: string; nome: s
   const dados = useDadosAluno(uid)
   const semInternet = useSemInternet()
   const a = avs.dados.find((x) => x.id === id)
-  const cicloId = a ? cicloDaAvaliacao(dados.mesos, a.data) : null
-  const ciclo = cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null
-  const r = a ? relatorioAvaliacao(avs.dados, id, ciclo, historicoExercicios(dados.mesos, dados.registros)) : null
+  // Uma vez por mudança de dados (antes: a cada render, ~1 por lista que chegava, durante a entrada da tela).
+  const r = useMemo(() => {
+    if (!a) return null
+    const cicloId = cicloDaAvaliacao(dados.mesos, a.data)
+    const ciclo = cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null
+    return relatorioAvaliacao(avs.dados, id, ciclo, historicoExercicios(dados.mesos, dados.registros))
+  }, [a, avs.dados, id, dados.mesos, dados.registros])
   const outras = avs.dados.filter((x) => x.id !== id)
   return (
     <main className="mx-auto max-w-md px-4 py-4">

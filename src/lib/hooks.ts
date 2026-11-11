@@ -54,13 +54,15 @@ export function useLista<T>(q: Query | null): Estado<(T & { id: string })[]> {
       alvo,
       { includeMetadataChanges: true },
       (s) =>
-        setE({
-          dados: s.docs.map((d) => ({ ...(d.data() as T), id: d.id })),
+        setE((x) => ({
+          // Só a confirmação do servidor mudou (nenhum documento mudou): mantém a mesma lista, senão todo
+          // useMemo que depende dela recalcula à toa (relatório, avaliação, evolução: o dobro de trabalho ao abrir).
+          dados: !x.carregando && s.docChanges().length === 0 ? x.dados : s.docs.map((d) => ({ ...(d.data() as T), id: d.id })),
           carregando: false,
           erro: null,
           pendente: s.metadata.hasPendingWrites,
           cache: s.metadata.fromCache,
-        }),
+        })),
       (erro) => setE({ dados: [], carregando: false, erro, pendente: false, cache: false }),
     )
   }, [alvo])
