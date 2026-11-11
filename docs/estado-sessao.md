@@ -384,3 +384,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Antes de vencer, o Pix avisa: "Após o vencimento: multa de 2% e juros de 1% ao mês."
 - Coach: lista de Alunos mostra "Com atraso: R$ X" (valor do dia em que o aluno tocou "Já paguei").
 - Ligado nas duas marcas (`pix.atraso` no `marca.json`): VFIT e Gislane, mesma regra.
+
+## 11/11/2026 — Pop-up do Pix e vencimento fixo
+- Início do aluno: pop-up "Quer adiantar a mensalidade?" nos 5 dias antes do vencimento (1x por dia); o quadro Pagamento abre o mesmo pop-up.
+- Conta: "Pagar com Pix" começa sempre fechado; notificações de vencimento agora abrem o Início.
+- Vencimento fixo: renovar/confirmar soma 1 mês ao vencimento (mesmo atrasado); só conta de hoje se ainda ficar no passado.
+- Coach: "Renovar" vira 1 toque (+1 mês); "Mudar data ou mensalidade" abre o formulário antigo.

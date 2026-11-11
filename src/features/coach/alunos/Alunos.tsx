@@ -157,7 +157,8 @@ export default function Alunos() {
     ) : (
       <>
         {!a.presencial && a.status === 'bloqueado' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Liberar</button>}
-        {!a.presencial && a.status === 'ativo' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Renovar</button>}
+        {!a.presencial && a.status === 'ativo' && <button className={linhaAcao} onClick={() => { abrir(null); confirmarPix(a.id, a.pagoAte) }}>Renovar</button>}
+        {!a.presencial && a.status === 'ativo' && <button className={linhaAcao} onClick={() => setEditando(a.id)}>Mudar data ou mensalidade</button>}
         {!a.presencial && <button className={linhaAcao} onClick={() => setAvisando(a.id)}>Enviar aviso</button>}
         {!a.presencial && a.status !== 'bloqueado' && (
           <button className={`${linhaAcao} text-red-400`} onClick={() => { abrir(null); bloquear(a.id) }}>Bloquear</button>

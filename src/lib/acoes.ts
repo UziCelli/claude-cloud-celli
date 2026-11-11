@@ -74,7 +74,7 @@ export const salvarMensalidade = (uid: string, valor: number | null) =>
 export const informarPagamento = (uid: string) =>
   updateDoc(doc(db, 'usuarios', uid), { pagamentoInformadoEm: serverTimestamp() })
 
-// pagoAte = vencimento atual do aluno (quem paga adiantado não perde dias). Devolve o novo vencimento
+// Mantém o mesmo dia do mês do vencimento (+1 mês), pagando adiantado ou atrasado. Devolve o novo vencimento
 // (YYYY-MM-DD) na hora e a gravação à parte: offline a promessa só resolve ao reconectar.
 export function confirmarPagamento(uid: string, pagoAte: Timestamp | undefined) {
   const data = proximoVencimento(pagoAte, new Date())

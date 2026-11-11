@@ -347,3 +347,28 @@ export function Folha({ titulo, onFechar, children }: { titulo: string; onFechar
     </div>
   )
 }
+
+// Janela centralizada sobre o fundo escuro. `aoFechar`: toque no fundo fecha. Use dentro de <AnimatePresence>.
+export const Modal = ({ rotulo, children, aoFechar }: { rotulo: string; children: ReactNode; aoFechar?: () => void }) => (
+  <m.div
+    role="dialog"
+    aria-modal="true"
+    aria-label={rotulo}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0, transition: saida }}
+    transition={suave}
+    onClick={(e) => e.target === e.currentTarget && aoFechar?.()}
+    className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/85 p-4"
+  >
+    <m.div
+      initial={{ ...mexe('translateY(48px)'), opacity: 0 }}
+      animate={sobe}
+      exit={{ ...mexe('translateY(48px)'), opacity: 0, transition: saida }}
+      transition={suave}
+      className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
+    >
+      {children}
+    </m.div>
+  </m.div>
+)

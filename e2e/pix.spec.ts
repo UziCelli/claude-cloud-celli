@@ -35,7 +35,7 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
   await test.step('coach põe a mensalidade 150', async () => {
     await coach.goto('/#/alunos')
     await coach.getByRole('button', { name: `Configurações de ${ALUNO.nome}` }).filter({ visible: true }).click()
-    await coach.getByRole('button', { name: 'Renovar' }).click()
+    await coach.getByRole('button', { name: 'Mudar data ou mensalidade' }).click()
     await coach.getByRole('spinbutton', { name: 'Mensalidade (R$)' }).fill('150')
     await coach.getByRole('button', { name: 'Salvar mensalidade' }).click()
     await expect(coach.getByRole('spinbutton', { name: 'Mensalidade (R$)' })).toHaveCount(0) // salvar fecha o formulário
@@ -70,7 +70,7 @@ test('Pix: coach define a mensalidade, aluno vencido paga e avisa, coach confirm
   await ctx.close()
 })
 
-test('Pix no Início: aparece 5 dias antes do vencimento, sem bloquear; longe do vencimento, não', async ({ page }) => {
+test('Pix no Início: pop-up 5 dias antes (1x por dia), reabre pelo quadro Pagamento; longe do vencimento, não abre sozinho', async ({ page }) => {
   await limparEmuladores()
   await criarCoach(COACH.nome, COACH.email, COACH.senha)
   const uid = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
@@ -78,25 +78,55 @@ test('Pix no Início: aparece 5 dias antes do vencimento, sem bloquear; longe do
     papel: 'aluno', status: 'ativo', nome: ALUNO.nome, email: ALUNO.email, mensalidade: 150,
     pagoAte: new Date(Date.now() + 3 * 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
   })
+  const popup = page.getByRole('dialog', { name: 'Pagar mensalidade' })
 
   await entrar(page, ALUNO.email, ALUNO.senha)
   await expect(page.getByRole('heading', { name: /Olá, Bia/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /Mensalidade vence em \d dias/ })).toBeVisible()
-  await expect(page.getByRole('img', { name: 'QR Code Pix' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Copiar código Pix' })).toBeVisible()
+  await expect(popup.getByRole('heading', { name: 'Quer adiantar a mensalidade?' })).toBeVisible()
+  await expect(popup.getByRole('img', { name: 'QR Code Pix' })).toBeVisible()
+  await expect(popup.getByRole('button', { name: 'Copiar código Pix' })).toBeVisible()
 
-  await test.step('na Conta (onde a notificação abre), o Pix já vem aberto', async () => {
-    await page.goto('/#/conta')
-    await expect(page.getByRole('button', { name: 'Pagar com Pix' })).toHaveAttribute('aria-expanded', 'true')
+  await test.step('"Agora não" fecha e, recarregando no mesmo dia, não reaparece', async () => {
+    await popup.getByRole('button', { name: 'Agora não' }).click()
+    await expect(popup).toHaveCount(0)
+    await page.reload()
+    await expect(page.getByRole('heading', { name: /Olá, Bia/ })).toBeVisible()
+    await expect(popup).toHaveCount(0)
   })
 
-  await test.step('com 20 dias, o Início não mostra o Pix', async () => {
+  await test.step('o quadro Pagamento reabre o pop-up', async () => {
+    await page.getByRole('button', { name: /Pagamento/ }).click()
+    await expect(popup.getByRole('img', { name: 'QR Code Pix' })).toBeVisible()
+    await popup.getByRole('button', { name: 'Agora não' }).click()
+  })
+
+  await test.step('na Conta, o Pix começa fechado', async () => {
+    await page.goto('/#/conta')
+    await expect(page.getByRole('button', { name: 'Pagar com Pix' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  await test.step('com 20 dias, o Início não abre o pop-up sozinho', async () => {
     await definirPagoAte(uid, new Date(Date.now() + 20 * 86_400_000))
+    await page.evaluate(() => localStorage.clear())
     await page.goto('/#/')
     await expect(page.getByRole('heading', { name: /Olá, Bia/ })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Mensalidade vence/ })).toHaveCount(0)
-    await expect(page.getByRole('img', { name: 'QR Code Pix' })).toHaveCount(0)
+    await expect(popup).toHaveCount(0)
   })
+})
+
+test('Coach: um toque em Renovar soma 1 mês', async ({ page }) => {
+  await limparEmuladores()
+  await criarCoach(COACH.nome, COACH.email, COACH.senha)
+  const uid = await criarAluno(ALUNO.nome, ALUNO.email, ALUNO.senha)
+  await gravarDoc(`usuarios/${uid}`, {
+    papel: 'aluno', status: 'ativo', nome: ALUNO.nome, email: ALUNO.email, mensalidade: 150,
+    pagoAte: new Date(Date.now() + 3 * 86_400_000), privacidadeVersao: VERSAO_PRIVACIDADE, privacidadeEm: new Date(),
+  })
+  await entrar(page, COACH.email, COACH.senha)
+  await page.goto('/#/alunos')
+  await page.getByRole('button', { name: `Configurações de ${ALUNO.nome}` }).filter({ visible: true }).click()
+  await page.getByRole('button', { name: 'Renovar' }).click()
+  await expect(page.getByText(/Acesso até \d{2}\/\d{2}/)).toBeVisible()
 })
 
 test('Pix vencido: QR com multa e juros do dia; o coach vê o valor com atraso', async ({ page, browser }) => {

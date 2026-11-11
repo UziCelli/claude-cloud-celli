@@ -26,7 +26,7 @@ import { cargaAnterior } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
-import { Botao, classesBotao, cascata, Centro, item, Painel, sobe, useDepoisDaEntrada, useMontou, mexe } from '../../ui'
+import { Botao, classesBotao, cascata, Centro, item, Modal, Painel, sobe, useDepoisDaEntrada, useMontou, mexe } from '../../ui'
 import { BrilhoBorda } from '../../vidro'
 import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
@@ -81,28 +81,6 @@ function Novidades() {
 }
 
 const METODOS_SEQUENCIA = /Biset|Triset|Superset|Circuito/
-const Modal = ({ rotulo, children }: { rotulo: string; children: ReactNode }) => (
-  <m.div
-    role="dialog"
-    aria-label={rotulo}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0, transition: saida }}
-    transition={suave}
-    className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/85 p-4"
-  >
-    <m.div
-      initial={{ ...mexe('translateY(48px)'), opacity: 0 }}
-      animate={sobe}
-      exit={{ ...mexe('translateY(48px)'), opacity: 0, transition: saida }}
-      transition={suave}
-      className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
-    >
-      {children}
-    </m.div>
-  </m.div>
-)
-
 // Explicação de um método (toque no selo): sempre abre.
 function ExplicacaoMetodo({ metodo, fechar }: { metodo: Metodo; fechar: () => void }) {
   const t = METODOS[metodo]
