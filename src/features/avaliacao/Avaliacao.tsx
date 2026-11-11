@@ -154,5 +154,5 @@ export default function Avaliacao({ r, aluno, comentario }: { r: RelatorioAvalia
 }
 
 export const BotaoPdfAvaliacao = ({ r, aluno, comentario }: { r: RelatorioAvaliacao; aluno: string; comentario?: string }) => (
-  <BotaoCompartilhar dados={{ r, aluno, comentario }} gerar={gerarPdfAvaliacao} antecipar={false} rotulo="Baixar PDF" arquivo="avaliacao-fisica.pdf" titulo="Avaliação física" />
+  <BotaoCompartilhar dados={{ r, aluno, comentario }} gerar={gerarPdfAvaliacao} rotulo="Baixar PDF" arquivo="avaliacao-fisica.pdf" titulo="Avaliação física" />
 )
