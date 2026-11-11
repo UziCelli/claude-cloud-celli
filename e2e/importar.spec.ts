@@ -35,7 +35,7 @@ test('coach importa um mesociclo da planilha', async ({ page }) => {
   await expect(previa).toContainText('Treino 1: Supino, Crucifixo')
   await expect(previa).toContainText('Treino 2: Agachamento')
   await expect(previa).toContainText('1 treino realizado com carga')
-  await expect(previa).toContainText('1 treino com carga marcado como Não realizado fica de fora')
+  await expect(previa).toContainText('1 treino com carga não está marcado como realizado')
   await page.waitForTimeout(2000) // fim da animação do painel (só para o print)
   await page.screenshot({ path: '/tmp/claude-0/-home-user-claude-cloud-celli/7bb1957b-62c0-5c39-98cc-434448e8e65a/scratchpad/importar-previa.png' })
 
