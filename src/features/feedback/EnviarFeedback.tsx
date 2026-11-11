@@ -34,6 +34,9 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
   const [enviado, setEnviado] = useState<number>()
   const [, atualizar] = useState(0)
   const faltaTrava = travaAte - Date.now()
+  // A tela de origem (Conta, fim do treino) costuma estar rolada até embaixo, e a troca de rota mantém a rolagem:
+  // sem isto a tela abre já na caixa de texto e as estrelas ficam escondidas lá em cima.
+  useEffect(() => window.scrollTo(0, 0), [])
   useEffect(() => {
     if (faltaTrava <= 0) return
     const t = setTimeout(() => atualizar((n) => n + 1), faltaTrava)
@@ -85,7 +88,8 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
         }}
       >
         <p className="-mt-3 text-slate-400">Conte o que falta, o que atrapalha ou o que você adoraria ter no app. Leva 1 minuto.</p>
-        <div role="group" aria-label="Nota" className="flex justify-between">
+        <p aria-live="polite" className="text-center font-semibold text-slate-100">{nota ? `Sua nota: ${nota} de 5` : 'Quantas estrelas o app merece? Toque para escolher.'}</p>
+        <div role="group" aria-label="Nota" className="-mt-3 flex justify-between">
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} type="button" aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`} aria-pressed={n === nota} onClick={() => setNota(n)} className={`grid size-14 place-items-center ${n <= nota ? 'text-amber-400' : 'text-slate-500'}`}>
               <IcEstrela cheia={n <= nota} className="size-10" />
@@ -131,7 +135,7 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
         </div>
 
         <Botao tipo="primario" type="submit" tamanho="lg" className="w-full" disabled={!nota || faltaTrava > 0}>
-          {faltaTrava > 0 ? 'Enviado. Aguarde um minuto' : 'Enviar'}
+          {faltaTrava > 0 ? 'Enviado. Aguarde um minuto' : nota ? 'Enviar' : 'Escolha as estrelas lá em cima'}
         </Botao>
       </form>
     </Pagina>

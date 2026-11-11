@@ -28,7 +28,16 @@ test('aluno envia feedback e o coach vê, marca lido e copia o depoimento', asyn
   await criarAluno(BIA.nome, BIA.email, BIA.senha)
 
   const ana = await comoAluno(browser, ANA)
+  // Entrando pela Conta rolada até embaixo: a tela abre no topo, com as estrelas à vista.
+  await ana.page.setViewportSize({ width: 360, height: 640 })
+  await ana.page.goto('/#/conta')
+  await ana.page.getByRole('link', { name: 'Sua opinião' }).scrollIntoViewIfNeeded()
+  await ana.page.getByRole('link', { name: 'Sua opinião' }).click()
+  await expect(ana.page.getByRole('button', { name: '5 estrelas' })).toBeInViewport()
+  await ana.page.setViewportSize({ width: 390, height: 844 })
+  await expect(ana.page.getByRole('button', { name: 'Escolha as estrelas lá em cima' })).toBeDisabled()
   await ana.page.getByRole('button', { name: '5 estrelas' }).click()
+  await expect(ana.page.getByText('Sua nota: 5 de 5')).toBeVisible()
   await ana.page.getByPlaceholder('Conte com suas palavras…').fill('Nunca mais perdi uma carga.')
   await ana.page.getByLabel(/Autorizo usar meu depoimento/).check()
   await ana.page.getByRole('button', { name: 'Enviar', exact: true }).click()
