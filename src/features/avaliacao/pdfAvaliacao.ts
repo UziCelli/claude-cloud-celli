@@ -1,8 +1,8 @@
 import marca from '@marca/marca.json'
 import { dataBR, fmtDeltaUn, fmtMedida, NOME_FONTE, type RelatorioAvaliacao, type Seta, type Tom } from '../../lib/avaliacao'
-import { SEGMENTOS, textoCarga } from '../../lib/segmentos'
+import { textoCarga } from '../../lib/segmentos'
 import { primeiroNome } from '../../lib/contato'
-import { BASE_PDF, CONTORNO, corParte, formaDe, LEGENDA, LEGENDA_FRACA, LINHA_PDF, VIEWBOX } from './corpoPaths'
+import { ARTE, corParte, LEGENDA, LEGENDA_FRACA, REGIOES, SILHUETA, TAMANHO, VISTAS } from './corpoPaths'
 import { criarFolhas, LARG, M, MUDO, PW, sans, TEXTO, TRILHA } from '../relatorio/folhasPdf'
 
 const COR_TOM: Record<Tom, string> = { bom: '#16a34a', atencao: '#d97706', neutro: '#6b7280' }
@@ -32,38 +32,44 @@ function seta(ctx: CanvasRenderingContext2D, s: Seta, x: number, y: number, cor:
   ctx.restore()
 }
 
-// Corpo de frente e de costas (mesma geometria da tela) e legenda em texto. `ESC` converte o viewBox em pixels da folha.
-const ESC = 2.2
-function corpo(f: Awaited<ReturnType<typeof criarFolhas>>, segmentos: RelatorioAvaliacao['segmentos']) {
-  const h = VIEWBOX.h * ESC
-  f.espaco(h + 140)
-  const x0 = M + (LARG - VIEWBOX.w * ESC) / 2
+// Corpo de frente e de costas (mesma geometria da tela) e legenda em texto. `ESC` converte pixels do PNG em pixels da folha.
+const ESC = 0.38
+const carregar = (url: string) =>
+  new Promise<HTMLImageElement>((ok, erro) => {
+    const i = new Image()
+    i.onload = () => ok(i)
+    i.onerror = () => erro(new Error('corpo'))
+    i.src = url
+  })
+async function corpo(f: Awaited<ReturnType<typeof criarFolhas>>, segmentos: RelatorioAvaliacao['segmentos']) {
+  const artes = await Promise.all(VISTAS.map((v) => carregar(ARTE[v]))).catch(() => null) // sem a imagem, o PDF segue sem a figura
   const { ctx } = f
-  ctx.save()
-  ctx.translate(x0, f.y + 10)
-  ctx.scale(ESC, ESC)
-  for (const v of ['frente', 'costas'] as const) {
-    ctx.fillStyle = BASE_PDF
-    ctx.strokeStyle = LINHA_PDF
-    ctx.lineWidth = 0.6
-    for (const d of [CONTORNO[v], ...SEGMENTOS.map(({ id }) => formaDe(id, v))]) {
-      if (!d) continue
-      const p = new Path2D(d)
-      ctx.fill(p)
-      ctx.stroke(p)
-    }
-    for (const { id } of SEGMENTOS) {
-      const d = formaDe(id, v)
-      const s = segmentos.find((x) => x.id === id)
-      if (!d || !s) continue
-      ctx.fillStyle = corParte(s.veredito, !!s.fraca, true)
-      ctx.fill(new Path2D(d))
-    }
-  }
-  ctx.restore()
-  f.y += h + 14
-  f.texto('Frente', x0 + 50 * ESC, sans(24), MUDO, 'center')
-  f.texto('Costas', x0 + 150 * ESC, sans(24), MUDO, 'center')
+  const [w, h] = [TAMANHO.w * ESC, TAMANHO.h * ESC]
+  const folga = 70
+  const x0 = M + (LARG - 2 * w - folga) / 2
+  if (artes) {
+    f.espaco(h + 140)
+    VISTAS.forEach((v, i) => {
+      ctx.save()
+      ctx.translate(x0 + i * (w + folga), f.y + 10)
+      ctx.scale(ESC, ESC)
+      ctx.save()
+      ctx.clip(new Path2D(SILHUETA[v]))
+      ctx.globalAlpha = 0.7
+      for (const s of segmentos) {
+        const d = REGIOES[s.id][v]
+        if (!d) continue
+        ctx.fillStyle = corParte(s.veredito, !!s.fraca, true)
+        ctx.fill(new Path2D(d))
+      }
+      ctx.restore()
+      ctx.drawImage(artes[i], 0, 0, TAMANHO.w, TAMANHO.h)
+      ctx.restore()
+    })
+    f.y += h + 50
+    f.texto('Frente', x0 + w / 2, sans(24), MUDO, 'center')
+    f.texto('Costas', x0 + w + folga + w / 2, sans(24), MUDO, 'center')
+  } else f.espaco(100)
   f.y += 46
   ctx.font = sans(26)
   const itens = LEGENDA.map((l) => ({ ...l, w: 36 + ctx.measureText(l.texto).width }))
@@ -96,7 +102,7 @@ export async function gerarPdfAvaliacao({ r, aluno, comentario }: EntradaPdfAval
 
   f.titulo('Sua evolução')
   f.paragrafo(r.resumo.frase)
-  if (r.anterior && r.segmentos.length) corpo(f, r.segmentos)
+  if (r.anterior && r.segmentos.length) await corpo(f, r.segmentos)
   for (const s of r.segmentos) {
     const carga = s.carga ? ` Carga: ${textoCarga(s.carga.melhor)}.` : ''
     f.paragrafo(`${s.rotulo}: ${s.texto}.${s.medida ? ` Medida ${s.medida.delta}.` : ''}${carga}`, sans(28), TEXTO, 40)
