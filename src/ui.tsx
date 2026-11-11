@@ -305,7 +305,7 @@ export const Barra = ({ frac }: { frac: number }) => (
   <m.div
     className="mt-1 h-1 origin-left rounded bg-marca-500"
     style={{ width: `${Math.max(2, Math.round(frac * 100))}%` }}
-    initial={{ ...mexe('scaleX(0)') }}
+    initial={mexe('scaleX(0)')}
     animate={{ transform: 'scaleX(1)' }}
     transition={suave}
   />

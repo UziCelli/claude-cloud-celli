@@ -89,7 +89,7 @@ export default function Grupo({ rota }: { rota: string }) {
       {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} abrirHoje={abrirHoje(u)} />)}
       {membros.length > 1 && (
         <nav aria-label="Alunos do grupo" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4">
-          <div className="vidro !bg-slate-900/85 mx-auto max-w-[400px] rounded-full p-1">
+          <div className="vidro !bg-slate-900/95 mx-auto max-w-[400px] rounded-full p-1">
             <div className="relative flex">
               {/* Pílula própria (x em %), não Bolha/layoutId: o layoutId mede pela página e, com alunos em
                   rolagens diferentes, a pílula "caçava" a diferença de rolagem ao trocar. */}

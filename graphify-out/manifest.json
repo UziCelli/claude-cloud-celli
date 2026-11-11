@@ -624,9 +624,9 @@
     "semantic_hash": ""
   },
   "src/features/anamnese/AnamneseAluno.tsx": {
-    "mtime": 1794426680.1767113,
-    "seen": 1794427254.8607044,
-    "ast_hash": "0537c14ec2f216439848c6d610b95fe6",
+    "mtime": 1794427329.3295557,
+    "seen": 1794427346.9238021,
+    "ast_hash": "e47a32e85b6513da787acd029c5c2385",
     "semantic_hash": ""
   },
   "src/features/anamnese/AnamneseCoach.tsx": {
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "src/features/coach/presencial/Presencial.tsx": {
-    "mtime": 1794426680.1758378,
-    "seen": 1794427254.8607678,
-    "ast_hash": "f844a817ada030855991b72a8f7b8f5f",
+    "mtime": 1794427329.3276021,
+    "seen": 1794427346.9238765,
+    "ast_hash": "d0792ec882163d00f60135f2f39cb816",
     "semantic_hash": ""
   },
   "src/features/coach/semana/EvolucaoCoach.tsx": {
@@ -1554,9 +1554,9 @@
     "semantic_hash": ""
   },
   "src/ui.tsx": {
-    "mtime": 1794426654.0878327,
-    "seen": 1794427254.8609185,
-    "ast_hash": "d4596565ec3345e679ccc9eaef2f5a6d",
+    "mtime": 1794427329.3315475,
+    "seen": 1794427346.9240246,
+    "ast_hash": "90c69e3a0b539ee9c7d7f69e40126631",
     "semantic_hash": ""
   },
   "src/versao.d.ts": {
