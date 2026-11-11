@@ -116,6 +116,7 @@ export default function ImportarPlanilha({ uid, qtdMesos, onFechar }: { uid: str
 }
 
 function Previa({ meso, registros, deFora, comoFeitos, onComoFeitos }: Importado & { comoFeitos: boolean; onComoFeitos: (v: boolean) => void }) {
+  const n = registros.length + (comoFeitos ? deFora : 0)
   return (
     <div className="space-y-1 rounded-lg bg-slate-950 p-3 text-sm" data-testid="previa">
       <p>Início: {meso.inicio.split('-').reverse().join('/')}</p>
@@ -130,14 +131,14 @@ function Previa({ meso, registros, deFora, comoFeitos, onComoFeitos }: Importado
         ))}
       </ul>
       <p>
-        {registros.length} {registros.length === 1 ? 'treino realizado' : 'treinos realizados'} com carga
+        {n} {n === 1 ? 'treino realizado' : 'treinos realizados'} com carga
       </p>
       {deFora > 0 && (
         <label className="flex items-start gap-2 text-xs text-slate-400">
           <input type="checkbox" checked={comoFeitos} onChange={(e) => onComoFeitos(e.target.checked)} className="mt-0.5" />
           <span>
             {deFora} {deFora === 1 ? 'treino com carga não está marcado como realizado' : 'treinos com carga não estão marcados como realizados'}.
-            Importar também como feitos
+            Importar também como feitos (confira: a carga pode ter sido copiada)
           </span>
         </label>
       )}

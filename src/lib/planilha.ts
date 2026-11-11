@@ -72,7 +72,7 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
   const nSemanas = num(c(cr, cc + 1))
   // Modelo antigo ("Elaboração dos Treinamentos" em S1): sem config; semanas = números em S18↓, frequência = T3→,
   // início = P da 1ª "Semana" em B, auxiliares e pausa 2 linhas abaixo de "Exercícios Auxiliares" (T), sem métodos.
-  const antigo = nSemanas === null && rotulo(c(1, 'S')) === 'elaboracao dos treinamentos'
+  const antigo = nSemanas === null && rotulo(c(1, 'S')).startsWith('elaboracao dos treinamentos')
   if (nSemanas === null && !antigo) throw new Error('Esta aba não tem a Configuração do Meso (número de semanas). Use uma aba do modelo atual.')
   const contar = (r: number, k: number, passo: 'r' | 'k') => {
     let n = 0
@@ -84,8 +84,8 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
   let semanas: number
   let frequencia: number
   if (antigo) {
-    const rSem = Array.from({ length: maxRow }, (_, i) => i + 1).find((r) => texto(c(r, 'B')) === 'Semana') ?? 2
-    const rEx = Array.from({ length: maxRow }, (_, i) => i + 1).find((r) => texto(c(r, 'T')) === 'Exercícios Auxiliares') ?? 24
+    const rSem = Array.from({ length: maxRow }, (_, i) => i + 1).find((r) => rotulo(c(r, 'B')) === 'semana') ?? 2
+    const rEx = Array.from({ length: maxRow }, (_, i) => i + 1).find((r) => rotulo(c(r, 'T')) === 'exercicios auxiliares') ?? 24
     rAux = rEx + 2
     semanas = contar(18, colNum('S'), 'r')
     frequencia = contar(3, T, 'k')
@@ -126,7 +126,7 @@ export function planilhaParaMeso(celulas: Map<string, Valor>, novoId: () => stri
   // Métodos: tabela 7 linhas abaixo do rótulo. Linhas repetidas (mesmo conteúdo) entram uma vez.
   const metodos: AplicacaoMetodo[] = []
   const vistos = new Set<string>()
-  for (let r = antigo ? 0 : cr + 7; r < (antigo ? 0 : cr + 107); r++) {
+  for (let r = cr + 7; !antigo && r < cr + 107; r++) {
     const m: Record<string, Valor | undefined> = {}
     METODO_COLS.forEach((nome, i) => (m[nome] = c(r, cc + i)))
     const semana = num(m.semana)
