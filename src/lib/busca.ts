@@ -1,7 +1,7 @@
 // Busca no catálogo de exercícios (combobox do coach). Função pura.
 import catalogo from '../data/exercicios.json'
 
-const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+export const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 const itens = catalogo.flatMap((g) => g.exercicios.map((e) => ({ nome: e.nome, grupo: g.grupo, n: norm(e.nome) })))
 

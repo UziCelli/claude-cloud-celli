@@ -8,6 +8,7 @@ import {
 } from '../../lib/avaliacao'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../lib/contato'
 import { db } from '../../lib/firebase'
+import { historicoExercicios } from '../../lib/evolucao'
 import { useDoc } from '../../lib/hooks'
 import { relatorioCiclo } from '../../lib/relatorio'
 import { ir, trocarRota } from '../../rota'
@@ -71,6 +72,7 @@ export default function AvaliacaoCoach({ uid, id: idRota }: { uid: string; id: s
 }
 
 function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: string; aluno: Usuario; ficha: Av | null; outras: Av[]; dados: ReturnType<typeof useDadosAluno> }) {
+  const cargas = useMemo(() => historicoExercicios(dados.mesos, dados.registros), [dados.mesos, dados.registros])
   const base = ficha ?? outras[0] // nova: sexo, idade e altura vêm da avaliação mais recente
   const [v, setV] = useState<Textos>(() => ({
     data: ficha?.data ?? hoje(),
@@ -128,7 +130,7 @@ function Editor({ uid, id, aluno, ficha, outras, dados }: { uid: string; id: str
 
   const cicloId = form ? cicloDaAvaliacao(dados.mesos, form.data) : null
   const ciclo = cicloId ? relatorioCiclo(dados.mesos, dados.registros, cicloId, new Date()) : null
-  const r = form ? relatorioAvaliacao([...outras.filter((a) => a.id !== id), { ...form, id, liberado }], id, ciclo) : null
+  const r = form ? relatorioAvaliacao([...outras.filter((a) => a.id !== id), { ...form, id, liberado }], id, ciclo, cargas) : null
 
   // Não espera o servidor (offline a promessa só resolve na volta da internet): o estado vem do que o aparelho já sabe.
   const rodar = (p: Promise<void>, ok: string) => {
