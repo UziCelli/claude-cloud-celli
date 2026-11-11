@@ -133,5 +133,8 @@ test('treinos entre duas avaliações viram um cartão do segmento com a carga',
   const cartao = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Coxas' }) })
   await expect(cartao).toContainText('Leg Press 45: 200 → 230 kg (+15%)')
   await expect(cartao).toContainText('ganho de massa, confirmado pela carga')
+  await expect(page.getByRole('img', { name: 'Melhorou: coxas.' })).toBeVisible()
   expect(await cabeNaTela(page)).toBe(true)
+  const [pdf] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Baixar PDF' }).click()])
+  expect((await readFile((await pdf.path())!)).subarray(0, 5).toString()).toBe('%PDF-')
 })

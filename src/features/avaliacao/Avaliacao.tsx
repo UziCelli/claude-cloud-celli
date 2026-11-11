@@ -6,6 +6,7 @@ import { dataBR, fmtDeltaUn, fmtMedida, NOME_FONTE, type Grupo, type Linha, type
 import { textoCarga } from '../../lib/segmentos'
 import { cascata, item, Painel } from '../../ui'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
+import CorpoSvg from './CorpoSvg'
 import { gerarPdfAvaliacao } from './pdfAvaliacao'
 
 const COR: Record<Tom, string> = {
@@ -113,7 +114,7 @@ export default function Avaliacao({ r, aluno, comentario }: { r: RelatorioAvalia
       {r.segmentos.length > 0 && (
         <section className="space-y-2">
           <h2 className="font-semibold">Sua evolução</h2>
-          {/* O desenho do corpo (PR 2) entra aqui, antes dos cartões. */}
+          {r.anterior && <CorpoSvg segmentos={r.segmentos} />}
           <ul className="space-y-2">
             {r.segmentos.map((s) => (
               <li key={s.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
