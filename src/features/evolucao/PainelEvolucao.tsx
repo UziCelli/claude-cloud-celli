@@ -1,7 +1,7 @@
 import { collection, doc, query, where } from 'firebase/firestore'
 import { m, useReducedMotion } from 'motion/react'
 import { suave } from '../../movimento'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { evolucaoExercicio } from '../../engine'
 import type { Usuario } from '../../lib/acesso'
 import { diaSP } from '../../lib/acesso'
@@ -40,7 +40,7 @@ function Faixa({ frac, className = 'bg-marca-500' }: { frac: number; className?:
 
 const Titulo = ({ children }: { children: string }) => <h2 className="mb-3 font-semibold">{children}</h2>
 
-export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: string; nome: string; voltar?: string; compartilhar?: boolean }) {
+export function Painel({ uid, nome, voltar, compartilhar = false, resumido = false }: { uid: string; nome: string; voltar?: string; compartilhar?: boolean; resumido?: boolean }) {
   const mesosL = useLista<MesoSalvo & { id: string }>(useMemo(() => query(collection(db, 'mesos'), where('alunoId', '==', uid)), [uid]))
   const regsL = useLista<RegistroEvolucao>(useMemo(() => query(collection(db, 'registros'), where('alunoId', '==', uid)), [uid]))
   const cardiosL = useLista<CardioDoc>(useMemo(() => query(collection(db, 'cardios'), where('alunoId', '==', uid)), [uid]))
@@ -105,7 +105,60 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
     return { ganhas: lista.filter((q) => q.ganha), proxima: lista.find((q) => !q.ganha) }
   })
 
+  const grade = (
+    <>
+            <Titulo>Seus últimos 3 meses</Titulo>
+            <div className="grid grid-flow-col grid-cols-12 grid-rows-7 gap-1" role="img" aria-label={`${p.dias.length} dias treinados nos últimos 84 dias${cardio.size ? ` e ${cardio.size} ${plural(cardio.size, 'dia', 'dias')} de cardio` : ''}`}>
+              {Array.from({ length: 84 }, (_, i) => {
+                const dia = inicioGrade + Math.floor(i / 7) * 7 + (i % 7)
+                const cor =
+                  dia > hoje ? 'bg-transparent'
+                  : treinou.has(dia) ? `bg-marca-400${cardio.has(dia) ? ' ring-2 ring-inset ring-teal-300' : ''}`
+                  : cardio.has(dia) ? 'bg-teal-400/80'
+                  : 'bg-slate-800'
+                return <div key={dia} title={dataCurta(dia)} className={`aspect-square rounded-sm ${cor}`} />
+              })}
+            </div>
+            {cardio.size > 0 && (
+              <p className="mt-2 text-xs text-slate-400">
+                <span aria-hidden className="mr-1 inline-block size-2.5 rounded-sm bg-marca-400 align-middle" /> Treino ·{' '}
+                <span aria-hidden className="mr-1 inline-block size-2.5 rounded-sm bg-teal-400/80 align-middle" /> Cardio
+              </p>
+            )}
+    </>
+  )
+  const barras = (
+    <>
+            <div className="relative mt-4 flex h-24 items-end gap-1">
+              {p.porSemana.map((s) => (
+                <div key={s.inicio} className="flex h-full flex-1 flex-col justify-end" title={`Semana de ${dataCurta(s.inicio)}: ${s.feitos}`}>
+                  <div className={`rounded-t ${s.feitos ? 'bg-marca-500' : 'bg-slate-800'}`} style={{ height: `${Math.max(4, (s.feitos / maxSemana) * 100)}%` }} />
+                </div>
+              ))}
+              {p.meta != null && (
+                <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-amber-300" style={{ bottom: `${(p.meta / maxSemana) * 100}%` }} />
+              )}
+            </div>
+            {cardio.size > 0 && <p className="mt-2 text-sm text-slate-400">Cardio: {cardio.size} {plural(cardio.size, 'dia', 'dias')} nos últimos 3 meses</p>}
+            <p className="mt-2 text-sm text-slate-400">
+              Média de {fmt(p.mediaSemanal)} por semana{p.meta != null && ` · meta ${p.meta} por semana`}
+            </p>
+    </>
+  )
+  const mesAtual = new Date(hoje * 86_400_000).toISOString().slice(0, 7)
+  const noMes = p.dias.filter((d) => new Date(d * 86_400_000).toISOString().slice(0, 7) === mesAtual).length
+  const evolucoes = resumido ? p.topEvolucao.slice(0, 3) : p.topEvolucao
+
   const numero = 'text-3xl font-extrabold text-marca-400'
+  const detalhes = (children: ReactNode) =>
+    resumido ? (
+      <details className="group">
+        <summary className="toque flex min-h-12 cursor-pointer list-none items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 text-sm font-semibold text-slate-200">Ver mais detalhes</summary>
+        <div className="mt-4 space-y-4">{children}</div>
+      </details>
+    ) : (
+      <>{children}</>
+    )
   return (
     <main className={base}>
       {cabeca}
@@ -124,6 +177,30 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
         </div>
       )}
       <m.div className="space-y-4" variants={cascata} initial="hidden" animate="show">
+        {resumido ? (
+          <m.div variants={item}>
+          <Cartao className="space-y-4">
+            <p className="text-base font-semibold">
+              {noMes > 0 ? `Você treinou ${noMes} ${plural(noMes, 'dia', 'dias')} neste mês` : 'Neste mês você ainda não treinou'}
+              {top ? ` e subiu ${Math.round(top.pct).toLocaleString('pt-BR')}% de carga no ${top.nome}.` : '.'}
+            </p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className={numero}><Contar n={noMes} /></p>
+                <p className="text-xs text-slate-400">{plural(noMes, 'treino no mês', 'treinos no mês')}</p>
+              </div>
+              <div>
+                <p className={numero}><Contar n={p.semanasSeguidas} /></p>
+                <p className="text-xs text-slate-400">{plural(p.semanasSeguidas, 'semana seguida', 'semanas seguidas')}</p>
+              </div>
+              <div>
+                <p className={numero}>{top ? `+${Math.round(top.pct).toLocaleString('pt-BR')}%` : '–'}</p>
+                <p className="text-xs text-slate-400">maior evolução</p>
+              </div>
+            </div>
+          </Cartao>
+        </m.div>
+        ) : (
         <m.div variants={item} className="grid grid-cols-3 gap-2 text-center">
           <Cartao className="px-2">
             <p className={numero}>
@@ -144,50 +221,27 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
             {compTexto && <p className="text-xs text-slate-500">{compTexto}</p>}
           </Cartao>
         </m.div>
+        )}
 
-        <m.div variants={item}>
-          <Cartao>
-            <Titulo>Seus últimos 3 meses</Titulo>
-            <div className="grid grid-flow-col grid-cols-12 grid-rows-7 gap-1" role="img" aria-label={`${p.dias.length} dias treinados nos últimos 84 dias${cardio.size ? ` e ${cardio.size} ${plural(cardio.size, 'dia', 'dias')} de cardio` : ''}`}>
-              {Array.from({ length: 84 }, (_, i) => {
-                const dia = inicioGrade + Math.floor(i / 7) * 7 + (i % 7)
-                const cor =
-                  dia > hoje ? 'bg-transparent'
-                  : treinou.has(dia) ? `bg-marca-400${cardio.has(dia) ? ' ring-2 ring-inset ring-teal-300' : ''}`
-                  : cardio.has(dia) ? 'bg-teal-400/80'
-                  : 'bg-slate-800'
-                return <div key={dia} title={dataCurta(dia)} className={`aspect-square rounded-sm ${cor}`} />
-              })}
-            </div>
-            {cardio.size > 0 && (
-              <p className="mt-2 text-xs text-slate-400">
-                <span aria-hidden className="mr-1 inline-block size-2.5 rounded-sm bg-marca-400 align-middle" /> Treino ·{' '}
-                <span aria-hidden className="mr-1 inline-block size-2.5 rounded-sm bg-teal-400/80 align-middle" /> Cardio
-              </p>
-            )}
-            <div className="relative mt-4 flex h-24 items-end gap-1">
-              {p.porSemana.map((s) => (
-                <div key={s.inicio} className="flex h-full flex-1 flex-col justify-end" title={`Semana de ${dataCurta(s.inicio)}: ${s.feitos}`}>
-                  <div className={`rounded-t ${s.feitos ? 'bg-marca-500' : 'bg-slate-800'}`} style={{ height: `${Math.max(4, (s.feitos / maxSemana) * 100)}%` }} />
-                </div>
-              ))}
-              {p.meta != null && (
-                <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-amber-300" style={{ bottom: `${(p.meta / maxSemana) * 100}%` }} />
-              )}
-            </div>
-            {cardio.size > 0 && <p className="mt-2 text-sm text-slate-400">Cardio: {cardio.size} {plural(cardio.size, 'dia', 'dias')} nos últimos 3 meses</p>}
-            <p className="mt-2 text-sm text-slate-400">
-              Média de {fmt(p.mediaSemanal)} por semana{p.meta != null && ` · meta ${p.meta} por semana`}
-            </p>
-          </Cartao>
-        </m.div>
+        {resumido ? (
+          <m.div variants={item}>
+            <Cartao>{grade}</Cartao>
+          </m.div>
+        ) : (
+          <m.div variants={item}>
+            <Cartao>
+              {grade}
+              {barras}
+            </Cartao>
+          </m.div>
+        )}
 
         {p.topEvolucao.length > 0 && (
           <m.div variants={item}>
             <Cartao>
               <Titulo>Maiores evoluções</Titulo>
               <ul className="space-y-3">
-                {p.topEvolucao.map((e) => (
+                {evolucoes.map((e) => (
                   <li key={e.nome}>
                     <p className="mb-1 text-sm">
                       {e.nome}: {fmt(e.de)} → {fmt(e.ate)} kg <span className="font-semibold text-green-400">(+{Math.round(e.pct).toLocaleString('pt-BR')}%)</span>
@@ -200,6 +254,23 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
           </m.div>
         )}
 
+        {compartilhar && (
+          <m.div variants={item}>
+            <BotaoCompartilhar
+              dados={{
+                nome: nome.split(' ')[0],
+                treinos: p.totalTreinos,
+                semanasSeguidas: p.semanasSeguidas,
+                toneladas: `${fmt(toneladas)} t`,
+                comparacao: compTexto,
+                destaque: top && { nome: top.nome, de: top.de, ate: top.ate, pct: top.pct },
+              }}
+            />
+          </m.div>
+        )}
+
+        {detalhes(<>
+        {resumido && <m.div variants={item}><Cartao>{barras}</Cartao></m.div>}
         <m.div variants={item} className="grid gap-4 sm:grid-cols-2">
           <Cartao>
             <Titulo>Mais constante</Titulo>
@@ -239,21 +310,6 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
             </ul>
           </Cartao>
         </m.div>
-
-        {compartilhar && (
-          <m.div variants={item}>
-            <BotaoCompartilhar
-              dados={{
-                nome: nome.split(' ')[0],
-                treinos: p.totalTreinos,
-                semanasSeguidas: p.semanasSeguidas,
-                toneladas: `${fmt(toneladas)} t`,
-                comparacao: compTexto,
-                destaque: top && { nome: top.nome, de: top.de, ate: top.ate, pct: top.pct },
-              }}
-            />
-          </m.div>
-        )}
 
         <m.div variants={item}>
           <Cartao>
@@ -296,13 +352,14 @@ export function Painel({ uid, nome, voltar, compartilhar = false }: { uid: strin
             )}
           </Cartao>
         </m.div>
+        </>)}
       </m.div>
     </main>
   )
 }
 
 export default function EvolucaoAluno({ uid, nome }: { uid: string; nome: string }) {
-  return <Painel uid={uid} nome={nome} compartilhar />
+  return <Painel uid={uid} nome={nome} compartilhar resumido />
 }
 
 export function EvolucaoCoach({ uid }: { uid: string }) {

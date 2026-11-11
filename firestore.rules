@@ -6,8 +6,8 @@ rules_version = '2';
 // manualmente no console do Firebase, editando usuarios/{uid} para
 // papel = 'coach' (e status = 'ativo').
 //
-// Aluno "liberado" = papel 'aluno', status 'ativo' e pagoAte no futuro.
-// Aluno bloqueado, vencido ou aguardando não lê nem escreve mesos/registros.
+// Aluno "liberado" = papel 'aluno', status 'ativo' e agora < pagoAte + 7 dias (tolerância; CARENCIA_DIAS em src/lib/acesso.ts).
+// Aluno bloqueado, vencido há mais de 7 dias ou aguardando não lê nem escreve mesos/registros.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -39,7 +39,7 @@ service cloud.firestore {
       return signedIn()
         && me().papel == 'aluno'
         && me().status == 'ativo'
-        && request.time < me().pagoAte;
+        && request.time < me().pagoAte + duration.value(7, 'd');
     }
 
     function own(data) {
@@ -411,12 +411,14 @@ service cloud.firestore {
         && request.resource.data.get('vistaEm', request.time) == request.time;
 
       allow update: if isCoach()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['obsCoach', 'vistaEm', 'alunoId', 'atualizadoEm'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['obsCoach', 'vistaEm', 'liberadoEm', 'alunoId', 'atualizadoEm'])
         && request.resource.data.atualizadoEm == request.time
         && (!('obsCoach' in request.resource.data)
             || (request.resource.data.obsCoach is string && request.resource.data.obsCoach.size() <= 2000))
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['vistaEm'])
             || request.resource.data.vistaEm == request.time)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['liberadoEm'])
+            || request.resource.data.liberadoEm == request.time)
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['alunoId'])
             || (request.resource.data.alunoId is string
                 && get(/databases/$(database)/documents/usuarios/$(request.resource.data.alunoId)).data.papel == 'aluno'));

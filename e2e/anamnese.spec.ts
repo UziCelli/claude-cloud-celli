@@ -19,6 +19,7 @@ const PARQ = [
   { id: 'ossoArticulacao', rotulo: 'Tem problema de osso, articulação ou coluna que piora com exercício?' },
   { id: 'supervisaoMedica', rotulo: 'Algum médico disse que você só deve treinar com supervisão médica?' },
 ]
+const GRAVES = ['coracao', 'dorPeito', 'tontura', 'supervisaoMedica']
 const ANTIGA = (dias: number) => new Date(Date.now() - dias * 86_400_000)
 
 async function entrar(page: Page, e: string, titulo = /Olá/) {
@@ -35,11 +36,22 @@ const marcar = (page: Page, pergunta: string, resposta: 'Sim' | 'Não') =>
 
 // Responde o formulário inteiro (PAR-Q todo "não", menos `sim`) e envia.
 async function responder(page: Page, sim: string[] = []) {
-  for (const p of PARQ) await marcar(page, p.rotulo, sim.includes(p.id) ? 'Sim' : 'Não')
+  for (const p of PARQ) {
+    await marcar(page, p.rotulo, sim.includes(p.id) ? 'Sim' : 'Não')
+    if (sim.includes(p.id) && GRAVES.includes(p.id)) await confirmarGrave(page)
+  }
   for (let i = 0; i < ETAPAS - 1; i++) await proximo(page).click()
   await page.getByRole('checkbox', { name: /Respondi com verdade/ }).click()
   await page.getByRole('button', { name: 'Enviar', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Anamnese enviada' })).toBeVisible()
+}
+
+// Sim grave: "Leia de novo" e depois "Tem certeza?".
+async function confirmarGrave(page: Page) {
+  await expect(page.getByRole('heading', { name: 'Leia de novo com atenção' })).toBeVisible()
+  await page.getByRole('button', { name: 'Li, continuar' }).click()
+  await page.getByRole('button', { name: 'Sim, tenho certeza' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 }
 
 async function mesoDe(alunoId: string) {
@@ -70,7 +82,7 @@ test('aluno novo: trava o treino, responde com aviso médico e libera', async ({
 
   await expect(page.getByText('Etapa 1 de 5')).toBeVisible()
   await expect(proximo(page)).toBeDisabled() // PAR-Q sem resposta
-  await responder(page, ['coracao'])
+  await responder(page, ['doencaCronica'])
   await expect(page.getByText('Procure seu médico antes de treinar forte.')).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
@@ -78,18 +90,42 @@ test('aluno novo: trava o treino, responde com aviso médico e libera', async ({
   await expect(page.getByRole('button', { name: 'Iniciar treino' })).toBeVisible()
   await expect.poll(async () => (await listarDocs('anamneses')).filter((d) => d.fields.alunoId.stringValue === id && d.fields.origem.stringValue === 'aluno').length).toBe(1)
   const doc = (await listarDocs('anamneses')).find((d) => d.fields.alunoId.stringValue === id)!
-  expect(doc.fields.r.mapValue.fields.coracao.booleanValue).toBe(true)
+  expect(doc.fields.r.mapValue.fields.doencaCronica.booleanValue).toBe(true)
   expect(doc.fields.r.mapValue.fields.responsavelConfirmou).toBeUndefined() // não é menor: o campo não vai
 })
 
-test('aluno atual sem anamnese: só o cartão, o treino não trava', async ({ page }) => {
+test('aluno atual sem anamnese: também trava o treino até responder', async ({ page }) => {
   const id = await criarAluno('Ari Atual', email('ari'), senha, undefined, true, { anamnese: false })
   const mesoId = await mesoDe(id)
   await entrar(page, email('ari'))
   await expect(page.getByRole('link', { name: /Responda a anamnese \(3 min\)/ })).toBeVisible()
   await page.goto(`/#/treino/${mesoId}/1/1`)
-  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Responda a anamnese/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Iniciar treino' })).toHaveCount(0)
+})
+
+test('sim grave pede dupla confirmação; "Não, corrigir" não marca', async ({ page }) => {
+  await criarAluno('Gil Grave', email('gil'), senha, undefined, true, { anamnese: false })
+  await entrar(page, email('gil'))
+  await page.goto('/#/anamnese')
+  const p = PARQ[0]
+  await marcar(page, p.rotulo, 'Sim')
+  await expect(page.getByText(p.rotulo, { exact: true }).last()).toBeVisible() // a pergunta reaparece no aviso
+  await page.getByRole('button', { name: 'Li, continuar' }).click()
+  await expect(page.getByText(/treino fica pausado/)).toBeVisible()
+  await page.getByRole('button', { name: 'Não, corrigir' }).click()
+  await expect(page.locator('section').filter({ hasText: p.rotulo }).getByRole('button', { name: 'Sim', exact: true })).toHaveAttribute('aria-pressed', 'false')
+  await marcar(page, p.rotulo, 'Sim')
+  await confirmarGrave(page)
+  await expect(page.locator('section').filter({ hasText: p.rotulo }).getByRole('button', { name: 'Sim', exact: true })).toHaveAttribute('aria-pressed', 'true')
+})
+
+// Depende de ligar o PausaSaude no AlunoApp.
+test('aluno pausado vê só a tela de pausa até o coach liberar', async ({ page }) => {
+  const id = await criarAluno('Pat Pausa', email('pat'), senha, undefined, true, { anamnese: false })
+  await criarAnamnese(id, { ...Object.fromEntries(PARQ.map((q) => [q.id, false])), coracao: true, declaracao: true }, ANTIGA(60))
+  await entrar(page, email('pat'), /Treino pausado pela sua saúde/)
+  await expect(page.getByRole('button', { name: 'Ver minha anamnese' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 })
 
 test('coach abrindo o treino de aluno novo não trava', async ({ page }) => {

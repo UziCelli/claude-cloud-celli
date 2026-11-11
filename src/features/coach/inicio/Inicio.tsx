@@ -19,7 +19,7 @@ import { resumoNotas } from '../../../lib/feedback'
 import { IcBalao, IcMais, IcPlay, IcQr } from '../../../icones'
 import QrCadastro from '../alunos/QrCadastro'
 import { EscolherAluno } from '../presencial/Presencial'
-import { anamnesesNovas, anamnesesPendentes, lerAnamnese, sinaisAtencao, type Anamnese } from '../../../lib/anamnese'
+import { anamnesesNovas, anamnesesPendentes, lerAnamnese, pausadoSaude, sinaisAtencao, type Anamnese } from '../../../lib/anamnese'
 import { Quadro } from '../../../vidro'
 
 const saudacao = (d: Date) => {
@@ -63,6 +63,7 @@ export default function Inicio({ nome }: { nome: string }) {
   const paraAvaliar = avaliacoesParaFazer(mesosAtivos, avaliacoes.dados, agora)
   const docsAnam = anamneses.dados.map((d) => lerAnamnese(d.id, d)).filter((a): a is Anamnese => !!a && nomeDe.has(a.alunoId))
   const novasAnam = anamnesesNovas(docsAnam) // uma por aluno
+  const pausados = alunos.dados.filter((a) => nomeDe.has(a.id) && pausadoSaude(docsAnam.filter((d) => d.alunoId === a.id)))
   const pendentesAnam = anamnesesPendentes(alunos.dados.map((a) => ({ id: a.id, nome: a.nome, status: a.status, presencial: a.presencial })), docsAnam, mesosAtivos, agora)
   const avisosPix = alunos.dados.filter((a) => a.pagamentoInformadoEm && a.status === 'ativo' && !a.presencial).length
   const blocos: [string, AlunoComId[], string][] = [
@@ -150,6 +151,20 @@ export default function Inicio({ nome }: { nome: string }) {
                 <a href={`#/aluno/${x.alunoId}/avaliacoes`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">
                   {nomeDe.get(x.alunoId)} · {x.nome}
                 </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {pausados.length > 0 && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-amber-400/60 bg-amber-950/40 p-4">
+          <h2 className="font-semibold">
+            Pausados por saúde <span className="font-display text-lg font-bold text-amber-300">({pausados.length})</span>
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {pausados.map((a) => (
+              <li key={a.id} className="max-w-full min-w-0">
+                <a href={`#/aluno/${a.id}/anamnese`} className="block min-h-11 min-w-0 max-w-full truncate rounded-full border border-amber-400/40 bg-white/10 px-4 py-2.5 text-sm hover:bg-white/15">{a.nome}</a>
               </li>
             ))}
           </ul>

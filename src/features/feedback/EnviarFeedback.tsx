@@ -76,7 +76,7 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
   }
 
   return (
-    <Pagina titulo="Sua opinião" voltar={<BotaoVoltar para="/conta" />}>
+    <Pagina titulo="Sua opinião sobre o app" voltar={<BotaoVoltar para="/conta" />}>
       <form
         className="mx-auto max-w-md space-y-5"
         onSubmit={(e) => {
@@ -84,7 +84,7 @@ export default function EnviarFeedback({ uid, nome }: { uid: string; nome: strin
           if (nota && faltaTrava <= 0) enviar()
         }}
       >
-        <p className="-mt-3 text-slate-400">Como está sendo treinar com {marca.nome}?</p>
+        <p className="-mt-3 text-slate-400">Conte o que falta, o que atrapalha ou o que você adoraria ter no app. Leva 1 minuto.</p>
         <div role="group" aria-label="Nota" className="flex justify-between">
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} type="button" aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`} aria-pressed={n === nota} onClick={() => setNota(n)} className={`grid size-14 place-items-center ${n <= nota ? 'text-amber-400' : 'text-slate-500'}`}>

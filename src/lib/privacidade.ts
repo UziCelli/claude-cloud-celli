@@ -5,7 +5,8 @@
 // 2026-11-10: anamnese (histórico de saúde, inclusive de menores de 18 com autorização do responsável).
 // 2026-11-10b: a avaliação física passa a registrar condição de saúde (lipedema), marcada só pelo coach.
 // (A 2026-11-10 da anamnese já foi aceita pelos alunos: por isso o sufixo "b", para pedir o aceite de novo.)
-export const VERSAO_PRIVACIDADE = '2026-11-10b'
+// 2026-11-11: o PAR-Q com "sim" grave confirmado pausa o treino até o coach liberar.
+export const VERSAO_PRIVACIDADE = '2026-11-11'
 
 export const aceitouPrivacidade = (p: { privacidadeVersao?: string }) => p.privacidadeVersao === VERSAO_PRIVACIDADE
 

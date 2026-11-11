@@ -29,11 +29,21 @@ const DIA = 86400_000
 
 export const fimDoDiaSaoPaulo = (data: string) => new Date(`${data}T23:59:59.999-03:00`)
 
-// Coach sempre entra. Aluno: igual à regra (ativo e agora < pagoAte).
+// Tolerância depois do vencimento (CDC): o acesso só pausa 7 dias após o pagoAte. Igual em firestore.rules e push/.
+export const CARENCIA_DIAS = 7
+
+// Coach sempre entra. Aluno: igual à regra (ativo e agora < pagoAte + 7 dias).
 export function liberado(u: Usuario | null, agora: Date) {
   if (!u) return false
   if (u.papel === 'coach') return true
-  return u.status === 'ativo' && !!u.pagoAte && agora.getTime() < u.pagoAte.toMillis()
+  return u.status === 'ativo' && !!u.pagoAte && agora.getTime() < u.pagoAte.toMillis() + CARENCIA_DIAS * DIA
+}
+
+// Dias de atraso (calendário de São Paulo) de aluno ativo com app que já venceu mas ainda está liberado. null = não se aplica.
+export function emAtraso(u: Usuario | null, agora: Date) {
+  if (!u || u.papel !== 'aluno' || u.presencial || !u.pagoAte || !liberado(u, agora)) return null
+  if (agora.getTime() < u.pagoAte.toMillis()) return null
+  return Math.max(1, -diasParaVencer(u.pagoAte, agora))
 }
 
 // O coach só tem poder com login que passou pelo 2º fator (ou o claim de teste mfaDispensado,

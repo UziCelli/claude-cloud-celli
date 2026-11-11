@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Timestamp } from 'firebase/firestore'
-import { diasParaVencer, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, proximoVencimento, vencePerto, type Usuario } from './acesso'
+import { CARENCIA_DIAS, diasParaVencer, emAtraso, faltaSegundoFator, fimDoDiaSaoPaulo, hojeMaisDias, liberado, proximoVencimento, vencePerto, type Usuario } from './acesso'
 
 const sp = (iso: string) => new Date(`${iso}-03:00`)
 const ts = (d: Date) => Timestamp.fromDate(d)
@@ -16,9 +16,10 @@ describe('liberado', () => {
   const agora = sp('2026-10-10T12:00')
 
   it('aluno ativo com pagamento em dia', () => expect(liberado(aluno, agora)).toBe(true))
-  it('vencido (igual à regra: agora < pagoAte)', () => {
-    expect(liberado(aluno, sp('2026-10-11T00:00'))).toBe(false)
-    expect(liberado(aluno, aluno.pagoAte!.toDate())).toBe(false)
+  it('vencido: ainda liberado até 7 dias depois do pagoAte (igual à regra)', () => {
+    expect(liberado(aluno, sp('2026-10-11T00:00'))).toBe(true)
+    expect(liberado(aluno, new Date(aluno.pagoAte!.toMillis() + CARENCIA_DIAS * 86400_000 - 1))).toBe(true)
+    expect(liberado(aluno, new Date(aluno.pagoAte!.toMillis() + CARENCIA_DIAS * 86400_000))).toBe(false)
   })
   it('sem pagoAte, bloqueado ou aguardando', () => {
     expect(liberado({ ...aluno, pagoAte: undefined }, agora)).toBe(false)
@@ -27,6 +28,22 @@ describe('liberado', () => {
   })
   it('coach sempre', () => expect(liberado({ ...aluno, papel: 'coach', pagoAte: undefined }, agora)).toBe(true))
   it('sem perfil', () => expect(liberado(null, agora)).toBe(false))
+})
+
+describe('emAtraso', () => {
+  const aluno: Usuario = { papel: 'aluno', nome: 'Ana', email: 'a@x.com', status: 'ativo', pagoAte: ts(fimDoDiaSaoPaulo('2026-10-10')) }
+  it('null em dia', () => expect(emAtraso(aluno, sp('2026-10-10T12:00'))).toBeNull())
+  it('dias de atraso no calendário de SP, dentro da tolerância', () => {
+    expect(emAtraso(aluno, sp('2026-10-11T00:10'))).toBe(1)
+    expect(emAtraso(aluno, sp('2026-10-13T12:00'))).toBe(3)
+  })
+  it('null depois da tolerância, presencial, bloqueado ou coach', () => {
+    expect(emAtraso(aluno, sp('2026-10-18T12:00'))).toBeNull()
+    expect(emAtraso({ ...aluno, presencial: true }, sp('2026-10-12T12:00'))).toBeNull()
+    expect(emAtraso({ ...aluno, status: 'bloqueado' }, sp('2026-10-12T12:00'))).toBeNull()
+    expect(emAtraso({ ...aluno, papel: 'coach' }, sp('2026-10-12T12:00'))).toBeNull()
+    expect(emAtraso(null, sp('2026-10-12T12:00'))).toBeNull()
+  })
 })
 
 describe('diasParaVencer (dias de calendário em São Paulo)', () => {

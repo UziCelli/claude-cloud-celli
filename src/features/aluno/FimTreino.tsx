@@ -188,7 +188,7 @@ export default function FimTreino({
             </Botao>
           </div>
         )}
-        {recordes.length > 0 && <ConviteFeedback />}
+        <ConviteFeedback />
         <Botao tipo="primario" tamanho="lg" className="w-full" onClick={voltar}>
           Voltar para Hoje
         </Botao>

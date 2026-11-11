@@ -61,11 +61,11 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
+      <FaixaFeedback />
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
       <AvaliacaoPronta a={avaliacoes.dados[0]} />
       <Quadros pagoAte={perfil?.pagoAte?.toMillis()} ultima={avaliacoes.dados[0]} />
-      <FaixaFeedback />
     </main>
   )
 }

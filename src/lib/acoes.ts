@@ -323,6 +323,9 @@ export const novaVersaoCoach = (alunoId: string, r: Respostas) =>
   addDoc(collection(db, 'anamneses'), { alunoId, versao: VERSAO_ANAMNESE, origem: 'coach', r, em: serverTimestamp(), atualizadoEm: serverTimestamp(), vistaEm: serverTimestamp() })
 export const anotarAnamnese = (id: string, obsCoach: string) => updateDoc(doc(db, 'anamneses', id), { obsCoach, atualizadoEm: serverTimestamp() })
 export const marcarAnamneseVista = (id: string) => updateDoc(doc(db, 'anamneses', id), { vistaEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
+// Libera o treino pausado por saúde: marca cada anamnese grave ainda sem liberação (sem await: vale offline).
+export const liberarTreinoSaude = (ids: string[]) =>
+  Promise.all(ids.map((id) => updateDoc(doc(db, 'anamneses', id), { liberadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })))
 
 // ---------- aluno ----------
 

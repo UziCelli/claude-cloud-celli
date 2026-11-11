@@ -72,7 +72,7 @@ export default function Politica() {
         <p>
           Anamnese: você responde no app, pelo celular, no começo e a cada ciclo de treino, e pode ver e atualizar quando quiser (aba Conta). Só você e o seu coach
           veem. Não enviamos suas respostas para inteligência artificial nem para terceiros, e elas saem junto no "apagar de vez". Se você tem menos de 18 anos, um
-          responsável legal precisa autorizar ao responder. Um "sim" nas perguntas de saúde mostra um aviso para procurar um médico, mas não bloqueia o seu treino.
+          responsável legal precisa autorizar ao responder. Um "sim" em perguntas de saúde mostra um aviso para procurar um médico. Um "sim" em coração ou pressão, dor no peito, tontura ou desmaio, ou supervisão médica pausa o seu treino até o seu coach conversar com você e liberar.
         </p>
         <p>Não pedimos CPF, data de nascimento (só a idade, na avaliação física), endereço nem cartão.</p>
       </Secao>

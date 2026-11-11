@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { aceitouPrivacidade, senhaJaConferida } from './lib/privacidade'
 import { estadoSenha, EVENTO_SENHA } from './lib/senha'
-import { faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
+import { CARENCIA_DIAS, faltaSegundoFator, liberado, type Usuario } from './lib/acesso'
 import { collection, doc, getDocFromServer, query, where } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
 import { consultaRegistrosRecentes, pedirAcesso, temTotp } from './lib/acoes'
@@ -89,8 +89,8 @@ function Principal() {
     if (estagio === 'abertura') etapaCarregando(carregando && !user ? 'auth' : 'perfil')
     else telaPronta()
   }, [estagio, carregando, user])
-  // Aluno aberto além do vencimento: força nova avaliação em pagoAte, senão ele ainda vê o treino e o servidor recusa as gravações.
-  const venceEm = perfil?.papel === 'coach' ? 0 : perfil?.pagoAte?.toMillis() ?? 0
+  // Aluno aberto além da tolerância: força nova avaliação em pagoAte + 7 dias, senão ele ainda vê o treino e o servidor recusa as gravações.
+  const venceEm = perfil?.papel === 'coach' || !perfil?.pagoAte ? 0 : perfil.pagoAte.toMillis() + CARENCIA_DIAS * 86400_000
   const [tique, atualizar] = useState(0)
   useEffect(() => {
     const falta = venceEm - Date.now()
@@ -310,7 +310,9 @@ function SemAcesso({ uid, perfil }: { uid: string; perfil: Usuario }) {
       <p className="text-slate-400">
         {aguardando
           ? 'Seu coach vai liberar seu acesso em breve.'
-          : 'Seu acesso está pausado. Fale com seu coach para reativar.'}
+          : perfil.status === 'ativo'
+            ? 'Seu acesso está pausado: a mensalidade venceu há mais de 7 dias.'
+            : 'Seu acesso está pausado. Fale com seu coach para reativar.'}
       </p>
       {vencido && <PagarPix uid={uid} perfil={perfil} />}
       <Botao disabled={saindo} onClick={sairAgora}>{saindo ? 'Saindo…' : 'Sair'}</Botao>

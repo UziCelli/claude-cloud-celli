@@ -99,7 +99,7 @@ export function resumoCoach(todos: AlunoComId[], registros: RegistroResumo[], ag
   return {
     aguardando: alunos.filter((a) => a.status === 'aguardando'),
     vencendo: alunos.filter((a) => deApp(a) && a.pagoAte && diasParaVencer(a.pagoAte, agora) >= 0 && diasParaVencer(a.pagoAte, agora) <= 7),
-    vencidos: alunos.filter((a) => deApp(a) && !liberado(a, agora)),
+    vencidos: alunos.filter((a) => deApp(a) && (!liberado(a, agora) || (!!a.pagoAte && a.pagoAte.toMillis() <= agora.getTime()))),
     treinaramHoje: alunos.filter((a) => treinouHoje.has(a.id)),
     treinosHoje,
     sumidos,
