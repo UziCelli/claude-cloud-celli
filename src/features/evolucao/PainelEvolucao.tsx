@@ -30,8 +30,8 @@ function Faixa({ frac, className = 'bg-marca-500' }: { frac: number; className?:
       <m.div
         className={`h-full origin-left rounded ${className}`}
         style={{ width: `${Math.max(3, Math.round(Math.min(1, frac) * 100))}%` }}
-        initial={{ scaleX: quieto ? 1 : 0 }}
-        animate={{ scaleX: 1 }}
+        initial={quieto ? false : { transform: 'scaleX(0)' }}
+        animate={{ transform: 'scaleX(1)' }}
         transition={suave}
       />
     </div>

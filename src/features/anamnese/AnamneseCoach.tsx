@@ -88,7 +88,7 @@ export default function AnamneseCoach({ uid }: { uid: string }) {
       )}
       {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
       <div className="sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 lg:bottom-2"> {/* acima das abas do coach (66px) no celular */}
-        <div className="flex flex-wrap gap-2 rounded-2xl bg-slate-950/90 p-2 backdrop-blur">
+        <div className="flex flex-wrap gap-2 rounded-2xl bg-slate-950/95 p-2">
           {pausado && (
             <Botao className="w-full basis-full border-amber-400/60 bg-amber-500/20 text-amber-100" onClick={() => liberarTreinoSaude(pendentes.map((a) => a.id)).catch((e) => { falhou(e); setErro(`Não foi possível liberar (${codigo(e)}).`) })}>Liberar treino</Botao>
           )}

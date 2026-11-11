@@ -89,7 +89,7 @@ export default function Grupo({ rota }: { rota: string }) {
       {membros.map((u) => <Membro key={u} uid={u} ativo={u === ativo} rota={rotaDe(u)} abrirHoje={abrirHoje(u)} />)}
       {membros.length > 1 && (
         <nav aria-label="Alunos do grupo" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4">
-          <div className="vidro !bg-slate-900/85 mx-auto max-w-[400px] rounded-full p-1">
+          <div className="vidro !bg-slate-900/95 mx-auto max-w-[400px] rounded-full p-1">
             <div className="relative flex">
               {/* Pílula própria (x em %), não Bolha/layoutId: o layoutId mede pela página e, com alunos em
                   rolagens diferentes, a pílula "caçava" a diferença de rolagem ao trocar. */}
@@ -114,7 +114,7 @@ export default function Grupo({ rota }: { rota: string }) {
 function Barra({ uid, grupo, onAdicionar, onSair }: { uid: string; grupo: boolean; onAdicionar: () => void; onSair: () => void }) {
   const nome = useNome(uid)
   return (
-    <div role="region" aria-label="Presencial" className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/90 pt-topo backdrop-blur-md">
+    <div role="region" aria-label="Presencial" className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/95 pt-topo">
       <div className="mx-auto flex h-12 max-w-md items-center gap-3 px-4">
         <span className="size-2 shrink-0 rounded-full bg-amber-400" />
         <div className="min-w-0 flex-1 leading-tight">

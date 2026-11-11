@@ -13,7 +13,7 @@ import type { Foto } from '../../../lib/acesso'
 import { contaDoDia, PIX, reais } from '../../aluno/PagarPix'
 import EnviarAviso from './EnviarAviso'
 import { IcEngrenagem, IcPlay } from '../../../icones'
-import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina } from '../../../ui'
+import { Aviso, Botao, Campo, campoBase, Cartao, Msg, Pagina, sobe, mexe } from '../../../ui'
 
 type Aluno = Usuario & { id: string }
 
@@ -190,7 +190,7 @@ export default function Alunos() {
           </button>
         </div>
         {aberto === a.id && (
-          <m.div className="pt-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+          <m.div className="pt-2" initial={{ opacity: 0, ...mexe('translateY(-8px)') }} animate={sobe} transition={suave}>
             {confirmando?.id === a.id ? (
               <ConfirmarAluno id={a.id} nome={a.nome} tipo={confirmando.tipo} onFechar={() => abrir(null)} onErro={() => setErro('Não deu para gravar. Tente de novo.')} />
             ) : avisando === a.id ? (
@@ -347,7 +347,7 @@ function ConfirmarAluno({ id, nome, tipo, onFechar, onErro }: { id: string; nome
   }
 
   return (
-    <m.div className="w-full space-y-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+    <m.div className="w-full space-y-2" initial={{ opacity: 0, ...mexe('translateY(-8px)') }} animate={sobe} transition={suave}>
       <p className="text-sm">
         {apagar
           ? `Apagar “${nome}” de vez? Apaga perfil, mesociclos, cargas, anotações e o login. A limpeza automática apaga também os registros de erro e as cópias de segurança em até 24 h. Não dá para desfazer.`

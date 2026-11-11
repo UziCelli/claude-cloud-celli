@@ -59,13 +59,7 @@ export const Botao = ({
   tamanho?: keyof typeof tamanhos
   carregando?: boolean
 }) => (
-  <m.button
-    data-m
-    whileTap={{ scale: 0.96 }}
-    transition={agil}
-    {...p}
-    className={classesBotao(tipo, tamanho, className)}
-  >
+  <button {...p} className={classesBotao(tipo, tamanho, className)}>
     {carregando ? (
       <span className="inline-flex items-center justify-center gap-2">
         <span aria-hidden className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -74,7 +68,7 @@ export const Botao = ({
     ) : (
       children
     )}
-  </m.button>
+  </button>
 )
 
 export const Campo = ({ rotulo, className = '', ...p }: InputHTMLAttributes<HTMLInputElement> & { rotulo: string }) => (
@@ -157,6 +151,15 @@ export const Aviso = ({ children }: { children: ReactNode }) => (
   </m.div>
 )
 
+// Leve de propósito: só `transform` (string) e `opacity`, que o Motion passa para a GPU (WAAPI). `x`/`y`/`scale`
+// soltos rodam quadro a quadro na linha principal e engasgam no Android ao abrir as telas (11/11/2026).
+// Termina em `none`: transform parado vira bloco de contenção para `fixed` de dentro.
+// Reduzir movimento: o MotionConfig só corta x/y/scale soltos, não `transform` em string. Use `...mexe(...)` no
+// initial/exit: com a preferência ligada, sem deslocamento (fica só a opacidade).
+const pedeQuieto = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+export const mexe = (transform: string) => (pedeQuieto() ? {} : { transform })
+export const sobe = { opacity: 1, transform: 'translateY(0px)', transitionEnd: { transform: 'none' } }
+
 // Mensagem que aparece e some suave (erro, sucesso, aviso). `chave` muda = anima de novo.
 export const Msg = ({ children, className = '' }: { children?: ReactNode; className?: string }) => {
   const montou = useMontou()
@@ -164,8 +167,8 @@ export const Msg = ({ children, className = '' }: { children?: ReactNode; classN
     <m.div
       key={typeof children === 'string' ? children : 'msg'}
       // sem animar altura (travava no iPhone) e sem saída (como o Painel): só opacidade + deslize ao entrar
-      initial={montou ? { opacity: 0, y: -4 } : false}
-      animate={{ opacity: 1, y: 0 }}
+      initial={montou ? { opacity: 0, ...mexe('translateY(-4px)') } : false}
+      animate={sobe}
       transition={agil}
       className={className}
     >
@@ -179,13 +182,9 @@ export const Abertura = ({ texto, children }: { texto?: string; children?: React
   const parado = useReducedMotion() // pulso em loop (opacidade) não é coberto pelo MotionConfig
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-4">
-      <m.div
-        initial={{ opacity: 0, scale: 0.85, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={suave}
-      >
+      <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={suave}>
         <m.div
-          animate={parado ? undefined : { opacity: [1, 0.55, 1], scale: [1, 1.04, 1] }}
+          animate={parado ? undefined : { opacity: [1, 0.55, 1] }}
           transition={{ duration: 1.6, delay: 0.5, repeat: Infinity, ease: 'easeInOut' }}
         >
           <Logo className="h-10 text-white" />
@@ -194,8 +193,8 @@ export const Abertura = ({ texto, children }: { texto?: string; children?: React
       <m.div
         aria-hidden
         className="h-0.5 w-24 origin-left rounded bg-marca-500"
-        initial={{ scaleX: 0, opacity: 0 }}
-        animate={{ scaleX: 1, opacity: 1 }}
+        initial={{ ...mexe('scaleX(0)'), opacity: 0 }}
+        animate={{ transform: 'scaleX(1)', opacity: 1 }}
         transition={{ ...suave, delay: 0.2 }}
       />
       <m.p
@@ -213,7 +212,7 @@ export const Abertura = ({ texto, children }: { texto?: string; children?: React
 
 export const Centro = ({ children }: { children: ReactNode }) => (
   <div className="flex min-h-dvh items-center justify-center px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] text-center">
-    <m.div className="w-full max-w-sm min-w-0 space-y-4" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={suave}>
+    <m.div className="w-full max-w-sm min-w-0 space-y-4" initial={{ opacity: 0, ...mexe('translateY(6px)') }} animate={sobe} transition={suave}>
       {children}
     </m.div>
   </div>
@@ -224,10 +223,14 @@ export const Centro = ({ children }: { children: ReactNode }) => (
 // Mesmo nível (troca de aba) = só fade, sem deslize.
 // Modo "wait" (saída curta, depois a entrada): com as duas telas sobrepostas (popLayout) o texto da tela que
 // sai repete na página e quebra o e2e (getByText estrito), então a sobreposição ficou de fora.
+// `transform` (e não `x`): o Motion só passa para a GPU (WAAPI) opacity/transform. Com `x` o deslize rodava quadro a
+// quadro na linha principal, junto com a montagem da tela nova, e engasgava sempre no Android (11/11/2026).
+// Termina em `none`: transform parado vira bloco de contenção e desloca os `fixed` de dentro da tela (folhas, descanso).
+const desloca = (pct: number) => `translateX(${pct}%)`
 const camada: Variants = {
-  entra: (d: number) => (d ? { x: d > 0 ? '100%' : '-25%', opacity: d > 0 ? 1 : 0.5 } : { opacity: 0 }),
-  fica: (d: number) => ({ x: 0, opacity: 1, transition: d ? suave : saida }),
-  sai: (d: number) => ({ opacity: 0, x: d > 0 ? '-25%' : d < 0 ? '25%' : 0, transition: saida }),
+  entra: (d: number) => (d ? { transform: desloca(d > 0 ? 100 : -25), opacity: d > 0 ? 1 : 0.5 } : { opacity: 0 }),
+  fica: (d: number) => ({ transform: desloca(0), opacity: 1, transition: d ? suave : saida, transitionEnd: { transform: 'none' } }),
+  sai: (d: number) => ({ opacity: 0, transform: d ? desloca(d > 0 ? -25 : 25) : 'none', transition: saida }),
 }
 const reduzida: Variants = { entra: { opacity: 0 }, fica: { opacity: 1, transition: saida }, sai: { opacity: 0, transition: saida } }
 
@@ -266,7 +269,7 @@ export const Tela = ({ chave, abrir = false, children }: { chave: string; abrir?
 export const Painel = ({ aberto, children, className }: { aberto: boolean; children: ReactNode; className?: string }) => {
   const montou = useMontou()
   return aberto ? (
-    <m.div initial={montou ? { opacity: 0, y: -8 } : false} animate={{ opacity: 1, y: 0 }} transition={suave} className={className}>
+    <m.div initial={montou ? { opacity: 0, ...mexe('translateY(-8px)') } : false} animate={sobe} transition={suave} className={className}>
       {children}
     </m.div>
   ) : null
@@ -295,24 +298,24 @@ export const useMontou = () => {
 
 // Cascata: <Cascata> (container) + <Item> (filhos diretos). Sem delay em campos de digitação.
 export const cascata = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } }
-export const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: suave } }
+export const item = { hidden: { opacity: 0 }, show: { opacity: 1, transition: suave } } // só opacidade: leve na entrada da tela
 
 // Barra que cresce da esquerda até `frac` (0–1) ao aparecer.
 export const Barra = ({ frac }: { frac: number }) => (
   <m.div
     className="mt-1 h-1 origin-left rounded bg-marca-500"
     style={{ width: `${Math.max(2, Math.round(frac * 100))}%` }}
-    initial={{ scaleX: 0 }}
-    animate={{ scaleX: 1 }}
+    initial={mexe('scaleX(0)')}
+    animate={{ transform: 'scaleX(1)' }}
     transition={suave}
   />
 )
 
 // Troca com deslize na direção da seta: `chave` numérica (ex.: semana). Maior = desliza para a esquerda.
 const desliza = {
-  entra: (d: number) => ({ opacity: 0, x: d * 20 }),
-  fica: { opacity: 1, x: 0, transition: suave },
-  sai: (d: number) => ({ opacity: 0, x: -d * 20, transition: saida }),
+  entra: (d: number) => ({ opacity: 0, ...mexe(`translateX(${d * 20}px)`) }),
+  fica: { opacity: 1, transform: 'translateX(0px)', transition: suave, transitionEnd: { transform: 'none' } },
+  sai: (d: number) => ({ opacity: 0, ...mexe(`translateX(${-d * 20}px)`), transition: saida }),
 }
 export const Deslizar = ({ chave, children }: { chave: number; children: ReactNode }) => {
   const ant = useRef(chave)
@@ -331,23 +334,8 @@ export const Deslizar = ({ chave, children }: { chave: number; children: ReactNo
   )
 }
 
-// Número que conta de 0 (ou do valor já mostrado) até `n` (sem animar se o usuário pede menos movimento).
-export const Contar = ({ n }: { n: number }) => {
-  const [v, setV] = useState(0)
-  const mostrado = useRef(0)
-  useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches || n === 0) return setV((mostrado.current = n))
-    const t0 = performance.now()
-    const de = mostrado.current
-    let id = requestAnimationFrame(function passo(t) {
-      const k = Math.min(1, (t - t0) / 500)
-      setV((mostrado.current = Math.round(de + (n - de) * (1 - (1 - k) ** 3))))
-      if (k < 1) id = requestAnimationFrame(passo)
-    })
-    return () => cancelAnimationFrame(id)
-  }, [n])
-  return <>{v}</>
-}
+// Número (antes contava de 0 até `n` com um render por quadro: pesava na entrada da Evolução; 11/11/2026).
+export const Contar = ({ n }: { n: number }) => <>{n}</>
 
 export function Folha({ titulo, onFechar, children }: { titulo: string; onFechar: () => void; children: ReactNode }) {
   return (

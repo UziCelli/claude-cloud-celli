@@ -249,7 +249,7 @@ export function Conteudo({ uid, ultima, anotacao = '', motivo, coach }: { uid: s
           </div>
         </div>
       )}
-      <div className={coach ? 'sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 rounded-2xl bg-slate-950/90 p-2 backdrop-blur lg:bottom-2' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
+      <div className={coach ? 'sticky bottom-[calc(66px+1rem+env(safe-area-inset-bottom))] mt-6 rounded-2xl bg-slate-950/95 p-2 lg:bottom-2' : 'fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3'}> {/* coach: o menu dele já ocupa o rodapé */}
         <div className="mx-auto flex max-w-md gap-2">
           {etapa > 0 && <Botao tamanho="lg" className="flex-1" onClick={() => irPara(etapa - 1)}>Voltar</Botao>}
           <Botao
