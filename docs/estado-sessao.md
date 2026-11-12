@@ -7,6 +7,11 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Botão **Copiar texto** em todo feedback: copia entre aspas, com nota, assunto e tipo, sem o nome do aluno.
 - "Story" virou **Imagem**, só para depoimento autorizado (LGPD); quem não autorizou vê "Sem autorização para divulgar".
 
+## 12/11/2026 — Anotações com data e excluir
+- Cada anotação mostra a data e há quanto tempo (`12/11 · hoje`); as antigas aparecem como "sem data" até serem editadas. Salvar sem mudar não renova a data.
+- Lixeira para aluno (tela do treino) e coach (tabela da semana), com confirmação mostrando o texto. Apaga só aquela anotação, para os dois.
+- Campo novo `datas` em `notas/{aluno}` (sem migração); regras e testes atualizados. `test:rules`: só as 3 falhas antigas de timeout (scripts admin).
+
 ## 12/11/2026 — Central do aluno e próximo meso
 - Coach: tela do aluno com cartão AGORA (semana, "termina ~dd/mm", treino de hoje) e botões Editar treino / Ver o que ele fez.
 - Cartão PRÓXIMO: "Montar próximo meso" copia o atual e começa no dia seguinte ao fim; "Começar hoje" adianta.

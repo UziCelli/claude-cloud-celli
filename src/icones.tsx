@@ -43,6 +43,7 @@ export const IcPontos = ({ className = 'size-6' }: P) => (
 )
 export const IcNota = svg(<><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></>)
 export const IcLapis = svg(<><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /><path d="m14.5 5.5 3 3" /></>)
+export const IcLixeira = svg(<><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5" /></>)
 export const IcPlay = svg(<path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />)
 export const IcPausa = svg(<path d="M8 5v14M16 5v14" />)
 export const IcReiniciar = svg(<><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" /><path d="M3 3v5h5" /></>)

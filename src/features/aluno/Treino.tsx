@@ -24,7 +24,8 @@ import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvoluc
 import { ehRecorde } from '../../lib/recorde'
 import { cargaAnterior, semanaAtual } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
-import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
+import { confirmarExclusao, dataDaNota, msDaNota } from '../../lib/notas'
+import { IcCadeado, IcCheck, IcInfo, IcLapis, IcLixeira, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
 import { Botao, classesBotao, cascata, Centro, item, Modal, Painel, sobe, useDepoisDaEntrada, useMontou, mexe } from '../../ui'
 import { BrilhoBorda } from '../../vidro'
@@ -194,7 +195,7 @@ function AvisoAdaptado({ chave }: { chave: string }) {
   )
 }
 
-function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }) {
+function Nota({ uid, nome, texto, em }: { uid: string; nome: string; texto: string; em?: number }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
   const montou = useMontou()
@@ -214,8 +215,11 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
           <Botao
             tipo="primario"
             onClick={() => {
-              salvarNota(uid, nome, rascunho)
-              if (rascunho.trim()) avisarCoach('comentou')
+              // sem mudança não regrava (a data continua a de quando foi escrita)
+              if (rascunho.trim() !== texto) {
+                salvarNota(uid, nome, rascunho)
+                if (rascunho.trim()) avisarCoach('comentou')
+              }
               setEditando(false)
             }}
           >
@@ -229,11 +233,24 @@ function Nota({ uid, nome, texto }: { uid: string; nome: string; texto: string }
     setRascunho(texto)
     setEditando(true)
   }
+  const data = dataDaNota(em)
   const fechado = texto ? (
-    <button onClick={abrir} aria-label={`Editar anotação de ${nome}`} className="mb-3 flex w-full items-start justify-between gap-3 border-l-2 border-marca-500/50 py-1 pl-3 text-left text-sm text-slate-300">
-      <span className="min-w-0 break-words">{texto}</span>
-      <IcLapis className="size-4 shrink-0 text-slate-500" />
-    </button>
+    <div className="mb-3 flex items-start gap-1 border-l-2 border-marca-500/50 pl-3">
+      <button onClick={abrir} aria-label={`Editar anotação de ${nome}`} className="flex min-w-0 flex-1 items-start justify-between gap-3 py-1 text-left text-sm text-slate-300">
+        <span className="min-w-0">
+          <span className="block break-words">{texto}</span>
+          <span className="mt-0.5 block text-[11px] text-slate-500">{data}</span>
+        </span>
+        <IcLapis className="size-4 shrink-0 text-slate-500" />
+      </button>
+      <button
+        onClick={() => confirmarExclusao(nome, texto, data, 'o coach') && salvarNota(uid, nome, '')}
+        aria-label={`Excluir anotação de ${nome}`}
+        className="-m-1 shrink-0 rounded p-3 text-slate-500 hover:text-red-400"
+      >
+        <IcLixeira className="size-4" />
+      </button>
+    </div>
   ) : (
     <Botao tipo="fantasma" onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 !px-2">
       <IcMais className="size-4" /> Anotação
@@ -636,7 +653,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   )}
                 </div>
               </div>
-              <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} />
+              <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
               <div className="space-y-2">
                 {(() => {
                 // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.
