@@ -24,11 +24,10 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      APK_SENHA: ${{ secrets.APK_SENHA }}
-      GH_TOKEN: ${{ github.token }}
       MARCA: ${{ inputs.marca || 'vfit' }}
     steps:
       - uses: actions/checkout@v4
@@ -61,6 +60,8 @@ jobs:
           EOF
 
       - name: Preparar keystore
+        env:
+          APK_SENHA: ${{ secrets.APK_SENHA }}
         working-directory: twa
         run: |
           if [ -f forca.keystore.enc ]; then
@@ -134,6 +135,8 @@ jobs:
           npx --yes @bubblewrap/cli@1.25.0 build --skipPwaValidation
 
       - name: Publicar APK como release
+        env:
+          GH_TOKEN: ${{ github.token }}
         working-directory: twa
         run: |
           APK=$(find . -maxdepth 2 -iname "*-release-signed.apk" -o -iname "app-release-signed.apk" | head -n1)
@@ -148,4 +151,6 @@ jobs:
 
       # O plano gratuito do Firebase (Spark) não hospeda .apk: o APK fica só na Release "apk".
       - name: Republicar o site (leva o assetlinks.json criado no 1º run)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref main

@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { apagarChaveIA, chaveMascarada, chaveValida, refChaveIA, salvarChaveIA } from '../../lib/ia'
-import { useDoc } from '../../lib/hooks'
+import { apagarChaveIA, chaveValida, useChaveIA, salvarChaveIA } from '../../lib/ia'
 import { Aviso, Botao, Campo, Cartao, Msg } from '../../ui'
 
 // Só coach: cadastra a chave da Anthropic (assistente de voz do editor). A chave inteira nunca volta para a tela.
 export default function AssistenteIA() {
-  const { dados, carregando, erro: erroLeitura } = useDoc<{ chave: string }>(refChaveIA())
+  const { dados, carregando, erro: erroLeitura } = useChaveIA()
   const [nova, setNova] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState('')
@@ -57,10 +56,10 @@ export default function AssistenteIA() {
           Fale os exercícios no editor do mesociclo e a IA (modelo Haiku, barato) monta a lista. A chave fica guardada só para você; aluno nunca vê.
         </p>
         {erroLeitura ? (
-          <Aviso>Ative a verificação em 2 etapas (acima) para cadastrar a chave.</Aviso>
+          <Aviso>{erroLeitura}</Aviso>
         ) : (
           <>
-            {dados?.chave && <p className="text-sm">Chave cadastrada: <span className="font-mono">{chaveMascarada(dados.chave)}</span></p>}
+            {dados?.chave && <p className="text-sm">Chave cadastrada: <span className="font-mono">{dados.chave}</span></p>}
             <Campo
               rotulo={dados?.chave ? 'Trocar a chave' : 'Chave da API (sk-ant-…)'}
               type="password"

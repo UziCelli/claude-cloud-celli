@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   saude:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       # endereço|código esperado|texto que precisa aparecer na resposta (cabeçalho ou página)

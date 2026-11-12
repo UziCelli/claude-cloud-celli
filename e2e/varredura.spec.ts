@@ -48,6 +48,8 @@ async function entrar(page: Page, email: string, senha: string, esperado: string
 for (const largura of [1280, 390]) {
   test(`varredura ${largura}px`, async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: largura, height: largura > 500 ? 800 : 844 }, locale: 'pt-BR' })
+    // A varredura usa somente emuladores; a API de IA é validada nos testes próprios.
+    await ctx.route('**/ia/status', rota => rota.fulfill({ json: { chave: null } }))
     let page = await ctx.newPage()
     const erros: string[] = []
     const ouvir = (p: Page) => {

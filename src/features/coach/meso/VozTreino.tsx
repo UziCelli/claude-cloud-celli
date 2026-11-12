@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Meso, Registros } from '../../../engine'
 import { IcMicrofone } from '../../../icones'
-import { montarTreinosPorFala, refChaveIA } from '../../../lib/ia'
+import { montarTreinosPorFala, useChaveIA } from '../../../lib/ia'
 import { descreverAcao, MAX_TEXTO, type Acao, type Proposta } from '../../../lib/iaTreino'
-import { useDoc } from '../../../lib/hooks'
 import { mensagemVoz, ouvir, vozDisponivel, type Escuta } from '../../../lib/voz'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import { aplicarAcoes } from './util'
@@ -28,7 +27,7 @@ export default function VozTreino({
   registros: Registros
   onAtualizar: (patch: Partial<Meso>) => void
 }) {
-  const { dados, carregando, erro: erroLeitura } = useDoc<{ chave: string }>(refChaveIA())
+  const { dados, carregando, erro: erroLeitura } = useChaveIA()
   const [aberto, setAberto] = useState(false)
   const [texto, setTexto] = useState('')
   const [ouvindo, setOuvindo] = useState(false)
@@ -103,7 +102,7 @@ export default function VozTreino({
     setPensando(true)
     try {
       const divisao = Array.from({ length: meso.frequencia }, (_, i) => (meso.divisao[i] ?? []).map((s) => s.nome))
-      const r = await montarTreinosPorFala(dados.chave, texto, divisao, meso.semanas)
+      const r = await montarTreinosPorFala(texto, divisao, meso.semanas)
       if (r.acoes.length || r.avisos.length) setProposta(r)
       else setErro(`A IA não entendeu. Diga o treino e o que fazer, por exemplo: "adiciona crucifixo no treino 1", "3x12 em todas as semanas" ou "dropset no supino do treino 2". Este mesociclo tem ${meso.frequencia} treinos.`)
     } catch (e) {
