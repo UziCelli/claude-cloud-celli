@@ -299,12 +299,13 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
-    // Métodos com sinais na pesquisa. Os testes cruzam estas listas com src/data/fisio.ts.
+    // Métodos enviáveis (todos têm sinais de perigo: próprios ou ALERTA_GERAL). Os testes cruzam estas listas com src/data/fisio.ts.
     function fisioLiberavel(m) {
-      return m in ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M10', 'M11', 'M12', 'M13', 'M14', 'M18', 'M21', 'M25'];
+      return m in ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12', 'M13',
+        'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21', 'M22', 'M23', 'M24', 'M25'];
     }
     function fisioExigeLiberacao(m) {
-      return m in ['M01', 'M02', 'M03', 'M07', 'M18', 'M25'];
+      return m in ['M01', 'M02', 'M03', 'M07', 'M08', 'M16', 'M18', 'M20', 'M22', 'M24', 'M25'];
     }
     function textoFisio(t, max) {
       return t is string && t.size() <= max && t.matches('.*[^\\s].*');
@@ -349,6 +350,43 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sinalRelatado', 'sinalEm', 'atualizadoEm'])
         && request.resource.data.sinalRelatado == true && resource.data.sinalRelatado == false
         && request.resource.data.sinalEm == request.time && request.resource.data.atualizadoEm == request.time;
+    }
+
+    // Relato de dor do treino (dado de saúde, Etapa 3): fisioDores/{id automático} = { alunoId, exercicio,
+    // articulacao, tipo, intensidade, momento, texto?, em, atualizadoEm, resposta?, respondidoEm?, vistoEm? }.
+    // O aluno (liberado) só cria o próprio, não altera nem apaga. O coach (2º fator) lê, marca visto, responde,
+    // transfere (presencial → conta) e apaga (LGPD). Ids das articulações = src/lib/anatomia.ts + 'outro'.
+    match /fisioDores/{id} {
+      allow read: if isCoach() || (own(resource.data) && liberado());
+      allow delete: if isCoach();
+      allow create: if own(request.resource.data) && liberado()
+        && request.resource.data.keys().hasOnly(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'texto', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'em', 'atualizadoEm'])
+        && textoFisio(request.resource.data.exercicio, 120)
+        && request.resource.data.articulacao in ['ombro', 'cotovelo', 'punho', 'cervical', 'lombar', 'quadril', 'joelho', 'tornozelo', 'outro']
+        && request.resource.data.tipo in ['dor', 'sensacao']
+        && request.resource.data.intensidade is int
+        && request.resource.data.intensidade >= 0 && request.resource.data.intensidade <= 10
+        && request.resource.data.momento in ['durante', 'fim']
+        && (!('texto' in request.resource.data)
+            || (request.resource.data.texto is string && request.resource.data.texto.size() <= 300))
+        && (request.resource.data.articulacao != 'outro'
+            || ('texto' in request.resource.data && textoFisio(request.resource.data.texto, 300)))
+        && request.resource.data.em == request.time
+        && request.resource.data.atualizadoEm == request.time;
+      allow update: if isCoach() && request.resource.data.atualizadoEm == request.time && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resposta', 'respondidoEm', 'vistoEm', 'atualizadoEm'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasAll(['resposta', 'respondidoEm'])
+          && textoFisio(request.resource.data.resposta, 1000)
+          && request.resource.data.respondidoEm == request.time
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['vistoEm'])
+              || request.resource.data.vistoEm == request.time))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['vistoEm', 'atualizadoEm'])
+          && request.resource.data.vistoEm == request.time)
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alunoId', 'atualizadoEm'])
+          && alunoFisio(request.resource.data.alunoId)
+          && get(/databases/$(database)/documents/usuarios/$(resource.data.alunoId)).data.get('migradoPara', '') == request.resource.data.alunoId)
+      );
     }
 
     // Mapa opcional de medidas: só as chaves da lista (as mesmas de src/lib/avaliacao.ts; o teste compara).

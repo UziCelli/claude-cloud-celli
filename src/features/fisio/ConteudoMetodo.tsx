@@ -8,8 +8,8 @@ export default function ConteudoMetodo({ metodo: m, protocolo = true }: { metodo
     <p>Evidência: {m.nivel === 'LIMITROFE' ? 'Limítrofe · opcional' : m.nivel === 'ALTO' ? 'Alta' : 'Moderada'}{m.nivelNota && ` (${m.nivelNota})`}</p>
     <section className="rounded-xl border border-red-700 bg-red-950/40 p-3">
       <h3 className="font-semibold text-red-200">Parar e procurar médico ou fisioterapeuta se:</h3>
+      {m.alertaGeral && <p className="text-red-200">Sinais gerais de perigo (a pesquisa não trouxe sinais específicos).</p>}
       <ul className="list-disc pl-5">{m.encaminharSe.map((s) => <li key={s}>{s}</li>)}</ul>
-      {!m.encaminharSe.length && <p>A pesquisa não trouxe sinais de alerta específicos para este método. O envio ao aluno está indisponível.</p>}
     </section>
     {m.liberacao && <p className="text-amber-200">Exige liberação profissional registrada: {m.liberacao}.</p>}
     {m.ressalva && <p className="rounded-lg bg-amber-950/50 p-3 text-amber-200">{m.ressalva}</p>}

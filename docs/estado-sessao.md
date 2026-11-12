@@ -8,7 +8,9 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - **Não juntar na `main` até o Victor mandar** (exceção ao fluxo automático). PR em rascunho.
 - Etapa 1 feita: articulações e músculos dos 329 exercícios (`src/data/anatomia.json`, `src/lib/anatomia.ts`). Nada muda na tela ainda.
 - Etapa 2 feita: 25 métodos Fisioterapia + regras R1–R8 (`src/data/fisio.ts`), tela do coach em Métodos → "Métodos Fisioterapia". 60 PMIDs conferidos no PubMed.
-- **Pendências do Victor:** conferir `docs/fisio-catalogo.md`; decidir os pontos "fora do modelo" listados em `docs/plano-fisio.md` (Etapa 2); sinais de alerta dos 10 métodos sem lista.
+- 12/11 (noite): os 10 métodos sem sinais próprios usam a **lista geral de perigo** (`ALERTA_GERAL`, decisão do Victor) e podem ser enviados; regras exigem liberação em todo método com `liberacao`.
+- Etapa 3 (botão "Senti dor" + resposta do coach): coleção `fisioDores`, regras e `src/lib/dor.ts` com testes; telas em andamento.
+- **Pendências do Victor:** conferir `docs/fisio-catalogo.md`.
 
 ## 12/11/2026 — Feedbacks no celular
 - Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).

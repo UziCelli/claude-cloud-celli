@@ -29,7 +29,8 @@ export type MetodoFisio = {
   protocolo: string[]
   ressalva?: string
   liberacao?: string // quando exige liberação de médico/fisioterapeuta registrada
-  encaminharSe: string[] // sinais de alerta: parar e procurar médico/fisioterapeuta (vazio = a pesquisa não trouxe)
+  encaminharSe: string[] // sinais de perigo: parar e procurar médico/fisioterapeuta
+  alertaGeral?: boolean // true = a pesquisa não trouxe sinais próprios; usa ALERTA_GERAL (decisão do Victor, 12/11/2026)
   refs: Ref[]
 }
 
@@ -46,6 +47,16 @@ const ALERTA_LOMBAR = [
   'Dormência na região genital',
 ]
 const LIBERACAO_LOMBAR = 'Dor irradiada (ciática/hérnia)'
+// Sinais gerais de perigo (texto de segurança do app, não evidência da pesquisa) para os métodos
+// sem sinais próprios. Decisão do Victor (12/11/2026).
+export const ALERTA_GERAL = [
+  'Dor forte que não passa',
+  'Inchaço',
+  'Travamento',
+  'Formigamento ou dormência',
+  'Febre',
+  'Dor no peito, falta de ar ou tontura',
+]
 const ALERTA_TENDAO = [
   'Dor noturna ou em repouso crescente',
   'Piora após 2 semanas',
@@ -147,7 +158,7 @@ export const METODOS_FISIO: MetodoFisio[] = [
       'Meta de referência: força do lado operado ≥90% do lado sadio (simetria sozinha não garante boa mecânica de aterrissagem).',
     ],
     ressalva: 'Dose e critérios de progressão têm evidência fraca; saltos e retorno ao esporte dependem do cirurgião/fisioterapeuta.',
-    liberacao: 'Sempre', encaminharSe: [],
+    liberacao: 'Sempre', encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Kotsifaki 2023 (guia Aspetar)', pmid: '36731908' }, { autor: 'Perriman 2018', pmid: '29685058' }],
   },
   {
@@ -157,7 +168,7 @@ export const METODOS_FISIO: MetodoFisio[] = [
       'Corrida com mudança de direção, Nordic, avanço, panturrilha, prancha, equilíbrio unipodal, saltos com aterrissagem controlada (sem joelho para dentro).',
       'Fundamento: cerca de metade das lesões de LCA a menos, principalmente em mulheres jovens.',
     ],
-    encaminharSe: [],
+    encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Webster 2018 (J Orthop Res)', pmid: '29737024' }, { autor: 'Watson 2026 (Am J Sports Med)', pmid: '41486737' }],
   },
   // Tendões (tendinopatias)
@@ -218,7 +229,7 @@ export const METODOS_FISIO: MetodoFisio[] = [
       'Começar com volume baixo.',
     ],
     ressalva: 'Como prevenção isolada de lesão a evidência é mais fraca; funciona melhor dentro do aquecimento neuromuscular (M09).',
-    encaminharSe: [],
+    encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Cholp 2025', pmid: '41178985' }, { autor: 'Pecci 2025', pmid: '40230340' }],
   },
   {
@@ -228,14 +239,14 @@ export const METODOS_FISIO: MetodoFisio[] = [
       'Exercícios excêntricos em posição alongada ("extender", "diver", "glider").',
       'Fundamento: retorno em média em 49 vs 86 dias em atletas de elite (um ensaio, 56 atletas).',
     ],
-    liberacao: 'Sempre', encaminharSe: [],
+    liberacao: 'Sempre', encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Askling 2014', pmid: '24620041' }],
   },
   {
     id: 'M17', nome: 'Copenhagen (adução em prancha lateral)', queixas: ['coxa'], nivel: 'MODERADO', nivelNota: 'para força de adutores',
     protocolo: ['2x/sem por 8 semanas; começar com alavanca curta (apoio no joelho) e evoluir para longa (apoio no tornozelo).'],
     ressalva: 'Não vender como prevenção de lesão na virilha (evidência baixa; uma meta-análise do tema foi retratada).',
-    encaminharSe: [],
+    encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Quintana-Cepedal 2024', pmid: '39551738' }, { autor: 'Wang 2025', pmid: '41217257' }],
   },
   // Tornozelo e pé
@@ -257,7 +268,7 @@ export const METODOS_FISIO: MetodoFisio[] = [
       'Cadência lenta com pausa no topo, carga progressiva (12RM → 8RM em ~3 meses).',
     ],
     ressalva: 'Acelera a melhora aos 3 meses; sem diferença aos 6 e 12 meses.',
-    encaminharSe: [],
+    encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Rathleff 2015', pmid: '25145882' }],
   },
   {
@@ -267,7 +278,7 @@ export const METODOS_FISIO: MetodoFisio[] = [
       '2x/sem, 48 h entre sessões.',
       'Critério para avançar: sem dor, sem joelho para dentro, aterrissagem consistente.',
     ],
-    liberacao: 'Após lesão', encaminharSe: [],
+    liberacao: 'Após lesão', encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Ramirez-Campillo 2020 (Sports Med)', pmid: '32915430' }, { autor: 'Oliver 2023 (Sports Med)', pmid: '37897637' }],
   },
   // Pescoço
@@ -290,19 +301,19 @@ export const METODOS_FISIO: MetodoFisio[] = [
       '3x/sem, somando ~3 h semanais, contínuo. Progressão: menos apoio das mãos, base menor, superfície macia.',
       'Fundamento: −23% na taxa de quedas; equilíbrio + funcional + resistido chega a −34%. Força isolada não basta.',
     ],
-    liberacao: 'Queda recente com lesão, tontura, desmaio ou osteoporose grave', encaminharSe: [],
+    liberacao: 'Queda recente com lesão, tontura, desmaio ou osteoporose grave', encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Sherrington 2019 (Cochrane)', pmid: '30703272' }],
   },
   {
     id: 'M23', nome: 'Treino de potência / excêntrico em idosos', queixas: ['idosos'], nivel: 'MODERADO',
     protocolo: ['2–3x/sem, 2–3 séries de 6–10 reps, subida rápida e descida controlada, ~40–60% 1RM, 8–12 semanas.'],
-    encaminharSe: [],
+    encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Lan 2026 (Exp Gerontol)', pmid: '42660338' }],
   },
   {
     id: 'M24', nome: 'Treino resistido na fibromialgia', queixas: ['idosos'], nivel: 'MODERADO',
     protocolo: ['2–3x/sem, intensidade moderada, 2–3 séries de 8–12 reps, progressão gradual, ~12 semanas, evitando picos de dor.'],
-    liberacao: 'Sempre', encaminharSe: [],
+    liberacao: 'Sempre', encaminharSe: ALERTA_GERAL, alertaGeral: true,
     refs: [{ autor: 'Rech 2026 (J Bodyw Mov Ther)', pmid: '42264849' }, { autor: 'Casanova-Rodríguez 2026 (Ann Phys Rehabil Med)', pmid: '42551246' }],
   },
   {

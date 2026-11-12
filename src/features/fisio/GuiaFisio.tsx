@@ -91,15 +91,12 @@ export default function GuiaFisio() {
               </p>
             )}
             <h3 className="mt-3 text-xs font-semibold uppercase text-slate-400">Parar e procurar médico ou fisioterapeuta se:</h3>
-            {m.encaminharSe.length ? (
-              <ul className="list-disc pl-5 text-sm">
-                {m.encaminharSe.map((e) => (
-                  <li key={e}>{e}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-slate-500">A pesquisa não trouxe sinais de alerta específicos para este método.</p>
-            )}
+            {m.alertaGeral && <p className="text-xs text-slate-400">Sinais gerais de perigo (a pesquisa não trouxe sinais específicos).</p>}
+            <ul className="list-disc pl-5 text-sm">
+              {m.encaminharSe.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
             <Refs refs={m.refs} />
           </Cartao>
         ))}

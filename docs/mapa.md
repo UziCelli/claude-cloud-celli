@@ -57,6 +57,7 @@ Comece por aqui para achar onde mexer.
 - `foto.ts` — `reduzirFoto(arquivo, largura, altura, max)`: corte "cover" centralizado (`recorteCover`), JPEG em data URL (lê por data URL por causa da CSP). Padrão 192×192 e ≤ 60000 caracteres (foto de perfil); o story do treino usa 1080×1920 e ≤ 1.500.000
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
+- `dor.ts` (+ `dor.test.ts`) — relato de dor do treino: `dicaDaDor(intensidade)` (faixas do Victor 0–3 / 4–5 / 6+, nunca chama a dor de aceitável), `ALERTA_DOR`, `validarDor`, `lerDor`
 - `anatomia.ts` (+ `anatomia.test.ts`) — sistema Físio (Etapa 1): `ARTICULACOES` (mesmos ids da anamnese), `MUSCULOS`, `anatomiaDo(nome)`, `articulacoesDo(nome)` (fora do catálogo = todas)
 - `evolucao.ts` — `painelEvolucao()`, `historicoExercicios()`, `recordesDe()`, `comparacaoToneladas()`, `recordeAnterior()`, `resumoTreino()` (tela de fim de treino), `rankingAlunos()`: cálculos do painel de evolução
 - `recorde.ts` — `ehRecorde()`: verifica se uma carga é recorde
@@ -292,6 +293,10 @@ Comece por aqui para achar onde mexer.
 - `alunoId`, `metodoId`, `condicao` (≤300), `recado` (≤2000), `contextoLiberacao` (bool), `liberacao` (null ou `{ profissional, registro, data }`), `alertasRevisados` (true), `recolhida`, `sinalRelatado`, `em`, `atualizadoEm`, `sinalEm?`.
 - Saúde: só coach com MFA cria para aluno existente sem exclusão pendente. Método precisa ter sinais na fonte; métodos com `liberacao` ou contexto global exigem registro profissional. Payload imutável; coach só recolhe ou transfere para `usuarios/{antigo}.migradoPara`; aluno ativo/em dia só lê a própria não recolhida e acrescenta sinal uma vez. Nenhum update apaga o sinal. Exclusão em `apagarAluno` e `limpeza-lgpd`; transferência em `darAcessoAoApp`; backup já inclui todas as coleções.
 
+### `fisioDores/{id automático}` (Etapa 3, 12/11/2026)
+- `alunoId`, `exercicio` (≤120), `articulacao` (8 ids de `lib/anatomia.ts` ou `outro`), `tipo` (`dor`\|`sensacao`), `intensidade` (0–10, inteiro), `momento` (`durante`\|`fim`), `texto?` (≤300; obrigatório em `outro`), `em`, `atualizadoEm`, `resposta?` (≤1000), `respondidoEm?`, `vistoEm?`.
+- Saúde: o aluno liberado só cria o próprio (hora do servidor) e não altera nem apaga. O coach com MFA lê, marca visto, responde (campo a campo) e transfere para `migradoPara`. Exclusão em `apagarAluno` e `limpeza-lgpd`; transferência em `darAcessoAoApp`. Lógica pura: `src/lib/dor.ts` (`dicaDaDor`, `validarDor`, `lerDor`).
+
 ### `usuarios/{uid}`
 - `papel`: 'coach' \| 'aluno'
 - `status`: 'ativo' \| 'aguardando' \| 'bloqueado'
@@ -378,6 +383,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
 | Conteúdo Físio (12/11/2026) | `src/data/fisio.ts`, `docs/fisio-pesquisa.md` | Conteúdo de saúde: só a pesquisa (método, número, referência); teste barra PMID fora dela, "kg" e "trata/cura". LIMÍTROFE = opcional com ressalva. Guia completo só do coach; aluno vê somente orientação individual enviada (Etapa 2b). Dez métodos sem sinais específicos continuam impedidos de envio. | `src/data/fisio.test.ts`, `src/lib/fisio.test.ts`, e2e `metodos.spec.ts`, `fisio.spec.ts` |
+| Relato de dor (12/11/2026) | `firestore.rules` (`fisioDores`), `src/lib/dor.ts`, `Treino.tsx`, `FisioAluno.tsx`, `FisioCoach.tsx`, `acoes.ts`, `tools/limpeza-lgpd.mjs` | Dado de saúde. O aluno só cria (nunca edita/apaga); a dica é fixa por faixa e nunca diz "aceitável" (origem da dor desconhecida). Sem push: o coach vê no cartão do Início. `fisioExigeLiberacao` nas regras = todo método com `liberacao` em `fisio.ts` (o teste do catálogo completo cruza; foi pego quando os 10 métodos ganharam `ALERTA_GERAL`). | `tests/fisio-rules.test.ts`, `src/lib/dor.test.ts`, e2e `dor.spec.ts` |
 | Orientações Físio (12/11/2026) | `firestore.rules`, `src/features/fisio/`, `src/lib/fisio.ts`, `acoes.ts`, `tools/limpeza-lgpd.mjs` | Isolamento por aluno, MFA, sinais não apagáveis por update, conteúdo imutável, liberação registrada e envio bloqueado sem alertas. Nunca regravar o documento todo ao relatar/recolher (risco de apagar sinal concorrente). Sem protocolo/recado com sinal ou pausa de saúde. Offline não significa “coach avisado”; informar pendência e contato direto. Política 2026-11-12; nova coleção entra na exclusão e transferência. | `tests/fisio-rules.test.ts`, `tests/limpeza-lgpd.test.ts`, e2e `fisio.spec.ts` |
 | Anatomia do catálogo (12/11/2026) | `src/data/anatomia.json`, `src/lib/anatomia.ts`, `tools/extrair_planilha.py` | Fica **fora** do `exercicios.json` porque o extrator regrava aquele arquivo inteiro. Exercício novo no catálogo precisa de linha no `anatomia.json` (mesmo id), senão o teste falha. Ids das articulações = opções de dor da anamnese (o teste compara). | `anatomia.test.ts` |
 | Carga × medida por segmento (11/11/2026) | `src/lib/segmentos.ts`, `src/features/avaliacao/corpoPaths.ts` | Exercício fora do catálogo é ignorado; janela entre as duas avaliações; `conta:false` fica fora. `corpoPaths.ts` é a fonte única do desenho (app e PDF). O PNG do corpo precisa estar no precache do PWA (hoje `png` entra) e o PDF só desenha depois de carregar a imagem. | `segmentos.test.ts`, `corpoPaths.test.ts` |

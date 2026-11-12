@@ -78,3 +78,74 @@ describe('orientações Físio: segurança', () => {
     await assertFails(updateDoc(ref('coach'), { alunoId: 'bia', atualizadoEm: serverTimestamp() }))
   })
 })
+
+// Relato de dor do treino (Etapa 3): fisioDores/{id automático}. O aluno só cria o próprio; o coach responde.
+describe('relatos de dor (fisioDores): segurança', () => {
+  const dor = (uid?: string, id = 'd') => doc(db(uid), 'fisioDores', id)
+  const relato = (extra: object = {}) => ({ alunoId: 'ana', exercicio: 'Agachamento Livre Barra', articulacao: 'joelho', tipo: 'dor', intensidade: 4, momento: 'durante', em: serverTimestamp(), atualizadoEm: serverTimestamp(), ...extra })
+  const existente = (alunoId = 'ana') => env.withSecurityRulesDisabled((c) =>
+    setDoc(doc(c.firestore() as unknown as Firestore, 'fisioDores', 'd'), { ...relato({ alunoId }), em: Timestamp.now(), atualizadoEm: Timestamp.now() }))
+  const agora = { atualizadoEm: serverTimestamp() }
+
+  it('aluno liberado cria o próprio (com e sem texto; "outro" exige texto) e lê pelo id e pela consulta', async () => {
+    await assertSucceeds(setDoc(dor('ana', 'a1'), relato()))
+    await assertSucceeds(setDoc(dor('ana', 'a2'), relato({ articulacao: 'outro', texto: 'Na canela', tipo: 'sensacao', intensidade: 0, momento: 'fim' })))
+    await assertSucceeds(setDoc(dor('ana', 'a3'), relato({ intensidade: 10, texto: 'é'.repeat(300) })))
+    await assertSucceeds(getDoc(dor('ana', 'a1')))
+    await assertSucceeds(getDocs(query(collection(db('ana'), 'fisioDores'), where('alunoId', '==', 'ana'))))
+  })
+  it('nega relato malformado: valores fora da lista, número inválido, texto longo, campo extra, horas forjadas, resposta do aluno', async () => {
+    for (const extra of [
+      { articulacao: 'nariz' }, { articulacao: 'outro' }, { articulacao: 'outro', texto: '   ' }, { tipo: 'medo' }, { momento: 'ontem' },
+      { intensidade: -1 }, { intensidade: 11 }, { intensidade: 3.5 }, { intensidade: '4' }, { exercicio: '' }, { exercicio: 'x'.repeat(121) },
+      { texto: 'x'.repeat(301) }, { texto: 5 }, { hack: true }, { resposta: 'eu mesmo' }, { vistoEm: serverTimestamp() },
+      { em: Timestamp.fromMillis(Date.now() - 86400_000) }, { atualizadoEm: Timestamp.fromMillis(Date.now() + 86400_000) },
+    ]) await assertFails(setDoc(dor('ana', 'x'), relato(extra)))
+    const { momento: _m, ...semMomento } = relato()
+    await assertFails(setDoc(dor('ana', 'x'), semMomento))
+  })
+  it('ninguém cria em nome de outro; bloqueado, vencido e sem login não criam nem leem', async () => {
+    await assertFails(setDoc(dor('bia', 'x'), relato()))
+    await assertFails(setDoc(dor('coach', 'x'), relato()))
+    for (const uid of ['bloq', 'vencida']) await assertFails(setDoc(dor(uid, 'x'), relato({ alunoId: uid })))
+    await assertFails(setDoc(dor(undefined, 'x'), relato()))
+    await existente()
+    for (const uid of [undefined, 'bia', 'bloq', 'vencida']) await assertFails(getDoc(dor(uid)))
+    await assertFails(getDocs(collection(db('ana'), 'fisioDores')))
+  })
+  it('aluno não altera nem apaga o próprio relato (nem a resposta)', async () => {
+    await existente()
+    await assertFails(updateDoc(dor('ana'), { intensidade: 1, ...agora }))
+    await assertFails(updateDoc(dor('ana'), { resposta: 'ok', respondidoEm: serverTimestamp(), ...agora }))
+    await assertFails(updateDoc(dor('ana'), { vistoEm: serverTimestamp(), ...agora }))
+    await assertFails(setDoc(dor('ana'), relato()))
+    await assertFails(deleteDoc(dor('ana')))
+  })
+  it('coach com 2º fator lê, lista, marca visto, responde e apaga; sem 2º fator, nada', async () => {
+    await existente()
+    await assertSucceeds(getDoc(dor('coach')))
+    await assertSucceeds(getDocs(collection(db('coach'), 'fisioDores')))
+    await assertSucceeds(updateDoc(dor('coach'), { vistoEm: serverTimestamp(), ...agora }))
+    await assertSucceeds(updateDoc(dor('coach'), { resposta: 'x'.repeat(1000), respondidoEm: serverTimestamp(), ...agora }))
+    await assertSucceeds(updateDoc(dor('coach'), { resposta: 'Reduza a amplitude', respondidoEm: serverTimestamp(), vistoEm: serverTimestamp(), ...agora }))
+    const semFator = doc(db('coach', false), 'fisioDores', 'd')
+    await assertFails(getDoc(semFator))
+    await assertFails(updateDoc(semFator, { vistoEm: serverTimestamp(), ...agora }))
+    await assertFails(deleteDoc(semFator))
+    await assertSucceeds(deleteDoc(dor('coach')))
+  })
+  it('coach não mexe no relato do aluno nem forja horas; resposta vazia ou longa é negada', async () => {
+    await existente()
+    for (const mudanca of [
+      { intensidade: 1 }, { articulacao: 'ombro' }, { exercicio: 'Outro' }, { em: serverTimestamp() },
+      { resposta: '', respondidoEm: serverTimestamp() }, { resposta: 'x'.repeat(1001), respondidoEm: serverTimestamp() },
+      { resposta: 'ok', respondidoEm: Timestamp.now() }, { resposta: 'ok' }, { vistoEm: Timestamp.now() }, { hack: 1 },
+    ]) await assertFails(updateDoc(dor('coach'), { ...mudanca, ...agora }))
+    await assertFails(updateDoc(dor('coach'), { vistoEm: serverTimestamp() }))
+  })
+  it('transferência só para o destino registrado do presencial', async () => {
+    await existente('presencial')
+    await assertFails(updateDoc(dor('coach'), { alunoId: 'bia', ...agora }))
+    await assertSucceeds(updateDoc(dor('coach'), { alunoId: 'ana', ...agora }))
+  })
+})
