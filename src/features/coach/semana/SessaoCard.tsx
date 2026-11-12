@@ -1,6 +1,7 @@
 import { textoNota } from '../../../lib/notas'
 import { metricasSessao, type Cargas, type Sessao } from '../../../engine'
-import { registrarCarga } from '../../../lib/acoes'
+import { registrarCarga, salvarNota } from '../../../lib/acoes'
+import { confirmarExclusao, dataDaNota, msDaNota } from '../../../lib/notas'
 import { doc } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
 import { useDoc } from '../../../lib/hooks'
@@ -10,7 +11,7 @@ import { Cartao } from '../../../ui'
 import type { NotasDoc } from '../../../lib/conversores'
 import { fmt } from './format'
 import LoadInput from './LoadInput'
-import { IcCheck } from '../../../icones'
+import { IcCheck, IcLixeira } from '../../../icones'
 
 const CORES: Record<string, string> = {
   Dropset: 'bg-purple-900/50 text-purple-300',
@@ -142,11 +143,26 @@ export default function SessaoCard({
                 <td className="p-2">{e.pos}</td>
                 <td className="p-2">
                   {e.slot.nome}
-                  {textoNota(notas?.exercicios?.[e.slot.nome.trim()]) && (
-                    <div className="mt-0.5 max-w-[14rem] whitespace-normal break-words text-[11px] text-slate-400">
-                      {textoNota(notas?.exercicios?.[e.slot.nome.trim()])}
-                    </div>
-                  )}
+                  {textoNota(notas?.exercicios?.[e.slot.nome.trim()]) && (() => {
+                    const nome = e.slot.nome.trim()
+                    const texto = textoNota(notas?.exercicios?.[nome])
+                    const data = dataDaNota(msDaNota(notas?.datas?.[nome]))
+                    return (
+                      <div className="mt-0.5 flex max-w-[14rem] items-start gap-1 whitespace-normal text-[11px] text-slate-400">
+                        <span className="min-w-0 break-words">
+                          {texto}
+                          <span className="block text-slate-500">{data}</span>
+                        </span>
+                        <button
+                          onClick={() => confirmarExclusao(nome, texto, data, 'o aluno') && salvarNota(alunoId, nome, '')}
+                          aria-label={`Excluir anotação de ${nome}`}
+                          className="shrink-0 rounded p-1 text-slate-500 hover:text-red-400"
+                        >
+                          <IcLixeira className="size-3.5" />
+                        </button>
+                      </div>
+                    )
+                  })()}
                   {pc[e.slot.slotId] > 0 && <div className="mt-0.5 text-[11px] text-slate-400">Inclui peso do corpo: {fmt(pc[e.slot.slotId])} kg</div>}
                   <Chips rotulo={e.rotulo} />
                 </td>

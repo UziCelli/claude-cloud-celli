@@ -164,4 +164,5 @@ export const docsParaRegistrosReps = (docs: RegistroDoc[]): Registros =>
   Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaReps(d.reps)]))
 
 // notas/{alunoId}: anotação do aluno por exercício (chave = nome do exercício; '' = sem nota).
-export type NotasDoc = { exercicios?: Record<string, string> }
+// datas: quando cada anotação foi escrita (anotações de antes de 12/11/2026 não têm).
+export type NotasDoc = { exercicios?: Record<string, string>; datas?: Record<string, { toMillis(): number } | null> }

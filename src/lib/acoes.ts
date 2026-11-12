@@ -431,13 +431,21 @@ export const cancelarTreino = (
   )
 }
 
-// Anotação do aluno por exercício (vale em todas as semanas/mesos). '' = sem nota.
-export const salvarNota = (alunoId: string, exercicio: string, texto: string) =>
-  setDoc(
+// Anotação do aluno por exercício (vale em todas as semanas/mesos), com a data em que foi escrita.
+// '' = apaga a anotação e a data (aluno ou coach, depois de confirmar).
+export const salvarNota = (alunoId: string, exercicio: string, texto: string) => {
+  const t = texto.trim().slice(0, 300)
+  return setDoc(
     doc(db, 'notas', alunoId),
-    { alunoId, exercicios: { [exercicio]: texto.trim().slice(0, 300) }, atualizadoEm: serverTimestamp() },
+    {
+      alunoId,
+      exercicios: { [exercicio]: t || deleteField() },
+      datas: { [exercicio]: t ? serverTimestamp() : deleteField() },
+      atualizadoEm: serverTimestamp(),
+    },
     { merge: true },
   )
+}
 
 // ---------- login ----------
 
