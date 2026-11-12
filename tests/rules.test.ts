@@ -736,8 +736,26 @@ describe('notas', () => {
     await assertFails(setDoc(nota('ana', 'ana'), { alunoId: 'ana', exercicios: {} }, { merge: true }));
   });
 
+  it('data da anotação: aluno grava e apaga (com a anotação); datas precisa ser mapa', async () => {
+    await assertSucceeds(gravar('ana', 'ana', { datas: { Supino: serverTimestamp() } }));
+    await assertSucceeds(
+      setDoc(nota('ana', 'ana'), { alunoId: 'ana', exercicios: { Supino: deleteField() }, datas: { Supino: deleteField() }, atualizadoEm: serverTimestamp() }, { merge: true }),
+    );
+    await assertFails(gravar('ana', 'ana', { datas: 'texto' }));
+    await assertFails(gravar('ana', 'ana', { datas: ['a'] }));
+    await assertFails(gravar('ana', 'bia', { datas: { Supino: serverTimestamp() } }));
+  });
+
+  it('coach apaga a anotação do aluno', async () => {
+    await assertSucceeds(
+      setDoc(nota('coach', 'ana'), { exercicios: { Supino: deleteField() }, datas: { Supino: deleteField() }, atualizadoEm: serverTimestamp() }, { merge: true }),
+    );
+  });
+
   it('limita exercicios a 300 chaves', async () => {
     const mapa = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`ex${i}`, 't']));
+    await assertSucceeds(gravar('ana', 'ana', { datas: mapa(299) }));
+    await assertFails(gravar('bia', 'bia', { datas: mapa(301) }));
     // 299 (e não 300): com 300 nomes o emulador falha ao avaliar get() em me() (limite do motor de regras), então o teto efetivo é 299.
     await assertSucceeds(gravar('ana', 'ana', { exercicios: mapa(299) }));
     await assertFails(gravar('bia', 'bia', { exercicios: mapa(301) }));
