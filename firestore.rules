@@ -299,6 +299,58 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
+    // Métodos com sinais na pesquisa. Os testes cruzam estas listas com src/data/fisio.ts.
+    function fisioLiberavel(m) {
+      return m in ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M10', 'M11', 'M12', 'M13', 'M14', 'M18', 'M21', 'M25'];
+    }
+    function fisioExigeLiberacao(m) {
+      return m in ['M01', 'M02', 'M03', 'M07', 'M18', 'M25'];
+    }
+    function textoFisio(t, max) {
+      return t is string && t.size() <= max && t.matches('.*[^\\s].*');
+    }
+    function liberacaoFisio(l) {
+      return l is map && l.keys().hasOnly(['profissional', 'registro', 'data'])
+        && l.keys().hasAll(['profissional', 'registro', 'data'])
+        && textoFisio(l.profissional, 120) && textoFisio(l.registro, 80)
+        && l.data is string && l.data.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && timestamp.date(int(l.data.split('-')[0]), int(l.data.split('-')[1]), int(l.data.split('-')[2])) <= request.time;
+    }
+    function alunoFisio(uid) {
+      return uid is string && get(/databases/$(database)/documents/usuarios/$(uid)).data.papel == 'aluno'
+        && !exists(/databases/$(database)/documents/exclusoes/$(uid));
+    }
+    match /fisioOrientacoes/{id} {
+      allow read: if isCoach() || (liberado() && own(resource.data) && resource.data.recolhida == false);
+      allow delete: if isCoach(); // exclusão LGPD
+      allow create: if isCoach()
+        && request.resource.data.keys().hasOnly(['alunoId', 'metodoId', 'condicao', 'recado', 'contextoLiberacao', 'liberacao', 'alertasRevisados', 'recolhida', 'sinalRelatado', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['alunoId', 'metodoId', 'condicao', 'recado', 'contextoLiberacao', 'liberacao', 'alertasRevisados', 'recolhida', 'sinalRelatado', 'em', 'atualizadoEm'])
+        && alunoFisio(request.resource.data.alunoId)
+        && fisioLiberavel(request.resource.data.metodoId)
+        && textoFisio(request.resource.data.condicao, 300)
+        && request.resource.data.recado is string && request.resource.data.recado.size() <= 2000
+        && request.resource.data.contextoLiberacao is bool
+        && (request.resource.data.liberacao == null || liberacaoFisio(request.resource.data.liberacao))
+        && (!(fisioExigeLiberacao(request.resource.data.metodoId) || request.resource.data.contextoLiberacao)
+            || request.resource.data.liberacao != null)
+        && request.resource.data.alertasRevisados == true
+        && request.resource.data.recolhida == false && request.resource.data.sinalRelatado == false
+        && request.resource.data.em == request.time && request.resource.data.atualizadoEm == request.time;
+      // Edições campo a campo: nenhuma edição substitui conteúdo nem apaga sinal concorrente.
+      allow update: if isCoach() && request.resource.data.atualizadoEm == request.time && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recolhida', 'atualizadoEm'])
+          && request.resource.data.recolhida == true)
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alunoId', 'atualizadoEm'])
+          && alunoFisio(request.resource.data.alunoId)
+          && get(/databases/$(database)/documents/usuarios/$(resource.data.alunoId)).data.get('migradoPara', '') == request.resource.data.alunoId)
+      );
+      allow update: if liberado() && own(resource.data) && resource.data.recolhida == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sinalRelatado', 'sinalEm', 'atualizadoEm'])
+        && request.resource.data.sinalRelatado == true && resource.data.sinalRelatado == false
+        && request.resource.data.sinalEm == request.time && request.resource.data.atualizadoEm == request.time;
+    }
+
     // Mapa opcional de medidas: só as chaves da lista (as mesmas de src/lib/avaliacao.ts; o teste compara).
     // Os valores não são conferidos aqui: só o coach grava, e a leitura ignora o que não for número na faixa.
     function mapaDe(d, campo, chaves) {

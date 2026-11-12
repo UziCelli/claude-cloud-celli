@@ -11,7 +11,7 @@ export function CaixaAceite({ marcada, onChange }: { marcada: boolean; onChange:
       <span>
         Li e aceito a{' '}
         <a href="/privacidade" target="_blank" rel="noopener" className="underline">Política de Privacidade</a>, inclusive o uso dos meus
-        dados de saúde (peso, avaliação física e treinos)
+        dados de saúde (peso, avaliação física, anamnese, orientações Físio e treinos)
       </span>
     </label>
   )
@@ -34,7 +34,7 @@ export default function Politica() {
         <Logo className="h-10 text-white" />
         Política de Privacidade
       </h1>
-      <p className="text-center text-xs text-slate-500">Versão vigente: 10/11/2026 (anamnese, avaliação física e lipedema)</p>
+      <p className="text-center text-xs text-slate-500">Versão vigente: 12/11/2026 (orientações Físio e sinais de alerta)</p>
       <Secao n={1} titulo="Quem cuida dos seus dados">
         <p>
           {marca.responsavel.nome}, personal trainer (CREF {marca.responsavel.cref}), é {marca.responsavel.papel} pelos dados do app {marca.nome}. Contato:{' '}
@@ -52,6 +52,7 @@ export default function Politica() {
           <li>Cardio (dia, tipo e minutos).</li>
           <li>Avaliação física, se o seu coach fizer: data, idade, sexo, peso, altura, perímetros, dobras cutâneas, bioimpedância, o recado do coach e, se existir, a condição de saúde lipedema (braços e/ou pernas).</li>
           <li>Anamnese (histórico de saúde): respostas sobre saúde, dores, rotina e treino, e se você tem menos de 18 anos, a autorização do responsável.</li>
+          <li>Orientações Físio: condição informada, método e recado do coach, registro de liberação de médico/fisioterapeuta (nome, profissão, conselho/registro e data) e se você relatou algum sinal de alerta, com o horário do relato.</li>
           <li>Sua opinião e depoimentos (nota, assunto e texto).</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
         </Lista>
@@ -74,18 +75,24 @@ export default function Politica() {
           veem. Não enviamos suas respostas para inteligência artificial nem para terceiros, e elas saem junto no "apagar de vez". Se você tem menos de 18 anos, um
           responsável legal precisa autorizar ao responder. Um "sim" em perguntas de saúde mostra um aviso para procurar um médico. Um "sim" em coração ou pressão, dor no peito, tontura ou desmaio, ou supervisão médica pausa o seu treino até o seu coach conversar com você e liberar.
         </p>
+        <p>
+          Físio: só você e o seu coach veem as suas orientações. O coach registra uma liberação profissional existente quando exigida; o app não diagnostica nem emite liberação clínica.
+          Ao relatar um sinal de alerta, você recebe a orientação de parar e procurar médico ou fisioterapeuta, e o relato aparece para o coach no app.
+          O aviso ao coach depende da sincronização com a internet e não é um serviço de emergência. A cópia já carregada pode ficar no aparelho para consulta offline.
+          Esses dados não são enviados para inteligência artificial e são apagados junto com a conta.
+        </p>
         <p>Não pedimos CPF, data de nascimento (só a idade, na avaliação física), endereço nem cartão.</p>
       </Secao>
       <Secao n={3} titulo="Dados de saúde">
         <p>
           Peso, medidas da avaliação física (perímetros, dobras, percentual de gordura), condições como o lipedema, respostas da anamnese (doenças, dores, remédios, gestação) e informações de treino são dados de saúde (dados
-          sensíveis, LGPD art. 11). Só os usamos com o seu consentimento específico, dado ao aceitar esta política.
+          sensíveis, LGPD art. 11), assim como as orientações Físio, liberações registradas e relatos de sinais de alerta. Só os usamos com o seu consentimento específico, dado ao aceitar esta política.
         </p>
       </Secao>
       <Secao n={4} titulo="Para quê">
         <p>
           Montar e ajustar seu treino, acompanhar sua evolução (inclusive pela avaliação física), liberar o acesso conforme o pagamento, avisar o fim do descanso (se você
-          permitir notificações) e manter o app funcionando e seguro.
+          permitir notificações), disponibilizar orientações de exercício para ajudar na reabilitação e acompanhar relatos de sinais de alerta, e manter o app funcionando e seguro.
         </p>
       </Secao>
       <Secao n={5} titulo="Com quem">
@@ -102,7 +109,7 @@ export default function Politica() {
         <Lista>
           <li>Enquanto você for aluno.</li>
           <li>
-            Se você pedir a exclusão, apagamos tudo (perfil, login, treinos, cargas, anotações, cardio, avaliações físicas, anamneses, opiniões enviadas com nome e registros de erro) em até 24 horas,
+            Se você pedir a exclusão, apagamos tudo (perfil, login, treinos, cargas, anotações, cardio, avaliações físicas, anamneses, orientações Físio e seus relatos/liberações, opiniões enviadas com nome e registros de erro) em até 24 horas,
             inclusive das cópias de segurança.
           </li>
           <li>Registros de erro e cópias de segurança são apagados sozinhos após 30 dias.</li>

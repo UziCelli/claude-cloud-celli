@@ -3,6 +3,7 @@
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
 ## 12/11/2026 — Sistema Físio (EM ANDAMENTO, branch separada, NÃO juntar)
+- **Retomada Codex:** Victor reenviou o Markdown científico (igual ao corpo de `fisio-pesquisa.md`) e pediu continuidade coordenada por código/documentação. Ler `docs/fisio-continuidade.md` antes de mexer. Etapa 2b: orientação individual coach → aluno, liberação profissional registrada, relato de sinal e recolhimento. **Não é o botão geral “Senti dor” da Etapa 3.** Resultados e limites no documento de continuidade.
 - Grande atualização: aluno relata dor no treino → dica pronta e segura na hora + coach avisado. Plano: `docs/plano-fisio.md`.
 - **Não juntar na `main` até o Victor mandar** (exceção ao fluxo automático). PR em rascunho.
 - Etapa 1 feita: articulações e músculos dos 329 exercícios (`src/data/anatomia.json`, `src/lib/anatomia.ts`). Nada muda na tela ainda.

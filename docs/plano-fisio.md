@@ -2,6 +2,8 @@
 
 > Status 12/11/2026: Etapa 1 feita (`src/data/anatomia.json`, `src/lib/anatomia.ts`, tabela em `docs/fisio-catalogo.md`). Etapa 2 feita: pesquisa em `docs/fisio-pesquisa.md` (60 PMIDs conferidos), dados em `src/data/fisio.ts`, tela do coach `#/fisio` (`src/features/fisio/GuiaFisio.tsx`).
 
+> Continuidade Codex: Etapa 2b adiciona orientações individuais, liberação profissional registrada, relato de sinais de alerta e recolhimento. Decisões, limites e verificações em [`fisio-continuidade.md`](fisio-continuidade.md). O botão geral “Senti dor” (Etapa 3) continua pendente.
+
 ## Contexto
 - Victor quer uma nova área **Físio** no app: o aluno relata dor/sensação no treino e recebe orientações curtas; o coach recebe o relato e manda orientação específica.
 - Base técnica: HSR (Heavy Slow Resistance), sobrecarga/ênfase excêntrica, redução de volume/carga e polimento (já existe `polimento()` em `src/engine/volume.ts`).
@@ -9,7 +11,7 @@
 - **Sem merge na `main` até o Victor mandar** (exceção ao fluxo automático do CLAUDE.md). Tudo fica na branch `ccr-0e483d63-az3bo7` (PR em rascunho, sem juntar).
 - Decisões do Victor (12/11/2026):
   - Dor marcada → aluno vê **dica pronta e segura na hora** + coach é avisado e manda a orientação específica.
-  - Pesquisa científica: vem do agente do Victor (aguardando o prompt). Textos de orientação só depois disso.
+  - Pesquisa científica: recebida e preservada em `docs/fisio-pesquisa.md`. Victor reenviou o mesmo Markdown ao Codex para continuar o PR.
   - **1ª etapa: articulações e músculos no catálogo.**
 
 ## Etapa 1 — Base no catálogo (pode começar já)
@@ -25,9 +27,10 @@ O catálogo (`src/data/exercicios.json`) tem 12 grupos e 329 exercícios, cada u
 4. Teste (Vitest): todo exercício tem ≥1 articulação e ≥1 músculo principal; só ids válidos.
 5. Nada muda na tela nesta etapa (sem risco para os alunos).
 
-## Etapas seguintes (dependem da pesquisa do Victor)
+## Etapas seguintes
 - **Etapa 2 — Conteúdo (feita 12/11/2026):** 25 métodos + regras R1–R8 da pesquisa em `src/data/fisio.ts`; tela só do coach em Métodos → "Métodos Fisioterapia".
   - Fora do modelo (decisão pendente, não adaptado): liberar método para o aluno com alerta de `exige_liberacao`/`encaminhar_se` (vira a Etapa 3/4); protocolo ficou em texto (não em campos séries/reps), porque a pesquisa traz faixas; nenhum protocolo veio como "verificado", então todos mostram "sugestão inicial"; 10 métodos sem sinais de alerta próprios (M08, M09, M15, M16, M17, M19, M20, M22, M23, M24).
+- **Etapa 2b — Orientações individuais (continuidade Codex):** resolve o fluxo de liberação acima para os 15 métodos com sinais definidos. Coach abre aluno → Mais → Físio, informa condição relatada, confirma contextos/revisão dos alertas e registra liberação profissional quando exigida. Aluno acessa pelo Início ou Conta → Físio. Sinal relatado oculta protocolo/recado e aparece no Início do coach; recolhimento preserva o histórico. Os dez métodos incompletos continuam só no catálogo do coach. Coleção `fisioOrientacoes`, regras testadas, exclusão/transferência e Política (`2026-11-12`). Sem mudança no motor, cargas ou notificação push nova.
 - **Etapa 3 — Botão "Senti dor" no treino** (`src/features/aluno/Treino.tsx`):
   - Pop-up: articulações do exercício (Etapa 1) + "Outro" com texto; tipo (dor / outra sensação); intensidade 0–10; momento (durante / fim do treino).
   - Dica pronta na hora conforme intensidade; alerta forte acima do limite.

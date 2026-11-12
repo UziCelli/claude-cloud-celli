@@ -11,6 +11,7 @@ import AvisoAtraso from './AvisoAtraso'
 import AvisoIOS from '../instalar/AvisoIOS'
 import EvolucaoAluno from './EvolucaoAluno'
 import GuiaMetodos from '../metodos/GuiaMetodos'
+import FisioAluno from '../fisio/FisioAluno'
 import ContaAluno from './ContaAluno'
 import Hoje from './Hoje'
 import InicioAluno from './InicioAluno'
@@ -41,12 +42,13 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   else if (rota === '/treino') tela = <Hoje uid={uid} />
   else if (rota === '/anamnese') tela = <AnamneseAluno uid={uid} />
   else if (rota === '/metodos') tela = <GuiaMetodos />
+  else if (rota === '/fisio') tela = <FisioAluno uid={uid} pausado={pausado} />
   else if (rota === '/feedback') tela = <EnviarFeedback uid={uid} nome={nome} />
   else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />
   else if (rota === '/conta') tela = <ContaAluno uid={uid} perfil={perfil} abrirTutorial={() => setTutorial(true)} />
 
-  // PAR-Q grave confirmado: só a anamnese e a conta (LGPD: exportar/apagar) ficam abertas até o coach liberar (trava só na tela; o "sim" fica gravado).
-  if (pausado && rota !== '/anamnese' && rota !== '/conta')
+  // PAR-Q grave: anamnese, conta (LGPD) e alertas Físio continuam acessíveis; FisioAluno oculta protocolos/recados durante a pausa.
+  if (pausado && rota !== '/anamnese' && rota !== '/conta' && rota !== '/fisio')
     return (
       <>
         <Brilho />
@@ -61,7 +63,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
     { rotulo: 'Início', href: '#/', Icone: IcCasa, ativo: rota === '/' },
     { rotulo: 'Treino', href: '#/treino', Icone: IcHaltere, ativo: rota === '/treino' },
     { rotulo: 'Evolução', href: '#/evolucao', Icone: IcGrafico, ativo: rota === '/evolucao' },
-    { rotulo: 'Conta', href: '#/conta', Icone: IcPessoa, ativo: rota === '/conta' || rota === '/metodos' || rota === '/feedback' },
+    { rotulo: 'Conta', href: '#/conta', Icone: IcPessoa, ativo: rota === '/conta' || rota === '/metodos' || rota === '/feedback' || rota === '/fisio' },
   ]
 
   return (

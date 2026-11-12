@@ -39,6 +39,7 @@ import TutorialCoach, { tutorialCoachNaoVisto } from './features/coach/TutorialC
 import { AnimatePresence } from 'motion/react'
 import Instalar from './features/instalar/Instalar'
 import GuiaFisio from './features/fisio/GuiaFisio'
+import FisioCoach from './features/fisio/FisioCoach'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
 import AcaoEmail from './features/auth/AcaoEmail'
@@ -269,6 +270,7 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if ((p = casar('/aluno/:uid/avaliacoes', rota))) tela = <AvaliacoesCoach key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/avaliacao/:id', rota))) tela = <AvaliacaoCoach key={p.uid} uid={p.uid} id={p.id} />
   else if ((p = casar('/aluno/:uid/anamnese', rota))) tela = <AnamneseCoach key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/fisio', rota))) tela = <FisioCoach key={p.uid} uid={p.uid} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if (rota === '/feedbacks') tela = <Feedbacks />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
