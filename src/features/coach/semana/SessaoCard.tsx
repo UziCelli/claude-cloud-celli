@@ -1,3 +1,4 @@
+import { textoNota } from '../../../lib/notas'
 import { metricasSessao, type Cargas, type Sessao } from '../../../engine'
 import { registrarCarga } from '../../../lib/acoes'
 import { doc } from 'firebase/firestore'
@@ -141,9 +142,9 @@ export default function SessaoCard({
                 <td className="p-2">{e.pos}</td>
                 <td className="p-2">
                   {e.slot.nome}
-                  {notas?.exercicios?.[e.slot.nome.trim()] && (
+                  {textoNota(notas?.exercicios?.[e.slot.nome.trim()]) && (
                     <div className="mt-0.5 max-w-[14rem] whitespace-normal break-words text-[11px] text-slate-400">
-                      {notas.exercicios[e.slot.nome.trim()]}
+                      {textoNota(notas?.exercicios?.[e.slot.nome.trim()])}
                     </div>
                   )}
                   {pc[e.slot.slotId] > 0 && <div className="mt-0.5 text-[11px] text-slate-400">Inclui peso do corpo: {fmt(pc[e.slot.slotId])} kg</div>}

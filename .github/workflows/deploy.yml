@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +39,7 @@ jobs:
   # Gislane: job separado. Não depende do da VFIT nem o bloqueia. Falha até a conta de serviço ter acesso
   # ao projeto gislane-personal-trainer e o "dominio" de marcas/gislane/marca.json estar preenchido.
   gislane:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

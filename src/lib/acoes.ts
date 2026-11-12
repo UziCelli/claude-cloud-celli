@@ -50,7 +50,8 @@ import { paraDoc, type AvaliacaoForm } from './avaliacao'
 import { idCardio, type TipoCardio } from './cardio'
 import type { NovoFeedback } from './feedback'
 import { docParaMeso, mesoParaDoc, registroId, type MesoDoc } from './conversores'
-import { auth, authCadastro, db } from './firebase'
+import { auth, authCadastro, db, apagarCacheAoSair, concluirSaida, reabrirAposFalha } from './firebase'
+import { sincronizarAntesDeSair } from './saidaSegura'
 import type { Importado } from './planilha'
 import { inicioJanela } from './resumo'
 import { VERSAO_PRIVACIDADE } from './privacidade'
@@ -547,13 +548,18 @@ export function pedirAcesso(nome: string) {
 }
 
 // Antes de sair, espera as gravações pendentes chegarem ao servidor (ex.: o cadastro recém-feito);
-// trocar de usuário com escrita na fila a deixaria presa. Offline, desiste em 5 s: o que ficou na
-// fila continua salvo no aparelho e sobe quando essa pessoa entrar de novo.
+// trocar de usuário com escrita na fila a deixaria presa. Sem confirmação em 5 s,
+// mantém a sessão e os dados para tentar novamente com internet.
 // Reentrante: toques repetidos reaproveitam a mesma saída.
 let saindo: Promise<void> | null = null
 export function sair() {
   saindo ??= (async () => {
-    await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 5000))])
+    try {
+      await sincronizarAntesDeSair(() => waitForPendingWrites(db))
+    } catch (erro) {
+      alert('Ainda há dados para sincronizar. Conecte-se à internet e tente sair novamente. Suas cargas continuam salvas neste aparelho.')
+      throw erro
+    }
     // Este aparelho para de receber os avisos de quem saiu (precisa do login ainda válido; desiste em 2 s).
     await Promise.race([desinscreverAvisos(), new Promise((r) => setTimeout(r, 2000))])
     try {
@@ -561,7 +567,15 @@ export function sair() {
     } catch {
       /* sem armazenamento */
     }
-    await signOut(auth)
+    try {
+      await apagarCacheAoSair()
+      await signOut(auth)
+      concluirSaida()
+    } catch (erro) {
+      alert('Não foi possível limpar os dados deste aparelho. Feche as outras abas do app e tente sair novamente. A página será recarregada.')
+      reabrirAposFalha()
+      throw erro
+    }
   })().finally(() => {
     saindo = null
   })

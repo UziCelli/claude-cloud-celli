@@ -437,15 +437,25 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
-    // Registro de erros do app (src/lib/log.ts): qualquer usuário logado cria, com campos e
-    // tamanhos fixos (exige login para ninguém de fora esgotar a cota grátis). Só o coach lê e apaga.
+    // Até 20 documentos imutáveis por conta aprovada/dia UTC, mesmo fora do app.
+    // A data vem do servidor; novos cadastros não podem consumir a cota de logs.
+    function idLogValido(id, slot) {
+      let hoje = request.time.date();
+      let dia = string(hoje.year()) + '-'
+        + (hoje.month() < 10 ? '0' : '') + string(hoje.month()) + '-'
+        + (hoje.day() < 10 ? '0' : '') + string(hoje.day());
+      return slot is int && slot >= 0 && slot < 20
+        && id == request.auth.uid + '_' + dia + '_' + string(slot);
+    }
+
     match /logs/{id} {
       allow read, delete: if isCoach();
       allow update: if false;
 
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em'])
-        && request.resource.data.keys().hasAll(['tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em'])
+      allow create: if (isCoach() || (signedIn() && me().papel == 'aluno' && me().status == 'ativo'))
+        && idLogValido(id, request.resource.data.slot)
+        && request.resource.data.keys().hasOnly(['slot', 'tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em'])
+        && request.resource.data.keys().hasAll(['slot', 'tipo', 'mensagem', 'tela', 'versao', 'aparelho', 'online', 'uid', 'em'])
         && request.resource.data.tipo in ['erro', 'promessa', 'gravacao', 'carregando']
         && request.resource.data.mensagem is string && request.resource.data.mensagem.size() <= 500
         && request.resource.data.tela is string && request.resource.data.tela.size() <= 100
