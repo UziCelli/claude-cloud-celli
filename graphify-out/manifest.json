@@ -216,9 +216,9 @@
     "semantic_hash": ""
   },
   "e2e/varredura.spec.ts": {
-    "mtime": 1794495670.0401697,
-    "seen": 1794513136.3385603,
-    "ast_hash": "c71b00c6c6a4d973430ab500fd0f5fb8",
+    "mtime": 1794513294.4131277,
+    "seen": 1794513312.398862,
+    "ast_hash": "1ce1c5f5a9de3beddcf3b591ffbb073d",
     "semantic_hash": ""
   },
   "e2e/voz-ia.spec.ts": {
