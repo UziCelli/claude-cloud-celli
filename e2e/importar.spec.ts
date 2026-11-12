@@ -22,6 +22,7 @@ test('coach importa um mesociclo da planilha', async ({ page }) => {
   await page.goto(`/#/aluno/${alunoId}`)
 
   async function importar() {
+    await page.getByRole('button', { name: 'Mais' }).click()
     await page.getByRole('button', { name: 'Importar da planilha' }).click()
     await page.getByLabel('Planilha (.xlsx)').setInputFiles({ name: 'treino.xlsx', mimeType: TIPO, buffer })
   }

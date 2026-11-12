@@ -96,7 +96,7 @@ Comece por aqui para achar onde mexer.
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — reexporta o painel de evolução
-- `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor; `dataSP`, `diaCurto`, `DIAS_CURTO` (datas curtas)
+- `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor (vários em andamento: vence o de `inicio` mais recente); `proximoMeso()`: o de início futuro mais próximo; `dataSP`, `diaCurto`, `DIAS_CURTO` (datas curtas)
 
 ### `src/features/evolucao/` — Painel de evolução, conquistas, cartão
 - `PainelEvolucao.tsx` — tela única para aluno (`#/evolucao`) e coach (`#/aluno/:uid/evolucao`): números, calendário, maiores evoluções, recordes, conquistas, tabela por exercício
@@ -140,7 +140,7 @@ Comece por aqui para achar onde mexer.
 - `alertas/calcularAlertas.ts` (+ teste) — `calcularAlertas()` puro (visíveis, `arquivados`, `chave` em cada item) e `chavesAtuais()`
 - `alunos/Alunos.tsx`, `NovoAluno.tsx` — lista, cadastro; `alunos/EnviarAviso.tsx` — aviso escrito do coach (para todos ou um aluno; só notificação)
 - `meso/EditorMeso.tsx` — editor visual: divisão, métodos, progressão (Config: pausa dos principais e dos auxiliares)
-- `meso/MesosDoAluno.tsx` — lista de mesos de um aluno
+- `meso/MesosDoAluno.tsx` — central do aluno: cartão AGORA (semana, fim ~dd/mm, treino de hoje, Editar treino / Ver o que ele fez / presencial), cartão PRÓXIMO (montar, editar, "Começar hoje", excluir, ajuste de sobreposição), botão Mais (evolução, avaliação, anamnese, importar, novo) e "Mesos anteriores" recolhido
 - `meso/ImportarPlanilha.tsx` — "Importar da planilha": lê o .xlsx no aparelho (`lib/xlsx.ts` + `lib/planilha.ts`) e grava meso + cargas num lote (`importarMeso` em `acoes.ts`)
 - `meso/VozTreino.tsx` — "Montar o meso por voz" no topo do `EditorMeso` (acima das abas): ditado (`lib/voz.ts`) ou texto → Haiku (`lib/ia.ts`, recebe a lista atual e o nº de semanas) → prévia por ação (Adicionar / Trocar / Refazer a lista / Séries e reps / Volume / Método; texto de `descreverAcao`) → "Aplicar no editor" (`aplicarAcoes` em `meso/util.ts`; não salva sozinho). Mexer no texto desliga o microfone; "Limpar" zera tudo
 - `meso/CampoExercicio.tsx` — combobox de exercício (sugestões de `src/lib/busca.ts`, texto livre)
@@ -446,6 +446,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 | Iniciar offline + recarregar (19/10/2026) | `Treino.tsx` (`iniciou`) | `inicioEm` pendente lê null e `inicioLocal` se perde no reload: `iniciou` só ignora o toque quando há início conhecido (`inicioMs`) ou `jaIniciou`; senão o botão ficava morto. | e2e `aluno.spec.ts` |
 | Treino iniciado em semana passada (19/10/2026) | `agenda.ts` (`travado`), `Hoje.tsx`, `Treino.tsx` | Registro com `inicioEm` ou `realizadoEm` conta como mexido e não tranca (card nem semana), para o aluno voltar e apertar "Concluir treino". | `agenda.test.ts` |
 | Liberar/Renovar e "Já paguei" (19/10/2026) | `acoes.ts` (`definirAcesso`) | Com `pagoAte`, também apaga `pagamentoInformadoEm` (antes só `confirmarPagamento` apagava; o aviso ficava preso). "Confirmar pagamento" (e o contador do Início) só para aluno ativo e não presencial. | `tests/rules.test.ts`, e2e `pix.spec.ts` |
+| Próximo meso (12/11/2026) | `mesoAtual.ts`, `MesosDoAluno.tsx`, `Treino.tsx` | Próximo meso é escondido só na tela (`inicio` futuro); nunca pôr dado sensível no meso. O aluno vê "Seu próximo ciclo começa em dd/mm" e `Treino` recusa meso futuro (só aluno; presencial abre). | `mesoAtual.test.ts`, e2e `proximo-meso.spec.ts` |
 | Salvar do editor recusado (19/10/2026) | `EditorMeso.tsx` (`salvar`), `MesosDoAluno.tsx`, `ImportarPlanilha.tsx` | `salvar` zera `dirty` antes da confirmação: se o servidor recusar, o catch devolve a edição e o `dirty`, senão o snapshot apaga o que o coach digitou. Meso apagado mostra "não encontrado"; "Ver semanas" pede confirmação com mudança não salva; "Avisar aluno" espera a gravação pendente; criar e importar ignoram o toque duplo. | manual |
 | Sair do grupo presencial (19/10/2026) | `Presencial.tsx` (`sair`) | `sair` guarda em ref quem saiu: no render antes do hash mudar, o efeito regravava `[ativo]` e o grupo de 3+ perdia alunos. | e2e `presencial.spec.ts` |
 | Vencimento com o app aberto (19/10/2026) | `App.tsx` (`Principal`) | `liberado()` só roda a cada render: um timer em `pagoAte` (teto 2^31−1 ms) força o render e mostra a tela de pagamento, em vez de o servidor recusar as cargas em silêncio. | manual |
