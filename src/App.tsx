@@ -38,6 +38,7 @@ import AlunoApp from './features/aluno/AlunoApp'
 import TutorialCoach, { tutorialCoachNaoVisto } from './features/coach/TutorialCoach'
 import { AnimatePresence } from 'motion/react'
 import Instalar from './features/instalar/Instalar'
+import GuiaFisio from './features/fisio/GuiaFisio'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
 import AcaoEmail from './features/auth/AcaoEmail'
@@ -182,6 +183,7 @@ function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
 
 const ativaAba = (rota: string) =>
   rota === '/alertas' || rota === '/ranking' || rota === '/feedbacks' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
+  : rota === '/fisio' ? 'metodos'
   : rota === '/alunos' || rota.startsWith('/alunos/') || rota.startsWith('/aluno/') || rota.startsWith('/meso/') ? 'alunos'
   : 'inicio' // '/' e rotas desconhecidas (a tela padrão é o Início)
 
@@ -272,7 +274,8 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n) || 1} />
-  else if (rota === '/metodos') tela = <GuiaMetodos />
+  else if (rota === '/metodos') tela = <GuiaMetodos coach />
+  else if (rota === '/fisio') tela = <GuiaFisio />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} abrirTutorial={() => setTutorial(true)} />
   return (
     <div className="lg:flex">

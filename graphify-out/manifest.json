@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "e2e/metodos.spec.ts": {
-    "mtime": 1794360824.82277,
-    "seen": 1794506067.4795947,
-    "ast_hash": "38ce98b3f3991052a0f2fbe170fb1820",
+    "mtime": 1794515028.1459517,
+    "seen": 1794515244.295866,
+    "ast_hash": "0b95c8cd9db29a16cc7ee9603bb50ae9",
     "semantic_hash": ""
   },
   "e2e/monitoramento.spec.ts": {
@@ -216,9 +216,9 @@
     "semantic_hash": ""
   },
   "e2e/varredura.spec.ts": {
-    "mtime": 1794360824.82277,
-    "seen": 1794506067.4796214,
-    "ast_hash": "c71b00c6c6a4d973430ab500fd0f5fb8",
+    "mtime": 1794515028.1459517,
+    "seen": 1794515244.295888,
+    "ast_hash": "3314e4ecde175da273848c96dff9ac69",
     "semantic_hash": ""
   },
   "e2e/voz-ia.spec.ts": {
@@ -402,9 +402,9 @@
     "semantic_hash": ""
   },
   "src/App.tsx": {
-    "mtime": 1794513665.578493,
-    "seen": 1794514424.2085917,
-    "ast_hash": "5ff61e21c1371ca995b7e70dc0f6f9b6",
+    "mtime": 1794515028.1454685,
+    "seen": 1794515244.2959256,
+    "ast_hash": "f1327d09cccb0a8d9826f7cc74e53072",
     "semantic_hash": ""
   },
   "src/avatar.tsx": {
@@ -966,9 +966,9 @@
     "semantic_hash": ""
   },
   "src/features/metodos/GuiaMetodos.tsx": {
-    "mtime": 1794360824.8487158,
-    "seen": 1794506067.4798987,
-    "ast_hash": "495bc3cb27163eb2ebcd4b071617cc7b",
+    "mtime": 1794515022.0814881,
+    "seen": 1794515244.2960558,
+    "ast_hash": "0e4701687ac661f6e2620d8698250446",
     "semantic_hash": ""
   },
   "src/features/metodos/IconeMetodo.tsx": {
@@ -1884,9 +1884,9 @@
     "semantic_hash": ""
   },
   "docs/estado-sessao.md": {
-    "mtime": 1794514400.918537,
-    "seen": 1794514424.208835,
-    "ast_hash": "7c2478c7e4e3e71987d632976b4800d3",
+    "mtime": 1794515140.122415,
+    "seen": 1794515244.2962155,
+    "ast_hash": "9a3fb0df4e558832a959d007f67c2bba",
     "semantic_hash": ""
   },
   "docs/firebase-setup.md": {
@@ -1902,9 +1902,9 @@
     "semantic_hash": ""
   },
   "docs/mapa.md": {
-    "mtime": 1794514386.773068,
-    "seen": 1794514424.2088385,
-    "ast_hash": "181354e15455e053c20fbd6f122d5fcb",
+    "mtime": 1794515140.1210203,
+    "seen": 1794515244.2962208,
+    "ast_hash": "98fa373663ed820b348f86199e570dd5",
     "semantic_hash": ""
   },
   "docs/peso-corporal.md": {
@@ -2256,9 +2256,33 @@
     "semantic_hash": ""
   },
   "docs/plano-fisio.md": {
-    "mtime": 1794514516.0992951,
-    "seen": 1794514532.690065,
-    "ast_hash": "99208b35d8ce996588ad632d250644a8",
+    "mtime": 1794515140.1216881,
+    "seen": 1794515244.2962294,
+    "ast_hash": "94be5bd230fef5e6fcd1e804083f39ae",
+    "semantic_hash": ""
+  },
+  "src/data/fisio.test.ts": {
+    "mtime": 1794514956.38657,
+    "seen": 1794515244.2959304,
+    "ast_hash": "b37e829798b01b986638e326609c875b",
+    "semantic_hash": ""
+  },
+  "src/data/fisio.ts": {
+    "mtime": 1794515206.9305491,
+    "seen": 1794515244.2959313,
+    "ast_hash": "a08d0d916427b66820709b0109b34fc2",
+    "semantic_hash": ""
+  },
+  "src/features/fisio/GuiaFisio.tsx": {
+    "mtime": 1794515209.4425335,
+    "seen": 1794515244.2960522,
+    "ast_hash": "5f117303330e26dd42e626eb809b04a5",
+    "semantic_hash": ""
+  },
+  "docs/fisio-pesquisa.md": {
+    "mtime": 1794514872.2448666,
+    "seen": 1794515244.2962189,
+    "ast_hash": "d0451fbfed0606e8dfe394a4dd270ae4",
     "semantic_hash": ""
   }
 }

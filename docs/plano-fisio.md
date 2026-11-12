@@ -1,6 +1,6 @@
 # Plano — Sistema Físio (grande atualização, branch separada)
 
-> Status 12/11/2026: Etapa 1 feita (`src/data/anatomia.json`, `src/lib/anatomia.ts`, tabela em `docs/fisio-catalogo.md`). Etapa 2 aguarda a pesquisa do agente do Victor.
+> Status 12/11/2026: Etapa 1 feita (`src/data/anatomia.json`, `src/lib/anatomia.ts`, tabela em `docs/fisio-catalogo.md`). Etapa 2 feita: pesquisa em `docs/fisio-pesquisa.md` (60 PMIDs conferidos), dados em `src/data/fisio.ts`, tela do coach `#/fisio` (`src/features/fisio/GuiaFisio.tsx`).
 
 ## Contexto
 - Victor quer uma nova área **Físio** no app: o aluno relata dor/sensação no treino e recebe orientações curtas; o coach recebe o relato e manda orientação específica.
@@ -26,7 +26,8 @@ O catálogo (`src/data/exercicios.json`) tem 12 grupos e 329 exercícios, cada u
 5. Nada muda na tela nesta etapa (sem risco para os alunos).
 
 ## Etapas seguintes (dependem da pesquisa do Victor)
-- **Etapa 2 — Conteúdo:** transformar a pesquisa em `src/data/fisio.ts` (mesmo formato de `src/data/metodos.ts`): HSR, excêntrico, polimento, "monitoramento da dor" (escala 0–10), sinais de alerta (parar e procurar profissional). Victor aprova cada texto.
+- **Etapa 2 — Conteúdo (feita 12/11/2026):** 25 métodos + regras R1–R8 da pesquisa em `src/data/fisio.ts`; tela só do coach em Métodos → "Métodos Fisioterapia".
+  - Fora do modelo (decisão pendente, não adaptado): liberar método para o aluno com alerta de `exige_liberacao`/`encaminhar_se` (vira a Etapa 3/4); protocolo ficou em texto (não em campos séries/reps), porque a pesquisa traz faixas; nenhum protocolo veio como "verificado", então todos mostram "sugestão inicial"; 10 métodos sem sinais de alerta próprios (M08, M09, M15, M16, M17, M19, M20, M22, M23, M24).
 - **Etapa 3 — Botão "Senti dor" no treino** (`src/features/aluno/Treino.tsx`):
   - Pop-up: articulações do exercício (Etapa 1) + "Outro" com texto; tipo (dor / outra sensação); intensidade 0–10; momento (durante / fim do treino).
   - Dica pronta na hora conforme intensidade; alerta forte acima do limite.

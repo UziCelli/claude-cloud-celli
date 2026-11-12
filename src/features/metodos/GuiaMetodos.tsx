@@ -5,12 +5,17 @@ import { Botao, Cartao } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
 import IconeMetodo from './IconeMetodo'
 
-export default function GuiaMetodos() {
+export default function GuiaMetodos({ coach }: { coach?: boolean }) {
   const [feito, setFeito] = useState(false)
   return (
     <main className="mx-auto max-w-md px-4 py-4">
       <BotaoVoltar para="/" />
       <h1 className="mb-3 text-lg font-bold">Guia de métodos</h1>
+      {coach && (
+        <a href="#/fisio" className="mb-3 block">
+          <Cartao className="flex min-h-11 items-center justify-between font-semibold">Métodos Fisioterapia <span aria-hidden>→</span></Cartao>
+        </a>
+      )}
       <div className="space-y-3">
         {ORDEM.map((nome) => {
           const t = METODOS[nome]

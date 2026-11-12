@@ -132,6 +132,10 @@ Comece por aqui para achar onde mexer.
 - `GuiaMetodos.tsx` — página "Guia de métodos" + botão "Mostrar as notas de novo"
 - Textos: `src/data/metodos.ts` (`METODOS`, `COR_METODO`, `ORDEM`, `metodoDoRotulo`); notas dispensadas: `src/lib/notasMetodo.ts`
 
+### `src/features/fisio/` — Métodos Fisioterapia (rota `#/fisio`, só o coach; plano em `docs/plano-fisio.md`)
+- `GuiaFisio.tsx` — 25 métodos com filtro por queixa, nível de evidência, "sugestão inicial", liberação, sinais de alerta e links do PubMed; regras R1–R8. Entrada: cartão no topo de Métodos do coach (`GuiaMetodos coach`)
+- Dados: `src/data/fisio.ts` (`METODOS_FISIO`, `REGRAS_FISIO`, `QUEIXAS`, `AVISO_FISIO`), fonte `docs/fisio-pesquisa.md`
+
 ### `src/features/coach/` — App do coach
 - `presencial/Presencial.tsx` — `PresencialHoje`/`PresencialTreino`: faixa "Presencial: aluno" + as telas Hoje/Treino do aluno com `base`. Na 1ª vez de cada aluno abre direto no treino de hoje (`abrirHoje` → `Hoje.tsx`); "Encerrar" volta à tela de antes do presencial ("Tirar" no grupo). `EscolherAluno`: folha com busca e recentes (`forca-presencial-recentes`, só ids), usada no "+ Aluno" e no botão "Treino presencial" do Início
 - `presencial/EditarTreino.tsx` — edição do treino do dia pelo coach (botão Editar no cartão, `Folha` de `ui.tsx` embaixo, "+ Adicionar exercício", "Voltar ao planejado"); usado por `Treino.tsx` só com `coach`
@@ -363,6 +367,7 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
+| Conteúdo Físio (12/11/2026) | `src/data/fisio.ts`, `docs/fisio-pesquisa.md` | Conteúdo de saúde: só o que está na pesquisa (método, número e referência); o teste barra PMID fora dela, "kg" e "trata/cura". Linguagem "ajuda na reabilitação". Método LIMÍTROFE = opcional, com ressalva. O aluno ainda **não** vê nada: liberar método para o aluno (com alerta de liberação/sinais) é a Etapa 3, com regras e LGPD. | `src/data/fisio.test.ts`, e2e `metodos.spec.ts` |
 | Anatomia do catálogo (12/11/2026) | `src/data/anatomia.json`, `src/lib/anatomia.ts`, `tools/extrair_planilha.py` | Fica **fora** do `exercicios.json` porque o extrator regrava aquele arquivo inteiro. Exercício novo no catálogo precisa de linha no `anatomia.json` (mesmo id), senão o teste falha. Ids das articulações = opções de dor da anamnese (o teste compara). | `anatomia.test.ts` |
 | Carga × medida por segmento (11/11/2026) | `src/lib/segmentos.ts`, `src/features/avaliacao/corpoPaths.ts` | Exercício fora do catálogo é ignorado; janela entre as duas avaliações; `conta:false` fica fora. `corpoPaths.ts` é a fonte única do desenho (app e PDF). O PNG do corpo precisa estar no precache do PWA (hoje `png` entra) e o PDF só desenha depois de carregar a imagem. | `segmentos.test.ts`, `corpoPaths.test.ts` |
 | Importar planilha: modelo antigo (11/11/2026) | `lib/planilha.ts`, `ImportarPlanilha.tsx` | Aba com "Elaboração dos Treinamentos" em S1 e sem "Configuração do Meso": semanas = linhas numeradas em S18↓, frequência = T3→, início = P da 1ª "Semana", auxiliares e pausa na linha 2 abaixo de "Exercícios Auxiliares" (T/Z), sem métodos. Treino com carga e "Realizado" desmarcado só entra se o coach marcar "Importar também como feitos" (padrão desmarcado). | `planilha.test.ts` |

@@ -6,7 +6,8 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Grande atualização: aluno relata dor no treino → dica pronta e segura na hora + coach avisado. Plano: `docs/plano-fisio.md`.
 - **Não juntar na `main` até o Victor mandar** (exceção ao fluxo automático). PR em rascunho.
 - Etapa 1 feita: articulações e músculos dos 329 exercícios (`src/data/anatomia.json`, `src/lib/anatomia.ts`). Nada muda na tela ainda.
-- **Pendências do Victor:** conferir `docs/fisio-catalogo.md` (começar por "Escolhas que eu fiz"); mandar a pesquisa do agente dele (base da Etapa 2, textos).
+- Etapa 2 feita: 25 métodos Fisioterapia + regras R1–R8 (`src/data/fisio.ts`), tela do coach em Métodos → "Métodos Fisioterapia". 60 PMIDs conferidos no PubMed.
+- **Pendências do Victor:** conferir `docs/fisio-catalogo.md`; decidir os pontos "fora do modelo" listados em `docs/plano-fisio.md` (Etapa 2); sinais de alerta dos 10 métodos sem lista.
 
 ## 12/11/2026 — Feedbacks no celular
 - Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).
