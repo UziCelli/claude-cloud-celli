@@ -43,7 +43,6 @@ function Orientacao({ o, pendente, pausado }: { o: OrientacaoFisio; pendente: bo
     {!interrompida && !pausado && o.recado && <p className="mb-3 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {o.recado}</p>}
     {o.liberacao && <p className="mb-3 text-xs text-slate-300">Liberação registrada pelo coach: {o.liberacao.profissional} · {o.liberacao.registro} · {o.liberacao.data}</p>}
     <ConteudoMetodo metodo={m} protocolo={!interrompida && !pausado && metodoLiberavel(m.id)} />
-    {!metodoLiberavel(m.id) && <Aviso>Esta orientação aguarda complemento dos sinais de alerta. Converse com seu coach antes de usar.</Aviso>}
     {!o.sinalRelatado && <Botao className="mt-3 w-full" tipo="perigo" disabled={relatando} onClick={relatar}>{relatando ? 'Relato aguardando confirmação…' : erro ? 'Tentar enviar relato novamente' : 'Estou com um desses sinais de alerta'}</Botao>}
     {(relatando || (o.sinalRelatado && pendente)) && <p role="status" className="mt-2 text-sm text-amber-200">Aguardando sincronização do relato. Se estiver sem internet, fale diretamente com seu coach.</p>}
     {o.sinalRelatado && !pendente && !relatando && <p role="status" className="mt-2 text-sm">Relato registrado para o coach.</p>}
