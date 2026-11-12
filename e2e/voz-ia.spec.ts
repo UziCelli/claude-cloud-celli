@@ -47,7 +47,12 @@ test('cadastra a chave, dita sem o texto voltar, mexe na divisão, progressão e
   let corpoEnviado = ''
   let acoes: unknown = []
   let avisos: unknown = []
-  await page.route('https://api.anthropic.com/v1/messages', async (rota) => {
+  let chaveNoServidor = ''
+  await page.route('**/ia/*', async (rota) => {
+    const caminho = new URL(rota.request().url()).pathname
+    if (caminho === '/ia/salvar') chaveNoServidor = rota.request().postDataJSON().chave
+    if (caminho === '/ia/apagar') chaveNoServidor = ''
+    if (caminho !== '/ia/montar') return rota.fulfill({ json: { chave: chaveNoServidor ? `sk-ant-…${chaveNoServidor.slice(-4)}` : null } })
     cabecalhos = rota.request().headers()
     corpoEnviado = rota.request().postData() ?? ''
     await rota.fulfill({ json: { content: [{ type: 'tool_use', name: 'montar_treinos', input: { acoes, avisos } }] } })
@@ -75,7 +80,8 @@ test('cadastra a chave, dita sem o texto voltar, mexe na divisão, progressão e
   await expect(page.getByText('Chave salva.')).toBeVisible()
   await expect(page.getByText('sk-ant-…3456')).toBeVisible()
   await expect(page.getByText(CHAVE)).toHaveCount(0)
-  expect(JSON.stringify(await lerDoc('segredos/ia'))).toContain(CHAVE)
+  expect(chaveNoServidor).toBe(CHAVE)
+  expect(JSON.stringify(await lerDoc('segredos/ia'))).not.toContain(CHAVE)
 
   // O ditado não reescreve o que foi apagado: mexer no texto desliga o microfone e a fala atrasada é ignorada.
   await page.goto(`/#/meso/${id}`)
@@ -112,8 +118,10 @@ test('cadastra a chave, dita sem o texto voltar, mexe na divisão, progressão e
   await expect(proposta.getByText('fora do catálogo')).toHaveCount(1)
   await expect(proposta.getByText('Treino 9')).toHaveCount(0)
   await expect(proposta.getByText('Remover exercício não dá para fazer aqui.')).toBeVisible()
-  expect(cabecalhos['x-api-key']).toBe(CHAVE)
-  expect(cabecalhos['anthropic-dangerous-direct-browser-access']).toBe('true')
+  expect(cabecalhos['x-api-key']).toBeUndefined()
+  expect(cabecalhos.authorization).toMatch(/^Bearer /)
+  expect(cabecalhos['anthropic-dangerous-direct-browser-access']).toBeUndefined()
+  expect(corpoEnviado).not.toContain(CHAVE)
   expect(corpoEnviado).toContain('Treino 1: 1. Agachamento Livre Halter')
   expect(corpoEnviado).toContain('Treino 2: (vazio)')
 

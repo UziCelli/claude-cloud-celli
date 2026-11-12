@@ -222,9 +222,9 @@
     "semantic_hash": ""
   },
   "e2e/voz-ia.spec.ts": {
-    "mtime": 1794495670.0401697,
-    "seen": 1794512349.4526863,
-    "ast_hash": "3f81e8545f5904a5e490c5aaa0bd0e8e",
+    "mtime": 1794512551.8370166,
+    "seen": 1794512557.4159782,
+    "ast_hash": "e9755e61552ccb2636734a661c2bcdf9",
     "semantic_hash": ""
   },
   "firebase.json": {

@@ -1,7 +1,7 @@
 # Graph Report - claude-cloud-celli  (2026-11-12)
 
 ## Corpus Check
-- 351 files · ~332,579 words
+- 351 files · ~332,622 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 3, (none) 2, .ico 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `16298804`
+- Built from commit: `5f74584e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -194,14 +194,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `Pontos sensíveis (leia antes de auditar ou mexer)` --references--> `nadaPassaDaTela()`  [INFERRED]
   docs/mapa.md → e2e/layout.spec.ts
-- `Pontos sensíveis (leia antes de auditar ou mexer)` --references--> `versao()`  [INFERRED]
-  docs/mapa.md → e2e/privacidade.spec.ts
 - `9. Registro do aluno` --references--> `repsEfetivas()`  [INFERRED]
   docs/logica-planilha.md → src/engine/metricas.ts
-- ``src/features/auth/` — Autenticação` --references--> `useSair()`  [INFERRED]
-  docs/mapa.md → src/features/auth/BotaoSair.tsx
-- ``src/features/conta/` — Minha Conta` --references--> `Chave()`  [INFERRED]
-  docs/mapa.md → src/features/conta/ChavesAvisos.tsx
+- `Pontos sensíveis (leia antes de auditar ou mexer)` --references--> `versao()`  [INFERRED]
+  docs/mapa.md → e2e/privacidade.spec.ts
+- `Lembrete na hora certa (10/11/2026)` --references--> `quaisLembrar()`  [INFERRED]
+  docs/plano-notificacoes.md → tools/avisos-pagamento.mjs
+- ``relatorios/{mesoId}`` --references--> `relatorioCiclo()`  [INFERRED]
+  docs/mapa.md → src/lib/relatorio.ts
 
 ## Import Cycles
 - 2-file cycle: `src/lib/avaliacao.ts -> src/lib/segmentos.ts -> src/lib/avaliacao.ts`
@@ -817,7 +817,7 @@ Cohesion: 0.20
 Nodes (7): vitest, recorteCover(), arquivos(), chaves(), PROIBIDOS, semPix(), VARS
 
 ## Knowledge Gaps
-- **4 isolated node(s):** `RFC-8291`, `RFC-8292`, `RFC-8291`, `RFC-8188`
+- **4 isolated node(s):** `RFC-8188`, `RFC-8292`, `RFC-8291`, `RFC-8291`
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1274 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -825,15 +825,15 @@ Nodes (7): vitest, recorteCover(), arquivos(), chaves(), PROIBIDOS, semPix(), VA
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `vitest` connect `marca.test.ts` to `ataques.test.ts`, `Avaliacao.tsx`, `Hoje.tsx`, `TabProgressao.tsx`, `react`, `lib/planilha.test.ts`, `src/index.ts`, `avaliacao.ts`, `metricas.ts`, `util.ts`, `App.tsx`, ``src/lib/` — Firestore, estado, cálculos com dados`, `DuasEtapas`, `CardioHoje.tsx`, `CampoExercicio`, `seriesDoRotulo`, `motion`, `prescreverSessao`, `segmentos.ts`, `jwt.ts`, `cartaoStory.ts`, `Entrar.tsx`, `avisos-pagamento.mjs`, `montarPdf`, `webpush.ts`, `sessao.test.ts`, `AvisoAtraso.tsx`, `ref_node_fs`, `acoes.ts`, `iaTreino.ts`, `src/index.ts`, `ehRecorde`, `aluno-exemplo.test.ts`, `package.json`, `mesoAtual.ts`, `evolucao.ts`, `firebase-admin`, `src/ia.ts`, `src/acesso.ts`, `ui.tsx`, `pix.ts`, `push.ts`, `engine/index.ts`, `inatividade.ts`, `EnviarFeedback.tsx`, `descanso.ts`, `Alunos.tsx`, `progressao.test.ts`, `PainelEvolucao.tsx`, `aluno-exemplo.test.ts`, `SenhaSegura.tsx`, `rules.test.ts`, `registrarErro`, `SessaoCard.tsx`, `prescreverSessao`?**
-  _High betweenness centrality (0.106) - this node is a cross-community bridge._
+  _High betweenness centrality (0.101) - this node is a cross-community bridge._
 - **Are the 146 inferred relationships involving `Pontos sensíveis (leia antes de auditar ou mexer)` (e.g. with `nadaPassaDaTela()` and `versao()`) actually correct?**
   _`Pontos sensíveis (leia antes de auditar ou mexer)` has 146 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `RFC-8291`, `RFC-8292`, `RFC-8291` to the rest of the system?**
+- **What connects `RFC-8188`, `RFC-8292`, `RFC-8291` to the rest of the system?**
   _4 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `criarCoach` be split into smaller, more focused modules?**
   _Cohesion score 0.09788359788359788 - nodes in this community are weakly interconnected._
 - **Why does `Pontos sensíveis (leia antes de auditar ou mexer)` connect `App.tsx` to `AcaoEmail.tsx`, `Hoje.tsx`, `acoes.ts`, `TabProgressao.tsx`, `react`, `ui.tsx`, `avaliacao.ts`, `criarAluno`, `App.tsx`, ``src/lib/` — Firestore, estado, cálculos com dados`, `util.ts`, `CardioHoje.tsx`, `Descanso`, `motion`, `seriesDoRotulo`, `prescreverSessao`, `FimTreino.tsx`, `cartaoStory.ts`, `Entrar.tsx`, `Inicio.tsx`, `avisos-pagamento.mjs`, `montarPdf`, `AvisoAtraso.tsx`, `Mapa do Código — Força`, `InicioAluno.tsx`, `iaTreino.ts`, `src/index.ts`, `ehRecorde`, `mesoAtual.ts`, `evolucao.ts`, `src/ia.ts`, `src/acesso.ts`, `Avaliacao.tsx`, `pix.ts`, `push.ts`, `inatividade.ts`, `Alunos.tsx`, `PainelEvolucao.tsx`, `aluno-exemplo.test.ts`, `SenhaSegura.tsx`, `limpeza-lgpd.mjs`, `ImportarPlanilha.tsx`, `SessaoCard.tsx`, `MesosDoAluno.tsx`, `layout.spec.ts`, `prescreverSessao`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Botao()` (e.g. with `Pontos sensíveis (leia antes de auditar ou mexer)` and ``src/` — Raiz`) actually correct?**
   _`Botao()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `ataques.test.ts` be split into smaller, more focused modules?**
