@@ -5,17 +5,28 @@ import { Aviso, Botao, Cartao } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
 import { relatarSinalFisio } from './acoesFisio'
 import ConteudoMetodo from './ConteudoMetodo'
+import { type RelatoDor } from '../../lib/dor'
+import { ROTULO_LOCAL } from './RelatarDor'
+import { useDores } from './useDores'
 import { useOrientacoes } from './useOrientacoes'
 
 export default function FisioAluno({ uid, pausado = false }: { uid: string; pausado?: boolean }) {
   const lista = useOrientacoes(uid)
   const offline = useSemInternet()
+  const dores = useDores(uid)
   return <main className="mx-auto max-w-md space-y-4 px-4 py-4">
     <BotaoVoltar para="/conta" />
     <h1 className="text-2xl font-bold">Físio · minhas orientações</h1>
     <p className="text-sm text-slate-300">Orientações individuais enviadas pelo seu coach. Não substituem avaliação de médico ou fisioterapeuta.</p>
     {pausado && <Aviso>Seu treino está pausado por saúde. Os protocolos ficam ocultos até o seu coach conversar com você e liberar. Você ainda pode consultar os alertas e relatar um sinal.</Aviso>}
     {lista.erro ? <Aviso>Não foi possível carregar suas orientações. Confira a conexão e abra esta tela novamente.</Aviso> : lista.carregando ? <p>Carregando…</p> : lista.dados.length === 0 ? <p>{offline ? TEXTO_SEM_INTERNET : 'Seu coach ainda não disponibilizou orientações aqui.'}</p> : lista.dados.map((o) => <Orientacao key={o.id} o={o} pendente={lista.pendente} pausado={pausado} />)}
+    <h2 className="pt-2 text-xl font-bold">Meus relatos de dor</h2>
+    {dores.erro ? <Aviso>Não foi possível carregar seus relatos.</Aviso> : dores.carregando ? <p>Carregando…</p> : dores.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Você ainda não relatou dor. Use "Senti dor" na tela do treino.'}</p> : dores.dados.map((d) => <Cartao key={d.id}>
+      <p className="font-semibold">{d.exercicio}</p>
+      <p className="text-sm">{descreverDor(d)}</p>
+      {d.texto && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">{d.texto}</p>}
+      {d.resposta && <p className="mt-2 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {d.resposta}</p>}
+    </Cartao>)}
     {lista.cache && <p className="text-sm text-amber-200">Você está vendo a cópia deste aparelho. Conecte-se para conferir atualizações do coach.</p>}
   </main>
 }
@@ -49,3 +60,5 @@ function Orientacao({ o, pendente, pausado }: { o: OrientacaoFisio; pendente: bo
     {erro && <p role="status" className="mt-2 text-sm text-amber-200">{erro}</p>}
   </Cartao>
 }
+
+export const descreverDor = (d: RelatoDor) => `${d.em ? d.em.toDate().toLocaleDateString('pt-BR') : 'Agora'} · ${ROTULO_LOCAL[d.articulacao]} · ${d.tipo === 'dor' ? 'Dor' : 'Outra sensação'} ${d.intensidade}/10 · ${d.momento === 'durante' ? 'durante o treino' : 'no fim do treino'}`

@@ -10,6 +10,7 @@ import { mmss, useDescanso } from '../../lib/descanso'
 import { avisarCoach } from '../../lib/push'
 import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
 import { seriesDoRotulo } from '../../lib/metodoSeries'
+import RelatarDor from '../fisio/RelatarDor'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
@@ -655,6 +656,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                 </div>
               </div>
               <Nota key={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} uid={uid} nome={e.slot.nome.trim()} texto={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
+              {!coach && <RelatarDor uid={uid} exercicio={e.slot.nome.trim()} />}
               <div className="space-y-2">
                 {(() => {
                 // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.

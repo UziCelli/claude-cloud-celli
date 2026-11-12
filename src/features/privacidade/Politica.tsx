@@ -53,6 +53,7 @@ export default function Politica() {
           <li>Avaliação física, se o seu coach fizer: data, idade, sexo, peso, altura, perímetros, dobras cutâneas, bioimpedância, o recado do coach e, se existir, a condição de saúde lipedema (braços e/ou pernas).</li>
           <li>Anamnese (histórico de saúde): respostas sobre saúde, dores, rotina e treino, e se você tem menos de 18 anos, a autorização do responsável.</li>
           <li>Orientações Físio: condição informada, método e recado do coach, registro de liberação de médico/fisioterapeuta (nome, profissão, conselho/registro e data) e se você relatou algum sinal de alerta, com o horário do relato.</li>
+          <li>Relatos de dor do treino (local, intensidade e texto), com a resposta do coach.</li>
           <li>Sua opinião e depoimentos (nota, assunto e texto).</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
         </Lista>

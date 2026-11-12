@@ -4,14 +4,18 @@ import { CONTEXTOS_LIBERACAO, metodoFisio, metodoLiberavel, precisaLiberacao, va
 import { TEXTO_SEM_INTERNET, useSemInternet } from '../../lib/hooks'
 import { Aviso, Botao, Campo, Cartao, campoBase } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
-import { enviarOrientacao, recolherOrientacao } from './acoesFisio'
+import { enviarOrientacao, marcarDorVista, recolherOrientacao, responderDor } from './acoesFisio'
 import ConteudoMetodo from './ConteudoMetodo'
+import { type RelatoDor } from '../../lib/dor'
+import { descreverDor } from './FisioAluno'
+import { useDores } from './useDores'
 import { useOrientacoes } from './useOrientacoes'
 
 const vazio = (): OrientacaoForm => ({ metodoId: '', condicao: '', recado: '', contextoLiberacao: false, liberacao: null, alertasRevisados: false })
 
 export default function FisioCoach({ uid }: { uid: string }) {
   const lista = useOrientacoes(uid, true)
+  const dores = useDores(uid)
   const offline = useSemInternet()
   const [f, setF] = useState(vazio)
   const [contexto, setContexto] = useState('')
@@ -80,6 +84,8 @@ export default function FisioCoach({ uid }: { uid: string }) {
     </Cartao>
     {offline && <Aviso>{enviando ? 'Sem internet. Aguardando sincronização para confirmar o envio.' : 'Sem internet. Conecte-se para enviar uma orientação.'}</Aviso>}
     {msg && <p role="status" className="text-sm">{msg}</p>}
+    <h2 className="font-semibold">Relatos de dor</h2>
+    {dores.erro ? <Aviso>Não foi possível carregar os relatos de dor.</Aviso> : dores.carregando ? <p>Carregando…</p> : dores.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Nenhum relato de dor.'}</p> : dores.dados.map((d) => <Relato key={d.id} d={d} />)}
     <h2 className="font-semibold">Histórico de orientações</h2>
     {lista.erro ? <Aviso>Não foi possível carregar as orientações. Confira a conexão e tente abrir esta tela novamente.</Aviso> : lista.carregando ? <p>Carregando…</p> : lista.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Nenhuma orientação enviada.'}</p> : lista.dados.map((o) => <Cartao key={o.id}>
       <h3 className="font-semibold">{o.metodoId} · {metodoFisio(o.metodoId)?.nome}</h3>
@@ -91,4 +97,29 @@ export default function FisioCoach({ uid }: { uid: string }) {
       {!o.recolhida && <Botao onClick={() => recolher(o.id)}>Recolher orientação</Botao>}
     </Cartao>)}
   </main>
+}
+
+function Relato({ d }: { d: RelatoDor }) {
+  const [resposta, setResposta] = useState('')
+  const [msg, setMsg] = useState('')
+  const semInternet = useSemInternet()
+  const rodar = async (f: () => Promise<void>, ok: string) => {
+    setMsg('')
+    if (semInternet) { setMsg(TEXTO_SEM_INTERNET); return } // offline o updateDoc só termina ao sincronizar: a tela ficaria sem resposta
+    try { await f(); setMsg(ok) } catch { setMsg('Não foi possível salvar. Confira a conexão e tente de novo.') }
+  }
+  return <Cartao>
+    <h3 className="font-semibold">{d.exercicio}</h3>
+    <p className="text-sm">{descreverDor(d)}</p>
+    {d.texto && <p className="mt-1 whitespace-pre-wrap text-sm">{d.texto}</p>}
+    {d.resposta ? <p className="mt-2 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Sua resposta: {d.resposta}</p> : <>
+      <label className="mt-2 block text-sm">Responder
+        <textarea maxLength={1000} rows={2} className={`${campoBase} mt-1 w-full p-3`} value={resposta} onChange={(e) => setResposta(e.target.value)} />
+      </label>
+      <Botao className="mt-2" tipo="primario" disabled={!resposta.trim()} onClick={() => rodar(() => responderDor(d.id, resposta), 'Resposta enviada.')}>Enviar resposta</Botao>
+    </>}
+    {!d.vistoEm && !d.resposta && <Botao className="ml-2 mt-2" onClick={() => rodar(() => marcarDorVista(d.id), 'Marcado como visto.')}>Marcar como visto</Botao>}
+    {d.vistoEm && <p className="mt-2 text-xs text-slate-400">Visto</p>}
+    {msg && <p role="status" className="mt-2 text-sm">{msg}</p>}
+  </Cartao>
 }

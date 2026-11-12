@@ -21,6 +21,7 @@ import QrCadastro from '../alunos/QrCadastro'
 import { EscolherAluno } from '../presencial/Presencial'
 import { anamnesesNovas, anamnesesPendentes, lerAnamnese, pausadoSaude, sinaisAtencao, type Anamnese } from '../../../lib/anamnese'
 import { Quadro } from '../../../vidro'
+import { useDores } from '../../fisio/useDores'
 import { useOrientacoes } from '../../fisio/useOrientacoes'
 
 const saudacao = (d: Date) => {
@@ -45,6 +46,7 @@ export default function Inicio({ nome }: { nome: string }) {
   const avaliacoes = useLista<{ alunoId: string; data: string }>(useMemo(() => query(collection(db, 'avaliacoes'), where('data', '>=', corte)), [corte]))
   const fb = useFeedbacks()
   const sinaisFisio = useOrientacoes(null, true)
+  const doresNovas = useDores(null, true).dados.filter((d) => !d.vistoEm && !d.resposta)
   const anamneses = useLista<object>(useMemo(() => query(collection(db, 'anamneses')), [])) // uma consulta só: coleção pequena
   const alertas = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves)
   if (!alunos.carregando && alunos.dados.length === 0)
@@ -109,6 +111,15 @@ export default function Inicio({ nome }: { nome: string }) {
         <IcQr className="size-5" /> QR Code de cadastro
       </Botao>
       {qr && <QrCadastro onFechar={() => setQr(false)} />}
+      {doresNovas.some((d) => nomeDe.has(d.alunoId)) && (
+        <section className="mb-3 space-y-2 rounded-3xl border border-amber-600 bg-amber-950/50 p-4">
+          <h2 className="font-semibold">Físio · relatos de dor novos</h2>
+          <p className="text-sm">Abra a ficha para ver e responder.</p>
+          {doresNovas.filter((d) => nomeDe.has(d.alunoId)).map((d) => (
+            <a key={d.id} href={`#/aluno/${d.alunoId}/fisio`} className="flex min-h-11 items-center break-words text-sm underline">{nomeDe.get(d.alunoId)} · {d.intensidade}/10 · {d.exercicio}</a>
+          ))}
+        </section>
+      )}
       {sinaisFisio.dados.some((o) => alunos.dados.some((a) => a.id === o.alunoId && a.status !== 'arquivado')) && (
         <section className="mb-3 space-y-2 rounded-3xl border border-red-600 bg-red-950/50 p-4">
           <h2 className="font-semibold">Físio · sinais de alerta relatados</h2>
