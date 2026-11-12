@@ -12,6 +12,9 @@ import { db } from '../../../lib/firebase'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../../lib/hooks'
 import { ir, protegerSaida } from '../../../rota'
 import { DIAS_AUTO } from '../../../lib/agenda'
+import { fimISO } from '../../../lib/relatorio'
+import { dataSP, diaCurto } from '../../aluno/mesoAtual'
+import { fmtData } from '../semana/format'
 import { Aviso, Botao, Campo, CampoNumero, Msg, Pagina } from '../../../ui'
 import { BotaoVoltar } from '../../../voltar'
 import Preview from './Preview'
@@ -191,6 +194,9 @@ export default function EditorMeso({ id }: { id: string }) {
     >
       <Msg>{erro && <p className="mb-3 text-sm text-red-400">{erro}</p>}</Msg>
       <Msg>{aviso && <p className="mb-3 text-sm text-slate-300" role="status">{aviso}</p>}</Msg>
+      {meso.inicio.slice(0, 10) > dataSP(new Date()) && (
+        <div className="mb-3"><Aviso>Próximo meso: o aluno ainda não vê. Começa em {fmtData(meso.inicio)}.</Aviso></div>
+      )}
       <Msg>
       {conflito && (
         <div className="mb-3">
@@ -282,7 +288,10 @@ export default function EditorMeso({ id }: { id: string }) {
             <p className="mt-1 text-sm text-slate-400">{meso.frequencia} {meso.frequencia === 1 ? 'treino' : 'treinos'} por semana</p>
           </fieldset>
           <CampoNumero rotulo="Semanas" min={1} max={12} valor={meso.semanas} onConfirmar={setSemanas} />
-          <Campo rotulo="Início" type="date" value={meso.inicio} onChange={(e) => atualizar({ inicio: e.target.value })} />
+          <div>
+            <Campo rotulo="Início" type="date" value={meso.inicio} onChange={(e) => atualizar({ inicio: e.target.value })} />
+            {meso.inicio && <p className="mt-1 text-sm text-slate-400">{`Termina em ~${fmtData(fimISO(meso))} (${diaCurto(fimISO(meso))})`}</p>}
+          </div>
           <CampoNumero
             rotulo="Pausa dos principais (exercícios 1 e 2), s"
             min={0}

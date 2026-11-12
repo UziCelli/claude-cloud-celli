@@ -23,7 +23,7 @@ import { useAnamnese } from '../anamnese/useAnamnese'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
 import { historicoExercicios, recordeAnterior, resumoTreino, type RegistroEvolucao } from '../../lib/evolucao'
 import { ehRecorde } from '../../lib/recorde'
-import { cargaAnterior } from '../../lib/treino'
+import { cargaAnterior, semanaAtual } from '../../lib/treino'
 import { cargaVolta, comVolta, semanaDeVolta, travado as travadoAgenda } from '../../lib/agenda'
 import { IcCadeado, IcCheck, IcInfo, IcLapis, IcMais, IcPausa, IcPlay, IcReiniciar, IcSino, IcSinoMudo, IcVoltar } from '../../icones'
 import { ir, voltar } from '../../rota'
@@ -392,6 +392,13 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   if (!dados || !(Number.isInteger(semana) && semana >= 1 && Number.isInteger(treino) && treino >= 1)) return naoEncontrado // NaN faria prescreverSessao lançar
 
   const hoje = new Date()
+  if (!coach && semanaAtual(docParaMeso(dados), hoje).estado === 'antes')
+    return (
+      <Centro>
+        <p className="text-slate-300">Este ciclo ainda não começou.</p>
+        <Botao tipo="fantasma" onClick={sair}>Voltar</Botao>
+      </Centro>
+    )
   const meso = comVolta(docParaMeso(dados), docsRegistros, hoje) // semana de volta: prescrição com −5%
   const volta = semanaDeVolta(meso, docsRegistros, hoje, semana) // e a carga anterior (número cinza) também
   const sessao = prescreverSessao(meso, semana, treino)

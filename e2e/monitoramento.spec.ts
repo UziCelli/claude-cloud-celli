@@ -31,8 +31,9 @@ test('treino de hoje em destaque: Início com link certo e selo na semana', asyn
 
   const link = page.getByRole('link', { name: 'Ana Aluna · Treino 2 (feito)' })
   await expect(link).toBeVisible()
-  await expect(link).toHaveAttribute('href', `#/meso/${mesoId}/semana/1`)
+  await expect(link).toHaveAttribute('href', `#/aluno/${alunoId}`)
   await link.click()
+  await page.getByRole('button', { name: 'Ver o que ele fez' }).click()
 
   const cartao2 = page.locator('.rounded-xl.border').filter({ has: page.getByRole('heading', { name: /Treino 2/ }) })
   await expect(cartao2.getByText('Feito hoje', { exact: true })).toBeVisible()
