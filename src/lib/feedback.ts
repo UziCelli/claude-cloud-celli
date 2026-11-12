@@ -44,6 +44,10 @@ export function montarFeedback(e: Entrada, uid: string): NovoFeedback {
 export const rotuloAssunto = (id: string) => ASSUNTOS.find((a) => a.id === id)?.rotulo ?? id
 export const rotuloTipo = (id: string) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
 
+// Texto para colar num prompt: nunca leva o nome do aluno.
+export const textoParaCopiar = (f: Pick<Feedback, 'nota' | 'assunto' | 'tipo' | 'texto'>) =>
+  `Feedback de aluno (${f.nota}/5 · ${rotuloAssunto(f.assunto)}${f.tipo ? ` · ${rotuloTipo(f.tipo)}` : ''}):\n"${(f.texto ?? '').trim()}"`
+
 // Convite em bons momentos (fim do treino, relatório): no máximo 1 vez a cada 7 dias neste aparelho.
 // Conta tanto o convite mostrado quanto o feedback enviado.
 export const CHAVE_CONVITE = 'forca-feedback-convite'
