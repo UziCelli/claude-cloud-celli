@@ -2,6 +2,11 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 12/11/2026 — Feedbacks no celular
+- Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).
+- Botão **Copiar texto** em todo feedback: copia entre aspas, com nota, assunto e tipo, sem o nome do aluno.
+- "Story" virou **Imagem**, só para depoimento autorizado (LGPD); quem não autorizou vê "Sem autorização para divulgar".
+
 ## 12/11/2026 — Central do aluno e próximo meso
 - Coach: tela do aluno com cartão AGORA (semana, "termina ~dd/mm", treino de hoje) e botões Editar treino / Ver o que ele fez.
 - Cartão PRÓXIMO: "Montar próximo meso" copia o atual e começa no dia seguinte ao fim; "Começar hoje" adianta.

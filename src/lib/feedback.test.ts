@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaMarca, filtrar, montarFeedback, podeConvidar, resumoNotas, textoDepoimento, type Entrada } from './feedback'
+import { assinaturaMarca, filtrar, montarFeedback, podeConvidar, resumoNotas, textoDepoimento, textoParaCopiar, type Entrada } from './feedback'
 
 const base: Entrada = { nota: 5, assunto: 'app', texto: '', anonimo: false, depoimento: false }
 
@@ -70,5 +70,14 @@ describe('depoimento pronto', () => {
   })
   it('texto com primeiro nome', () => {
     expect(textoDepoimento(' Amei ', 'Maria Souza', 'da Gislane')).toBe('“Amei” — Maria, treina com a Gislane')
+  })
+})
+
+describe('copiar feedback', () => {
+  it('entre aspas, com nota, assunto e tipo, sem o nome do aluno', () => {
+    expect(textoParaCopiar({ nota: 3, assunto: 'treinos', tipo: 'critica', texto: ' Treino B longo. ' })).toBe('Feedback de aluno (3/5 · Meus treinos · Crítica):\n"Treino B longo."')
+  })
+  it('sem tipo', () => {
+    expect(textoParaCopiar({ nota: 5, assunto: 'app', texto: 'Amei' })).toBe('Feedback de aluno (5/5 · O app):\n"Amei"')
   })
 })

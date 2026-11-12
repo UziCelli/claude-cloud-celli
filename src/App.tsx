@@ -27,7 +27,7 @@ import MesosDoAluno from './features/coach/meso/MesosDoAluno'
 import EditorMeso from './features/coach/meso/EditorMeso'
 import VisaoSemana from './features/coach/semana/VisaoSemana'
 import RankingAlunos from './features/coach/RankingAlunos'
-import Feedbacks from './features/coach/feedbacks/Feedbacks'
+import Feedbacks, { useFeedbacks } from './features/coach/feedbacks/Feedbacks'
 import Grupo from './features/coach/presencial/Presencial'
 import RelatorioCoach from './features/relatorio/RelatorioCoach'
 import AvaliacoesCoach from './features/avaliacao/AvaliacoesCoach'
@@ -197,13 +197,15 @@ function Menu({ rota }: { rota: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const arquivados = useArquivados()
+  // Mesma consulta do Início (o Firestore junta, sem leitura extra).
+  const naoLidos = useFeedbacks().dados.filter((f) => !f.lido).length
   const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves).total
   const itens = [
     { id: 'inicio', rotulo: 'Início', href: '#/', Icone: IcCasa },
     { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },
     { id: 'alertas', rotulo: 'Alertas', href: '#/alertas', Icone: IcSino, selo },
     { id: 'ranking', rotulo: 'Ranking', href: '#/ranking', Icone: IcTrofeu },
-    { id: 'feedbacks', rotulo: 'Feedbacks', href: '#/feedbacks', Icone: IcBalao },
+    { id: 'feedbacks', rotulo: 'Feedbacks', href: '#/feedbacks', Icone: IcBalao, selo: naoLidos },
     { id: 'metodos', rotulo: 'Métodos', href: '#/metodos', Icone: IcLivro },
     { id: 'conta', rotulo: 'Minha conta', href: '#/conta', Icone: IcPessoa },
   ]
@@ -234,8 +236,8 @@ function Menu({ rota }: { rota: string }) {
       <BarraAbas
         className="lg:hidden"
         abas={itens
-          .filter((i) => i.id !== 'ranking' && i.id !== 'feedbacks')
-          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.rotulo, href: i.href, Icone: i.Icone, ativo: (at === 'ranking' || at === 'feedbacks' ? 'inicio' : at) === i.id, selo: i.selo }))}
+          .filter((i) => i.id !== 'ranking')
+          .map((i) => ({ rotulo: i.id === 'conta' ? 'Conta' : i.id === 'feedbacks' ? 'Opiniões' : i.rotulo, href: i.href, Icone: i.Icone, ativo: (at === 'ranking' ? 'inicio' : at) === i.id, selo: i.selo }))}
       />
     </>
   )

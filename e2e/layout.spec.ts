@@ -173,8 +173,11 @@ for (const vp of [
     } else {
       await expect(abas).toBeVisible()
       await expect(menuLateral).toBeHidden()
-      for (const n of ['Início', 'Alunos', 'Alertas', 'Métodos', 'Conta']) await expect(abas.getByRole('link', { name: new RegExp(`^${n}`) })).toBeVisible()
+      for (const n of ['Início', 'Alunos', 'Alertas', 'Opiniões', 'Métodos', 'Conta']) await expect(abas.getByRole('link', { name: new RegExp(`^${n}`) })).toBeVisible()
       await expect(abas.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
+      // Nenhum rótulo da barra cortado.
+      const cortados = await abas.locator('span').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth).map((e) => e.textContent))
+      expect(cortados, 'rótulos cortados na barra').toEqual([])
     }
     await confere(page)
     await expect(page.getByText('Maria Aparecida dos Santos Albuquerque Ferreira').first()).toBeVisible()
@@ -250,6 +253,7 @@ test('coach iPhone 390x844: barra de abas na mesma altura em todas as telas', as
     ['Início', /^Início$/],
     ['Alunos', /^Alunos/],
     ['Alertas', /^Alertas/],
+    ['Opiniões', /^Opiniões/],
     ['Métodos', /^Métodos/],
     ['Conta', /^Conta/],
   ]

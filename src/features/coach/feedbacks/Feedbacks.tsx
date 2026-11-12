@@ -3,7 +3,7 @@ import { collection, limit, orderBy, query, where, type Timestamp } from 'fireba
 import { useMemo, useState } from 'react'
 import type { Usuario } from '../../../lib/acesso'
 import { apagarFeedback, marcarFeedbackLido } from '../../../lib/acoes'
-import { filtrar, rotuloAssunto, rotuloTipo, resumoNotas, textoDepoimento, type Feedback, type Filtro } from '../../../lib/feedback'
+import { filtrar, rotuloAssunto, rotuloTipo, resumoNotas, textoDepoimento, textoParaCopiar, type Feedback, type Filtro } from '../../../lib/feedback'
 import { db } from '../../../lib/firebase'
 import { registrarErro } from '../../../lib/log'
 import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks'
@@ -39,12 +39,13 @@ const Estrelas = ({ nota }: { nota: number }) => (
   </span>
 )
 
-// nome: null = aluno com nome ainda carregando (ou fora da lista); aí não há Story nem "Copiar depoimento".
+// nome: null = aluno com nome ainda carregando (ou fora da lista); aí não há Imagem nem "Copiar depoimento".
 function Cartao({ f, nome, aviso }: { f: Feedback; nome: string | null; aviso: (t: string) => void }) {
   const falhou = (e: { code?: string }) => registrarErro('gravacao', `feedback: ${e?.code ?? e}`, e)
-  const copiar = () =>
+  // Copia direto no clique (exigência do iPhone).
+  const copiar = (t: string) =>
     navigator.clipboard
-      .writeText(textoDepoimento(f.texto ?? '', nome ?? '', marca.doNome))
+      .writeText(t)
       .then(() => aviso('Copiado'))
       .catch(() => aviso('Não deu para copiar.'))
   return (
@@ -55,13 +56,15 @@ function Cartao({ f, nome, aviso }: { f: Feedback; nome: string | null; aviso: (
       </div>
       <p className="text-sm text-slate-400">{rotuloAssunto(f.assunto)}{f.tipo ? ` · ${rotuloTipo(f.tipo)}` : ''}</p>
       {f.texto && <p className="whitespace-pre-wrap break-words text-slate-100">{f.texto}</p>}
+      {f.texto && !f.depoimento && <p className="text-xs text-slate-400">Sem autorização para divulgar</p>}
       <div className="flex flex-wrap items-start gap-2 pt-1">
         {f.depoimento && f.texto && nome && (
           <>
-            <BotaoCompartilhar<DadosDepoimento> dados={{ texto: f.texto, nome }} gerar={gerarCartaoDepoimento} rotulo="Story" arquivo="depoimento.png" titulo="Depoimento" />
-            <Botao onClick={copiar}>Copiar depoimento</Botao>
+            <BotaoCompartilhar<DadosDepoimento> dados={{ texto: f.texto, nome }} gerar={gerarCartaoDepoimento} rotulo="Imagem" arquivo="depoimento.png" titulo="Depoimento" />
+            <Botao onClick={() => copiar(textoDepoimento(f.texto ?? '', nome, marca.doNome))}>Copiar depoimento</Botao>
           </>
         )}
+        {f.texto && <Botao onClick={() => copiar(textoParaCopiar(f))}>Copiar texto</Botao>}
         <Botao onClick={() => marcarFeedbackLido(f.id, !f.lido).catch(falhou)}>{f.lido ? 'Não lido' : 'Lido'}</Botao>
         <Botao tipo="alerta" onClick={() => window.confirm('Apagar este feedback?') && apagarFeedback(f.id).catch(falhou)}>Apagar</Botao>
       </div>
