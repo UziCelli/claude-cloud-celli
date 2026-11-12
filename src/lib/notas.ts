@@ -3,8 +3,14 @@ const SP = 3 * 3_600_000 // São Paulo, sem horário de verão
 const diaSP = (ms: number) => Math.floor((ms - SP) / 86_400_000)
 
 // null = hora do servidor ainda pendente (offline): vale agora. undefined = anotação antiga.
-export const msDaNota = (v: { toMillis(): number } | null | undefined, agora = Date.now()) =>
-  v === undefined ? undefined : v === null ? agora : v.toMillis()
+export function msDaNota(v: unknown, agora = Date.now()): number | undefined {
+  if (v === null) return agora
+  try {
+    if (!v || typeof v !== 'object' || !('toMillis' in v) || typeof v.toMillis !== 'function') return undefined
+    const ms: unknown = v.toMillis()
+    return typeof ms === 'number' && Number.isFinite(ms) ? ms : undefined
+  } catch { return undefined }
+}
 
 export function dataDaNota(ms: number | undefined, agora = Date.now()): string {
   if (ms == null) return 'sem data'
@@ -26,3 +32,8 @@ export function dataDaNota(ms: number | undefined, agora = Date.now()): string {
 // Confirmação antes de excluir (a anotação some para o aluno e para o coach).
 export const confirmarExclusao = (exercicio: string, texto: string, data: string, quemMais: 'o coach' | 'o aluno') =>
   window.confirm(`Excluir a anotação de ${exercicio}?\n\n"${texto}"\n(${data})\n\nEla some para você e para ${quemMais}.`)
+
+// Dados externos: nunca renderizar objetos como texto.
+export function textoNota(valor: unknown): string {
+  return typeof valor === "string" ? valor.slice(0, 300) : ""
+}

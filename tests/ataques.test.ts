@@ -579,9 +579,9 @@ describe('anônimo: sem login nada é lido nem escrito, em nenhuma coleção', (
 // ---------------------------------------------------------------------------------------------
 describe('abuso', () => {
   describe('logs', () => {
-    const log = (uid: string, id = 'l1') => doc(db(uid), 'logs', id);
+    const log = (uid: string, id = `${uid}_${new Date().toISOString().slice(0, 10)}_0`) => doc(db(uid), 'logs', id);
     const valido = (uid: string, extra: object = {}) => ({
-      tipo: 'erro', mensagem: 'falhou', tela: '/treino', versao: '1.0.0', aparelho: 'Mozilla/5.0',
+      slot: 0, tipo: 'erro', mensagem: 'falhou', tela: '/treino', versao: '1.0.0', aparelho: 'Mozilla/5.0',
       online: true, uid, em: serverTimestamp(), ...extra,
     });
 
@@ -633,9 +633,9 @@ describe('abuso', () => {
     it('sobrescrever ou editar log que já existe (de outro ou o próprio)', async () => {
       await negar(setDoc(log('ana', 'l_bia'), valido('ana'))); // mesmo id de um log da bia
       await negar(setDoc(log('ana', 'l_bia'), valido('bia')));
-      await setDoc(log('ana', 'meu'), valido('ana'));
-      await negar(setDoc(log('ana', 'meu'), valido('ana', { mensagem: 'reescrito' })));
-      await negar(updateDoc(log('ana', 'meu'), { mensagem: 'reescrito' }));
+      await setDoc(log('ana'), valido('ana'));
+      await negar(setDoc(log('ana'), valido('ana', { mensagem: 'reescrito' })));
+      await negar(updateDoc(log('ana'), { mensagem: 'reescrito' }));
     });
 
     it('aluno lendo logs: get, list, query pelo próprio uid, collectionGroup, apagar', async () => {
@@ -646,14 +646,14 @@ describe('abuso', () => {
       await negar(getDocs(query(collection(c, 'logs'), where('uid', '==', 'bia'))));
       await negar(getDocs(collectionGroup(c, 'logs')));
       await negar(deleteDoc(log('ana', 'l_bia')));
-      await setDoc(log('ana', 'meu'), valido('ana'));
-      await negar(getDoc(log('ana', 'meu'))); // nem o próprio log
-      await negar(deleteDoc(log('ana', 'meu')));
+      await setDoc(log('ana'), valido('ana'));
+      await negar(getDoc(log('ana'))); // nem o próprio log
+      await negar(deleteDoc(log('ana')));
     });
 
-    it('PERMITIDO DE PROPÓSITO: qualquer logado cria log válido, mesmo bloqueado (o app precisa avisar erros)', async () => {
-      await assertSucceeds(setDoc(log('blq', 'ok1'), valido('blq')));
-      await assertSucceeds(setDoc(log('agu', 'ok2'), valido('agu')));
+    it('cadastro aguardando ou bloqueado não pode consumir logs', async () => {
+      await assertFails(setDoc(log('blq'), valido('blq')));
+      await assertFails(setDoc(log('agu'), valido('agu')));
     });
   });
 

@@ -25,6 +25,7 @@ permissions:
 
 jobs:
   preparar:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       matriz: ${{ steps.m.outputs.matriz }}
@@ -44,6 +45,7 @@ jobs:
           echo "matriz={\"include\":[$M]}" >> "$GITHUB_OUTPUT"
 
   backup:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: preparar
     strategy:

@@ -101,7 +101,7 @@ export function useInatividade(papel: keyof typeof LIMITE_MIN) {
       } catch {
         /* ignora */
       }
-      sair()
+      sair().catch(() => { saindo.current = false; setAviso(true) })
     }
     const ev = ['pointerdown', 'keydown', 'scroll'] as const
     ev.forEach((e) => addEventListener(e, atividade, { passive: true, capture: true }))

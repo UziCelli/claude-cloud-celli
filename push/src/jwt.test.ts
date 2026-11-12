@@ -26,6 +26,15 @@ const obter = async (kid: string) => (kid === 'k1' ? par.publicKey : null)
 const ver = (t: string) => verificarIdToken(t, obter, AGORA)
 
 describe('verificarIdToken', () => {
+  it('IA exige MFA assinado: nem claim de emulador nem token adulterado substituem o segundo fator', async () => {
+    const verMfa = (t: string) => verificarIdToken(t, obter, AGORA, true)
+    expect(await verMfa(await assinar(BASE))).toBeNull()
+    expect(await verMfa(await assinar({ ...BASE, mfaDispensado: true }))).toBeNull()
+    expect(await verMfa(await assinar({ ...BASE, firebase: { sign_in_second_factor: '' } }))).toBeNull()
+    const payload = { ...BASE, firebase: { sign_in_second_factor: 'totp' } }
+    expect(await verMfa(await assinar(payload))).toEqual({ uid: 'aluno123', projeto: 'forca--app' })
+    expect(await verMfa(await assinar(payload, { chave: outro.privateKey }))).toBeNull()
+  })
   it('aceita um token válido e devolve o uid e o projeto', async () => {
     expect(await ver(await assinar(BASE))).toEqual({ uid: 'aluno123', projeto: 'forca--app' })
   })

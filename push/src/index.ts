@@ -1,3 +1,4 @@
+import { atenderIA, MAX_CORPO_IA, ROTAS_IA, type AcaoIA, type ResultadoIA } from './ia'
 import { DurableObject } from 'cloudflare:workers'
 import { acessoComCache, appCheckOk, ehCoach, lerPermissao, podeAvisarTreino, quemAvisaCoach, registrarAgendamento, type CacheAcesso } from './acesso'
 import { cors } from './cors'
@@ -31,6 +32,14 @@ const MAX_COACHES = 5
 // Uma instância por aluno (nome: veja nomeDO): guarda a inscrição e dispara o alarme.
 // A instância '__vapid' guarda o par de chaves VAPID (gerado na 1ª vez, nunca regenerado).
 export class Descanso extends DurableObject<Env> {
+  private iaFila: Promise<unknown> = Promise.resolve()
+  // Fila exclusiva do projeto: não deixa uma migração atrasada sobrescrever uma chave nova.
+  ia(acao: AcaoIA, corpo: unknown, projeto: Projeto, token: string, appCheck?: string): Promise<string> {
+    const resultado = this.iaFila.then(() => atenderIA(acao, corpo, this.ctx.storage, projeto, token, appCheck))
+    this.iaFila = resultado.catch(() => {})
+    return resultado.then(r => JSON.stringify(r))
+  }
+
   private par?: Promise<ParVapid>
   // Só na memória: se a instância reiniciar, o limite e o cache recomeçam (basta para segurar abuso).
   private marcas: number[] = []
@@ -230,6 +239,33 @@ export default {
     }
     const coaches = (projeto: Projeto) => env.DESCANSO.get(env.DESCANSO.idFromName(nomeCoaches(projeto)))
     const aluno = (projeto: Projeto, uid: string) => env.DESCANSO.get(env.DESCANSO.idFromName(nomeDO(projeto, uid)))
+
+    if (req.method === 'POST' && ROTAS_IA.includes(pathname as AcaoIA)) {
+      const id = token ? await verificarIdToken(token, kid => chaveDoGoogle(kid), agora, true) : null
+      if (!token || !id || !uidOk(id.uid)) return json({ erro: 'Entre novamente com a verificação em 2 etapas.' }, 401)
+      if (!(await aluno(id.projeto, id.uid).passar('ia', 30, 60000))) return json({ erro: 'Muitos pedidos. Tente mais tarde.' }, 429)
+      if (!(await ehCoach(id.projeto, id.uid, token, fetch, appCheck))) return json({ erro: 'Sem permissão para usar a IA.' }, 403)
+      // Limita o fluxo antes de armazenar o corpo inteiro (não confia em Content-Length).
+      const reader = req.body?.getReader()
+      const chunks: Uint8Array[] = []
+      let size = 0
+      if (reader) {
+        for (;;) {
+          const { value, done } = await reader.read()
+          if (done) break
+          size += value.byteLength
+          if (size > MAX_CORPO_IA) { await reader.cancel(); return json({ erro: 'Pedido grande demais.' }, 413) }
+          chunks.push(value)
+        }
+      }
+      const bytes = new Uint8Array(size)
+      let offset = 0
+      for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length }
+      let corpo: unknown
+      try { corpo = JSON.parse(new TextDecoder().decode(bytes)) } catch { return json({ erro: 'Pedido inválido.' }, 400) }
+      const r: ResultadoIA = JSON.parse(await env.DESCANSO.get(env.DESCANSO.idFromName(`__ia:${id.projeto}`)).ia(pathname as AcaoIA, corpo, id.projeto, token, appCheck))
+      return json(r.corpo, r.status, { 'Cache-Control': 'no-store' })
+    }
 
     // Robô diário (GitHub): JWT da conta de serviço, não ID token.
     if (req.method === 'POST' && pathname === '/aviso-pagamento') {

@@ -175,3 +175,13 @@ Plano Spark do Firebase:
 - **O que não fazemos:** foto do corpo, data de nascimento, IA no texto (nenhuma medida sai do Firebase).
 - **Em aberto:** revisão da Política por advogado (passo 6 da auditoria, seção 5), agora com dado de saúde mais sensível.
 
+
+## 10. Correções da revisão de 12/11/2026
+
+- Publicações e manutenções com credenciais só executam jobs na `main`, inclusive ao acionar manualmente. O Worker não publica mais pushes de branches de trabalho. Tokens de publicação ficam apenas nos passos necessários.
+- **Barreira externa ainda necessária:** alguém com escrita pode editar o próprio YAML em outra branch. Para impedir esse uso de credenciais, mover segredos de produção para GitHub Environments limitados à `main`, com proteção independente do arquivo. Condições no código evitam erros, mas não substituem essa configuração. Não é possível copiar segredos existentes pela API: os valores precisam ser cadastrados pelo responsável, sem colocá-los no chat.
+- Sair da conta agora espera sincronização, encerra o Firestore nas abas abertas e apaga seu cache local antes de encerrar a sessão. Se houver cargas pendentes sem internet, a saída é recusada para preservar os dados. Abas antigas ou suspensas que impeçam a limpeza devem ser fechadas antes de tentar novamente.
+- Anotações vindas do banco passam por validação antes de aparecer. Valores internos inválidos podiam afetar a tela do coach; a conclusão antiga de que só afetavam o próprio aluno estava incorreta.
+- Logs usam até 20 documentos imutáveis por conta/dia UTC, com identificador validado nas regras. Somente alunos ativos ou coaches autenticados com segundo fator podem gravar. Contas aguardando/bloqueadas não podem. O limite local é conveniência; o servidor valida a cota. Excluir logs do dia libera os slots: limpeza automática deve manter o dia atual. Apps antigos com IDs aleatórios deixarão de registrar erros até atualizar, sem afetar cargas.
+- Pendências de console (App Check, regras publicadas, IAM e MFA) precisam ser conferidas no serviço; documentação não comprova seu estado real.
+- IA: a chave passa a ficar no Worker (Durable Object separado por projeto). O navegador recebe somente metadados; pedidos exigem coach com segundo fator e têm limite persistente de uso. A configuração antiga é transferida no servidor e removida do Firestore somente após salvar com sucesso. É preciso publicar o Worker atualizado junto do app. Aparelhos que já guardaram a chave devem atualizar e sair com limpeza; trocar a chave antiga é recomendado.

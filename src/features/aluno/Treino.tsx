@@ -1,3 +1,4 @@
+import { textoNota } from '../../lib/notas'
 import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { confete, elastico, saida, suave } from '../../movimento'
@@ -653,7 +654,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   )}
                 </div>
               </div>
-              <Nota key={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} uid={uid} nome={e.slot.nome.trim()} texto={notas?.exercicios?.[e.slot.nome.trim()] ?? ''} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
+              <Nota key={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} uid={uid} nome={e.slot.nome.trim()} texto={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
               <div className="space-y-2">
                 {(() => {
                 // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.

@@ -1,6 +1,6 @@
 // Registro de erros do app (coleção `logs`). Só grava com login; antes disso guarda no aparelho.
 // Nunca pode quebrar o app: tudo em try/catch e falha ao logar não gera novo log.
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from './firebase'
 
@@ -10,6 +10,7 @@ type Contador = { dia: string; n: number }
 
 const FILA = 'forca-logs-fila'
 const DIA = 'forca-logs-dia'
+const ENVIADOS = 'forca-logs-enviados-'
 export const MAX_DIA = 20
 export const MAX_FILA = 20
 
@@ -53,7 +54,15 @@ const jaLogados = new WeakSet<object>()
 
 function enviar(i: Item, uid: string) {
   try {
-    addDoc(collection(db, 'logs'), { ...i, uid, em: serverTimestamp() }).catch(() => {})
+    // Mesmo limite para a fila anterior ao login e os erros atuais. IDs repetidos
+    // são recusados pelo servidor, inclusive se apagarem o contador do aparelho.
+    const hoje = new Date().toISOString().slice(0, 10)
+    const chave = ENVIADOS + uid
+    const c = contarDia(ler<Contador | null>(chave, null), hoje)
+    if (!c) return
+    gravar(chave, c)
+    const slot = c.n - 1
+    setDoc(doc(db, 'logs', `${uid}_${hoje}_${slot}`), { ...i, uid, slot, em: serverTimestamp() }).catch(() => {})
   } catch {
     /* ignora */
   }

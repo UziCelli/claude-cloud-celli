@@ -1,44 +1,69 @@
-// Assistente de voz (IA): guarda a chave da Anthropic no Firestore (segredos/ia, só o coach lê — ver firestore.rules)
-// e chama o Haiku direto do aparelho do coach. A chave nunca vai no código do app nem para o aluno.
-import { deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore'
-import { db } from './firebase'
+// O navegador envia a chave apenas ao cadastrá-la. Leituras devolvem somente o final mascarado;
+// a chamada à Anthropic e a migração da chave antiga são feitas pelo Worker autenticado.
+import { useEffect, useState } from 'react'
+import { getToken } from 'firebase/app-check'
+import { appCheck, auth } from './firebase'
 import { corpoPedido, lerResposta, type Proposta } from './iaTreino'
+import { cabecalhosPush, juntarUrl } from './push'
 
-const refChave = () => doc(db, 'segredos', 'ia')
-
+const BASE = import.meta.env.VITE_PUSH_URL as string | undefined
+const ATUALIZOU = 'forca-ia-configuracao'
+type MetadadosIA = { chave: string | null }
 export const chaveValida = (c: string) => /^sk-ant-[A-Za-z0-9_-]{15,290}$/.test(c.trim())
-export const salvarChaveIA = (chave: string) => setDoc(refChave(), { chave: chave.trim(), atualizadoEm: serverTimestamp() })
-export const apagarChaveIA = () => deleteDoc(refChave())
-export const refChaveIA = refChave
-// Mostra só o fim da chave (a chave inteira nunca volta para a tela).
-export const chaveMascarada = (c: string) => `sk-ant-…${c.slice(-4)}`
 
-const ERROS_HTTP: Record<number, string> = {
-  400: 'A Anthropic recusou o pedido (pode ser falta de crédito na conta). Confira em console.anthropic.com.',
-  401: 'A Anthropic recusou a chave. Cadastre uma chave nova em Minha conta.',
-  403: 'A chave não tem permissão para isso. Cadastre uma chave nova em Minha conta.',
-  429: 'Muitos pedidos seguidos. Espere um pouco e tente de novo.',
-  529: 'A IA está sobrecarregada agora. Tente de novo em instantes.',
+async function chamar(caminho: string, corpo: unknown): Promise<unknown> {
+  if (!BASE) throw new Error('O assistente de IA ainda não está disponível neste ambiente.')
+  const token = await auth.currentUser?.getIdToken()
+  if (!token) throw new Error('Entre novamente com a verificação em 2 etapas.')
+  const ac = appCheck ? (await getToken(appCheck, false)).token : undefined
+  let r: Response
+  try {
+    r = await fetch(juntarUrl(BASE, caminho), {
+      method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(45000),
+      headers: cabecalhosPush(token, ac), body: JSON.stringify(corpo),
+    })
+  } catch { throw new Error('Sem conexão com a IA. Confira a internet e tente de novo.') }
+  const resposta = await r.json().catch(() => null)
+  if (!r.ok) throw new Error(typeof resposta?.erro === 'string' ? resposta.erro : 'O assistente de IA está indisponível. Tente mais tarde.')
+  return resposta
 }
 
-// Manda a fala (e a lista atual de exercícios de cada treino) ao Haiku e devolve as ações pedidas. Erros viram texto em português para a tela.
-export async function montarTreinosPorFala(chave: string, fala: string, divisao: string[][], semanas?: number): Promise<Proposta> {
-  let resp: Response
-  try {
-    resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: AbortSignal.timeout(30_000),
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': chave,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify(corpoPedido(fala, divisao, semanas)),
-    })
-  } catch {
-    throw new Error('Sem conexão com a IA. Confira a internet e tente de novo.')
-  }
-  if (!resp.ok) throw new Error(ERROS_HTTP[resp.status] ?? `A IA não respondeu (erro ${resp.status}).`)
-  return lerResposta(await resp.json().catch(() => null), divisao)
+export async function salvarChaveIA(chave: string) {
+  await chamar('/ia/salvar', { chave: chave.trim() })
+  window.dispatchEvent(new Event(ATUALIZOU))
+}
+export async function apagarChaveIA() {
+  await chamar('/ia/apagar', {})
+  window.dispatchEvent(new Event(ATUALIZOU))
+}
+
+export function useChaveIA() {
+  const [dados, setDados] = useState<MetadadosIA | null>(null)
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
+  const [versao, setVersao] = useState(0)
+  useEffect(() => {
+    const atualizar = () => setVersao(v => v + 1)
+    window.addEventListener(ATUALIZOU, atualizar)
+    return () => window.removeEventListener(ATUALIZOU, atualizar)
+  }, [])
+  useEffect(() => {
+    let vivo = true
+    setCarregando(true)
+    setErro('')
+    chamar('/ia/status', {}).then(r => {
+      if (!vivo) return
+      const chave = (r as MetadadosIA | null)?.chave
+      // Defesa adicional: mesmo um servidor antigo/errado nunca fornece chave bruta à UI.
+      if (chave !== null && (typeof chave !== 'string' || !/^sk-ant-…[A-Za-z0-9_-]{4}$/.test(chave))) throw new Error('Resposta inválida do assistente de IA.')
+      setDados({ chave })
+    }).catch(e => { if (vivo) { setDados(null); setErro(e instanceof Error ? e.message : 'Não foi possível acessar a IA.') } })
+      .finally(() => { if (vivo) setCarregando(false) })
+    return () => { vivo = false }
+  }, [versao])
+  return { dados, carregando, erro }
+}
+
+export async function montarTreinosPorFala(fala: string, divisao: string[][], semanas?: number): Promise<Proposta> {
+  return lerResposta(await chamar('/ia/montar', corpoPedido(fala, divisao, semanas)), divisao)
 }

@@ -1,3 +1,4 @@
+import { textoNota } from '../../../lib/notas'
 import { metricasSessao, type Cargas, type Sessao } from '../../../engine'
 import { registrarCarga, salvarNota } from '../../../lib/acoes'
 import { confirmarExclusao, dataDaNota, msDaNota } from '../../../lib/notas'
@@ -142,10 +143,10 @@ export default function SessaoCard({
                 <td className="p-2">{e.pos}</td>
                 <td className="p-2">
                   {e.slot.nome}
-                  {notas?.exercicios?.[e.slot.nome.trim()] && (() => {
+                  {textoNota(notas?.exercicios?.[e.slot.nome.trim()]) && (() => {
                     const nome = e.slot.nome.trim()
-                    const texto = notas.exercicios[nome]
-                    const data = dataDaNota(msDaNota(notas.datas?.[nome]))
+                    const texto = textoNota(notas?.exercicios?.[nome])
+                    const data = dataDaNota(msDaNota(notas?.datas?.[nome]))
                     return (
                       <div className="mt-0.5 flex max-w-[14rem] items-start gap-1 whitespace-normal text-[11px] text-slate-400">
                         <span className="min-w-0 break-words">

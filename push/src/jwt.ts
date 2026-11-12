@@ -36,12 +36,16 @@ async function abrir(token: string, obterChave: (kid: string, c: Claims) => Prom
 const agoraOk = (c: Claims, agora: number) => typeof c.exp === 'number' && c.exp > agora && typeof c.iat === 'number' && c.iat <= agora + 60
 
 // Confere um ID token do Firebase (RS256) de um dos projetos. Devolve uid e projeto, ou null se qualquer checagem falhar.
-export async function verificarIdToken(token: string, obterChave: ObterChave, agora: number): Promise<{ uid: string; projeto: Projeto } | null> {
+export async function verificarIdToken(token: string, obterChave: ObterChave, agora: number, exigirMfa = false): Promise<{ uid: string; projeto: Projeto } | null> {
   const c = await abrir(token, (kid) => obterChave(kid))
   if (!c) return null
   const projeto = PROJETOS.find((p) => p === c.aud)
   if (!projeto || c.iss !== `https://securetoken.google.com/${projeto}`) return null
   if (!agoraOk(c, agora)) return null
+  if (exigirMfa) {
+    const fb = c.firebase as { sign_in_second_factor?: unknown } | undefined
+    if (typeof fb?.sign_in_second_factor !== 'string' || !fb.sign_in_second_factor) return null
+  }
   if (typeof c.sub !== 'string' || c.sub === '') return null
   return { uid: c.sub, projeto }
 }
