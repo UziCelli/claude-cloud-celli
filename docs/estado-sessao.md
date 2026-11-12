@@ -2,6 +2,12 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 12/11/2026 — Sistema Físio (EM ANDAMENTO, branch separada, NÃO juntar)
+- Grande atualização: aluno relata dor no treino → dica pronta e segura na hora + coach avisado. Plano: `docs/plano-fisio.md`.
+- **Não juntar na `main` até o Victor mandar** (exceção ao fluxo automático). PR em rascunho.
+- Etapa 1 feita: articulações e músculos dos 329 exercícios (`src/data/anatomia.json`, `src/lib/anatomia.ts`). Nada muda na tela ainda.
+- **Pendências do Victor:** conferir `docs/fisio-catalogo.md` (começar por "Escolhas que eu fiz"); mandar a pesquisa do agente dele (base da Etapa 2, textos).
+
 ## 12/11/2026 — Feedbacks no celular
 - Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).
 - Botão **Copiar texto** em todo feedback: copia entre aspas, com nota, assunto e tipo, sem o nome do aluno.
