@@ -34,6 +34,8 @@ test('coach vê selo e cartão, marca vista, anota e o aluno lê', async ({ page
   await expect(page.getByRole('link', { name: /Sem Resposta · não respondeu/ })).toBeVisible()
 
   await page.goto(`/#/aluno/${alunoId}`)
+  await expect(page.getByRole('button', { name: /Mais\s*Atenção/ })).toBeVisible()
+  await page.getByRole('button', { name: /Mais/ }).click()
   await expect(page.getByRole('button', { name: /Anamnese\s*Atenção/ })).toBeVisible()
   await page.getByRole('button', { name: /Anamnese/ }).click()
   await expect(page.getByText('Problema no coração ou pressão alta', { exact: true })).toBeVisible() // sinal de atenção

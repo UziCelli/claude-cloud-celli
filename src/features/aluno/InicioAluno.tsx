@@ -70,7 +70,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       </div>
       {anamnese.motivo && <AnamnesePendente primeira={anamnese.motivo === 'primeira'} />}
       {!atual && <Msg>{semInternet ? TEXTO_SEM_INTERNET : 'Seu coach ainda não montou seu treino.'}</Msg>}
-      {atual?.estado.estado === 'antes' && <Msg>{`Começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
+      {atual?.estado.estado === 'antes' && <Msg>{`Seu próximo ciclo começa em ${fmtData(atual.meso.inicio)}.`}</Msg>}
       {atual?.estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {atual?.estado.estado === 'durante' && <Treinos mesoId={atual.doc.id} meso={atual.meso} registros={registros} hoje={hoje} />}
       <FaixaFeedback />

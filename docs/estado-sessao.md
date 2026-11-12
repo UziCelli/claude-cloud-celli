@@ -1,6 +1,13 @@
-# Estado da sessão (retomada) — atualizado em 11/11/2026
+# Estado da sessão (retomada) — atualizado em 12/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
+
+## 12/11/2026 — Central do aluno e próximo meso
+- Coach: tela do aluno com cartão AGORA (semana, "termina ~dd/mm", treino de hoje) e botões Editar treino / Ver o que ele fez.
+- Cartão PRÓXIMO: "Montar próximo meso" copia o atual e começa no dia seguinte ao fim; "Começar hoje" adianta.
+- O aluno só vê o próximo na data de início ("Seu próximo ciclo começa em dd/mm"). Escondido só na tela, sem robô.
+- Editor mostra "Termina em ~dd/mm"; "Treinaram hoje" abre a tela do aluno; Evolução, Avaliação e Anamnese ficaram em "Mais".
+- Pendência: rodar o e2e completo no CI.
 
 ## 11/11/2026 — Pagamento com tolerância, PAR-Q que pausa, feedback e evolução (PR #150)
 - **Pagamento (CDC):** o acesso só pausa 7 dias depois do vencimento (`CARENCIA_DIAS` em `acesso.ts`; regra e Worker iguais). Nesses 7 dias, aviso 1x por dia com valor + Pix e "Ciente, ir para o treino". O coach continua vendo quem venceu.

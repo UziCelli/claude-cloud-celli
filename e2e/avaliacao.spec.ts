@@ -34,6 +34,7 @@ test('coach lança, libera e recolhe; o aluno vê a evolução', async ({ browse
 
   // 1ª avaliação: rascunho.
   await coach.goto(`/#/aluno/${alunoId}`)
+  await coach.getByRole('button', { name: 'Mais' }).click()
   await coach.getByRole('button', { name: 'Avaliação física' }).click()
   await coach.getByRole('button', { name: 'Nova avaliação' }).click()
   await expect(campo(coach, 'Peso (kg)')).toHaveValue('75') // vem do perfil

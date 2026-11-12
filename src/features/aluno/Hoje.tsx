@@ -35,7 +35,7 @@ export default function Hoje({ uid, base = '', coach, abrirHoje }: { uid: string
   return (
     <main className="mx-auto max-w-md px-4 py-4">
       <AvisoNotificacoes />
-      {estado.estado === 'antes' && <Msg>Começa em {fmtData(meso.inicio)}.</Msg>}
+      {estado.estado === 'antes' && <Msg>Seu próximo ciclo começa em {fmtData(meso.inicio)}.</Msg>}
       {estado.estado === 'depois' && <Msg>Mesociclo concluído — fale com seu coach.</Msg>}
       {estado.estado === 'durante' && <Semana uid={uid} base={base} coach={coach} abrirHoje={abrirHoje} mesoId={doc.id} nome={doc.nome} meso={meso} hoje={hoje} />}
     </main>

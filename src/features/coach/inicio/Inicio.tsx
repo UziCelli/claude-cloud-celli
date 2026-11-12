@@ -217,7 +217,7 @@ export default function Inicio({ nome }: { nome: string }) {
                   const links = hoje?.length
                     ? hoje.map((t) => ({
                         k: `${t.mesoId}-${t.semana}-${t.treino}`,
-                        href: `#/meso/${t.mesoId}/semana/${t.semana}`,
+                        href: `#/aluno/${a.id}`,
                         texto: `${a.nome} · Treino ${t.treino}${t.feito ? ' (feito)' : ' (em andamento)'}`,
                       }))
                     : [{ k: a.id, href: `#/aluno/${a.id}`, texto: a.nome }]
