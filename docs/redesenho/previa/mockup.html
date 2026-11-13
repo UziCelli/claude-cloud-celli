@@ -1,0 +1,208 @@
+<!doctype html>
+<!-- Prévia do redesenho (rascunho, não é código do app). Abra com ?t=vfit | gislane | saas.
+     Gera os prints de docs/redesenho/previa/*.jpg (ver docs/redesenho/README.md, "Como regerar os prints"). -->
+<html lang="pt-BR">
+<meta charset="utf-8">
+<title>Prévia do redesenho</title>
+<style>
+@font-face{font-family:Inter;src:url(../../../public/fonts/inter.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:Montserrat;src:url(../../../public/fonts/montserrat.woff2) format('woff2');font-weight:100 900}
+*{box-sizing:border-box;margin:0;padding:0}
+/* Tudo que muda de uma marca para outra são estas variáveis (mais a logo). */
+:root{--fundo:#0a1424;--sup:#111d33;--sup2:#1a2a47;--linha:#26385a;--txt:#edf1f8;--txt2:#98a6c2;--txt3:#6b7a99;
+  --marca:#3f72a6;--marca-clara:#7faedd;--sobre-marca:#fff;--grad1:#2c5c8f;--grad2:#0b1e3d;--ok:#34d399;--alerta:#fbbf24;--dor:#fb7185;--pagina:#050b16}
+body.gislane{--fundo:#0e0a09;--sup:#1a1311;--sup2:#2c211e;--linha:#3d2e2a;--txt:#f7efec;--txt2:#c2a79f;--txt3:#8a7068;
+  --marca:#e21e27;--marca-clara:#f08a8e;--sobre-marca:#fff;--grad1:#b81a22;--grad2:#3a1512;--pagina:#070504}
+body.saas{--fundo:#f4f6f3;--sup:#ffffff;--sup2:#e9eee6;--linha:#d9e0d4;--txt:#131a12;--txt2:#566152;--txt3:#8a9486;
+  --marca:#1f8a4c;--marca-clara:#1f8a4c;--sobre-marca:#fff;--grad1:#27a35b;--grad2:#0f5a30;--ok:#1f8a4c;--alerta:#b7791f;--dor:#d6455d;--pagina:#dfe5dc}
+body{background:var(--pagina);font-family:Inter,system-ui,sans-serif;color:var(--txt);padding:36px 36px 28px;width:max-content}
+h1,h2,h3,.d{font-family:Montserrat,sans-serif}
+.topo{display:flex;align-items:center;gap:18px;margin-bottom:22px}
+.topo .logo{height:38px;display:flex;align-items:center}
+.topo .logo img{height:38px}
+.topo p{font-size:15px;color:var(--txt2)}
+.fila{display:flex;gap:26px;align-items:flex-start}
+.col{width:390px}
+.col>h4{font:700 15px Montserrat;margin-bottom:4px}
+.col>p{font-size:12.5px;color:var(--txt2);margin-bottom:10px;height:32px;line-height:1.3}
+.fone{width:390px;height:844px;background:var(--fundo);border-radius:44px;border:1px solid var(--linha);position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.tela{padding:58px 18px 0;height:100%;position:relative}
+.status{position:absolute;top:16px;left:30px;right:30px;display:flex;justify-content:space-between;font:600 14px Inter;color:var(--txt)}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.c{background:var(--sup);border:1px solid var(--linha);border-radius:22px;padding:16px}
+.m{color:var(--txt2)}.p{font-size:13px}.pp{font-size:11.5px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;border-radius:18px;background:var(--marca);color:var(--sobre-marca);font:700 17px Inter;width:100%}
+.btn.sec{background:var(--sup2);color:var(--txt)}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:5px 11px;font:700 12px Inter;background:var(--sup2);color:var(--txt)}
+.linha{display:flex;align-items:center;gap:10px}
+.entre{justify-content:space-between}
+/* Início */
+.heroi{background:linear-gradient(150deg,var(--grad1),var(--grad2));border-radius:28px;padding:20px;color:#fff;margin-top:16px}
+.heroi .btn{background:#fff;color:var(--grad2);margin-top:16px}
+.dias{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-top:12px}
+.dias b{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;margin:5px auto 0;font-size:13px;border:1px solid var(--linha)}
+.dias .f b{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok);border-color:transparent}
+.dias .h b{background:var(--marca);color:var(--sobre-marca);border-color:transparent;box-shadow:0 0 0 4px color-mix(in srgb,var(--marca) 30%,transparent)}
+.dias .x b{border-color:transparent;color:var(--txt3)}
+.dias span{font:600 11px Inter;color:var(--txt3)}
+.abas{position:absolute;left:14px;right:14px;bottom:18px;height:66px;border-radius:26px;background:color-mix(in srgb,var(--sup) 92%,transparent);border:1px solid var(--linha);display:grid;grid-template-columns:repeat(4,1fr);align-items:center;text-align:center;font:600 11px Inter;color:var(--txt3)}
+.abas div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.abas .a{color:var(--marca-clara)}
+/* Treino */
+.cab{display:flex;align-items:center;justify-content:space-between;font:600 14px Inter}
+.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:12px 0 18px}
+.seg i{height:5px;border-radius:9px;background:var(--sup2)}
+.seg .f{background:var(--ok)}.seg .a{background:var(--marca-clara)}
+.serie{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:16px;background:var(--sup);border:1px solid var(--linha);margin-top:8px;font:600 15px Inter}
+.serie .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:var(--sup2);color:var(--txt2)}
+.serie.f .n{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}
+.serie.f{color:var(--txt2)}
+.ativa{border-radius:22px;background:var(--sup);border:1.5px solid var(--marca-clara);padding:14px;margin-top:8px}
+.passo{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;background:var(--sup2);border-radius:16px;height:64px;text-align:center}
+.passo span{font:700 26px Inter;color:var(--txt2)}
+.passo b{font:800 30px Montserrat}
+.passo small{font:600 12px Inter;color:var(--txt2);margin-left:4px}
+.duo{display:grid;grid-template-columns:1.25fr 1fr;gap:8px;margin:10px 0}
+.rodape{position:absolute;left:0;right:0;bottom:0;padding:12px 18px 26px;background:var(--sup);border-top:1px solid var(--linha)}
+.atalhos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.atalhos div{height:46px;border-radius:14px;border:1px solid var(--linha);display:flex;align-items:center;justify-content:center;gap:6px;font:600 13px Inter;color:var(--txt2)}
+.barra{height:6px;border-radius:9px;background:var(--sup2);overflow:hidden;margin-bottom:10px}
+.barra i{display:block;height:100%;width:62%;background:var(--marca-clara)}
+/* Folha */
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.folha{position:absolute;left:0;right:0;bottom:0;background:var(--sup);border-radius:28px 28px 0 0;padding:10px 18px 30px;border-top:1px solid var(--linha)}
+.folha .pega{width:42px;height:5px;border-radius:9px;background:var(--linha);margin:0 auto 14px}
+.op{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid var(--linha)}
+.op:last-child{border:0}
+.op .ic{width:42px;height:42px;border-radius:13px;background:var(--sup2);display:grid;place-items:center;color:var(--marca-clara)}
+.op b{font:600 15.5px Inter;display:block}
+.tg{margin-left:auto;width:46px;height:28px;border-radius:99px;background:var(--sup2);position:relative}
+.tg::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--txt3)}
+.tg.on{background:var(--marca)}.tg.on::after{left:21px;background:#fff}
+/* Isometria */
+.anel{width:230px;height:230px;border-radius:50%;margin:18px auto 14px;display:grid;place-items:center;background:conic-gradient(var(--marca-clara) 0 60%,var(--sup2) 60% 100%)}
+.anel div{width:198px;height:198px;border-radius:50%;background:var(--fundo);display:grid;place-items:center;text-align:center}
+.anel b{font:800 58px Montserrat;line-height:1}
+/* Lista */
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--sup);border:1px solid var(--linha);margin-top:8px}
+.item .n{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:700 13px Inter;background:var(--sup2);color:var(--txt2)}
+.item.f .n{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}
+.item.a{border-color:var(--marca-clara)}.item.a .n{background:var(--marca);color:var(--sobre-marca)}
+.item b{font:600 15px Inter;display:block}
+.pont{margin-left:auto;display:flex;gap:4px}
+.pont i{width:8px;height:8px;border-radius:50%;background:var(--sup2)}
+.pont .f{background:var(--ok)}
+.grupo{border-left:3px solid #38bdf8;padding-left:8px;margin-top:8px}
+.grupo>span{font:700 11px Inter;color:#38bdf8}
+.paleta{display:flex;gap:10px;align-items:center;margin-left:auto}
+.paleta i{width:28px;height:28px;border-radius:50%;border:2px solid var(--sup)}
+.selo{border:1.5px dashed var(--txt3);border-radius:12px;padding:8px 14px;font:700 13px Montserrat;color:var(--txt2)}
+</style>
+<body>
+<script>
+const t = new URLSearchParams(location.search).get('t') || 'vfit'
+document.body.className = t
+const M = {
+  vfit: { nome: 'VFITCOACH', logo: '<img src="../../marca/logo-branco.svg">', sub: 'Marca do Victor · azul-marinho (cores atuais do app)', coach: 'Victor' },
+  gislane: { nome: 'Gislane', logo: '<img src="../../marca/gislane-logo.svg">', sub: 'Marca da Gislane · vermelho sobre marrom escuro (cores atuais do app)', coach: 'Gislane' },
+  saas: { nome: 'Sua marca', logo: '<span class="selo">LOGO DO CLIENTE</span>', sub: 'SaaS · exemplo fictício "Academia Verde": o contratante envia a logo e 1 cor; o app calcula o resto (aqui em tema claro)', coach: 'seu coach' },
+}[t]
+const ic = {
+  casa: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  halter: '<svg viewBox="0 0 24 24"><path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/></svg>',
+  graf: '<svg viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 15l4-5 3 3 4-6"/></svg>',
+  eu: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+  volta: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  seta: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  ok: '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+  lista: '<svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  nota: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  dor: '<svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/><path d="M12 9v4M10 11h4"/></svg>',
+  mais: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
+  corpo: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><path d="M12 8v7M7 10h10M9 21l3-6 3 6"/></svg>',
+  lados: '<svg viewBox="0 0 24 24"><path d="M12 4v16M5 9l-2 3 2 3M19 9l2 3-2 3M3 12h6M15 12h6"/></svg>',
+  sino: '<svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>',
+  rel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>',
+}
+const status = '<div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>'
+const abas = (a) => `<div class="abas">${[['casa', 'Início'], ['halter', 'Treino'], ['graf', 'Evolução'], ['eu', 'Você']].map(([i, n], k) => `<div class="${k === a ? 'a' : ''}">${ic[i]}${n}</div>`).join('')}</div>`
+const cab = (n) => `<div class="cab"><span class="linha m">${ic.volta} Treino 1</span><span class="m">${n} de 6</span><span class="linha">${ic.rel} 18:42</span></div>
+  <div class="seg">${[1, 2, 3, 4, 5, 6].map((k) => `<i class="${k < n ? 'f' : k === n ? 'a' : ''}"></i>`).join('')}</div>`
+const atalhos = `<div class="atalhos"><div>${ic.nota} Anotar</div><div style="color:var(--dor)">${ic.dor} Senti dor</div><div>${ic.mais} Mais</div></div>`
+
+const inicio = `<div class="tela">${status}
+  <div class="linha entre"><div><p class="p m">Sexta-feira, 13 de novembro</p><h1 style="font-size:28px">Olá, Ana</h1></div><div style="height:26px;opacity:.9">${M.logo.replace('<img', '<img style="height:26px"')}</div></div>
+  <div class="heroi"><div class="linha entre"><span class="chip" style="background:rgba(255,255,255,.18);color:#fff">HOJE</span><span class="pp" style="opacity:.75">Semana 10 de 12</span></div>
+    <h2 style="font-size:34px;margin-top:12px">Treino 1</h2><p class="p" style="opacity:.85;margin-top:4px">6 exercícios · ≈ 37 min</p>
+    <div class="btn">${ic.play} Começar treino</div></div>
+  <div class="c" style="margin-top:12px"><div class="linha entre"><h3 style="font-size:15px">Sua semana</h3><span class="p" style="color:var(--ok);font-weight:700">1 de 3 feitos</span></div>
+    <div class="dias">${[['S', '9', 'f'], ['T', '10', 'x'], ['Q', '11', 'x'], ['Q', '12', 'x'], ['S', '13', 'h'], ['S', '14', 'x'], ['D', '15', '']].map(([d, n, c]) => `<div class="${c}"><span>${d}</span><b>${c === 'f' ? '✓' : n}</b></div>`).join('')}</div></div>
+  <div class="c" style="margin-top:12px"><div class="linha entre"><h3 style="font-size:15px">Para você</h3><span class="pp m">1 de 3</span></div>
+    <div class="linha" style="margin-top:10px"><div class="op" style="border:0;padding:0;flex:1"><div class="ic">${ic.graf}</div><div><b>Seu relatório está pronto</b><span class="pp m">Evolução do ciclo e recado de ${M.coach}</span></div></div>${ic.seta}</div>
+    <div class="linha" style="justify-content:center;gap:6px;margin-top:12px"><i style="width:18px;height:5px;border-radius:9px;background:var(--marca-clara)"></i><i style="width:5px;height:5px;border-radius:9px;background:var(--linha)"></i><i style="width:5px;height:5px;border-radius:9px;background:var(--linha)"></i></div></div>
+  ${abas(0)}</div>`
+
+const foco = `<div class="tela">${status}${cab(3)}
+  <h2 style="font-size:23px;line-height:1.15">Cadeira Extensora Tradicional</h2>
+  <div class="linha" style="margin-top:8px"><span class="chip" style="background:rgba(244,114,182,.18);color:#f472b6">Dropset na S3 ${ic.info.replace('<svg', '<svg style="width:15px;height:15px"')}</span><span class="pp m">Semana passada: 38 kg × 10</span></div>
+  <div class="serie f" style="margin-top:14px"><span class="n">${ic.ok.replace('<svg', '<svg style="width:16px;height:16px"')}</span>Série 1<span style="margin-left:auto">38 kg × 10</span></div>
+  <div class="ativa"><div class="linha entre"><b style="font:700 15px Inter">Série 2 de 3</b><span class="pp m">meta: 10 reps</span></div>
+    <div class="duo"><div class="passo"><span>−</span><div><b>38</b><small>kg</small></div><span>+</span></div><div class="passo" style="grid-template-columns:40px 1fr 40px"><span>−</span><div><b>10</b><small>reps</small></div><span>+</span></div></div>
+    <div class="btn">${ic.ok} Série feita · descansar 90 s</div></div>
+  <div class="serie"><span class="n">3</span>Série 3 <span class="pp" style="color:#f472b6">+ 2 drops</span><span class="m" style="margin-left:auto">38 kg × 10</span></div>
+  ${atalhos}
+  <div class="rodape"><div class="linha entre"><span class="linha m" style="font:600 14px Inter">${ic.lista} Ver todos</span><span class="linha" style="font:700 15px Inter">Próximo: Remada Curvada ${ic.seta}</span></div></div></div>`
+
+const descanso = `<div class="tela">${status}${cab(3)}
+  <h2 style="font-size:23px;line-height:1.15">Cadeira Extensora Tradicional</h2>
+  <div class="serie f" style="margin-top:14px"><span class="n">${ic.ok.replace('<svg', '<svg style="width:16px;height:16px"')}</span>Série 1<span style="margin-left:auto">38 kg × 10</span></div>
+  <div class="serie f"><span class="n">${ic.ok.replace('<svg', '<svg style="width:16px;height:16px"')}</span>Série 2<span style="margin-left:auto">38 kg × 10</span></div>
+  <div class="serie"><span class="n">3</span>Série 3 <span class="pp" style="color:#f472b6">+ 2 drops</span><span class="m" style="margin-left:auto">38 kg × 10</span></div>
+  <div class="veu"></div>
+  <div class="folha"><div class="pega"></div><h3 style="font-size:17px;margin-bottom:4px">Cadeira Extensora · mais opções</h3>
+    <div class="op"><div class="ic">${ic.corpo}</div><div><b>Feito com o peso do corpo</b><span class="pp m">Anote só o peso extra</span></div><span class="tg"></span></div>
+    <div class="op"><div class="ic">${ic.lados}</div><div><b>Lados diferentes</b><span class="pp m">Abre Esquerdo e Direito</span></div><span class="tg"></span></div>
+    <div class="op"><div class="ic">${ic.sino}</div><div><b>Som do descanso</b><span class="pp m">Vale para o treino todo</span></div><span class="tg on"></span></div>
+    <div class="op"><div class="ic">${ic.info}</div><div><b>Como fazer o Dropset</b><span class="pp m">Explicação do método</span></div></div>
+    <div class="op"><div class="ic" style="color:#2dd4bf">${ic.dor}</div><div><b>Físio · orientação de ${M.coach}</b><span class="pp m">Aparece só se houver</span></div></div>
+    <div class="barra" style="margin-top:14px"><i></i></div>
+    <div class="linha entre"><div><span class="pp m">Descanso</span><div class="d" style="font:800 30px Montserrat">0:56</div></div><div class="btn sec" style="width:120px;height:48px;font-size:15px">Pular</div></div></div></div>`
+
+const iso = `<div class="tela">${status}${cab(6)}
+  <h2 style="font-size:23px;line-height:1.15">Prancha Frontal Isométrica</h2>
+  <div class="linha" style="margin-top:8px"><span class="chip">${ic.rel.replace('<svg', '<svg style="width:15px;height:15px"')} Isometria · 3 × 30 s</span><span class="pp m">Semana passada: 28 s</span></div>
+  <div class="anel"><div><div><b>0:18</b><p class="p m" style="margin-top:6px">Série 2 · meta 0:30</p></div></div></div>
+  <div class="btn">Parar e anotar 18 s</div>
+  <div class="serie f"><span class="n">${ic.ok.replace('<svg', '<svg style="width:16px;height:16px"')}</span>Série 1<span style="margin-left:auto">30 s</span></div>
+  <div class="serie"><span class="n">3</span>Série 3<span class="m" style="margin-left:auto">30 s</span></div>
+  ${atalhos}
+  <div class="rodape"><div class="linha entre"><span class="linha m" style="font:600 14px Inter">${ic.lista} Ver todos</span><span class="linha" style="font:700 15px Inter;color:var(--ok)">Último exercício · Concluir ${ic.seta}</span></div></div></div>`
+
+const pts = (f, n = 3) => `<span class="pont">${Array.from({ length: n }, (_, k) => `<i class="${k < f ? 'f' : ''}"></i>`).join('')}</span>`
+const lista = `<div class="tela">${status}
+  <div class="cab"><span class="linha m">${ic.volta} Voltar</span><span class="linha">${ic.rel} 18:42</span></div>
+  <h2 style="font-size:26px;margin-top:10px">Treino 1</h2><p class="p m">Semana 10 · 2 de 6 exercícios feitos · previsto 37 min</p>
+  <div class="item f" style="margin-top:14px"><span class="n">✓</span><div><b>Agachamento Livre Barra</b><span class="pp m">3 × 10 · 25,5 kg</span></div>${pts(3)}</div>
+  <div class="item f"><span class="n">✓</span><div><b>Supino Reto Barra</b><span class="pp m">3 × 10 · 32 kg</span></div>${pts(3)}</div>
+  <div class="item a"><span class="n">3</span><div><b>Cadeira Extensora</b><span class="pp" style="color:#f472b6">Dropset na S3</span></div>${pts(1)}</div>
+  <div class="item"><span class="n">4</span><div><b>Remada Curvada Pronada</b><span class="pp m">3 × 10 · última 44,5 kg</span></div>${pts(0)}</div>
+  <div class="grupo"><span>BISET · faça um depois do outro</span>
+    <div class="item" style="margin-top:6px"><span class="n">5</span><div><b>Elevação Lateral Halter</b><span class="pp m">3 × 10 · kg por lado</span></div>${pts(0)}</div>
+    <div class="item"><span class="n">6</span><div><b>Tríceps Pulley Barra Reta</b><span class="pp m">3 × 10 · última 56,5 kg</span></div>${pts(0)}</div></div>
+  <div class="rodape"><div class="btn">Continuar no exercício 3</div></div></div>`
+
+const telas = [
+  ['1 · Início', 'Um botão grande, a semana e uma fila única de avisos (em vez de vários cartões empilhados).', inicio],
+  ['2 · Treino: um exercício por vez', 'Série ativa com botões grandes de − e +. Um toque marca a série e liga o descanso.', foco],
+  ['3 · "Mais" + descanso', 'Tudo que é raro (peso do corpo, lados, som, método, físio) sai do cartão e fica num painel.', descanso],
+  ['4 · Isometria', 'Mesmo esqueleto: o campo de reps vira um cronômetro em segundos.', iso],
+  ['5 · Ver todos', 'Mapa do treino: onde estou, o que falta, grupos (Biset) juntos. Toque para pular.', lista],
+]
+document.body.innerHTML = `<div class="topo"><div class="logo">${M.logo}</div><p>${M.sub}</p>
+  <div class="paleta">${['--fundo', '--sup', '--sup2', '--marca', '--marca-clara', '--ok'].map((v) => `<i style="background:var(${v})"></i>`).join('')}</div></div>
+  <div class="fila">${telas.map(([h, p, x]) => `<div class="col"><h4>${h}</h4><p>${p}</p><div class="fone">${x}</div></div>`).join('')}</div>`
+</script>
+</body>
+</html>
