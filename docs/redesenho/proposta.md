@@ -84,11 +84,14 @@ Início · Treino · Evolução · **Você** (era "Conta").
 Pergunta do Victor (13/11/2026): ficariam pesadas? **Não, se seguirem as regras abaixo.** O app já usa a biblioteca `motion` (cascata dos cartões, festa de recorde, barra do descanso, deslizar entre semanas), então não entra peso novo de arquivo.
 - **Só mover, girar, escalar e mudar opacidade** (`transform` e `opacity`). Isso roda na placa de vídeo e fica liso até em celular antigo. Nunca animar altura, largura, sombra ou desfoque grande.
 - **Curtas:** 150 a 300 ms. No treino a animação confirma o toque, não faz o aluno esperar. O toque nunca fica travado até a animação acabar.
+- **Aprovado pelo Victor (13/11/2026) como direção:** as animações da lista abaixo entram no redesenho e continuam no app.
 - **Com função:** série marcada (✓ que "encaixa"), troca de exercício (desliza para o lado), painel "Mais" (sobe), cronômetro e anel da isometria, barrinha de progresso, festa de recorde e de treino concluído.
 - **Uma coisa por vez na tela.** O desenho novo ajuda: um exercício à vista em vez de 6 cartões animando juntos.
 - **Nada de cálculo pesado durante a animação** (lição já anotada no código: carregar o histórico durante o deslize travava a abertura no iPhone; hoje ele carrega depois, `useDepoisDaEntrada`).
 - **Respeitar "reduzir movimento"** do celular (já existe: `useReducedMotion`, variável `quieto`).
-- **Vidro/desfoque com moderação:** é o efeito mais caro que o app tem hoje; não aumentar a área desfocada.
+- **Menos vidro (decisão do Victor, 13/11/2026):** o efeito de vidro (desfoque do fundo, classes `.vidro`, `.lente`, `.vidro-escuro` e `BarraAbas` em `src/vidro.tsx` / `src/index.css`) passa a ser pouco usado. No lugar, **superfícies opacas** na cor da marca (como na prévia: cartões, barra de abas e painel "Mais" sem desfoque).
+  - Ganho: é o efeito mais caro do app; sem ele, rolagem e animações ficam mais lisas em celular fraco, e o texto fica mais legível em qualquer cor de contratante (SaaS).
+  - Em aberto: tirar de tudo ou manter em 1 ou 2 lugares de destaque (ex.: cartão do treino no Início)? A profundidade pode vir de borda fina, leve diferença de tom e sombra discreta.
 - **Medir no aparelho mais fraco que um aluno usa**, não só no iPhone do Victor. Se engasgar ali, simplifica.
 
 ## Riscos e cuidados

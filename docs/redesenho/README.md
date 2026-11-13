@@ -41,6 +41,10 @@ Pedido do Victor em 13/11/2026. **Nada aqui está aprovado nem implementado.** �
 - [ ] SaaS: tema claro e escuro, ou só escuro? O contratante escolhe 1 cor ou o app tira da logo?
 - [ ] O coach também entra neste redesenho ou fica para uma 2ª etapa? (Este rascunho cobre só o aluno.)
 
+## Já decidido pelo Victor (13/11/2026)
+- **Animações com função entram** (lista em `proposta.md`, seção "Animações"), seguindo as regras de leveza de lá.
+- **Menos efeito de vidro:** preferir superfícies opacas. Falta definir se o vidro some de vez ou fica em poucos lugares.
+
 ## Ordem sugerida (nada começa sem o ok do Victor)
 1. **Agora:** só este rascunho. Victor olha os prints e responde as decisões.
 2. Isometria juntada (entrega B).
