@@ -3,17 +3,18 @@ import { useMemo } from 'react'
 import { db } from '../../lib/firebase'
 import { COLECAO_CHECKINS, lerCheckin, type Checkin } from '../../lib/checkin'
 import { useLista } from '../../lib/hooks'
-import { corte30dias } from './useDores'
+import { corteCalculo, MES } from './useDores'
 
-// Do aluno (uid: últimos 30) ou, sem uid, de todos os dos últimos 30 dias (coach). Ordena aqui (sem índice composto).
-export function useCheckins(uid: string | null, todos = false) {
+// Do aluno (uid: últimos 30) ou, sem uid, de todos da janela de cálculo (coach). Ordena aqui (sem índice composto).
+export function useCheckins(uid: string | null, recentes = false) {
   const q = useMemo(() => {
     const c = collection(db, COLECAO_CHECKINS)
     if (uid) return query(c, where('alunoId', '==', uid))
-    return todos ? query(c, where('em', '>=', Timestamp.fromMillis(corte30dias()))) : null
-  }, [uid, todos])
+    return recentes ? query(c, where('em', '>=', Timestamp.fromMillis(corteCalculo()))) : null
+  }, [uid, recentes])
   const lista = useLista<object>(q)
-  const dados = useMemo(() => lista.dados.map((d) => lerCheckin(d.id, d)).filter((d): d is Checkin => !!d)
-    .sort((a, b) => (b.em?.toMillis() ?? Infinity) - (a.em?.toMillis() ?? Infinity) || b.id.localeCompare(a.id)).slice(0, uid ? 30 : 600), [lista.dados, uid])
-  return { ...lista, dados }
+  const todos = useMemo(() => lista.dados.map((d) => lerCheckin(d.id, d)).filter((d): d is Checkin => !!d)
+    .sort((a, b) => (b.em?.toMillis() ?? Infinity) - (a.em?.toMillis() ?? Infinity) || b.id.localeCompare(a.id)), [lista.dados])
+  const dados = useMemo(() => uid ? todos.slice(0, 30) : todos.filter((c) => (c.em?.toMillis() ?? Date.now()) >= Date.now() - MES).slice(0, 600), [todos, uid])
+  return { ...lista, dados, todos }
 }

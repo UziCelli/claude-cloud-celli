@@ -21,6 +21,7 @@ export type OrientacaoFisio = OrientacaoForm & {
   sinalRelatado: boolean
   em: Timestamp | null
   exercicios: string[] // nomes do catálogo onde o aluno vê o selo Físio no treino (rodada 4)
+  sinalEm: Timestamp | null // quando o aluno marcou o sinal (as sugestões ao coach usam para não esconder sinal novo)
 }
 
 export const metodoFisio = (id: string) => METODOS_FISIO.find((m) => m.id === id)
@@ -59,6 +60,7 @@ export function lerOrientacao(id: string, valor: unknown): OrientacaoFisio | nul
   if (precisaLiberacao({ metodoId: d.metodoId, contextoLiberacao: d.contextoLiberacao }) && !liberacao) return null
   const em = d.em && typeof (d.em as Timestamp).toMillis === 'function' ? d.em as Timestamp : null
   return { id, alunoId: d.alunoId, metodoId: d.metodoId, condicao: d.condicao, recado: d.recado, contextoLiberacao: d.contextoLiberacao, liberacao, alertasRevisados: true, recolhida: d.recolhida, sinalRelatado: d.sinalRelatado, em,
+    sinalEm: d.sinalEm && typeof (d.sinalEm as Timestamp).toMillis === 'function' ? d.sinalEm as Timestamp : null,
     exercicios: Array.isArray(d.exercicios) ? d.exercicios.filter((e): e is string => typeof e === 'string' && e.trim() !== '').slice(0, MAX_EXERCICIOS) : [] }
 }
 

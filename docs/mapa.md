@@ -299,8 +299,8 @@ Comece por aqui para achar onde mexer.
 - `alunoId`, `exercicio` (≤120), `articulacao` (8 ids de `lib/anatomia.ts` ou `outro`), `tipo` (`dor`\|`sensacao`), `intensidade` (0–10, inteiro), `momento` (`durante`\|`fim`), `texto?` (≤300; obrigatório em `outro`), `em`, `atualizadoEm`, `resposta?` (≤1000), `respondidoEm?`, `vistoEm?`.
 - Saúde: o aluno liberado só cria o próprio (hora do servidor) e não altera nem apaga. O coach com MFA lê, marca visto, responde (campo a campo) e transfere para `migradoPara`. Exclusão em `apagarAluno` e `limpeza-lgpd`; transferência em `darAcessoAoApp`. Lógica pura: `src/lib/dor.ts` (`dicaDaDor`, `validarDor`, `lerDor`).
 
-### `fisioCheckins/{id automático}` (rodada 4, 13/11/2026)
-- `alunoId`, `sono`, `estresse`, `cansaco`, `alimentacao` (inteiros 1–5; 1 = ruim, 5 = ótimo), `em`, `atualizadoEm`. Sem texto livre.
+### `fisioCheckins/{mesoId}_s{WW}_t{T}` (rodada 4, 13/11/2026; um por sessão desde a revisão do PR)
+- `alunoId`, `mesoId`, `semana`, `treino`, `sono`, `estresse`, `cansaco`, `alimentacao` (inteiros 1–5; 1 = ruim, 5 = ótimo), `em`, `atualizadoEm`. Sem texto livre.
 - Check-in do fim do treino (Hooper & McLean / Saw 2016; alimentação só contexto). Aluno liberado só cria; coach com MFA lê, apaga e transfere (`migradoPara`). Lógica: `src/lib/checkin.ts`. LGPD: exclusão, Limpeza LGPD, transferência.
 
 ### `usuarios/{uid}`

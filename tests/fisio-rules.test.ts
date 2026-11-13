@@ -18,6 +18,8 @@ beforeEach(async () => {
   await env.clearFirestore()
   await env.withSecurityRulesDisabled(async (c) => {
     const b = c.firestore() as unknown as Firestore
+    await setDoc(doc(b, 'mesos', 'mA'), { alunoId: 'ana', semanas: 4, frequencia: 3 })
+    await setDoc(doc(b, 'mesos', 'mB'), { alunoId: 'bia', semanas: 4, frequencia: 3 })
     for (const uid of ['ana', 'bia', 'coach', 'bloq', 'vencida', 'presencial']) await setDoc(doc(b, 'usuarios', uid), {
       papel: uid === 'coach' ? 'coach' : 'aluno', status: uid === 'bloq' ? 'bloqueado' : 'ativo',
       pagoAte: Timestamp.fromMillis(Date.now() + (uid === 'vencida' ? -10 : 30) * 86400_000),
@@ -176,30 +178,31 @@ describe('orientações: exercícios ligados', () => {
 })
 
 describe('check-in de recuperação (fisioCheckins): segurança', () => {
-  const ck = (uid?: string, id = 'c') => doc(db(uid), 'fisioCheckins', id)
-  const novo = (extra: object = {}) => ({ alunoId: 'ana', sono: 4, estresse: 3, cansaco: 2, alimentacao: 5, em: serverTimestamp(), atualizadoEm: serverTimestamp(), ...extra })
+  // F3 (revisão do PR): um check-in por sessão concluída; id = id do registro ({mesoId}_s{WW}_t{T}).
+  const ck = (uid?: string, id = 'mA_s01_t1') => doc(db(uid), 'fisioCheckins', id)
+  const novo = (extra: object = {}) => ({ alunoId: 'ana', mesoId: 'mA', semana: 1, treino: 1, sono: 4, estresse: 3, cansaco: 2, alimentacao: 5, em: serverTimestamp(), atualizadoEm: serverTimestamp(), ...extra })
   const existente = (alunoId = 'ana') => env.withSecurityRulesDisabled((c) =>
-    setDoc(doc(c.firestore() as unknown as Firestore, 'fisioCheckins', 'c'), { ...novo({ alunoId }), em: Timestamp.now(), atualizadoEm: Timestamp.now() }))
+    setDoc(doc(c.firestore() as unknown as Firestore, 'fisioCheckins', 'mA_s01_t1'), { ...novo({ alunoId }), em: Timestamp.now(), atualizadoEm: Timestamp.now() }))
   const agora = { atualizadoEm: serverTimestamp() }
 
   it('aluno liberado cria o próprio e lê pelo id e pela consulta', async () => {
-    await assertSucceeds(setDoc(ck('ana', 'a1'), novo()))
-    await assertSucceeds(setDoc(ck('ana', 'a2'), novo({ sono: 1, estresse: 5, cansaco: 1, alimentacao: 1 })))
-    await assertSucceeds(getDoc(ck('ana', 'a1')))
+    await assertSucceeds(setDoc(ck('ana'), novo()))
+    await assertSucceeds(setDoc(ck('ana', 'mA_s02_t3'), novo({ semana: 2, treino: 3, sono: 1, estresse: 5, cansaco: 1, alimentacao: 1 })))
+    await assertSucceeds(getDoc(ck('ana')))
     await assertSucceeds(getDocs(query(collection(db('ana'), 'fisioCheckins'), where('alunoId', '==', 'ana'))))
   })
   it('nega fora de 1–5, não inteiro, campo faltando ou a mais, texto livre e horas forjadas', async () => {
-    for (const extra of [{ sono: 0 }, { sono: 6 }, { estresse: 2.5 }, { cansaco: '3' }, { alimentacao: null }, { obs: 'cansado' }, { hack: true },
+    for (const extra of [{ sono: 0 }, { sono: 6 }, { estresse: 2.5 }, { cansaco: '3' }, { alimentacao: null }, { obs: 'cansado' }, { hack: true }, { semana: 1.5 },
       { em: Timestamp.fromMillis(Date.now() - 86400_000) }, { atualizadoEm: Timestamp.fromMillis(Date.now() + 86400_000) }])
-      await assertFails(setDoc(ck('ana', 'x'), novo(extra)))
+      await assertFails(setDoc(ck('ana'), novo(extra)))
     const { alimentacao: _a, ...semAlimentacao } = novo()
-    await assertFails(setDoc(ck('ana', 'x'), semAlimentacao))
+    await assertFails(setDoc(ck('ana'), semAlimentacao))
   })
   it('ninguém cria em nome de outro; bloqueado, vencido e sem login não criam nem leem', async () => {
-    await assertFails(setDoc(ck('bia', 'x'), novo()))
-    await assertFails(setDoc(ck('coach', 'x'), novo()))
-    for (const uid of ['bloq', 'vencida']) await assertFails(setDoc(ck(uid, 'x'), novo({ alunoId: uid })))
-    await assertFails(setDoc(ck(undefined, 'x'), novo()))
+    await assertFails(setDoc(ck('bia'), novo()))
+    await assertFails(setDoc(ck('coach'), novo()))
+    for (const uid of ['bloq', 'vencida']) await assertFails(setDoc(ck(uid), novo({ alunoId: uid })))
+    await assertFails(setDoc(ck(undefined), novo()))
     await existente()
     for (const uid of [undefined, 'bia', 'bloq', 'vencida']) await assertFails(getDoc(ck(uid)))
     await assertFails(getDocs(collection(db('ana'), 'fisioCheckins')))
@@ -211,13 +214,34 @@ describe('check-in de recuperação (fisioCheckins): segurança', () => {
     await assertSucceeds(getDoc(ck('coach')))
     await assertSucceeds(getDocs(collection(db('coach'), 'fisioCheckins')))
     await assertFails(updateDoc(ck('coach'), { sono: 5, ...agora }))
-    await assertFails(getDoc(doc(db('coach', false), 'fisioCheckins', 'c')))
-    await assertFails(deleteDoc(doc(db('coach', false), 'fisioCheckins', 'c')))
+    await assertFails(getDoc(doc(db('coach', false), 'fisioCheckins', 'mA_s01_t1')))
+    await assertFails(deleteDoc(doc(db('coach', false), 'fisioCheckins', 'mA_s01_t1')))
     await assertSucceeds(deleteDoc(ck('coach')))
   })
   it('transferência só para o destino registrado do presencial', async () => {
     await existente('presencial')
     await assertFails(updateDoc(ck('coach'), { alunoId: 'bia', ...agora }))
     await assertSucceeds(updateDoc(ck('coach'), { alunoId: 'ana', ...agora }))
+  })
+})
+
+describe('check-in por sessão (F3 da revisão do PR)', () => {
+  const ck = (uid: string, id: string) => doc(db(uid), 'fisioCheckins', id)
+  const novo = (extra: object = {}) => ({ alunoId: 'ana', mesoId: 'mA', semana: 1, treino: 1, sono: 4, estresse: 3, cansaco: 2, alimentacao: 5, em: serverTimestamp(), atualizadoEm: serverTimestamp(), ...extra })
+  it('um só por sessão: o segundo envio da mesma sessão é negado; sessões diferentes passam', async () => {
+    await assertSucceeds(setDoc(ck('ana', 'mA_s01_t1'), novo()))
+    await assertFails(setDoc(ck('ana', 'mA_s01_t1'), novo({ sono: 1 })))
+    await assertSucceeds(setDoc(ck('ana', 'mA_s01_t2'), novo({ treino: 2 })))
+  })
+  it('id precisa bater com a sessão e o meso precisa ser do próprio aluno', async () => {
+    await assertFails(setDoc(ck('ana', 'qualquer'), novo()))
+    await assertFails(setDoc(ck('ana', 'mA_s01_t2'), novo())) // id de outro treino
+    await assertFails(setDoc(ck('ana', 'mA_s1_t1'), novo({}))) // semana sem dois dígitos
+    await assertFails(setDoc(ck('ana', 'mB_s01_t1'), novo({ mesoId: 'mB' }))) // meso da bia
+    await assertFails(setDoc(ck('ana', 'mX_s01_t1'), novo({ mesoId: 'mX' }))) // meso que não existe
+    await assertFails(setDoc(ck('ana', 'mA_s05_t1'), novo({ semana: 5 }))) // além das semanas
+    await assertFails(setDoc(ck('ana', 'mA_s01_t4'), novo({ treino: 4 }))) // além da frequência
+    const { mesoId: _m, ...semMeso } = novo()
+    await assertFails(setDoc(ck('ana', 'mA_s01_t1'), semMeso))
   })
 })

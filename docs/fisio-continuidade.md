@@ -57,3 +57,12 @@ Para retomar: buscar a branch `ccr-0e483d63-az3bo7`, ler este documento e o diff
 - Ajustes dos prints (botão "Senti dor" visível; frase vazia do Físio do aluno) e os 6 pontos: métodos aplicados no treino (os 25), check-in de recuperação + "sentiu dor hoje?" no fim do treino, sugestões de polimento/conversar, cruzamentos com a anamnese, aba Físio.
 - Consulta ao Fable (desenho): a orientação ganha `exercicios` (não mexe em meso/motor); check-in com sono, estresse, cansaço (Hooper & McLean / Saw 2016) e alimentação só como contexto; números conservadores das sugestões; coach mantém 6 abas com "Treino | Físio" dentro de Métodos; aluno ganha a 5ª aba Físio.
 - Contexto de liberação pré-marcado e travado quando a anamnese diz cirurgia em 12 meses, gestação ou problema de osso/articulação/coluna (conservador; gestação não está na lista da pesquisa, decisão de segurança a confirmar com o Victor).
+
+## 13/11/2026 (manhã) — Claude: correções da revisão do PR (F1–F8)
+
+- F1/F8: o modal do selo no treino lê a orientação atual (fecha se recolhida; esconde protocolo se sinalizada) e tem o botão de sinal (`BotaoSinal.tsx`, compartilhado com a aba Físio).
+- F2: a chave da sugestão segue o evento mais recente entre todos os gatilhos (sinal usa `sinalEm`).
+- F3/F7: check-in com id da sessão (`registroId`), só create nas regras (idempotente); estados enviando/recebido/já respondido/erro com "Tentar de novo"; só para treino concluído há até 12 h.
+- F4/F5: `sugestoesFisio` corta a própria janela (`JANELA_CALCULO_DIAS` = 45); hooks devolvem `todos` (cálculo, sem corte de quantidade) e `dados` (exibição). Ficha e Alertas dão o mesmo resultado.
+- F6: erro de leitura (Físio ou base) mostra aviso, não "Tudo em dia", e não limpa dispensas.
+- A1 (cruzar cargas/volume/anamnese nas sugestões): proposta em `docs/fisio-a1-proposta.md`, aguardando o Victor.

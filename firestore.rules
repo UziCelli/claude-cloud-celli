@@ -403,16 +403,27 @@ service cloud.firestore {
       );
     }
 
-    // Check-in de recuperação no fim do treino (dado de saúde, rodada 4): fisioCheckins/{id automático} =
-    // { alunoId, sono, estresse, cansaco, alimentacao, em, atualizadoEm }, inteiros 1–5 (1 = ruim, 5 = ótimo).
+    // Check-in de recuperação no fim do treino (dado de saúde, rodada 4): fisioCheckins/{mesoId}_s{WW}_t{T} =
+    // { alunoId, mesoId, semana, treino, sono, estresse, cansaco, alimentacao, em, atualizadoEm }, inteiros 1–5 (1 = ruim, 5 = ótimo).
     // Sem texto livre. O aluno (liberado) só cria o próprio; o coach (2º fator) lê, apaga (LGPD) e transfere.
     function nota15(n) { return n is int && n >= 1 && n <= 5; }
     match /fisioCheckins/{id} {
       allow read: if isCoach() || (own(resource.data) && liberado());
       allow delete: if isCoach();
+      // Um por sessão concluída (revisão do PR, F3): id = id do registro ({mesoId}_s{WW}_t{T}), meso do próprio aluno.
+      // Só create: um segundo envio da mesma sessão é update e é negado (idempotente no servidor).
       allow create: if own(request.resource.data) && liberado()
-        && request.resource.data.keys().hasOnly(['alunoId', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
-        && request.resource.data.keys().hasAll(['alunoId', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasOnly(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasAll(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
+        && request.resource.data.mesoId is string
+        && request.resource.data.semana is int && request.resource.data.semana >= 1
+        && request.resource.data.treino is int && request.resource.data.treino >= 1
+        && id == request.resource.data.mesoId
+             + '_s' + (request.resource.data.semana < 10 ? '0' : '') + string(request.resource.data.semana)
+             + '_t' + string(request.resource.data.treino)
+        && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId == request.auth.uid
+        && request.resource.data.semana <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.semanas
+        && request.resource.data.treino <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.frequencia
         && nota15(request.resource.data.sono) && nota15(request.resource.data.estresse)
         && nota15(request.resource.data.cansaco) && nota15(request.resource.data.alimentacao)
         && request.resource.data.em == request.time

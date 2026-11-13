@@ -9,6 +9,7 @@ import { Botao, cascata, item } from '../../ui'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
 import { gerarCartaoTreino, limitar, type DadosTreino } from '../evolucao/cartaoStory'
 import { reduzirFoto } from '../../lib/foto'
+import type { SessaoCheckin } from '../../lib/checkin'
 import CheckinFim from '../fisio/CheckinFim'
 import ConviteFeedback from '../feedback/ConviteFeedback'
 import { IcCamera, IcSubir, IcTrofeu } from '../../icones'
@@ -55,7 +56,7 @@ export default function FimTreino({
   quieto: boolean | null
   voltar: () => void
   verTreino: () => void
-  checkin?: { uid: string; exercicios: string[] } // só no app do aluno (não no presencial do coach)
+  checkin?: { uid: string; exercicios: string[]; sessao: SessaoCheckin } // só no app do aluno (não no presencial do coach)
 }) {
   const { volumeKg, recordes, subiram } = resumo
   const comp = volumeKg > 0 ? comparacaoToneladas(volumeKg) : null

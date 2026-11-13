@@ -43,7 +43,7 @@ describe('orientações Físio', () => {
 })
 
 describe('rodada 4: selo no treino e cruzamentos com a anamnese', () => {
-  const base = { id: 'o', alunoId: 'ana', ...form(), recolhida: false, sinalRelatado: false, em: null, exercicios: ['Agachamento Livre Barra'] }
+  const base = { id: 'o', alunoId: 'ana', ...form(), recolhida: false, sinalRelatado: false, em: null, sinalEm: null, exercicios: ['Agachamento Livre Barra'] }
   it('lerOrientacao lê exercicios (lista de textos) e trata ausente como vazio', () => {
     const doc = { alunoId: 'ana', ...form(), recolhida: false, sinalRelatado: false }
     expect(lerOrientacao('o', doc)?.exercicios).toEqual([])

@@ -6,46 +6,53 @@ import type { RelatoDor } from './dor'
 
 export type TipoSugestao = 'polimento' | 'conversar'
 export type SugestaoFisio = { alunoId: string; tipo: TipoSugestao; motivo: string; chave: string }
+export type SinalFisio = { alunoId: string; id: string; em: number | null } // orientação com sinal de perigo (em = sinalEm)
 
 const DIA = 86400_000
+// Janela que as regras usam (a maior: 3 check-ins nos últimos 14 dias + base de 28 dias antes deles, com folga).
+// As consultas precisam trazer pelo menos isto; a função corta aqui para dar o mesmo resultado em qualquer tela.
+export const JANELA_CALCULO_DIAS = 45
 const ms = (t: { toMillis(): number } | null) => (t ? t.toMillis() : null)
 const diaDe = (m: number) => new Date(m - 3 * 3600_000).toISOString().slice(0, 10) // dia de São Paulo (UTC−3)
 
-type Entrada = {
-  dores: RelatoDor[]
-  checkins: Checkin[]
-  sinais: { alunoId: string; id: string }[] // orientações com sinal de perigo relatado e não recolhidas
-  agora: Date
-}
+type Entrada = { dores: RelatoDor[]; checkins: Checkin[]; sinais: SinalFisio[]; agora: Date }
 
-// Uma sugestão por (aluno, tipo): a primeira regra que bate dá o motivo. A chave muda com o último dado,
-// então uma sugestão dispensada (arquivados) só volta quando chegar dado novo.
+// Sinais a partir das orientações (só não recolhidas e com sinal). Hora = quando o aluno marcou (sinalEm).
+type OrientacaoComSinal = { id: string; alunoId: string; sinalRelatado: boolean; recolhida: boolean; sinalEm: { toMillis(): number } | null; em: { toMillis(): number } | null }
+export const sinaisDasOrientacoes = (os: OrientacaoComSinal[]): SinalFisio[] =>
+  os.filter((o) => o.sinalRelatado && !o.recolhida).map((o) => ({ alunoId: o.alunoId, id: o.id, em: ms(o.sinalEm ?? o.em) }))
+type Gatilho = { motivo: string; id: string; em: number } // motivo + evento que o disparou
+
+// Uma sugestão por (aluno, tipo). O motivo é o da regra mais importante; a chave é a do evento MAIS RECENTE entre
+// todos os gatilhos, então uma sugestão dispensada (arquivados) volta com qualquer evento novo que também dispare.
 export function sugestoesFisio({ dores, checkins, sinais, agora }: Entrada): SugestaoFisio[] {
   const fim = agora.getTime()
+  const naJanela = (m: number | null): m is number => m !== null && fim - m <= JANELA_CALCULO_DIAS * DIA
   const alunos = new Set([...dores.map((d) => d.alunoId), ...checkins.map((c) => c.alunoId), ...sinais.map((s) => s.alunoId)])
   const saida: SugestaoFisio[] = []
   for (const aluno of alunos) {
-    const ds = dores
-      .filter((d) => d.alunoId === aluno && d.tipo === 'dor' && ms(d.em) !== null)
-      .sort((a, b) => ms(a.em)! - ms(b.em)!)
-    const cs = checkins.filter((c) => c.alunoId === aluno && ms(c.em) !== null).sort((a, b) => ms(a.em)! - ms(b.em)!)
-    const sinal = sinais.find((s) => s.alunoId === aluno)
-    const conversar = motivoConversar(aluno, ds, sinal, fim)
-    if (conversar) saida.push({ alunoId: aluno, tipo: 'conversar', ...conversar })
-    const polimento = motivoPolimento(ds, cs, fim)
-    if (polimento) saida.push({ alunoId: aluno, tipo: 'polimento', ...polimento })
+    const ds = dores.filter((d) => d.alunoId === aluno && d.tipo === 'dor' && naJanela(ms(d.em))).sort((a, b) => ms(a.em)! - ms(b.em)!)
+    const cs = checkins.filter((c) => c.alunoId === aluno && naJanela(ms(c.em))).sort((a, b) => ms(a.em)! - ms(b.em)!)
+    const ss = sinais.filter((s) => s.alunoId === aluno)
+    for (const [tipo, gatilhos] of [['conversar', gatilhosConversar(ds, ss, fim)], ['polimento', gatilhosPolimento(ds, cs, fim)]] as const) {
+      if (!gatilhos.length) continue
+      const ultimo = gatilhos.reduce((a, b) => (b.em > a.em ? b : a))
+      saida.push({ alunoId: aluno, tipo, motivo: gatilhos[0].motivo, chave: `fisio_${tipo}_${aluno}_${ultimo.id}` })
+    }
   }
   return saida
 }
 
-const chave = (tipo: TipoSugestao, aluno: string, ultimoId: string) => `fisio_${tipo}_${aluno}_${ultimoId}`
+const ev = (d: RelatoDor) => ({ id: d.id, em: ms(d.em)! })
+const local = (a: string) => (a === 'outro' ? 'outro local' : a)
 
-function motivoConversar(aluno: string, ds: RelatoDor[], sinal: { id: string } | undefined, fim: number) {
-  if (sinal) return { motivo: 'Marcou um sinal de perigo numa orientação Físio.', chave: chave('conversar', aluno, sinal.id) }
+function gatilhosConversar(ds: RelatoDor[], ss: SinalFisio[], fim: number): Gatilho[] {
+  const g: Gatilho[] = []
+  for (const s of ss) g.push({ motivo: 'Marcou um sinal de perigo numa orientação Físio.', id: `${s.id}_${s.em ?? 0}`, em: s.em ?? 0 })
   const recentes = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA)
-  const forte = [...recentes].reverse().find((d) => d.intensidade >= 7)
-  if (forte) return { motivo: `Dor ${forte.intensidade}/10 em ${forte.articulacao === 'outro' ? 'outro local' : forte.articulacao} (${forte.exercicio}).`, chave: chave('conversar', forte.alunoId, forte.id) }
-  // Mesma articulação com dor ≥4 em 3 dias diferentes, ou persistindo por mais de 14 dias.
+  for (const d of [...recentes].reverse().filter((d) => d.intensidade >= 7))
+    g.push({ motivo: `Dor ${d.intensidade}/10 em ${local(d.articulacao)} (${d.exercicio}).`, ...ev(d) })
+  // Mesma articulação com dor ≥4 em 3 dias diferentes, ou persistindo por mais de 14 dias (dentro da janela).
   for (const art of new Set(ds.map((d) => d.articulacao))) {
     if (art === 'outro') continue
     const m = ds.filter((d) => d.articulacao === art && d.intensidade >= 4)
@@ -53,35 +60,39 @@ function motivoConversar(aluno: string, ds: RelatoDor[], sinal: { id: string } |
     const ultimo = m[m.length - 1]
     if (fim - ms(ultimo.em)! > 14 * DIA) continue // sem dor recente nessa articulação
     const dias = new Set(m.map((d) => diaDe(ms(d.em)!)))
-    if (dias.size >= 3) return { motivo: `Dor ≥4/10 em ${art} em ${dias.size} dias diferentes.`, chave: chave('conversar', ultimo.alunoId, ultimo.id) }
-    if (ms(ultimo.em)! - ms(m[0].em)! > 14 * DIA) return { motivo: `Dor ≥4/10 em ${art} há mais de 14 dias.`, chave: chave('conversar', ultimo.alunoId, ultimo.id) }
+    if (dias.size >= 3) g.push({ motivo: `Dor ≥4/10 em ${art} em ${dias.size} dias diferentes.`, ...ev(ultimo) })
+    else if (ms(ultimo.em)! - ms(m[0].em)! > 14 * DIA) g.push({ motivo: `Dor ≥4/10 em ${art} há mais de 14 dias.`, ...ev(ultimo) })
   }
   // 3 relatos seguidos (últimos 14 dias) com intensidade subindo.
   const u = recentes.slice(-3)
   if (u.length === 3 && u[0].intensidade < u[1].intensidade && u[1].intensidade < u[2].intensidade)
-    return { motivo: `Dor subindo nos últimos 3 relatos (${u.map((d) => d.intensidade).join(' → ')}/10).`, chave: chave('conversar', u[2].alunoId, u[2].id) }
-  return null
+    g.push({ motivo: `Dor subindo nos últimos 3 relatos (${u.map((d) => d.intensidade).join(' → ')}/10).`, ...ev(u[2]) })
+  return g
 }
 
-function motivoPolimento(ds: RelatoDor[], cs: Checkin[], fim: number) {
+function gatilhosPolimento(ds: RelatoDor[], cs: Checkin[], fim: number): Gatilho[] {
+  const g: Gatilho[] = []
   // ≥2 relatos de dor 4–6 na mesma articulação em 14 dias.
   const recentes = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA && d.intensidade >= 4 && d.intensidade <= 6 && d.articulacao !== 'outro')
   for (const art of new Set(recentes.map((d) => d.articulacao))) {
     const m = recentes.filter((d) => d.articulacao === art)
-    if (m.length >= 2) return { motivo: `${m.length} relatos de dor 4–6/10 em ${art} nos últimos 14 dias.`, chave: chave('polimento', m[0].alunoId, m[m.length - 1].id) }
+    if (m.length >= 2) g.push({ motivo: `${m.length} relatos de dor 4–6/10 em ${art} nos últimos 14 dias.`, ...ev(m[m.length - 1]) })
   }
   // Últimos 3 check-ins (todos nos últimos 14 dias) com recuperação ruim.
   const u = cs.slice(-3)
   if (u.length === 3 && fim - ms(u[0].em)! <= 14 * DIA) {
     const somas = u.map(somaRecuperacao)
-    if (somas.every((x) => x <= 7)) return { motivo: `Recuperação baixa em 3 check-ins seguidos (sono + estresse + cansaço: ${somas.join(', ')} de 15).`, chave: chave('polimento', u[2].alunoId, u[2].id) }
-    // Queda ≥30% sobre a média do próprio aluno (precisa de ≥6 check-ins nos 28 dias antes deles).
-    const ini = ms(u[0].em)!
-    const base = cs.filter((c) => ms(c.em)! < ini && ini - ms(c.em)! <= 28 * DIA).map(somaRecuperacao)
-    if (base.length >= 6) {
-      const media = base.reduce((a, b) => a + b, 0) / base.length
-      if (somas.every((x) => x <= media * 0.7)) return { motivo: `Recuperação 30% abaixo da média do aluno em 3 check-ins seguidos (média ${media.toFixed(1)}; agora ${somas.join(', ')}).`, chave: chave('polimento', u[2].alunoId, u[2].id) }
+    const ultimo = { id: u[2].id, em: ms(u[2].em)! }
+    if (somas.every((x) => x <= 7)) g.push({ motivo: `Recuperação baixa em 3 check-ins seguidos (sono + estresse + cansaço: ${somas.join(', ')} de 15).`, ...ultimo })
+    else {
+      // Queda ≥30% sobre a média do próprio aluno (precisa de ≥6 check-ins nos 28 dias antes deles).
+      const ini = ms(u[0].em)!
+      const base = cs.filter((c) => ms(c.em)! < ini && ini - ms(c.em)! <= 28 * DIA).map(somaRecuperacao)
+      if (base.length >= 6) {
+        const media = base.reduce((a, b) => a + b, 0) / base.length
+        if (somas.every((x) => x <= media * 0.7)) g.push({ motivo: `Recuperação 30% abaixo da média do aluno em 3 check-ins seguidos (média ${media.toFixed(1)}; agora ${somas.join(', ')}).`, ...ultimo })
+      }
     }
   }
-  return null
+  return g
 }

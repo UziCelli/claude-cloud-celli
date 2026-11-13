@@ -13,7 +13,10 @@ export const PERGUNTAS_CHECKIN = [
 ] as const
 export type CampoCheckin = (typeof PERGUNTAS_CHECKIN)[number]['id']
 export type CheckinForm = Record<CampoCheckin, number>
-export type Checkin = CheckinForm & { id: string; alunoId: string; em: Timestamp | null }
+// Sessão do treino (revisão do PR, F3): um check-in por sessão, id = registroId(mesoId, semana, treino).
+// Documentos antigos sem sessão continuam válidos (sessao = null); nada é inventado para eles.
+export type SessaoCheckin = { mesoId: string; semana: number; treino: number }
+export type Checkin = CheckinForm & { id: string; alunoId: string; em: Timestamp | null; sessao: SessaoCheckin | null }
 
 const nota = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 5
 
@@ -28,5 +31,7 @@ export function lerCheckin(id: string, valor: unknown): Checkin | null {
   const d = valor as Record<string, unknown>
   if (typeof d.alunoId !== 'string' || !d.alunoId || !checkinValido(d as Partial<CheckinForm>)) return null
   const em = d.em && typeof (d.em as Timestamp).toMillis === 'function' ? (d.em as Timestamp) : null
-  return { id, alunoId: d.alunoId, sono: d.sono as number, estresse: d.estresse as number, cansaco: d.cansaco as number, alimentacao: d.alimentacao as number, em }
+  const sessao = typeof d.mesoId === 'string' && Number.isInteger(d.semana) && Number.isInteger(d.treino)
+    ? { mesoId: d.mesoId, semana: d.semana as number, treino: d.treino as number } : null
+  return { id, alunoId: d.alunoId, sono: d.sono as number, estresse: d.estresse as number, cansaco: d.cansaco as number, alimentacao: d.alimentacao as number, em, sessao }
 }

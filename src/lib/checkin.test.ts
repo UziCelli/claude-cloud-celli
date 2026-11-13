@@ -19,5 +19,7 @@ describe('check-in', () => {
     expect(lerCheckin('c', { ...ok, sono: 9, alunoId: 'ana' })).toBeNull()
     expect(lerCheckin('c', { ...ok })).toBeNull()
     expect(lerCheckin('c', null)).toBeNull()
+    expect(lerCheckin('c', { ...ok, alunoId: 'ana' })?.sessao).toBeNull() // antigo, sem sessão
+    expect(lerCheckin('m_s01_t2', { ...ok, alunoId: 'ana', mesoId: 'm', semana: 1, treino: 2 })?.sessao).toEqual({ mesoId: 'm', semana: 1, treino: 2 })
   })
 })

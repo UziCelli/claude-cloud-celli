@@ -9,7 +9,7 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks
 import { inicioJanela } from '../../../lib/resumo'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../../lib/contato'
 import { saida, suave } from '../../../movimento'
-import { Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
+import { Aviso, Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
 import { useSugestoesFisio } from '../../fisio/useSugestoes'
 import { mesoAtual } from '../../aluno/mesoAtual'
@@ -23,7 +23,7 @@ export { calcularAlertas, type Reg }
 export function useArquivados() {
   const l = useLista<{ em: Timestamp | null }>(useMemo(() => collection(db, 'arquivados'), []))
   const chaves = useMemo(() => new Set(l.dados.map((d) => d.id)), [l.dados])
-  return { docs: l.dados, chaves, carregando: l.carregando, cache: l.cache }
+  return { docs: l.dados, chaves, carregando: l.carregando, cache: l.cache, erro: l.erro }
 }
 
 // Carrega tudo o que os alertas precisam (alunos, mesos, registros de 14 dias). O Início já tem esses dados
@@ -39,7 +39,8 @@ export function useAlertasCoach() {
   const r = calcularAlertas(alunos.dados, mesos.dados, registros.dados, agora, arquivados.chaves)
   const fisio = useSugestoesFisio(alunos.dados, arquivados.chaves)
   const carregando = alunos.carregando || mesos.carregando || registros.carregando || arquivados.carregando || fisio.carregando
-  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache) && !fisio.cache
+  const erroBase = [alunos, mesos, registros, arquivados].some((l) => l.erro) // leitura recusada não é "tudo em dia"
+  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache) && !erroBase && !fisio.cache && !fisio.erro
   // Uma vez por abertura da tela, com tudo carregado do servidor (o cache do aparelho pode estar incompleto,
   // e um alerta ainda não lido pareceria antigo).
   const limpou = useRef(false)
@@ -50,7 +51,7 @@ export function useAlertasCoach() {
   })
   const nomes = new Map(alunos.dados.map((x) => [x.id, x.nome]))
   const mesoDe = (id: string) => mesoAtual(mesos.dados.filter((d) => d.alunoId === id))?.doc.id
-  return { ...r, carregando, fisio: fisio.visiveis.map((x) => ({ ...x, aluno: nomes.get(x.alunoId) ?? 'Aluno', mesoId: mesoDe(x.alunoId) })) }
+  return { ...r, carregando, erroBase, erroFisio: fisio.erro, fisio: fisio.visiveis.map((x) => ({ ...x, aluno: nomes.get(x.alunoId) ?? 'Aluno', mesoId: mesoDe(x.alunoId) })) }
 }
 
 // A seção sai com animação quando o último cartão é arquivado (n vira 0).
@@ -146,7 +147,9 @@ export default function Alertas() {
         <p className="text-slate-400">Carregando…</p>
       ) : (
         <div className="space-y-6">
-          {a.total + a.fisio.length === 0 &&
+          {a.erroBase && <Aviso>Não foi possível carregar os alertas. Confira a conexão.</Aviso>}
+          {a.erroFisio && <Aviso>Não foi possível carregar as sugestões Físio. Confira a conexão.</Aviso>}
+          {a.total + a.fisio.length === 0 && !a.erroFisio && !a.erroBase &&
             (semInternet ? (
               <p className="text-slate-400">{TEXTO_SEM_INTERNET}</p>
             ) : (

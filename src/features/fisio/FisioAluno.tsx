@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react'
 import { metodoFisio, metodoLiberavel, type OrientacaoFisio } from '../../lib/fisio'
 import { TEXTO_SEM_INTERNET, useSemInternet } from '../../lib/hooks'
-import { Aviso, Botao, Cartao } from '../../ui'
+import { Aviso, Cartao } from '../../ui'
 import { BotaoVoltar } from '../../voltar'
-import { relatarSinalFisio } from './acoesFisio'
+import BotaoSinal from './BotaoSinal'
 import ConteudoMetodo from './ConteudoMetodo'
 import { type RelatoDor } from '../../lib/dor'
 import { ROTULO_LOCAL } from './RelatarDor'
@@ -32,33 +31,16 @@ export default function FisioAluno({ uid, pausado = false }: { uid: string; paus
 }
 
 function Orientacao({ o, pendente, pausado }: { o: OrientacaoFisio; pendente: boolean; pausado: boolean }) {
-  const [relatando, setRelatando] = useState(false)
-  const [erro, setErro] = useState('')
-  const trava = useRef(false)
   const m = metodoFisio(o.metodoId)!
-  const interrompida = o.sinalRelatado || relatando || !!erro
-  async function relatar() {
-    if (trava.current) return
-    trava.current = true
-    // A orientação de parada independe de internet ou confirmação do servidor.
-    setRelatando(true)
-    setErro('')
-    try { await relatarSinalFisio(o.id); setRelatando(false) }
-    catch { setErro('Não conseguimos confirmar o envio do relato. Fale diretamente com seu coach.'); setRelatando(false) }
-    finally { trava.current = false }
-  }
   return <Cartao>
     <h2 className="mb-3 font-semibold">{m.id} · {m.nome}</h2>
     <p className="mb-3 text-sm">Condição informada: {o.condicao}</p>
     {o.exercicios.length > 0 && <p className="mb-3 text-sm text-slate-300">No seu treino em: {o.exercicios.join(', ')}</p>}
-    {interrompida && <div className="mb-3" role="alert"><Aviso>Pare este exercício e procure médico ou fisioterapeuta. Não espere uma resposta do coach para buscar atendimento. O protocolo desta orientação foi ocultado.</Aviso></div>}
-    {!interrompida && !pausado && o.recado && <p className="mb-3 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {o.recado}</p>}
-    {o.liberacao && <p className="mb-3 text-xs text-slate-300">Liberação registrada pelo coach: {o.liberacao.profissional} · {o.liberacao.registro} · {o.liberacao.data}</p>}
-    <ConteudoMetodo metodo={m} protocolo={!interrompida && !pausado && metodoLiberavel(m.id)} />
-    {!o.sinalRelatado && <Botao className="mt-3 w-full" tipo="perigo" disabled={relatando} onClick={relatar}>{relatando ? 'Relato aguardando confirmação…' : erro ? 'Tentar enviar relato novamente' : 'Estou com um desses sinais de alerta'}</Botao>}
-    {(relatando || (o.sinalRelatado && pendente)) && <p role="status" className="mt-2 text-sm text-amber-200">Aguardando sincronização do relato. Se estiver sem internet, fale diretamente com seu coach.</p>}
-    {o.sinalRelatado && !pendente && !relatando && <p role="status" className="mt-2 text-sm">Relato registrado para o coach.</p>}
-    {erro && <p role="status" className="mt-2 text-sm text-amber-200">{erro}</p>}
+    <BotaoSinal id={o.id} sinalRelatado={o.sinalRelatado} pendente={pendente}>{(interrompida) => <>
+      {!interrompida && !pausado && o.recado && <p className="mb-3 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {o.recado}</p>}
+      {o.liberacao && <p className="mb-3 text-xs text-slate-300">Liberação registrada pelo coach: {o.liberacao.profissional} · {o.liberacao.registro} · {o.liberacao.data}</p>}
+      <ConteudoMetodo metodo={m} protocolo={!interrompida && !pausado && metodoLiberavel(m.id)} />
+    </>}</BotaoSinal>
   </Cartao>
 }
 

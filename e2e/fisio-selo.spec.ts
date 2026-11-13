@@ -1,5 +1,5 @@
 import { devices, expect, test, type Page } from '@playwright/test'
-import { ANAMNESE_MINIMA, criarAluno, criarAnamnese, criarCoach, criarMeso, hojeSaoPaulo, limparEmuladores } from './seed'
+import { ANAMNESE_MINIMA, criarAluno, criarAnamnese, criarCoach, criarMeso, gravarDoc, hojeSaoPaulo, limparEmuladores } from './seed'
 
 test.use({ ...devices['Pixel 7'] })
 const senha = 'senha123'
@@ -72,4 +72,39 @@ test('anamnese com cirurgia recente trava o contexto de liberação em "sim"', a
   await expect(ctx).toBeDisabled()
   await expect(ctx).toHaveValue('sim')
   await expect(page.getByText('cirurgia nos últimos 12 meses')).toBeVisible()
+})
+
+const orientacao = (extra: Record<string, unknown> = {}) => ({
+  alunoId: ana, metodoId: 'M04', condicao: 'Queixa informada de ombro', recado: 'Vá com calma', contextoLiberacao: false, liberacao: null, alertasRevisados: true,
+  recolhida: false, sinalRelatado: false, exercicios: ['Supino Reto Barra'], em: new Date(), atualizadoEm: new Date(), ...extra,
+})
+
+test('modal aberto fecha sozinho quando o coach recolhe (sem recarregar)', async ({ browser }) => {
+  await gravarDoc('fisioOrientacoes/regressaoF1', orientacao())
+  const ctx = await browser.newContext({ ...devices['Pixel 7'] })
+  const aluno = await ctx.newPage()
+  await entrar(aluno, 'ana.selo@exemplo.com', /Olá, Ana/)
+  await aluno.goto(`/#/treino/${mesoId}/1/1`)
+  await aluno.getByRole('button', { name: 'Físio · M04' }).click()
+  await expect(aluno.getByText('Sugestão inicial — ajustar individualmente', { exact: true })).toBeVisible()
+  await gravarDoc('fisioOrientacoes/regressaoF1', orientacao({ recolhida: true }))
+  await expect(aluno.getByRole('dialog', { name: 'Físio M04' })).toHaveCount(0)
+  await expect(aluno.getByText('Sugestão inicial — ajustar individualmente', { exact: true })).toHaveCount(0)
+  await ctx.close()
+})
+
+test('sinal de alerta pelo modal do treino esconde o protocolo na hora', async ({ browser }) => {
+  await gravarDoc('fisioOrientacoes/regressaoF8', orientacao({ exercicios: ['Agachamento Livre Halter'] }))
+  const ctx = await browser.newContext({ ...devices['Pixel 7'] })
+  const aluno = await ctx.newPage()
+  await entrar(aluno, 'ana.selo@exemplo.com', /Olá, Ana/)
+  await aluno.goto(`/#/treino/${mesoId}/1/1`)
+  await aluno.getByRole('button', { name: 'Físio · M04' }).click()
+  const modal = aluno.getByRole('dialog', { name: 'Físio M04' })
+  await expect(modal.getByText('Sugestão inicial — ajustar individualmente', { exact: true })).toBeVisible()
+  await modal.getByRole('button', { name: 'Estou com um desses sinais de alerta' }).click()
+  await expect(modal.getByRole('alert')).toContainText('Pare este exercício')
+  await expect(modal.getByText('Sugestão inicial — ajustar individualmente', { exact: true })).toHaveCount(0)
+  await expect(modal.getByText('Vá com calma')).toHaveCount(0)
+  await ctx.close()
 })

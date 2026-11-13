@@ -87,8 +87,14 @@ test('aluno envia o check-in; 3 ruins seguidos viram sugestão de polimento para
   for (const p of ['Como você dormiu esta noite?', 'Como está o seu estresse?', 'Cansaço ou dor muscular no corpo', 'Como você se alimentou hoje?'])
     await page.getByRole('button', { name: `${p} 2`, exact: true }).click()
   await page.getByRole('button', { name: 'Enviar', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Como você está?' })).toHaveCount(0)
+  await expect(page.getByText('Recebido pelo seu coach.')).toBeVisible()
   await expect.poll(async () => (await listarDocs('fisioCheckins')).length).toBe(3)
+  // F3: reabrir o resumo não pergunta de novo e continua 1 documento da sessão.
+  await page.getByRole('button', { name: 'Ver treino' }).click()
+  await page.getByRole('button', { name: 'Ver resumo' }).click()
+  await expect(page.getByRole('heading', { name: /Treino concluído/ })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Como você está?' })).toHaveCount(0)
+  expect((await listarDocs('fisioCheckins')).filter((d) => d.fields.mesoId?.stringValue === mesoId).length).toBe(1)
 
   const ctx = await browser.newContext({ ...devices['Pixel 7'] })
   const c = await ctx.newPage()
@@ -106,4 +112,20 @@ test('aluno envia o check-in; 3 ruins seguidos viram sugestão de polimento para
   await c.getByRole('button', { name: 'Dispensar' }).click()
   await expect(c.getByRole('heading', { name: /Físio · sugestões/ })).toHaveCount(0)
   await ctx.close()
+})
+
+test('envio offline mostra pendente e, online, "Recebido pelo seu coach"', async ({ page, context }) => {
+  const bia = await criarAluno('Bia Exemplo', 'bia.checkin@exemplo.com', senha)
+  const w = { w1: [8, 8, 8, null, null, null], w2: [8, 8, 8, null, null, null], w3: [8, 8, 8, null, null, null], w4: [8, 8, 8, null, null, null] }
+  mesoId = await criarMeso({ alunoId: bia, nome: 'Meso Bia', frequencia: 3, semanas: 4, inicio: hojeSaoPaulo(), pausaS: 60, divisao: { t1: [{ slotId: 'a', nome: 'Agachamento Livre Halter' }], t2: [{ slotId: 'a', nome: 'Levantamento Terra Barra' }], t3: [{ slotId: 'a', nome: 'Rosca Direta Barra' }] }, progressao: { principais: w, auxiliares: w } })
+  await entrar(page, 'bia.checkin@exemplo.com', /Olá, Bia/)
+  await concluir(page, 1)
+  await context.setOffline(true)
+  for (const p of ['Como você dormiu esta noite?', 'Como está o seu estresse?', 'Cansaço ou dor muscular no corpo', 'Como você se alimentou hoje?'])
+    await page.getByRole('button', { name: `${p} 4`, exact: true }).click()
+  await page.getByRole('button', { name: 'Enviar', exact: true }).click()
+  await expect(page.getByText('Salvo no aparelho; vai para o seu coach quando houver internet.')).toBeVisible()
+  await context.setOffline(false)
+  await expect(page.getByText('Recebido pelo seu coach.')).toBeVisible()
+  await expect.poll(async () => (await listarDocs('fisioCheckins')).filter((d) => d.fields.mesoId?.stringValue === mesoId).length).toBe(1)
 })

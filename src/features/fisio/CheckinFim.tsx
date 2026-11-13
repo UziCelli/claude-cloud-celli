@@ -1,22 +1,41 @@
 import { useState } from 'react'
-import { checkinValido, PERGUNTAS_CHECKIN, type CampoCheckin, type CheckinForm } from '../../lib/checkin'
+import { registroId } from '../../lib/conversores'
+import { useSemInternet } from '../../lib/hooks'
+import { checkinValido, PERGUNTAS_CHECKIN, type CampoCheckin, type CheckinForm, type SessaoCheckin } from '../../lib/checkin'
 import { Botao } from '../../ui'
-import { registrarCheckin } from './acoesFisio'
+import { checkinJaExiste, registrarCheckin } from './acoesFisio'
 import RelatarDor from './RelatarDor'
+import { useCheckins } from './useCheckins'
 
 const chip = (on: boolean) => `min-h-11 rounded-xl border px-3 text-sm font-semibold ${on ? 'border-marca-400 bg-marca-600 text-white' : 'border-slate-700 bg-slate-950 text-slate-200'}`
 
-// "Como você está?" no fim do treino do aluno. Enviar e Pular fazem o cartão sumir; Pular não grava nada.
-export default function CheckinFim({ uid, exercicios }: { uid: string; exercicios: string[] }) {
-  const [feito, setFeito] = useState(false)
+type Estado = 'form' | 'enviando' | 'recebido' | 'ja' | 'erro' | 'pulado'
+
+// "Como você está?" no fim do treino do aluno: um por sessão (id = registroId). Some se a sessão já tem resposta
+// (servidor ou localStorage). Enviar mostra o andamento; Pular grava só o localStorage.
+export default function CheckinFim({ uid, exercicios, sessao }: { uid: string; exercicios: string[]; sessao: SessaoCheckin }) {
+  const id = registroId(sessao.mesoId, sessao.semana, sessao.treino)
+  const chave = `forca-checkin-${id}`
+  const [estado, setEstado] = useState<Estado>('form')
   const [dor, setDor] = useState<boolean | null>(null)
   const [n, setN] = useState<Partial<CheckinForm>>({})
-  if (feito) return null
+  const lista = useCheckins(uid)
+  const offline = useSemInternet()
+  if (estado === 'pulado') return null
+  if (estado === 'form' && (lista.carregando || localStorage.getItem(chave) || lista.todos.some((c) => c.id === id))) return null
   const enviar = () => {
     if (!checkinValido(n)) return
-    registrarCheckin(uid, n).catch(() => {}) // sem await: offline fica na fila
-    setFeito(true)
+    setEstado('enviando')
+    // Sem await: offline fica na fila e o treino não espera. Não marca o localStorage aqui: o envio pendente já aparece
+    // na lista local (o cartão some ao voltar) e, se o servidor recusar, o documento sai da lista e o cartão volta.
+    registrarCheckin(uid, sessao, n).then(() => setEstado('recebido'), async () => {
+      const existe = await checkinJaExiste(sessao).catch(() => false)
+      setEstado(existe ? 'ja' : 'erro')
+    })
   }
+  if (estado !== 'form' && estado !== 'erro') return <section aria-label="Como você está?" role="status" className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm">
+    {estado === 'recebido' ? 'Recebido pelo seu coach.' : estado === 'ja' ? 'Você já respondeu este treino.' : offline ? 'Salvo no aparelho; vai para o seu coach quando houver internet.' : 'Enviando…'}
+  </section>
   return <section aria-label="Como você está?" className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4">
     <div>
       <h2 className="text-lg font-bold">Como você está?</h2>
@@ -35,9 +54,10 @@ export default function CheckinFim({ uid, exercicios }: { uid: string; exercicio
       </div>
       <div className="mt-1 flex justify-between text-xs text-slate-400"><span>1 · {p.ruim}</span><span>5 · {p.bom}</span></div>
     </fieldset>)}
+    {estado === 'erro' && <p role="alert" className="text-sm text-amber-200">Não conseguimos enviar. Confira a conexão e tente de novo.</p>}
     <div className="flex gap-2">
-      <Botao tipo="primario" tamanho="lg" className="flex-1" disabled={!checkinValido(n)} onClick={enviar}>Enviar</Botao>
-      <Botao tipo="fantasma" tamanho="lg" onClick={() => setFeito(true)}>Pular</Botao>
+      <Botao tipo="primario" tamanho="lg" className="flex-1" disabled={!checkinValido(n)} onClick={enviar}>{estado === 'erro' ? 'Tentar de novo' : 'Enviar'}</Botao>
+      <Botao tipo="fantasma" tamanho="lg" onClick={() => { localStorage.setItem(chave, 'pulado'); setEstado('pulado') }}>Pular</Botao>
     </div>
   </section>
 }

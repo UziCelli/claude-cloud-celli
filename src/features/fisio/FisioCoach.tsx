@@ -17,8 +17,8 @@ import { descreverDor } from './FisioAluno'
 import { somaRecuperacao } from '../../lib/checkin'
 import { useArquivados } from '../coach/alertas/Alertas'
 import { useCheckins } from './useCheckins'
-import { corte30dias, useDores } from './useDores'
-import { sugestoesFisio } from '../../lib/sugestoesFisio'
+import { useDores } from './useDores'
+import { sinaisDasOrientacoes, sugestoesFisio } from '../../lib/sugestoesFisio'
 import { useOrientacoes } from './useOrientacoes'
 
 const rotuloResposta = (id: string, v: unknown) => PERGUNTAS.flatMap((e) => e.perguntas).flatMap((p) => ('opcoes' in p && p.id === id ? p.opcoes.filter((o) => o.id === v) : [])).map((o) => o.rotulo)[0]
@@ -31,7 +31,7 @@ export default function FisioCoach({ uid }: { uid: string }) {
   const dores = useDores(uid)
   const checkins = useCheckins(uid)
   const arquivados = useArquivados().chaves
-  const sugestoes = useMemo(() => sugestoesFisio({ dores: dores.dados.filter((d) => (d.em?.toMillis() ?? Date.now()) >= corte30dias()), checkins: checkins.dados.filter((c) => (c.em?.toMillis() ?? Date.now()) >= corte30dias()), sinais: lista.dados.filter((o) => o.sinalRelatado && !o.recolhida), agora: new Date() }).filter((x) => !arquivados.has(x.chave)), [dores.dados, checkins.dados, lista.dados, arquivados])
+  const sugestoes = useMemo(() => sugestoesFisio({ dores: dores.todos, checkins: checkins.todos, sinais: sinaisDasOrientacoes(lista.dados), agora: new Date() }).filter((x) => !arquivados.has(x.chave)), [dores.todos, checkins.todos, lista.dados, arquivados])
   const offline = useSemInternet()
   const [f0, setF] = useState(vazio)
   const [exercicios, setExercicios] = useState<string[]>([])
