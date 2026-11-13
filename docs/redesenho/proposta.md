@@ -80,6 +80,17 @@ Início · Treino · Evolução · **Você** (era "Conta").
 - Físio vira item dentro de "Você" e aparece no Início/Treino **só para quem tem orientação**. A maioria dos alunos não tem, e hoje a aba ocupa lugar para todos.
 - "Você" organizado em grupos: Meu corpo (peso, avaliações, anamnese, físio) · Plano (mensalidade, Pix) · App (avisos, como usar, guia de métodos, opinião) · Privacidade e sair.
 
+## Animações (motion design)
+Pergunta do Victor (13/11/2026): ficariam pesadas? **Não, se seguirem as regras abaixo.** O app já usa a biblioteca `motion` (cascata dos cartões, festa de recorde, barra do descanso, deslizar entre semanas), então não entra peso novo de arquivo.
+- **Só mover, girar, escalar e mudar opacidade** (`transform` e `opacity`). Isso roda na placa de vídeo e fica liso até em celular antigo. Nunca animar altura, largura, sombra ou desfoque grande.
+- **Curtas:** 150 a 300 ms. No treino a animação confirma o toque, não faz o aluno esperar. O toque nunca fica travado até a animação acabar.
+- **Com função:** série marcada (✓ que "encaixa"), troca de exercício (desliza para o lado), painel "Mais" (sobe), cronômetro e anel da isometria, barrinha de progresso, festa de recorde e de treino concluído.
+- **Uma coisa por vez na tela.** O desenho novo ajuda: um exercício à vista em vez de 6 cartões animando juntos.
+- **Nada de cálculo pesado durante a animação** (lição já anotada no código: carregar o histórico durante o deslize travava a abertura no iPhone; hoje ele carrega depois, `useDepoisDaEntrada`).
+- **Respeitar "reduzir movimento"** do celular (já existe: `useReducedMotion`, variável `quieto`).
+- **Vidro/desfoque com moderação:** é o efeito mais caro que o app tem hoje; não aumentar a área desfocada.
+- **Medir no aparelho mais fraco que um aluno usa**, não só no iPhone do Victor. Se engasgar ali, simplifica.
+
 ## Riscos e cuidados
 - **Quem gosta de ver tudo de uma vez** (aluno antigo, treino curto): por isso existe o "Ver todos". Decidir se ele pode ser a tela inicial por preferência.
 - **Coach no presencial usa a mesma `Treino.tsx`** (com `coach`), para vários alunos em sequência. O redesenho precisa de um modo dele, ou ele fica na lista atual. Decisão de arquiteto.
