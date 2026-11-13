@@ -103,6 +103,7 @@ export default function MesosDoAluno({ uid }: { uid: string }) {
         <div className="mb-3 flex flex-wrap gap-2">
           <Botao onClick={() => ir(`/aluno/${uid}/evolucao`)}>Evolução</Botao>
           <Botao onClick={() => ir(`/aluno/${uid}/avaliacoes`)}>Avaliação física</Botao>
+          <Botao onClick={() => ir(`/aluno/${uid}/fisio`)}>Físio · orientações</Botao>
           <Botao className="inline-flex items-center gap-1.5" onClick={() => ir(`/aluno/${uid}/anamnese`)}>
             Anamnese
             {atencao && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-300">Atenção</span>}

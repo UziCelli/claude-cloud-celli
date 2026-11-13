@@ -299,6 +299,154 @@ service cloud.firestore {
         && request.resource.data.atualizadoEm == request.time;
     }
 
+    // Métodos enviáveis (todos têm sinais de perigo: próprios ou ALERTA_GERAL). Os testes cruzam estas listas com src/data/fisio.ts.
+    function fisioLiberavel(m) {
+      return m in ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12', 'M13',
+        'M14', 'M15', 'M16', 'M17', 'M18', 'M19', 'M20', 'M21', 'M22', 'M23', 'M24', 'M25'];
+    }
+    function fisioExigeLiberacao(m) {
+      return m in ['M01', 'M02', 'M03', 'M07', 'M08', 'M16', 'M18', 'M20', 'M22', 'M24', 'M25'];
+    }
+    function textoFisio(t, max) {
+      return t is string && t.size() <= max && t.matches('.*[^\\s].*');
+    }
+    function liberacaoFisio(l) {
+      return l is map && l.keys().hasOnly(['profissional', 'registro', 'data'])
+        && l.keys().hasAll(['profissional', 'registro', 'data'])
+        && textoFisio(l.profissional, 120) && textoFisio(l.registro, 80)
+        && l.data is string && l.data.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && timestamp.date(int(l.data.split('-')[0]), int(l.data.split('-')[1]), int(l.data.split('-')[2])) <= request.time;
+    }
+    // Lista de nomes de exercício (selo Físio no treino): até 10, cada nome com texto, até 120.
+    function exercicioFisio(l, i) {
+      return l.size() <= i || textoFisio(l[i], 120);
+    }
+    function exerciciosFisio(l) {
+      return l is list && l.size() <= 10
+        && exercicioFisio(l, 0) && exercicioFisio(l, 1) && exercicioFisio(l, 2) && exercicioFisio(l, 3) && exercicioFisio(l, 4)
+        && exercicioFisio(l, 5) && exercicioFisio(l, 6) && exercicioFisio(l, 7) && exercicioFisio(l, 8) && exercicioFisio(l, 9);
+    }
+    function alunoFisio(uid) {
+      return uid is string && get(/databases/$(database)/documents/usuarios/$(uid)).data.papel == 'aluno'
+        && !exists(/databases/$(database)/documents/exclusoes/$(uid));
+    }
+    match /fisioOrientacoes/{id} {
+      allow read: if isCoach() || (liberado() && own(resource.data) && resource.data.recolhida == false);
+      allow delete: if isCoach(); // exclusão LGPD
+      allow create: if isCoach()
+        && request.resource.data.keys().hasOnly(['alunoId', 'metodoId', 'condicao', 'recado', 'contextoLiberacao', 'liberacao', 'alertasRevisados', 'recolhida', 'sinalRelatado', 'em', 'atualizadoEm', 'exercicios'])
+        && (!('exercicios' in request.resource.data) || exerciciosFisio(request.resource.data.exercicios))
+        && request.resource.data.keys().hasAll(['alunoId', 'metodoId', 'condicao', 'recado', 'contextoLiberacao', 'liberacao', 'alertasRevisados', 'recolhida', 'sinalRelatado', 'em', 'atualizadoEm'])
+        && alunoFisio(request.resource.data.alunoId)
+        && fisioLiberavel(request.resource.data.metodoId)
+        && textoFisio(request.resource.data.condicao, 300)
+        && request.resource.data.recado is string && request.resource.data.recado.size() <= 2000
+        && request.resource.data.contextoLiberacao is bool
+        && (request.resource.data.liberacao == null || liberacaoFisio(request.resource.data.liberacao))
+        && (!(fisioExigeLiberacao(request.resource.data.metodoId) || request.resource.data.contextoLiberacao)
+            || request.resource.data.liberacao != null)
+        && request.resource.data.alertasRevisados == true
+        && request.resource.data.recolhida == false && request.resource.data.sinalRelatado == false
+        && request.resource.data.em == request.time && request.resource.data.atualizadoEm == request.time;
+      // Edições campo a campo: nenhuma edição substitui conteúdo nem apaga sinal concorrente.
+      allow update: if isCoach() && request.resource.data.atualizadoEm == request.time && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recolhida', 'atualizadoEm'])
+          && request.resource.data.recolhida == true)
+        // Exercícios do treino com esta orientação (selo Físio): só a lista, só enquanto não recolhida.
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['exercicios', 'atualizadoEm'])
+          && resource.data.recolhida == false
+          && exerciciosFisio(request.resource.data.exercicios))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alunoId', 'atualizadoEm'])
+          && alunoFisio(request.resource.data.alunoId)
+          && get(/databases/$(database)/documents/usuarios/$(resource.data.alunoId)).data.get('migradoPara', '') == request.resource.data.alunoId)
+      );
+      allow update: if liberado() && own(resource.data) && resource.data.recolhida == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sinalRelatado', 'sinalEm', 'atualizadoEm'])
+        && request.resource.data.sinalRelatado == true && resource.data.sinalRelatado == false
+        && request.resource.data.sinalEm == request.time && request.resource.data.atualizadoEm == request.time;
+    }
+
+    // Relato de dor do treino (dado de saúde, Etapa 3): fisioDores/{id automático} = { alunoId, exercicio,
+    // articulacao, tipo, intensidade, momento, texto?, em, atualizadoEm, resposta?, respondidoEm?, vistoEm? }.
+    // O aluno (liberado) só cria o próprio, não altera nem apaga. O coach (2º fator) lê, marca visto, responde,
+    // transfere (presencial → conta) e apaga (LGPD). Ids das articulações = src/lib/anatomia.ts + 'outro'.
+    match /fisioDores/{id} {
+      allow read: if isCoach() || (own(resource.data) && liberado());
+      allow delete: if isCoach();
+      allow create: if own(request.resource.data) && liberado()
+        && request.resource.data.keys().hasOnly(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'texto', 'mesoId', 'semana', 'treino', 'slotId', 'em', 'atualizadoEm'])
+        // A1: treino do relato (opcional; relatos antigos não têm). Se vier, vem inteiro e o meso é do próprio aluno.
+        && (!('mesoId' in request.resource.data)
+            || (request.resource.data.keys().hasAll(['mesoId', 'semana', 'treino', 'slotId'])
+                && request.resource.data.semana is int && request.resource.data.treino is int
+                && request.resource.data.slotId is string && request.resource.data.slotId.size() <= 60
+                && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId == request.auth.uid))
+        && (('mesoId' in request.resource.data) || !request.resource.data.keys().hasAny(['semana', 'treino', 'slotId']))
+        && request.resource.data.keys().hasAll(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'em', 'atualizadoEm'])
+        && textoFisio(request.resource.data.exercicio, 120)
+        && request.resource.data.articulacao in ['ombro', 'cotovelo', 'punho', 'cervical', 'lombar', 'quadril', 'joelho', 'tornozelo', 'outro']
+        && request.resource.data.tipo in ['dor', 'sensacao']
+        && request.resource.data.intensidade is int
+        && request.resource.data.intensidade >= 0 && request.resource.data.intensidade <= 10
+        && request.resource.data.momento in ['durante', 'fim']
+        && (!('texto' in request.resource.data)
+            || (request.resource.data.texto is string && request.resource.data.texto.size() <= 300))
+        && (request.resource.data.articulacao != 'outro'
+            || ('texto' in request.resource.data && textoFisio(request.resource.data.texto, 300)))
+        && request.resource.data.em == request.time
+        && request.resource.data.atualizadoEm == request.time;
+      allow update: if isCoach() && request.resource.data.atualizadoEm == request.time && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resposta', 'respondidoEm', 'vistoEm', 'atualizadoEm'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasAll(['resposta', 'respondidoEm'])
+          && textoFisio(request.resource.data.resposta, 1000)
+          && request.resource.data.respondidoEm == request.time
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['vistoEm'])
+              || request.resource.data.vistoEm == request.time))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['vistoEm', 'atualizadoEm'])
+          && request.resource.data.vistoEm == request.time)
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alunoId', 'atualizadoEm'])
+          && alunoFisio(request.resource.data.alunoId)
+          && get(/databases/$(database)/documents/usuarios/$(resource.data.alunoId)).data.get('migradoPara', '') == request.resource.data.alunoId)
+      );
+    }
+
+    // Check-in de recuperação no fim do treino (dado de saúde, rodada 4): fisioCheckins/{mesoId}_s{WW}_t{T} =
+    // { alunoId, mesoId, semana, treino, sono, estresse, cansaco, alimentacao, em, atualizadoEm }, inteiros 1–5 (1 = ruim, 5 = ótimo).
+    // Sem texto livre. O aluno (liberado) só cria o próprio; o coach (2º fator) lê, apaga (LGPD) e transfere.
+    function nota15(n) { return n is int && n >= 1 && n <= 5; }
+    match /fisioCheckins/{id} {
+      allow read: if isCoach() || (own(resource.data) && liberado());
+      allow delete: if isCoach();
+      // Um por sessão concluída (revisão do PR, F3): id = id do registro ({mesoId}_s{WW}_t{T}), meso do próprio aluno.
+      // Só create: um segundo envio da mesma sessão é update e é negado (idempotente no servidor).
+      allow create: if own(request.resource.data) && liberado()
+        && request.resource.data.keys().hasOnly(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'dor24h', 'em', 'atualizadoEm'])
+        && request.resource.data.get('dor24h', true) is bool // A1: "a dor do último treino passou em até 1 dia?" (opcional)
+        && request.resource.data.keys().hasAll(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
+        && request.resource.data.mesoId is string
+        && request.resource.data.semana is int && request.resource.data.semana >= 1
+        && request.resource.data.treino is int && request.resource.data.treino >= 1
+        && id == request.resource.data.mesoId
+             + '_s' + (request.resource.data.semana < 10 ? '0' : '') + string(request.resource.data.semana)
+             + '_t' + string(request.resource.data.treino)
+        && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId == request.auth.uid
+        && request.resource.data.semana <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.semanas
+        && request.resource.data.treino <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.frequencia
+        // Só de treino concluído há até 12 h (P2 da revisão): o registro da mesma sessão é do aluno e está realizado.
+        // Offline: o "Concluir" grava o registro antes do check-in e a fila envia na ordem (realizadoEm vira a hora da sincronização).
+        && get(/databases/$(database)/documents/registros/$(id)).data.alunoId == request.auth.uid
+        && get(/databases/$(database)/documents/registros/$(id)).data.realizado == true
+        && request.time < get(/databases/$(database)/documents/registros/$(id)).data.realizadoEm + duration.value(12, 'h')
+        && nota15(request.resource.data.sono) && nota15(request.resource.data.estresse)
+        && nota15(request.resource.data.cansaco) && nota15(request.resource.data.alimentacao)
+        && request.resource.data.em == request.time
+        && request.resource.data.atualizadoEm == request.time;
+      allow update: if isCoach() && request.resource.data.atualizadoEm == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alunoId', 'atualizadoEm'])
+        && alunoFisio(request.resource.data.alunoId)
+        && get(/databases/$(database)/documents/usuarios/$(resource.data.alunoId)).data.get('migradoPara', '') == request.resource.data.alunoId;
+    }
+
     // Mapa opcional de medidas: só as chaves da lista (as mesmas de src/lib/avaliacao.ts; o teste compara).
     // Os valores não são conferidos aqui: só o coach grava, e a leitura ignora o que não for número na faixa.
     function mapaDe(d, campo, chaves) {

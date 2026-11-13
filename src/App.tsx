@@ -20,6 +20,7 @@ import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
 import BotaoSair, { useSair } from './features/auth/BotaoSair'
 import Inicio from './features/coach/inicio/Inicio'
+import { useSugestoesFisio } from './features/fisio/useSugestoes'
 import Alertas from './features/coach/alertas/Alertas'
 import NovoAluno from './features/coach/alunos/NovoAluno'
 import Alunos from './features/coach/alunos/Alunos'
@@ -38,6 +39,8 @@ import AlunoApp from './features/aluno/AlunoApp'
 import TutorialCoach, { tutorialCoachNaoVisto } from './features/coach/TutorialCoach'
 import { AnimatePresence } from 'motion/react'
 import Instalar from './features/instalar/Instalar'
+import GuiaFisio from './features/fisio/GuiaFisio'
+import FisioCoach from './features/fisio/FisioCoach'
 import GuiaMetodos from './features/metodos/GuiaMetodos'
 import MinhaConta from './features/conta/MinhaConta'
 import AcaoEmail from './features/auth/AcaoEmail'
@@ -182,6 +185,7 @@ function Vigia({ papel }: { papel: 'coach' | 'aluno' }) {
 
 const ativaAba = (rota: string) =>
   rota === '/alertas' || rota === '/ranking' || rota === '/feedbacks' || rota === '/metodos' || rota === '/conta' ? rota.slice(1)
+  : rota === '/fisio' ? 'metodos'
   : rota === '/alunos' || rota.startsWith('/alunos/') || rota.startsWith('/aluno/') || rota.startsWith('/meso/') ? 'alunos'
   : 'inicio' // '/' e rotas desconhecidas (a tela padrão é o Início)
 
@@ -199,7 +203,8 @@ function Menu({ rota }: { rota: string }) {
   const arquivados = useArquivados()
   // Mesma consulta do Início (o Firestore junta, sem leitura extra).
   const naoLidos = useFeedbacks().dados.filter((f) => !f.lido).length
-  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves).total
+  const fisio = useSugestoesFisio(alunos.dados as AlunoComId[], arquivados.chaves).visiveis.length
+  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves).total + fisio
   const itens = [
     { id: 'inicio', rotulo: 'Início', href: '#/', Icone: IcCasa },
     { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },
@@ -267,12 +272,14 @@ function Coach({ uid, email, nome }: { uid: string; email: string; nome: string 
   else if ((p = casar('/aluno/:uid/avaliacoes', rota))) tela = <AvaliacoesCoach key={p.uid} uid={p.uid} />
   else if ((p = casar('/aluno/:uid/avaliacao/:id', rota))) tela = <AvaliacaoCoach key={p.uid} uid={p.uid} id={p.id} />
   else if ((p = casar('/aluno/:uid/anamnese', rota))) tela = <AnamneseCoach key={p.uid} uid={p.uid} />
+  else if ((p = casar('/aluno/:uid/fisio', rota))) tela = <FisioCoach key={p.uid} uid={p.uid} />
   else if (rota === '/ranking') tela = <RankingAlunos />
   else if (rota === '/feedbacks') tela = <Feedbacks />
   else if ((p = casar('/meso/:id', rota))) tela = <EditorMeso id={p.id} />
   else if ((p = casar('/meso/:id/relatorio', rota))) tela = <RelatorioCoach key={p.id} mesoId={p.id} />
   else if ((p = casar('/meso/:id/semana/:n', rota))) tela = <VisaoSemana id={p.id} semana={Number(p.n) || 1} />
-  else if (rota === '/metodos') tela = <GuiaMetodos />
+  else if (rota === '/metodos') tela = <GuiaMetodos coach />
+  else if (rota === '/fisio') tela = <GuiaFisio />
   else if (rota === '/conta') tela = <MinhaConta uid={uid} email={email} abrirTutorial={() => setTutorial(true)} />
   return (
     <div className="lg:flex">

@@ -22,6 +22,7 @@ import { LinhaAcima, treinosAcima } from './SugestaoTempo'
 import TabDivisao from './TabDivisao'
 import TabMetodos from './TabMetodos'
 import TabProgressao from './TabProgressao'
+import { lerProposta } from '../../fisio/propostaEditor'
 import { redimensionar } from './util'
 import VozTreino from './VozTreino'
 
@@ -51,7 +52,9 @@ export default function EditorMeso({ id }: { id: string }) {
   const [nome, setNome] = useState('')
   const [alunoId, setAlunoId] = useState('')
   const [dirty, setDirty] = useState(false)
-  const [aba, setAba] = useState<Aba>('config')
+  // Proposta Físio (A1): chega de Alertas/ficha pelo sessionStorage; abre a aba Progressão com o polimento montado.
+  const [proposta] = useState(() => lerProposta(id))
+  const [aba, setAba] = useState<Aba>(proposta ? 'progressao' : 'config')
   const [semana, setSemana] = useState(1)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState('')
@@ -315,7 +318,7 @@ export default function EditorMeso({ id }: { id: string }) {
       )}
 
       {aba === 'divisao' && <TabDivisao meso={meso} registros={registros} onAtualizar={atualizar} />}
-      {aba === 'progressao' && <TabProgressao meso={meso} onAtualizar={atualizar} />}
+      {aba === 'progressao' && <TabProgressao meso={meso} onAtualizar={atualizar} proposta={proposta} />}
       {aba === 'metodos' && <TabMetodos meso={meso} onAtualizar={atualizar} />}
         </m.div>
       </AnimatePresence>

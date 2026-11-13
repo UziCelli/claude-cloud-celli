@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { PropostaFisio } from '../../fisio/propostaEditor'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { analisarProgressao, polimento, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso, TipoPolimento } from '../../../engine'
@@ -28,7 +29,7 @@ function resumo(meso: Meso): Previa {
   }))
 }
 
-export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
+export default function TabProgressao({ meso, onAtualizar, proposta = null }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void; proposta?: PropostaFisio | null }) {
   const padrao = meso.progressao.padrao ?? meso.progressao.auxiliares
   const proprias = meso.progressaoExercicio ?? {}
   const setPadrao = (l: (number | null)[][]) => onAtualizar({ progressao: { ...meso.progressao, padrao: l } })
@@ -42,7 +43,7 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
 
   return (
     <div className="space-y-4">
-      <AjustarVolume meso={meso} onAtualizar={onAtualizar} />
+      <AjustarVolume meso={meso} onAtualizar={onAtualizar} proposta={proposta} />
       <TabelaProgressao
         titulo="Progressão padrão"
         linhas={padrao}
@@ -81,17 +82,17 @@ export default function TabProgressao({ meso, onAtualizar }: { meso: Meso; onAtu
   )
 }
 
-function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void }) {
-  const [modo, setModo] = useState<Modo>('prog')
+function AjustarVolume({ meso, onAtualizar, proposta }: { meso: Meso; onAtualizar: (patch: Partial<Meso>) => void; proposta: PropostaFisio | null }) {
+  const [modo, setModo] = useState<Modo>(proposta ? 'pol' : 'prog')
   const [reducao, setReducao] = useState('5')
   const [reducaoPol, setReducaoPol] = useState('40')
   const [pausas, setPausas] = useState<number[]>([])
-  const [semPol, setSemPol] = useState<number[]>([meso.semanas])
+  const [semPol, setSemPol] = useState<number[]>(proposta?.semanas ?? [meso.semanas])
   const [tipoPol, setTipoPol] = useState<TipoPolimento>('degrau')
   const [de, setDe] = useState('2')
   const [ate, setAte] = useState(String(meso.semanas))
   const [retorno, setRetorno] = useState('2')
-  const [onde, setOnde] = useState<'todos' | 'treino' | 'exercicio'>('todos')
+  const [onde, setOnde] = useState<'todos' | 'treino' | 'exercicio' | 'fisio'>(proposta ? 'fisio' : 'todos')
   const [treino, setTreino] = useState('1')
   const [slotSel, setSlotSel] = useState('')
 
@@ -101,7 +102,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
 
   // Prévia sempre atual: recalcula quando o meso ou algum parâmetro muda.
   const previa = useMemo(() => {
-    const alvo: AlvoVolume = onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
+    const alvo: AlvoVolume = onde === 'fisio' && proposta ? { tipo: 'exercicios', slotIds: proposta.slotIds } : onde === 'todos' ? { tipo: 'todos' } : onde === 'treino' ? { tipo: 'treino', treino: +treino } : { tipo: 'exercicio', slotId }
     const novo =
       modo === 'prog'
         ? progressaoAutomatica(meso, { pct: pctSemana, de: +de, ate: +ate, alvo, pausas })
@@ -110,7 +111,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
           : polimento(meso, { pct: Number(reducaoPol) || 0, semanas: semPol, alvo, tipo: tipoPol })
     const depois = resumo(novo)
     return { antes: resumo(meso), depois, novo, igual: JSON.stringify(novo) === JSON.stringify(meso), analise: analisarProgressao(depois.map((x) => x.mov)) }
-  }, [meso, modo, pctSemana, reducao, reducaoPol, pausas, semPol, tipoPol, de, ate, retorno, onde, treino, slotId])
+  }, [meso, modo, pctSemana, reducao, reducaoPol, pausas, semPol, tipoPol, de, ate, retorno, onde, treino, slotId, proposta])
 
   // Chips de semana (como o seletor de séries do drop set): um clique liga/desliga.
   const alternar = (lista: number[], w: number) => (lista.includes(w) ? lista.filter((x) => x !== w) : [...lista, w].sort((a, b) => a - b))
@@ -140,6 +141,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
   return (
     <Cartao>
       <h3 className="mb-2 font-semibold">Ajustar volume</h3>
+      {proposta && <p className="mb-3 rounded-xl border border-violet-500 bg-violet-950 p-3 text-sm text-violet-100">Proposta Físio: {proposta.motivo} Exercícios: {proposta.nomes.join(', ')}. Revise a prévia e toque em Aplicar alterações. Nada muda sem você aplicar.</p>}
       <div className="grid grid-cols-2 gap-3">
         <label className={`${rot} col-span-2`}>
           Modo
@@ -198,9 +200,10 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
             <option value="todos">Todos os exercícios</option>
             <option value="treino">Um treino</option>
             <option value="exercicio">Um exercício</option>
+            {proposta && <option value="fisio">Exercícios da proposta Físio</option>}
           </select>
         </label>
-        {onde !== 'todos' && (
+        {onde !== 'todos' && onde !== 'fisio' && (
           <label className={rot}>
             Treino
             <select value={treino} onChange={(e) => setTreino(e.target.value)} className={sel}>

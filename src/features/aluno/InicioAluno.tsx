@@ -24,6 +24,7 @@ import { useAvaliacoesLiberadas } from '../avaliacao/AvaliacaoAluno'
 import { FaixaFeedback } from '../feedback/ConviteFeedback'
 import { useAnamnese } from '../anamnese/useAnamnese'
 import BotaoSair from '../auth/BotaoSair'
+import { useOrientacoes } from '../fisio/useOrientacoes'
 
 const Msg = ({ children }: { children: string }) => <p className="py-6 text-center text-slate-400">{children}</p>
 
@@ -40,6 +41,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const relatorios = useRelatoriosLiberados(uid)
   const avaliacoes = useAvaliacoesLiberadas(uid)
+  const fisio = useOrientacoes(uid)
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
   // Abre sozinho 1x por dia perto do vencimento (se ainda não tocou "Já paguei"); o quadro Pagamento abre quando quiser.
   const [pix, setPix] = useState(false)
@@ -77,6 +79,7 @@ export default function InicioAluno({ uid, nome }: { uid: string; nome: string }
       <CardioHoje uid={uid} hoje={hoje} />
       <RelatorioPronto relatorios={relatorios.dados} mesos={mesos} />
       <AvaliacaoPronta a={avaliacoes.dados[0]} />
+      {fisio.dados.length > 0 && <a href="#/fisio" className="flex min-h-11 items-center rounded-2xl border border-marca-500/50 bg-marca-950/60 p-4 font-semibold">Físio · {fisio.dados.length} {fisio.dados.length === 1 ? 'orientação do seu coach' : 'orientações do seu coach'}</a>}
       <Quadros pagoAte={perfil?.pagoAte?.toMillis()} ultima={avaliacoes.dados[0]} aoPagar={perfil?.status === 'ativo' && perfil.pagoAte ? () => setPix(true) : undefined} />
       <AnimatePresence>{pix && perfil && <PixPopup uid={uid} perfil={perfil} hoje={hoje} fechar={() => setPix(false)} />}</AnimatePresence>
     </main>

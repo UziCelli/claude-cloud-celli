@@ -4,13 +4,17 @@ on:
   push:
     branches:
       - main
+  # PR em rascunho não roda testes (pedido do Victor, 13/11/2026: testar uma vez, antes de juntar).
+  # Roda ao marcar como pronto (ready_for_review) e a cada envio depois disso.
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
 
 jobs:
   app:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +29,7 @@ jobs:
       - run: npm run build:gislane
 
   rules:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +45,7 @@ jobs:
       - run: npm run test:rules
 
   e2e:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

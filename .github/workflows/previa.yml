@@ -1,0 +1,47 @@
+name: Prévia (Físio)
+
+# Prévia da branch do Físio num endereço separado do Hosting (canal "fisio", vale 7 dias), para o Victor
+# testar no celular sem mudar o app dos alunos (eles continuam no endereço normal).
+# Sobe também as regras do Firestore desta branch: só ACRESCENTAM as coleções do Físio. Trava: a branch
+# precisa conter a main, senão regras mais novas da main seriam desfeitas. O próximo "Publicar" da main
+# volta às regras da main (aí a prévia para de salvar o Físio; é só rodar esta de novo).
+# O endereço da prévia precisa estar na chave de navegador do Google Cloud (docs/seguranca.md), senão o login falha.
+# Só manual (Actions → "Prévia (Físio)" → Run workflow): não roda a cada envio (pedido do Victor, 13/11/2026).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publicar # mesmo grupo do "Publicar": nunca duas publicações de regras ao mesmo tempo
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  previa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trava (a branch precisa conter a main)
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor origin/main HEAD || { echo "A branch está atrás da main: junte a main antes da prévia."; exit 1; }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Publicar a prévia (regras + canal "fisio")
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase deploy --only firestore:rules,firestore:indexes --project forca--app --non-interactive
+          npx firebase hosting:channel:deploy fisio --expires 7d --project forca--app --non-interactive | tee "$RUNNER_TEMP/saida.txt"
+          echo "### Endereço da prévia" >> "$GITHUB_STEP_SUMMARY"
+          grep -oE 'https://[^ ]+\.web\.app' "$RUNNER_TEMP/saida.txt" | head -1 >> "$GITHUB_STEP_SUMMARY"

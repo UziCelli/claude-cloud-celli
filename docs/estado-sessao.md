@@ -9,6 +9,13 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - A voz (IA) continua usando o polimento degrau.
 - **Pendência do Victor:** conferir no celular se os limites do ritmo batem com o que ele usa.
 
+## 13/11/2026 — Sistema Físio juntado (PR #161)
+- Catálogo com articulações; 25 métodos Fisioterapia; orientações individuais; "Senti dor" ligado ao treino; check-in do fim do treino (um por sessão, inclui "a dor passou em 24 h?"); sugestões ao coach (converse com dor 6+ / progressão acima do planejado com dor na região / polimento) com "Preparar proposta no meso"; aba Físio do aluno.
+- Decisões do Victor: dor 6+ para "converse"; gestação exige liberação; números do A1 aprovados. Histórico detalhado no PR #161 e em `docs/fisio-continuidade.md`.
+- Testes: rodam uma vez, antes de juntar (PR em rascunho não roda CI). A prévia (`previa.yml`) é só manual.
+- **Pendências do Victor:** conferir `docs/fisio-catalogo.md` (agachamentos com barra já sem ombro).
+
+
 ## 12/11/2026 — Feedbacks no celular
 - Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).
 - Botão **Copiar texto** em todo feedback: copia entre aspas, com nota, assunto e tipo, sem o nome do aluno.

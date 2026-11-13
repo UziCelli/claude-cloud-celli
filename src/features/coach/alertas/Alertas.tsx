@@ -9,8 +9,12 @@ import { TEXTO_SEM_INTERNET, useLista, useSemInternet } from '../../../lib/hooks
 import { inicioJanela } from '../../../lib/resumo'
 import { linkEmail, linkWhatsApp, primeiroNome } from '../../../lib/contato'
 import { saida, suave } from '../../../movimento'
-import { Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
+import { Aviso, Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
+import { useSugestoesFisio } from '../../fisio/useSugestoes'
+import { TITULO_SUGESTAO } from '../../../lib/sugestoesFisio'
+import BotaoProposta from '../../fisio/BotaoProposta'
+import { mesoAtual } from '../../aluno/mesoAtual'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
 import { IcCheck, IcVoltar } from '../../../icones'
@@ -21,7 +25,7 @@ export { calcularAlertas, type Reg }
 export function useArquivados() {
   const l = useLista<{ em: Timestamp | null }>(useMemo(() => collection(db, 'arquivados'), []))
   const chaves = useMemo(() => new Set(l.dados.map((d) => d.id)), [l.dados])
-  return { docs: l.dados, chaves, carregando: l.carregando, cache: l.cache }
+  return { docs: l.dados, chaves, carregando: l.carregando, cache: l.cache, erro: l.erro }
 }
 
 // Carrega tudo o que os alertas precisam (alunos, mesos, registros de 14 dias). O Início já tem esses dados
@@ -35,17 +39,22 @@ export function useAlertasCoach() {
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const arquivados = useArquivados()
   const r = calcularAlertas(alunos.dados, mesos.dados, registros.dados, agora, arquivados.chaves)
-  const carregando = alunos.carregando || mesos.carregando || registros.carregando || arquivados.carregando
-  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache)
+  const fisio = useSugestoesFisio(alunos.dados, arquivados.chaves)
+  const carregando = alunos.carregando || mesos.carregando || registros.carregando || arquivados.carregando || fisio.carregando
+  const erroBase = [alunos, mesos, registros, arquivados].some((l) => l.erro) // leitura recusada não é "tudo em dia"
+  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache) && !erroBase && !fisio.cache && !fisio.erro
   // Uma vez por abertura da tela, com tudo carregado do servidor (o cache do aparelho pode estar incompleto,
   // e um alerta ainda não lido pareceria antigo).
   const limpou = useRef(false)
   useEffect(() => {
     if (carregando || !doServidor || limpou.current) return
     limpou.current = true
-    limparArquivadosAntigos(arquivados.docs, chavesAtuais(r), agora)
+    limparArquivadosAntigos(arquivados.docs, new Set([...chavesAtuais(r), ...fisio.todas.map((x) => x.chave)]), agora)
   })
-  return { ...r, carregando }
+  const nomes = new Map(alunos.dados.map((x) => [x.id, x.nome]))
+  const mesoDocDe = (id: string) => mesoAtual(mesos.dados.filter((d) => d.alunoId === id))?.doc
+  const mesoDe = (id: string) => mesoDocDe(id)?.id
+  return { ...r, carregando, erroBase, erroFisio: fisio.erro, fisio: fisio.visiveis.map((x) => ({ ...x, aluno: nomes.get(x.alunoId) ?? 'Aluno', mesoId: mesoDe(x.alunoId), mesoDoc: mesoDocDe(x.alunoId) })) }
 }
 
 // A seção sai com animação quando o último cartão é arquivado (n vira 0).
@@ -121,6 +130,8 @@ const rotulo = {
   demorado: (x: AlertaDemorado) => `Treino ${x.treino} demorou (semana ${x.semana})`,
 }
 
+const linkBtn = classesBotao('vidro', 'md', 'inline-flex items-center justify-center')
+
 export default function Alertas() {
   const a = useAlertasCoach()
   const semInternet = useSemInternet()
@@ -138,7 +149,9 @@ export default function Alertas() {
         <p className="text-slate-400">Carregando…</p>
       ) : (
         <div className="space-y-6">
-          {a.total === 0 &&
+          {a.erroBase && <Aviso>Não foi possível carregar os alertas. Confira a conexão.</Aviso>}
+          {a.erroFisio && <Aviso>Não foi possível carregar as sugestões Físio. Confira a conexão.</Aviso>}
+          {a.total + a.fisio.length === 0 && !a.erroFisio && !a.erroBase &&
             (semInternet ? (
               <p className="text-slate-400">{TEXTO_SEM_INTERNET}</p>
             ) : (
@@ -175,6 +188,21 @@ export default function Alertas() {
                     : {x.minutos} min, previsto {x.previsto} min
                   </p>
                   <Acoes chave={x.chave} email={x.email} assunto={`Treino ${x.treino}`} texto={textoDemorado(x)} />
+                </div>
+              </Saindo>
+            ))}
+          </Grupo>
+          <Grupo titulo="Físio · sugestões" n={a.fisio.length} cor="text-violet-300">
+            {a.fisio.map((x) => (
+              <Saindo key={x.chave}>
+                <div className="mb-2 space-y-2 rounded-xl border-2 border-violet-500 bg-violet-950 p-4 text-violet-100">
+                  <p className="font-semibold">{x.aluno} — {TITULO_SUGESTAO[x.tipo]}</p>
+                  <p className="text-sm text-violet-200">{x.motivo}</p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <a className={linkBtn} href={`#/aluno/${x.alunoId}/fisio`}>Abrir ficha</a>
+                    {(x.tipo === 'polimento' || x.tipo === 'progressao') && <BotaoProposta mesoDoc={x.mesoDoc} regiao={x.regiao} motivo={x.motivo} alunoId={x.alunoId} />}
+                    <Botao type="button" tipo="vidro" onClick={() => arquivarAlerta(x.chave).catch(() => {})}>Dispensar</Botao>
+                  </div>
                 </div>
               </Saindo>
             ))}
