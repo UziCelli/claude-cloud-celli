@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { collection, doc, query, where, type Timestamp } from 'firebase/firestore'
 import { prescreverSessao } from '../../../engine'
 import { marcarRealizado } from '../../../lib/acoes'
-import { docParaMeso, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
+import { docParaMeso, docsParaLados, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type RegistroDoc } from '../../../lib/conversores'
 import { diaSP } from '../../../lib/acesso'
 import { msSessao } from '../../../lib/resumo'
 import { comVolta } from '../../../lib/agenda'
@@ -51,6 +51,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
   const meso = comVolta(docParaMeso(dados), docsRegistros, agora) // prescrito = o que o aluno viu (semana de volta −5%)
   const registros = docsParaRegistros(docsRegistros, meso)
   const reps = docsParaRegistrosReps(docsRegistros)
+  const lados = docsParaLados(docsRegistros)
   const realizados = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, !!d.realizado]))
 
   const tempos = Object.fromEntries(docsRegistros.map((d) => [`${d.semana}-${d.treino}`, d]))
@@ -100,6 +101,7 @@ export default function VisaoSemana({ id, semana }: { id: string; semana: number
               sessao={sessao}
               cargas={registros[chave] ?? {}}
               reps={reps[chave] ?? {}}
+              lados={lados[chave] ?? {}}
               pc={lerPc(tempos[chave]?.pc)}
               realizado={!!realizados[chave]}
               inicioEm={tempos[chave]?.inicioEm}

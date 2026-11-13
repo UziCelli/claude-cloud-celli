@@ -8,6 +8,7 @@ Para quem for auditar ou mexer. Tudo em português do Brasil na tela.
 - Aluno (`Treino.tsx`): o campo mostra `total - corpo` e grava `extra + corpo`.
 - Coach (`SessaoCard.tsx`, campo `LoadInput`): igual ao aluno (mostra o extra, grava extra + `pc`).
 - Gravação sempre campo a campo (`setDoc merge`); nunca se reescreve dado existente em massa.
+- Exercício de 2 lados (`docs/plano-lados-isometria.md`): o total continua em `cargas`; o esquerdo vai em `lados` na mesma escrita; o `pc` entra no total (esq + dir + pc).
 
 ## Normalização de leitura (`normalizarCargas`)
 Aba e celular antigos continuam rodando versões velhas do app (o service worker não recarrega a página). Por isso há dados em formatos antigos, que são **lidos** de forma robusta, nunca reescritos. Com `pc[slot] > 0`:

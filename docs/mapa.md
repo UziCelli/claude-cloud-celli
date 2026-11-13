@@ -99,6 +99,7 @@ Comece por aqui para achar onde mexer.
 - `Tutorial.tsx` — onboarding do aluno (7 passos + "Tudo pronto" com atalhos; abre 1x no 1º acesso; "Como usar" na aba Conta; título de boas-vindas em `marca.json` → `boasVindas`). Usa `features/onboarding/Onboarding.tsx`
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
+- `src/lib/lados.ts` (+ `lados.test.ts`) — carga por lado (2 halteres/articulado): `doisLados(slot)` (`slot.doisLados` vence a lista `data/doisLados.json`), `lerCelula` (total ↔ esq/dir/"anotado antes"), `totalLados`. Gravação: `registrarCargaLados` em `acoes.ts`; leitura: `docsParaLados` em `conversores.ts`; placeholder: `cargaAnterior(..., lados)` em `treino.ts`. Telas: `coach/semana/CampoLados.tsx` (usado por `Treino.tsx` e `SessaoCard.tsx`); interruptor no meso: `meso/TabDivisao.tsx`.
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — reexporta o painel de evolução
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor (vários em andamento: vence o de `inicio` mais recente); `proximoMeso()`: o de início futuro mais próximo; `dataSP`, `diaCurto`, `DIAS_CURTO` (datas curtas)
@@ -211,6 +212,7 @@ Comece por aqui para achar onde mexer.
 
 ### `src/data/` — Dados estáticos
 - `exercicios.json` — catálogo de exercícios
+- `doisLados.json` — ids do catálogo com carga por lado (2 halteres/articulado), lido por `lib/lados.ts`. Fora do `exercicios.json` porque o extrator regrava aquele arquivo.
 - `anatomia.json` — articulações e músculos de cada exercício, por id (lido por `lib/anatomia.ts`; tabela para conferir em `docs/fisio-catalogo.md`)
 
 ### `tests/` · `e2e/` — Testes
@@ -389,6 +391,8 @@ Onde já houve falha ou onde errar custa caro. Cada linha diz o que protege e co
 
 | Área | Arquivo | Cuidado | Teste que protege |
 |---|---|---|---|
+| Carga por lado: total editado por versão velha | `src/lib/lados.ts` (`lerCelula`) | Versão velha do app pode editar só o total: se `lados` > total − `pc`, a célula vira "antiga" (a divisão se perde, o total continua certo). Ao concluir, série vazia de 2 lados com corpo grava `0 | 0 + pc` (`registrarCargaLados`). | `lados.test.ts` |
+| Carga por lado (13/11/2026) | `src/lib/lados.ts`, `acoes.ts` (`registrarCargaLados`, `cancelarTreino`), `conversores.ts` (`docsParaLados`), `treino.ts` (`cargaAnterior`), `CampoLados.tsx`, `firestore.rules` | **Total (`cargas`) e esquerdo (`lados`) vão na MESMA escrita** (um `setDoc merge`; nunca um sem o outro); null apaga os dois. `cargas` segue sendo o total (esq + dir + `pc`), então volume, recordes e relatórios não mudam. Célula de 2 lados **sem `lados`** é antiga: só leitura ("anotado antes"), nunca reescrita (campo vazio sobre ela não apaga) e não vira "semana passada". `rebasear`/`registrarPc` não mexem em `lados`. `cancelarTreino` apaga `lados`. As regras exigem `lados` mapa nas duas listas `hasOnly`. | `lados.test.ts`, `treino.test.ts`, `conversores.test.ts`, `tests/rules.test.ts`, e2e `lados.spec.ts` |
 | Check-in de recuperação (13/11/2026) | `features/fisio/CheckinFim.tsx` (fim do treino, só aluno), `useCheckins.ts`, `useSugestoes.ts`, `FisioCoach.tsx`, `Alertas.tsx`, `lib/checkin.ts` | Dado de saúde: `fisioCheckins` só criado pelo aluno (addDoc sem await); "Pular" não grava. Sugestões Físio só sugerem; "Dispensar" grava `arquivados/{chave}` e a chave entra em `limparArquivadosAntigos`. Entra em `apagarAluno`, `darAcessoAoApp`, `limpeza-lgpd`. | `checkin.test.ts`, `sugestoesFisio.test.ts`, `fisio-rules.test.ts`, `limpeza-lgpd.test.ts`, e2e `checkin.spec.ts` |
 | Conteúdo Físio (12/11/2026) | `src/data/fisio.ts`, `docs/fisio-pesquisa.md` | Conteúdo de saúde: só a pesquisa (método, número, referência); teste barra PMID fora dela, "kg" e "trata/cura". LIMÍTROFE = opcional com ressalva. Guia completo só do coach; aluno vê somente orientação individual enviada (Etapa 2b). Dez métodos sem sinais específicos continuam impedidos de envio. | `src/data/fisio.test.ts`, `src/lib/fisio.test.ts`, e2e `metodos.spec.ts`, `fisio.spec.ts` |
 | Orientações Físio (12/11/2026) | `firestore.rules`, `src/features/fisio/`, `src/lib/fisio.ts`, `acoes.ts`, `tools/limpeza-lgpd.mjs` | Isolamento por aluno, MFA, sinais não apagáveis por update, conteúdo imutável, liberação registrada e envio bloqueado sem alertas. Nunca regravar o documento todo ao relatar/recolher (risco de apagar sinal concorrente). Sem protocolo/recado com sinal ou pausa de saúde. Offline não significa “coach avisado”; informar pendência e contato direto. Política 2026-11-12; nova coleção entra na exclusão e transferência. | `tests/fisio-rules.test.ts`, `tests/limpeza-lgpd.test.ts`, e2e `fisio.spec.ts` |

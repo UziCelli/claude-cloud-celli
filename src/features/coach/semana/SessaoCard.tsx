@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { textoNota } from '../../../lib/notas'
 import { metricasSessao, type Cargas, type Sessao } from '../../../engine'
-import { registrarCarga, salvarNota } from '../../../lib/acoes'
+import { registrarCarga, registrarCargaLados, salvarNota } from '../../../lib/acoes'
 import { confirmarExclusao, dataDaNota, msDaNota } from '../../../lib/notas'
 import { doc } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
@@ -11,6 +12,8 @@ import { Cartao } from '../../../ui'
 import type { NotasDoc } from '../../../lib/conversores'
 import { fmt } from './format'
 import LoadInput from './LoadInput'
+import CampoLados, { BotaoLadosDiferentes } from './CampoLados'
+import { doisLados, ladosDiferentes, lerCelula } from '../../../lib/lados'
 import { IcCheck, IcLixeira } from '../../../icones'
 
 const CORES: Record<string, string> = {
@@ -55,6 +58,7 @@ export default function SessaoCard({
   sessao,
   cargas,
   reps = {},
+  lados = {},
   pc = {},
   realizado,
   onRealizado,
@@ -68,6 +72,7 @@ export default function SessaoCard({
   sessao: Sessao
   cargas: Cargas
   reps?: Cargas
+  lados?: Cargas // lado esquerdo (formato novo de 2 lados)
   pc?: Record<string, number>
   realizado: boolean
   onRealizado: (v: boolean) => void
@@ -76,6 +81,7 @@ export default function SessaoCard({
   limite?: number
   hoje?: 'feito' | 'andamento'
 }) {
+  const [edAberto, setEdAberto] = useState<Record<string, boolean>>({}) // "lados diferentes" aberto, por exercício
   const { dados: notas } = useDoc<NotasDoc>(doc(db, 'notas', alunoId))
   const m = metricasSessao(sessao, cargas, reps)
   const pausaPrincipais = sessao.exercicios.find((e) => e.pos <= 2 && e.slot.pausaS == null)?.pausaS // sem pausa própria do slot
@@ -136,6 +142,11 @@ export default function SessaoCard({
             // `cargas` é o total normalizado: o campo mostra o extra (total - corpo) e grava extra + corpo, como a tela do aluno.
             const corpo = pc[e.slot.slotId] > 0 ? pc[e.slot.slotId] : 0
             const extra = (c: number | null | undefined) => (c != null ? Math.max(0, Math.round((c - corpo) * 100) / 100) : null)
+            const dois = doisLados(e.slot)
+            const cel = (k: number) => lerCelula(cs[k], lados[e.slot.slotId]?.[k], corpo)
+            const ed = dois && (edAberto[e.slot.slotId] || ladosDiferentes(cs.map((_, k) => cel(k))))
+            const gravarLados = (coluna: number) => (esq: number | null, dir: number | null) =>
+              registrarCargaLados(mesoId, alunoId, sessao.semana, sessao.treino, e.slot.slotId, coluna, esq, dir, corpo)
             const gravar = (coluna: number) => (v: number | null) =>
               registrarCarga(mesoId, alunoId, sessao.semana, sessao.treino, e.slot.slotId, coluna, v == null ? null : Math.round((v + corpo) * 100) / 100)
             return (
@@ -164,16 +175,28 @@ export default function SessaoCard({
                     )
                   })()}
                   {pc[e.slot.slotId] > 0 && <div className="mt-0.5 text-[11px] text-slate-400">Inclui peso do corpo: {fmt(pc[e.slot.slotId])} kg</div>}
+                  {dois && (
+                    <div className="mt-1 whitespace-normal text-[11px] text-slate-400">
+                      kg em cada lado
+                      {!ladosDiferentes(cs.map((_, k) => cel(k))) && (
+                        <div className="mt-1"><BotaoLadosDiferentes aberto={!!edAberto[e.slot.slotId]} onAlternar={() => setEdAberto((p) => ({ ...p, [e.slot.slotId]: !p[e.slot.slotId] }))} /></div>
+                      )}
+                    </div>
+                  )}
                   <Chips rotulo={e.rotulo} />
                 </td>
                 {Array.from({ length: sessao.series }, (_, k) =>
                   k < e.n ? (
                     <td key={k} className="p-2 text-center">
                       <RepsFeitas alvo={e.reps[k]} feita={rs[k]} />
-                      <LoadInput
-                        valor={extra(cs[k])}
-                        onSalvar={gravar(k)}
-                      />
+                      {dois ? (
+                        <CampoLados className={ed ? 'w-36' : 'w-16'} cel={cel(k)} ed={!!ed} onGravar={gravarLados(k)} />
+                      ) : (
+                        <LoadInput
+                          valor={extra(cs[k])}
+                          onSalvar={gravar(k)}
+                        />
+                      )}
                     </td>
                   ) : (
                     <td key={k} className="p-2 text-center text-slate-700">
@@ -190,11 +213,15 @@ export default function SessaoCard({
                         <>
                           {e.drops[j] && <div className="text-[10px] font-semibold text-rose-300">S{e.drops[j].serie}·D{e.drops[j].etapa}</div>}
                           <RepsFeitas alvo={e.reps[coluna]} feita={rs[coluna]} />
-                          <LoadInput
-                            valor={extra(cs[coluna])}
-                            placeholder={e.cargaSugerida[coluna] ?? null}
-                            onSalvar={gravar(coluna)}
-                          />
+                          {dois ? (
+                            <CampoLados className={ed ? 'w-36' : 'w-16'} cel={cel(coluna)} ed={!!ed} placeholder={e.cargaSugerida[coluna] ?? null} onGravar={gravarLados(coluna)} />
+                          ) : (
+                            <LoadInput
+                              valor={extra(cs[coluna])}
+                              placeholder={e.cargaSugerida[coluna] ?? null}
+                              onSalvar={gravar(coluna)}
+                            />
+                          )}
                         </>
                       ) : (
                         <span className="text-slate-700">—</span>

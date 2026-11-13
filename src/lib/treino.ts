@@ -1,6 +1,7 @@
 // Ajudas da tela do aluno. Funções puras.
 import { prescreverSessao, type Meso, type Registros } from '../engine'
 import { diaSP } from './acesso'
+import { doisLados, lerCelula } from './lados'
 
 // Semana w cobre os dias [inicio + 7(w−1), inicio + 7w), contados no calendário de São Paulo.
 export function semanaAtual(meso: Meso, hoje: Date) {
@@ -24,24 +25,36 @@ export function cargaAnterior(
   treino: number,
   pos: number,
   pcs?: Record<string, Record<string, number> | undefined>,
+  lados?: Registros, // lado esquerdo por série (docsParaLados); só usado em exercício de 2 lados
 ) {
   const hoje = prescreverSessao(meso, semana, treino)?.exercicios[pos - 1]
   const alvo = hoje?.slot
   if (!hoje || !alvo) return null
+  const dois = doisLados(alvo)
   for (let w = semana - 1; w >= 1; w--) {
     const exs = prescreverSessao(meso, w, treino)?.exercicios ?? []
-    const comCarga = (e: (typeof exs)[number]) => e.slot.nome === alvo.nome && registros[`${w}-${treino}`]?.[e.slot.slotId]?.some((c) => c != null)
+    // 2 lados: só vale célula no formato novo (a antiga não diz se o número era por lado ou total).
+    const comCarga = (e: (typeof exs)[number]) => {
+      const cs = registros[`${w}-${treino}`]?.[e.slot.slotId]
+      const ls = lados?.[`${w}-${treino}`]?.[e.slot.slotId]
+      return e.slot.nome === alvo.nome && !!cs?.some((c, i) => c != null && (!dois || ls?.[i] != null))
+    }
     const e = [exs[pos - 1], ...exs].find((x) => x && comCarga(x))
     if (!e) continue
     const cargas = registros[`${w}-${treino}`][e.slot.slotId]
     const corpo = pcs?.[`${w}-${treino}`]?.[e.slot.slotId] ?? 0
-    const extra = corpo > 0 ? cargas.map((c) => (c == null ? null : Math.max(0, Math.round((c - corpo) * 100) / 100))) : cargas
-    const drops = hoje.drops.map(({ serie, etapa }) => {
-      const j = e.drops.findIndex((d) => d.serie === serie && d.etapa === etapa)
-      const k = j >= 0 ? j : e.drops.findIndex((d) => d.etapa === etapa)
-      return k >= 0 ? (extra[e.n + k] ?? null) : null
+    const cels = dois ? cargas.map((c, i) => lerCelula(c, lados?.[`${w}-${treino}`]?.[e.slot.slotId]?.[i], corpo)) : null
+    const extra = cels ? cels.map((c) => c.esq) : corpo > 0 ? cargas.map((c) => (c == null ? null : Math.max(0, Math.round((c - corpo) * 100) / 100))) : cargas
+    const fatiar = (v: (number | null | undefined)[]) => ({
+      series: v.slice(0, e.n).map((x) => x ?? null),
+      drops: hoje.drops.map(({ serie, etapa }) => {
+        const j = e.drops.findIndex((d) => d.serie === serie && d.etapa === etapa)
+        const k = j >= 0 ? j : e.drops.findIndex((d) => d.etapa === etapa)
+        return k >= 0 ? (v[e.n + k] ?? null) : null
+      }),
     })
-    return { series: extra.slice(0, e.n), drops }
+    // `dir`: lado direito (só em 2 lados); `series`/`drops` ficam com o esquerdo.
+    return { ...fatiar(extra), ...(cels && { dir: fatiar(cels.map((c) => c.dir)) }) }
   }
   return null
 }

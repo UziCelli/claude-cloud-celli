@@ -88,6 +88,7 @@ export interface RegistroDoc {
   treino: number
   cargas?: CargasDoc
   reps?: CargasDoc // reps feitas (opcional), mesmo formato das cargas
+  lados?: CargasDoc // kg do lado esquerdo por série (formato novo de 2 lados); cargas continua o TOTAL
   pc?: Record<string, number> // peso do corpo somado por exercício (slotId -> kg; 0 = desligado)
   realizado?: boolean
 }
@@ -159,6 +160,10 @@ const seriesDe = (meso: Meso | undefined, d: RegistroDoc): Record<string, number
 
 export const docsParaRegistros = (docs: RegistroDoc[], meso?: Meso): Registros =>
   Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, normalizarCargas(d, seriesDe(meso, d))]))
+
+// Lado esquerdo por série (só células no formato novo de 2 lados). Mesma chave de docsParaRegistros.
+export const docsParaLados = (docs: RegistroDoc[]): Registros =>
+  Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaCargas(d.lados)]))
 
 export const docsParaRegistrosReps = (docs: RegistroDoc[]): Registros =>
   Object.fromEntries(docs.map((d) => [`${d.semana}-${d.treino}`, docParaReps(d.reps)]))
