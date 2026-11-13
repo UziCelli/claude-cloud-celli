@@ -27,6 +27,25 @@ Pedido: cruzar o **histórico de progressão** com os relatos de dor para avisar
 
 **Para alinhar (limiares, a decidir com o Victor):** quanto é "demasiada" (ex.: volume por articulação na última semana acima de 1,5× a média das 4 anteriores, a razão aguda:crônica, cuja evidência é discutida; ou carga ou reps acima do prescrito em 2 ou mais sessões seguidas) e em quantas semanas olhar.
 
+## O que a pesquisa de volume muda (`docs/fisio-pesquisa-volume.md`, 13/11/2026)
+- **Não existe "volume máximo seguro"** nem previsão individual de lesão. O A1 é **apoio à decisão**. A linguagem fica "sinais para ajustar o treino", nunca "risco de X%".
+- **O que mais pesa é o salto brusco sobre uma base baixa**, não a carga alta construída aos poucos. Logo, comparar o aluno com ele mesmo (semanas anteriores), não com uma tabela.
+- **Ordem de confiança dos sinais** (usar nesta ordem):
+  1. lesão prévia na região (anamnese: `dores`, `lesoes`);
+  2. dor atual e **se a dor passou em 24 h**;
+  3. sono, estresse e cansaço (check-in);
+  4. salto de volume;
+  5. razão aguda:crônica, monotonia e idade isolada, que são fracos.
+- **Ajustar a região, não o corpo todo:** a proposta mexe só nos exercícios que carregam a articulação com dor (`anatomiaDo`).
+- **Triagem vem antes do volume:** liberação, gestação e PAR-Q não se resolvem cortando séries (já é assim no app).
+- **Lacuna nova (sinal nº 2):** o app não pergunta se a dor do último treino passou em 24 h. Proposta: no check-in do treino seguinte, uma pergunta "A dor do último treino passou em até 1 dia?" (Sim / Não), só quando houve relato no treino anterior.
+
+**Limiares propostos (heurísticas, sem calibração científica; o Victor decide):**
+- **Salto de volume:** volume da região na última semana ≥ 1,3× a média das 3 semanas anteriores. O número vem de corrida (aumentos acima de 30% associados a mais lesões; evidência baixa). Só vira aviso **junto com dor na região**.
+- **Reps acima do prescrito:** em 2 sessões seguidas, metade das séries ou mais com 2 reps ou mais acima do alvo. Mensagem: "carga provavelmente leve: ajustar a carga, não somar reps".
+- **Carga subindo com reps abaixo:** carga máxima subiu e metade das séries ou mais ficaram 2 reps ou mais abaixo do alvo, em 2 sessões seguidas. Mensagem: "carga acima do que dá para completar".
+- **Prioridade:** sinal de perigo e pausa de saúde > dor que não passou em 24 h > lesão prévia na região + dor > os demais.
+
 ## O que o app continua NÃO fazendo
 - Mexer no meso sozinho, sugerir método de reabilitação, diagnosticar, mostrar sugestão ao aluno.
 - Transformar texto de protocolo em dose clínica.
