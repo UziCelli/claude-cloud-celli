@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { m } from 'motion/react'
 import marca from '@marca/marca.json'
-import { IcBalao, IcCartao, IcEstrela, IcFisio, IcHaltere, IcNota, IcPrancheta, IcSino, IcSubir, type Icone } from '../../icones'
+import { IcBalao, IcCartao, IcEstrela, IcFisio, IcHaltere, IcNota, IcPlay, IcPrancheta, IcRelogio, IcSino, IcSubir, type Icone } from '../../icones'
 import { PIX } from './PagarPix'
 import Onboarding, { naoVisto, Palco, type Atalho, type Passo } from '../onboarding/Onboarding'
 
@@ -51,7 +51,7 @@ const passos = (nome: string): Passo[] => [
           <Chip n={1} Icone={IcHaltere} texto="Cada lado" />
           <Chip n={2} Icone={IcPrancheta} texto="Avaliação" />
           <Chip n={3} Icone={IcSino} texto="Lembretes" />
-          <Chip n={4} Icone={IcNota} texto="Anotações" />
+          <Chip n={4} Icone={IcRelogio} texto="Isometria" />
           {PIX && <Chip n={5} Icone={IcCartao} texto="Pix rápido" />}
         </div>
       </Palco>
@@ -94,6 +94,26 @@ const passos = (nome: string): Passo[] => [
             <Campo>E 12</Campo>
             <Campo>D 10</Campo>
           </div>
+        </div>
+      </Palco>
+    ),
+  },
+  {
+    rotulo: 'Novo · Isometria',
+    titulo: 'Isometria agora conta tempo',
+    texto: 'Prancha, cadeirinha e mais 28 exercícios isométricos agora são em segundos. Toque na série para cronometrar e anote os segundos feitos. O app soma seu tempo sob tensão, separado das cargas.',
+    ilustracao: (
+      <Palco>
+        <div className="space-y-3 text-sm">
+          {[['S1', '32', true], ['S2', '30', false]].map(([s, feito, destaque]) => (
+            <div key={s as string} className="flex items-center gap-2">
+              <span className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2.5 text-xs font-bold text-marca-300 ring-1 ring-slate-700">{s} <IcPlay className="size-3" /></span>
+              <span className="text-xs text-slate-400">30 s</span>
+              <Campo destaque={destaque as boolean}>{feito}</Campo>
+              <span className="text-xs text-slate-400">s feitos</span>
+            </div>
+          ))}
+          <p className="rounded-xl bg-slate-950 px-3 py-2 text-center font-semibold text-white">Tempo sob tensão: 62 s</p>
         </div>
       </Palco>
     ),

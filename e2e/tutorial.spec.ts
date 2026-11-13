@@ -84,7 +84,7 @@ test('novidades do aluno: termina pedindo a avaliação do app', async ({ page }
   const dialogo = page.getByRole('dialog')
   await page.getByRole('button', { name: 'Novidades do app' }).click()
   await expect(dialogo.getByRole('heading', { name: 'O app ficou maior' })).toBeVisible()
-  for (let n = 1; n < 7; n++) await dialogo.getByRole('button', { name: 'Próximo' }).click()
+  for (let n = 1; n < 8; n++) await dialogo.getByRole('button', { name: 'Próximo' }).click()
   await expect(dialogo.getByRole('heading', { name: 'Contamos com a sua ajuda' })).toBeVisible()
   if (marca.avaliarGoogle) await expect(dialogo.getByRole('link', { name: 'Avaliar o atendimento no Google' })).toHaveAttribute('target', '_blank')
   await dialogo.getByRole('link', { name: /Avaliar o app/ }).click()
