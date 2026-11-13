@@ -3,8 +3,14 @@
 // Números conservadores (consulta ao Fable, 13/11/2026; docs/plano-fisio.md). Função pura.
 import { somaRecuperacao, type Checkin } from './checkin'
 import type { RelatoDor } from './dor'
+import type { SinalProgressao } from './progressaoFisio'
 
-export type TipoSugestao = 'polimento' | 'conversar'
+export type TipoSugestao = 'conversar' | 'progressao' | 'polimento' // nesta ordem de prioridade
+export const TITULO_SUGESTAO: Record<TipoSugestao, string> = {
+  conversar: 'Converse com o aluno / considere encaminhar',
+  progressao: 'Progressão acima do planejado, com dor na região',
+  polimento: 'Considere semana de polimento / reduzir volume',
+}
 export type SugestaoFisio = { alunoId: string; tipo: TipoSugestao; motivo: string; chave: string }
 export type SinalFisio = { alunoId: string; id: string; em: number | null } // orientação com sinal de perigo (em = sinalEm)
 
@@ -15,7 +21,11 @@ export const JANELA_CALCULO_DIAS = 45
 const ms = (t: { toMillis(): number } | null) => (t ? t.toMillis() : null)
 const diaDe = (m: number) => new Date(m - 3 * 3600_000).toISOString().slice(0, 10) // dia de São Paulo (UTC−3)
 
-type Entrada = { dores: RelatoDor[]; checkins: Checkin[]; sinais: SinalFisio[]; agora: Date }
+type Entrada = {
+  dores: RelatoDor[]; checkins: Checkin[]; sinais: SinalFisio[]; agora: Date
+  progressao?: SinalProgressao[] // A1: sinais de progressão (lib/progressaoFisio), só viram sugestão com dor na região
+  anamnese?: Map<string, string[]> // A1: articulações com dor/lesão prévia na anamnese, por aluno
+}
 
 // Sinais a partir das orientações (só não recolhidas e com sinal). Hora = quando o aluno marcou (sinalEm).
 type OrientacaoComSinal = { id: string; alunoId: string; sinalRelatado: boolean; recolhida: boolean; sinalEm: { toMillis(): number } | null; em: { toMillis(): number } | null }
@@ -25,7 +35,7 @@ type Gatilho = { motivo: string; id: string; em: number } // motivo + evento que
 
 // Uma sugestão por (aluno, tipo). O motivo é o da regra mais importante; a chave é a do evento MAIS RECENTE entre
 // todos os gatilhos, então uma sugestão dispensada (arquivados) volta com qualquer evento novo que também dispare.
-export function sugestoesFisio({ dores, checkins, sinais, agora }: Entrada): SugestaoFisio[] {
+export function sugestoesFisio({ dores, checkins, sinais, agora, progressao = [], anamnese = new Map() }: Entrada): SugestaoFisio[] {
   const fim = agora.getTime()
   const naJanela = (m: number | null): m is number => m !== null && fim - m <= JANELA_CALCULO_DIAS * DIA
   const alunos = new Set([...dores.map((d) => d.alunoId), ...checkins.map((c) => c.alunoId), ...sinais.map((s) => s.alunoId)])
@@ -34,21 +44,27 @@ export function sugestoesFisio({ dores, checkins, sinais, agora }: Entrada): Sug
     const ds = dores.filter((d) => d.alunoId === aluno && d.tipo === 'dor' && naJanela(ms(d.em))).sort((a, b) => ms(a.em)! - ms(b.em)!)
     const cs = checkins.filter((c) => c.alunoId === aluno && naJanela(ms(c.em))).sort((a, b) => ms(a.em)! - ms(b.em)!)
     const ss = sinais.filter((s) => s.alunoId === aluno)
-    for (const [tipo, gatilhos] of [['conversar', gatilhosConversar(ds, ss, fim)], ['polimento', gatilhosPolimento(ds, cs, fim)]] as const) {
+    const prev = new Set(anamnese.get(aluno) ?? [])
+    const ps = progressao.filter((p) => p.alunoId === aluno)
+    for (const [tipo, gatilhos] of [['conversar', gatilhosConversar(ds, ss, cs, fim)], ['progressao', gatilhosProgressao(ds, ps, prev, fim)], ['polimento', gatilhosPolimento(ds, cs, fim)]] as const) {
       if (!gatilhos.length) continue
       const ultimo = gatilhos.reduce((a, b) => (b.em > a.em ? b : a))
       saida.push({ alunoId: aluno, tipo, motivo: gatilhos[0].motivo, chave: `fisio_${tipo}_${aluno}_${ultimo.id}` })
     }
   }
-  return saida
+  const ordem: TipoSugestao[] = ['conversar', 'progressao', 'polimento']
+  return saida.sort((a, b) => ordem.indexOf(a.tipo) - ordem.indexOf(b.tipo))
 }
 
 const ev = (d: RelatoDor) => ({ id: d.id, em: ms(d.em)! })
 const local = (a: string) => (a === 'outro' ? 'outro local' : a)
 
-function gatilhosConversar(ds: RelatoDor[], ss: SinalFisio[], fim: number): Gatilho[] {
+function gatilhosConversar(ds: RelatoDor[], ss: SinalFisio[], cs: Checkin[], fim: number): Gatilho[] {
   const g: Gatilho[] = []
   for (const s of ss) g.push({ motivo: 'Marcou um sinal de perigo numa orientação Físio.', id: `${s.id}_${s.em ?? 0}`, em: s.em ?? 0 })
+  // A1: a dor do treino anterior não passou em até 1 dia (sinal mais confiável depois da lesão prévia; pesquisa de volume).
+  for (const c of cs.filter((c) => c.dor24h === false && fim - ms(c.em)! <= 14 * DIA))
+    g.push({ motivo: 'A dor do treino anterior não passou em até 1 dia.', id: c.id, em: ms(c.em)! })
   const recentes = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA)
   for (const d of [...recentes].reverse().filter((d) => d.intensidade >= 7))
     g.push({ motivo: `Dor ${d.intensidade}/10 em ${local(d.articulacao)} (${d.exercicio}).`, ...ev(d) })
@@ -95,4 +111,19 @@ function gatilhosPolimento(ds: RelatoDor[], cs: Checkin[], fim: number): Gatilho
     }
   }
   return g
+}
+
+// A1: progressão acima do planejado só vira sugestão com dor (≥1) na mesma região nos últimos 14 dias.
+// Região com dor/lesão prévia na anamnese vem primeiro (fator individual mais forte; pesquisa de volume).
+function gatilhosProgressao(ds: RelatoDor[], ps: SinalProgressao[], prev: Set<string>, fim: number): Gatilho[] {
+  const g: (Gatilho & { previa: boolean })[] = []
+  for (const p of ps) {
+    const dor = [...ds].reverse().find((d) => fim - ms(d.em)! <= 14 * DIA && d.intensidade >= 1 && p.articulacoes.includes(d.articulacao))
+    if (!dor) continue
+    const previa = prev.has(dor.articulacao)
+    const motivo = `${p.texto} Dor ${dor.intensidade}/10 em ${dor.articulacao}${previa ? ' (região já na anamnese)' : ''}.`
+    const ultimo = ms(dor.em)! > p.em ? { id: dor.id, em: ms(dor.em)! } : { id: p.id, em: p.em }
+    g.push({ motivo, ...ultimo, previa })
+  }
+  return g.sort((a, b) => Number(b.previa) - Number(a.previa))
 }

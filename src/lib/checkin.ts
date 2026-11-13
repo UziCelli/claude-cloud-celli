@@ -16,7 +16,8 @@ export type CheckinForm = Record<CampoCheckin, number>
 // Sessão do treino (revisão do PR, F3): um check-in por sessão, id = registroId(mesoId, semana, treino).
 // Documentos antigos sem sessão continuam válidos (sessao = null); nada é inventado para eles.
 export type SessaoCheckin = { mesoId: string; semana: number; treino: number }
-export type Checkin = CheckinForm & { id: string; alunoId: string; em: Timestamp | null; sessao: SessaoCheckin | null }
+// dor24h (A1): "a dor do último treino passou em até 1 dia?" — só perguntado quando houve relato no treino anterior.
+export type Checkin = CheckinForm & { id: string; alunoId: string; em: Timestamp | null; sessao: SessaoCheckin | null; dor24h: boolean | null }
 
 const nota = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 5
 
@@ -33,5 +34,6 @@ export function lerCheckin(id: string, valor: unknown): Checkin | null {
   const em = d.em && typeof (d.em as Timestamp).toMillis === 'function' ? (d.em as Timestamp) : null
   const sessao = typeof d.mesoId === 'string' && Number.isInteger(d.semana) && Number.isInteger(d.treino)
     ? { mesoId: d.mesoId, semana: d.semana as number, treino: d.treino as number } : null
-  return { id, alunoId: d.alunoId, sono: d.sono as number, estresse: d.estresse as number, cansaco: d.cansaco as number, alimentacao: d.alimentacao as number, em, sessao }
+  return { id, alunoId: d.alunoId, sono: d.sono as number, estresse: d.estresse as number, cansaco: d.cansaco as number, alimentacao: d.alimentacao as number, em, sessao,
+    dor24h: typeof d.dor24h === 'boolean' ? d.dor24h : null }
 }

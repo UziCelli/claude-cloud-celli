@@ -12,6 +12,7 @@ import { saida, suave } from '../../../movimento'
 import { Aviso, Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
 import { useSugestoesFisio } from '../../fisio/useSugestoes'
+import { TITULO_SUGESTAO } from '../../../lib/sugestoesFisio'
 import { mesoAtual } from '../../aluno/mesoAtual'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
@@ -127,7 +128,6 @@ const rotulo = {
   demorado: (x: AlertaDemorado) => `Treino ${x.treino} demorou (semana ${x.semana})`,
 }
 
-const TEXTO_FISIO = { polimento: 'Considere semana de polimento / reduzir volume', conversar: 'Converse com o aluno / considere encaminhar' }
 const linkBtn = classesBotao('vidro', 'md', 'inline-flex items-center justify-center')
 
 export default function Alertas() {
@@ -194,7 +194,7 @@ export default function Alertas() {
             {a.fisio.map((x) => (
               <Saindo key={x.chave}>
                 <div className="mb-2 space-y-2 rounded-xl border-2 border-violet-500 bg-violet-950 p-4 text-violet-100">
-                  <p className="font-semibold">{x.aluno} — {TEXTO_FISIO[x.tipo]}</p>
+                  <p className="font-semibold">{x.aluno} — {TITULO_SUGESTAO[x.tipo]}</p>
                   <p className="text-sm text-violet-200">{x.motivo}</p>
                   <div className="flex flex-wrap gap-2 pt-1">
                     <a className={linkBtn} href={`#/aluno/${x.alunoId}/fisio`}>Abrir ficha</a>

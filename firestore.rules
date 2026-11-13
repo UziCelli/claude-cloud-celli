@@ -413,7 +413,8 @@ service cloud.firestore {
       // Um por sessão concluída (revisão do PR, F3): id = id do registro ({mesoId}_s{WW}_t{T}), meso do próprio aluno.
       // Só create: um segundo envio da mesma sessão é update e é negado (idempotente no servidor).
       allow create: if own(request.resource.data) && liberado()
-        && request.resource.data.keys().hasOnly(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasOnly(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'dor24h', 'em', 'atualizadoEm'])
+        && request.resource.data.get('dor24h', true) is bool // A1: "a dor do último treino passou em até 1 dia?" (opcional)
         && request.resource.data.keys().hasAll(['alunoId', 'mesoId', 'semana', 'treino', 'sono', 'estresse', 'cansaco', 'alimentacao', 'em', 'atualizadoEm'])
         && request.resource.data.mesoId is string
         && request.resource.data.semana is int && request.resource.data.semana >= 1

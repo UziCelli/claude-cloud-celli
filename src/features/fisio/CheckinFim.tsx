@@ -6,6 +6,7 @@ import { Botao } from '../../ui'
 import { checkinJaExiste, registrarCheckin } from './acoesFisio'
 import RelatarDor from './RelatarDor'
 import { useCheckins } from './useCheckins'
+import { useDores } from './useDores'
 
 const chip = (on: boolean) => `min-h-11 rounded-xl border px-3 text-sm font-semibold ${on ? 'border-marca-400 bg-marca-600 text-white' : 'border-slate-700 bg-slate-950 text-slate-200'}`
 
@@ -20,6 +21,12 @@ export default function CheckinFim({ uid, exercicios, sessao }: { uid: string; e
   const [dor, setDor] = useState<boolean | null>(null)
   const [n, setN] = useState<Partial<CheckinForm>>({})
   const lista = useCheckins(uid)
+  // A1: "a dor do último treino passou em até 1 dia?" só quando houve relato de dor em outro treino nos últimos 7 dias
+  // (mais de 4 h atrás, para não pegar o relato deste treino). É o sinal mais confiável depois da lesão prévia.
+  const dores = useDores(uid)
+  const [dor24h, setDor24h] = useState<boolean | null>(null)
+  const agora = Date.now()
+  const doeuAntes = dores.todos.some((d) => d.tipo === 'dor' && d.em && agora - d.em.toMillis() > 4 * 3600_000 && agora - d.em.toMillis() <= 7 * 86400_000)
   const offline = useSemInternet()
   if (estado === 'pulado') return null
   if (estado === 'form' && (lista.carregando || localStorage.getItem(chave) || lista.todos.some((c) => c.id === id))) return null
@@ -28,7 +35,7 @@ export default function CheckinFim({ uid, exercicios, sessao }: { uid: string; e
     setEstado('enviando')
     // Sem await: offline fica na fila e o treino não espera. Não marca o localStorage aqui: o envio pendente já aparece
     // na lista local (o cartão some ao voltar) e, se o servidor recusar, o documento sai da lista e o cartão volta.
-    registrarCheckin(uid, sessao, n).then(() => setEstado('recebido'), async () => {
+    registrarCheckin(uid, sessao, n, doeuAntes ? dor24h : null).then(() => setEstado('recebido'), async () => {
       const existe = await checkinJaExiste(sessao).catch(() => false)
       setEstado(existe ? 'ja' : 'erro')
     })
@@ -48,6 +55,12 @@ export default function CheckinFim({ uid, exercicios, sessao }: { uid: string; e
       </div>
     </fieldset>
     {dor && <RelatarDor key={String(dor)} uid={uid} exercicios={exercicios} momentoInicial="fim" semBotao aoFechar={() => setDor(null)} />}
+    {doeuAntes && <fieldset><legend className="mb-1 text-sm">A dor do último treino passou em até 1 dia?</legend>
+      <div className="flex gap-2">
+        <button type="button" aria-pressed={dor24h === true} className={`${chip(dor24h === true)} flex-1`} onClick={() => setDor24h(true)}>Sim, passou</button>
+        <button type="button" aria-pressed={dor24h === false} className={`${chip(dor24h === false)} flex-1`} onClick={() => setDor24h(false)}>Não passou</button>
+      </div>
+    </fieldset>}
     {PERGUNTAS_CHECKIN.map((p) => <fieldset key={p.id}><legend className="mb-1 text-sm">{p.rotulo}</legend>
       <div className="grid grid-cols-5 gap-2">
         {[1, 2, 3, 4, 5].map((v) => <button key={v} type="button" aria-pressed={n[p.id as CampoCheckin] === v} aria-label={`${p.rotulo} ${v}`} className={`${chip(n[p.id as CampoCheckin] === v)} min-h-12 px-0 text-base`} onClick={() => setN((x) => ({ ...x, [p.id]: v }))}>{v}</button>)}

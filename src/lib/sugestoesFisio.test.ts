@@ -11,7 +11,7 @@ const dor = (dias: number, intensidade: number, articulacao = 'joelho', extra: P
   id: `d${++seq}`, alunoId: 'ana', exercicio: 'Agachamento Livre Barra', articulacao: articulacao as RelatoDor['articulacao'], tipo: 'dor',
   intensidade, momento: 'durante', texto: '', em: diasAtras(dias), resposta: null, respondidoEm: null, vistoEm: null, ...extra,
 })
-const ck = (dias: number, sono: number, estresse = sono, cansaco = sono): Checkin => ({ id: `c${++seq}`, alunoId: 'ana', sono, estresse, cansaco, alimentacao: 3, em: diasAtras(dias), sessao: null })
+const ck = (dias: number, sono: number, estresse = sono, cansaco = sono): Checkin => ({ id: `c${++seq}`, alunoId: 'ana', sono, estresse, cansaco, alimentacao: 3, em: diasAtras(dias), sessao: null, dor24h: null })
 const rodar = (e: { dores?: RelatoDor[]; checkins?: Checkin[]; sinais?: SinalFisio[] }) =>
   sugestoesFisio({ dores: e.dores ?? [], checkins: e.checkins ?? [], sinais: e.sinais ?? [], agora })
 const tipos = (r: ReturnType<typeof rodar>) => r.map((s) => s.tipo).sort()

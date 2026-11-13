@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { metodoFisio, metodoLiberavel, type OrientacaoFisio } from '../../lib/fisio'
 import { TEXTO_SEM_INTERNET, useSemInternet } from '../../lib/hooks'
 import { Aviso, Cartao } from '../../ui'
@@ -7,18 +8,33 @@ import ConteudoMetodo from './ConteudoMetodo'
 import { type RelatoDor } from '../../lib/dor'
 import { ROTULO_LOCAL } from './RelatarDor'
 import { useDores } from './useDores'
+import { alunosComDorRecente, useProgressao } from './useProgressao'
 import { useOrientacoes } from './useOrientacoes'
 
 export default function FisioAluno({ uid, pausado = false }: { uid: string; pausado?: boolean }) {
   const lista = useOrientacoes(uid)
   const offline = useSemInternet()
   const dores = useDores(uid)
+  // A1: aviso descritivo ao aluno (pedido do Victor) só quando há progressão acima do planejado E dor na mesma região
+  // nos últimos 14 dias. Sem diagnóstico; a decisão é do coach.
+  const comDor = useMemo(() => alunosComDorRecente(dores.todos), [dores.todos])
+  const prog = useProgressao(comDor, uid)
+  const avisos = useMemo(() => {
+    const agora = Date.now()
+    const regioes = new Set<string>(dores.todos.filter((d) => d.tipo === 'dor' && d.em && agora - d.em.toMillis() <= 14 * 86400_000).map((d) => d.articulacao))
+    return prog.progressao.filter((p) => p.articulacoes.some((a) => regioes.has(a)))
+  }, [prog.progressao, dores.todos])
   return <main className="mx-auto max-w-md space-y-4 px-4 py-4">
     <BotaoVoltar para="/conta" />
     <h1 className="text-2xl font-bold">Físio · minhas orientações</h1>
     <p className="text-sm text-slate-300">Orientações individuais enviadas pelo seu coach. Não substituem avaliação de médico ou fisioterapeuta.</p>
     {pausado && <Aviso>Seu treino está pausado por saúde. Os protocolos ficam ocultos até o seu coach conversar com você e liberar. Você ainda pode consultar os alertas e relatar um sinal.</Aviso>}
     {lista.erro ? <Aviso>Não foi possível carregar suas orientações. Confira a conexão e abra esta tela novamente.</Aviso> : lista.carregando ? <p>Carregando…</p> : lista.dados.length === 0 ? (offline ? <p>{TEXTO_SEM_INTERNET}</p> : dores.dados.length === 0 && !dores.carregando && !dores.erro ? <p>Aqui aparecem as orientações do seu coach e os seus relatos de dor. No treino, toque em Senti dor.</p> : null) : lista.dados.map((o) => <Orientacao key={o.id} o={o} pendente={lista.pendente} pausado={pausado} />)}
+    {avisos.length > 0 && <section aria-label="Seu treino nas últimas semanas" className="space-y-2 rounded-2xl border border-amber-600 bg-amber-950/50 p-4 text-sm text-amber-100">
+      <h2 className="text-base font-bold">Seu treino nas últimas semanas</h2>
+      {avisos.map((p) => <p key={p.tipo + p.id}>{p.texto}</p>)}
+      <p className="text-amber-200">Você relatou dor nessa região. Converse com seu coach antes de mudar o treino.</p>
+    </section>}
     <h2 className="pt-2 text-xl font-bold">Meus relatos de dor</h2>
     {dores.erro ? <Aviso>Não foi possível carregar seus relatos.</Aviso> : dores.carregando ? <p>Carregando…</p> : dores.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Você ainda não relatou dor. Use "Senti dor" na tela do treino.'}</p> : dores.dados.map((d) => <Cartao key={d.id}>
       <p className="font-semibold">{d.exercicio}</p>

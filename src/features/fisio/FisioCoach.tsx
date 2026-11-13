@@ -17,8 +17,9 @@ import { descreverDor } from './FisioAluno'
 import { somaRecuperacao } from '../../lib/checkin'
 import { useArquivados } from '../coach/alertas/Alertas'
 import { useCheckins } from './useCheckins'
+import { alunosComDorRecente, useProgressao } from './useProgressao'
 import { useDores } from './useDores'
-import { sinaisDasOrientacoes, sugestoesFisio } from '../../lib/sugestoesFisio'
+import { sinaisDasOrientacoes, sugestoesFisio, TITULO_SUGESTAO } from '../../lib/sugestoesFisio'
 import { useOrientacoes } from './useOrientacoes'
 
 const rotuloResposta = (id: string, v: unknown) => PERGUNTAS.flatMap((e) => e.perguntas).flatMap((p) => ('opcoes' in p && p.id === id ? p.opcoes.filter((o) => o.id === v) : [])).map((o) => o.rotulo)[0]
@@ -31,7 +32,9 @@ export default function FisioCoach({ uid }: { uid: string }) {
   const dores = useDores(uid)
   const checkins = useCheckins(uid)
   const arquivados = useArquivados().chaves
-  const sugestoes = useMemo(() => sugestoesFisio({ dores: dores.todos, checkins: checkins.todos, sinais: sinaisDasOrientacoes(lista.dados), agora: new Date() }).filter((x) => !arquivados.has(x.chave)), [dores.todos, checkins.todos, lista.dados, arquivados])
+  const comDor = useMemo(() => alunosComDorRecente(dores.todos), [dores.todos])
+  const prog = useProgressao(comDor, uid)
+  const sugestoes = useMemo(() => sugestoesFisio({ dores: dores.todos, checkins: checkins.todos, sinais: sinaisDasOrientacoes(lista.dados), agora: new Date(), progressao: prog.progressao, anamnese: prog.anamnese }).filter((x) => !arquivados.has(x.chave)), [dores.todos, checkins.todos, lista.dados, arquivados, prog.progressao, prog.anamnese])
   const offline = useSemInternet()
   const [f0, setF] = useState(vazio)
   const [exercicios, setExercicios] = useState<string[]>([])
@@ -124,7 +127,7 @@ export default function FisioCoach({ uid }: { uid: string }) {
     {offline && <Aviso>{enviando ? 'Sem internet. Aguardando sincronização para confirmar o envio.' : 'Sem internet. Conecte-se para enviar uma orientação.'}</Aviso>}
     {msg && <p role="status" className="text-sm">{msg}</p>}
     <h2 className="font-semibold">Recuperação (check-ins)</h2>
-    {sugestoes.map((x) => <Aviso key={x.chave}>{x.tipo === 'polimento' ? 'Considere semana de polimento / reduzir volume.' : 'Converse com o aluno / considere encaminhar.'} {x.motivo}</Aviso>)}
+    {sugestoes.map((x) => <Aviso key={x.chave}>{TITULO_SUGESTAO[x.tipo]}. {x.motivo}</Aviso>)}
     {checkins.erro ? <Aviso>Não foi possível carregar os check-ins.</Aviso> : checkins.carregando ? <p>Carregando…</p> : checkins.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Nenhum check-in.'}</p> : <Cartao><ul className="divide-y divide-slate-800 text-sm">
       {checkins.dados.map((c) => <li key={c.id} className="py-2">
         <b>{c.em ? c.em.toDate().toLocaleDateString('pt-BR') : 'Agora'}</b> · Recuperação {somaRecuperacao(c)}/15

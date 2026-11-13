@@ -32,7 +32,7 @@ export const marcarDorVista = (id: string) => updateDoc(doc(db, COLECAO_DORES, i
 
 // Check-in de recuperação do fim do treino: sem await (offline fica na fila). Só cria; nunca edita.
 // Id = o da sessão: reenviar a mesma sessão escreve no mesmo documento (não duplica) e a regra nega o segundo.
-export const registrarCheckin = (uid: string, s: SessaoCheckin, f: CheckinForm) =>
-  setDoc(doc(db, COLECAO_CHECKINS, registroId(s.mesoId, s.semana, s.treino)), { alunoId: uid, mesoId: s.mesoId, semana: s.semana, treino: s.treino, sono: f.sono, estresse: f.estresse, cansaco: f.cansaco, alimentacao: f.alimentacao, em: serverTimestamp(), atualizadoEm: serverTimestamp() })
+export const registrarCheckin = (uid: string, s: SessaoCheckin, f: CheckinForm, dor24h: boolean | null = null) =>
+  setDoc(doc(db, COLECAO_CHECKINS, registroId(s.mesoId, s.semana, s.treino)), { alunoId: uid, mesoId: s.mesoId, semana: s.semana, treino: s.treino, sono: f.sono, estresse: f.estresse, cansaco: f.cansaco, alimentacao: f.alimentacao, ...(dor24h === null ? {} : { dor24h }), em: serverTimestamp(), atualizadoEm: serverTimestamp() })
 // O servidor já tem o check-in desta sessão? (a regra nega o segundo envio)
 export const checkinJaExiste = async (s: SessaoCheckin) => (await getDocFromServer(doc(db, COLECAO_CHECKINS, registroId(s.mesoId, s.semana, s.treino)))).exists()

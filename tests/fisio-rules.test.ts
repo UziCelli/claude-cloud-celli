@@ -263,4 +263,8 @@ describe('check-in só de treino concluído (P2 da revisão incremental)', () =>
   it('aceita a sessão concluída há pouco', async () => {
     await assertSucceeds(setDoc(ck('mA_s01_t1'), novo(1, 1)))
   })
+  it('A1: dor24h opcional, só booleano', async () => {
+    await assertFails(setDoc(ck('mA_s01_t1'), { ...novo(1, 1), dor24h: 'sim' }))
+    await assertSucceeds(setDoc(ck('mA_s01_t1'), { ...novo(1, 1), dor24h: false }))
+  })
 })
