@@ -125,3 +125,9 @@ Para um exercício escolhido, cada ocorrência dele no meso (em ordem de semana/
 - Chave "Cálculos pesados LIGADO/DESLIGADO" (`AN73`): existia só para o Excel não travar.
 - Formatação condicional (cores de método): vira estilo na tela.
 - Projeções `TREND` do Resumo 2x: só existiam na aba 2x; revisitar se o Victor pedir.
+
+## Isometria — extensão do aplicativo (13/11/2026)
+
+Isométricos do catálogo usam segundos no vetor de progressão e em `reps` realizadas. Padrão próprio: 3×30 s; limite de progressão: 60 s por série. O ajuste percentual redistribui o total em até seis séries; 360 s é o teto do conjunto quando as seis já têm 60 s. Exercícios dinâmicos mantêm as fórmulas anteriores.
+
+Para isometria: movimentos = 0, volume de carga = vazio, tempo sob tensão = soma dos segundos feitos (quando presentes, inclusive zero) ou prescritos. Sessão/semana/ciclo somam tempo sob tensão separadamente; a carga opcional continua disponível para acompanhamento, sem multiplicar kg por segundos no volume de repetições. O gráfico de movimentos ignora isometria. Tempo previsto do treino inclui os segundos de execução, como já fazia para a duração de repetições.

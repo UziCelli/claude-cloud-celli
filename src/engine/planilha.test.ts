@@ -45,6 +45,7 @@ describe('golden: Meso 3x da planilha', () => {
       const m = metricasSemana(sessoes)
       expect(m).toEqual({
         movimentos: w.movimentos, // 216
+        tempoSobTensaoS: 0,
         cargaMedia: w.cargaMedia,
         volume: w.volume,
         sessoesAtivas: w.sessoesAtivas,

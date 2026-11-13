@@ -21,7 +21,7 @@ describe('buscarExercicios', () => {
     expect(nomes('halt bulg')).toEqual(['Búlgaro com Halter'])
     expect(nomes('bulg halt')).toEqual(['Búlgaro com Halter'])
     const r = nomes('agach livre')
-    expect(r).toEqual(['Agachamento Livre Barra', 'Agachamento Livre Halter', 'Agachamento Livre Banco'])
+    expect(r).toEqual(['Agachamento Livre Barra', 'Agachamento Livre Halter', 'Agachamento Livre Banco', 'Agachamento Isométrico Livre'])
   })
   it('termo sem correspondência: vazio', () => {
     expect(buscarExercicios('zzzxyz')).toEqual([])

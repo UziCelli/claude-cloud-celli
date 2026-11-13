@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { textoNota } from '../../../lib/notas'
-import { metricasSessao, type Cargas, type Sessao } from '../../../engine'
+import { isometrico, metricasSessao, type Cargas, type Sessao } from '../../../engine'
 import { registrarCarga, registrarCargaLados, salvarNota } from '../../../lib/acoes'
 import { confirmarExclusao, dataDaNota, msDaNota } from '../../../lib/notas'
 import { doc } from 'firebase/firestore'
@@ -43,11 +43,11 @@ function Chips({ rotulo }: { rotulo: string }) {
 }
 
 // Reps feitas ≠ prescritas: mostra "alvo→feita" em destaque.
-function RepsFeitas({ alvo, feita }: { alvo: number; feita: number | null | undefined }) {
-  if (feita == null || feita === alvo) return <div className="mb-1 text-slate-400">{alvo}</div>
+function RepsFeitas({ alvo, feita, iso = false }: { alvo: number; feita: number | null | undefined; iso?: boolean }) {
+  if (feita == null || feita === alvo) return <div className="mb-1 text-slate-400">{alvo}{iso ? ' s' : ''}</div>
   return (
     <div className="mb-1 font-semibold text-amber-400">
-      {alvo}→{feita}
+      {alvo}→{feita}{iso ? ' s' : ''}
     </div>
   )
 }
@@ -130,7 +130,7 @@ export default function SessaoCard({
                 Drop
               </th>
             ))}
-            <th className="p-2 text-right">Movimentos</th>
+            <th className="p-2 text-right">Movimentos / tempo sob tensão</th>
             <th className="p-2 text-right">Carga média</th>
             <th className="p-2 text-right">Volume</th>
           </tr>
@@ -183,12 +183,13 @@ export default function SessaoCard({
                       )}
                     </div>
                   )}
+                  {isometrico(e.slot) && <p className="text-xs text-marca-300">Isometria · segundos</p>}
                   <Chips rotulo={e.rotulo} />
                 </td>
                 {Array.from({ length: sessao.series }, (_, k) =>
                   k < e.n ? (
                     <td key={k} className="p-2 text-center">
-                      <RepsFeitas alvo={e.reps[k]} feita={rs[k]} />
+                      <RepsFeitas iso={isometrico(e.slot)} alvo={e.reps[k]} feita={rs[k]} />
                       {dois ? (
                         <CampoLados className={ed ? 'w-36' : 'w-16'} cel={cel(k)} ed={!!ed} onGravar={gravarLados(k)} />
                       ) : (
@@ -212,7 +213,7 @@ export default function SessaoCard({
                       {tem ? (
                         <>
                           {e.drops[j] && <div className="text-[10px] font-semibold text-rose-300">S{e.drops[j].serie}·D{e.drops[j].etapa}</div>}
-                          <RepsFeitas alvo={e.reps[coluna]} feita={rs[coluna]} />
+                          <RepsFeitas iso={isometrico(e.slot)} alvo={e.reps[coluna]} feita={rs[coluna]} />
                           {dois ? (
                             <CampoLados className={ed ? 'w-36' : 'w-16'} cel={cel(coluna)} ed={!!ed} placeholder={e.cargaSugerida[coluna] ?? null} onGravar={gravarLados(coluna)} />
                           ) : (
@@ -229,7 +230,7 @@ export default function SessaoCard({
                     </td>
                   )
                 })}
-                <td className="p-2 text-right">{fmt(m.exercicios[i].movimentos)}</td>
+                <td className="p-2 text-right">{isometrico(e.slot) ? `${fmt(m.exercicios[i].tempoSobTensaoS)} s` : fmt(m.exercicios[i].movimentos)}</td>
                 <td className="p-2 text-right">{fmt(m.exercicios[i].cargaMedia)}</td>
                 <td className="p-2 text-right">{fmt(m.exercicios[i].volume)}</td>
               </tr>
@@ -239,7 +240,7 @@ export default function SessaoCard({
             <td className="p-2" colSpan={2 + sessao.series + nEtapas}>
               Sessão
             </td>
-            <td className="p-2 text-right">{fmt(m.movimentos)}</td>
+            <td className="p-2 text-right">{fmt(m.movimentos)}{m.tempoSobTensaoS > 0 && <div className="text-xs text-marca-300">Tempo sob tensão: {fmt(m.tempoSobTensaoS)} s</div>}</td>
             <td className="p-2 text-right">{fmt(m.cargaMedia)}</td>
             <td className="p-2 text-right">{fmt(m.volume)}</td>
           </tr>

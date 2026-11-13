@@ -1,5 +1,5 @@
 import type { Meso } from '../../../engine'
-import { prescreverSessao } from '../../../engine'
+import { isometrico, prescreverSessao } from '../../../engine'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
 import { IcSeta } from '../../../icones'
 import { campoBase, Cartao, Deslizar } from '../../../ui'
@@ -58,7 +58,7 @@ export default function Preview({
                     <span className="w-4 shrink-0 text-slate-500">{e.pos}</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{e.slot.nome || <span className="text-slate-500">(vazio)</span>}</p>
-                      <p className="text-slate-400">{e.reps.join('/')} reps</p>
+                      <p className="text-slate-400">{e.reps.join('/')} {isometrico(e.slot) ? 's' : 'reps'}</p>
                       {e.rotulo && (
                         <span className="mt-1 inline-block rounded-full bg-marca-500/20 px-2 py-0.5 text-xs text-marca-300">{e.rotulo}</span>
                       )}

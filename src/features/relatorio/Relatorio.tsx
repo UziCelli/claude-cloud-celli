@@ -64,6 +64,7 @@ export default function Relatorio({ r, aluno, comentario, compartilhar = false }
       <div className="grid grid-cols-3 gap-2">
         <Numero valor={volumeTexto(r.volumeKg)} rotulo="volume total" />
         <Numero valor={String(r.movimentos)} rotulo="movimentos" />
+        {(r.tempoSobTensaoS ?? 0) > 0 && <Numero valor={`${r.tempoSobTensaoS} s`} rotulo="tempo sob tensão" />}
         <Numero valor={r.tempoMedioMin == null ? '—' : `${r.tempoMedioMin} min`} rotulo="tempo médio" />
       </div>
 
@@ -80,7 +81,7 @@ export default function Relatorio({ r, aluno, comentario, compartilhar = false }
                 </p>
                 <Faixa frac={s.previstos ? s.feitos / s.previstos : 0} />
                 <p className="mt-1 text-xs text-slate-400">
-                  {volumeTexto(s.volumeKg)} · {s.movimentos} movimentos
+                  {volumeTexto(s.volumeKg)} · {s.movimentos} movimentos{(s.tempoSobTensaoS ?? 0) > 0 ? ` · ${s.tempoSobTensaoS} s de isometria` : ''}
                 </p>
               </li>
             ))}

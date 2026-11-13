@@ -1,5 +1,7 @@
 import {
   emGrupo,
+  isometrico,
+  progressaoIsometrica,
   linhaPrescrita,
   METODOS,
   padraoMetodo,
@@ -167,7 +169,7 @@ export function trocarExercicio(meso: Meso, registros: Registros, t: number, p: 
   const novoArr = [...arr]
   novoArr[p - 1] = { slotId: crypto.randomUUID(), nome }
   divisao[t - 1] = novoArr
-  return { divisao, trocas, preservou }
+  return { divisao, trocas, preservou, progressaoExercicio: comProgressaoIsometrica(meso, divisao) }
 }
 
 // Algum exercício do treino `t` tem carga registrada? Olha a divisão (com as trocas vigentes por semana),
@@ -326,7 +328,7 @@ export function aplicarAcoes(
     aplicados.push(`${nomeAlvo}: ${metodo}`)
   }
 
-  const patch: Partial<Meso> = { divisao: m.divisao, metodos: m.metodos, progressaoExercicio: m.progressaoExercicio ?? {} }
+  const patch: Partial<Meso> = { divisao: m.divisao, metodos: m.metodos, progressaoExercicio: comProgressaoIsometrica(m) }
   if (m.progressao !== meso.progressao) patch.progressao = m.progressao
   if (m.trocas) patch.trocas = m.trocas
   if (m.adicoes) patch.adicoes = m.adicoes
@@ -358,7 +360,7 @@ function aplicarDivisao(m: Meso, registros: Registros, a: AcaoDivisao, aplicados
     }
     const r = trocarExercicio(m, registros, t, a.pos, a.por.nome)
     aplicados.push(`Treino ${t}: ${a.de} por ${a.por.nome}`)
-    return { ...m, divisao: r.divisao, trocas: r.trocas }
+    return { ...m, divisao: r.divisao, trocas: r.trocas, progressaoExercicio: r.progressaoExercicio }
   }
   if (treinoTemCarga(m, registros, t)) {
     bloqueios.push(`Treino ${t}: já tem cargas registradas, então a lista não foi refeita. Peça para adicionar ou trocar.`)
@@ -373,4 +375,11 @@ function aplicarDivisao(m: Meso, registros: Registros, a: AcaoDivisao, aplicados
   divisao[t - 1] = a.exercicios.slice(0, MAX_POR_TREINO).map((e) => ({ slotId: crypto.randomUUID(), nome: e.nome }))
   aplicados.push(`Treino ${t}: lista refeita`)
   return { ...m, divisao, progressaoExercicio, metodos: m.metodos.filter((x) => x.treino !== t), trocas, adicoes }
+}
+
+// Inicializa somente slots isométricos novos; não altera nenhuma linha já personalizada.
+export function comProgressaoIsometrica(meso: Meso, divisao = meso.divisao) {
+  const proprias = { ...meso.progressaoExercicio }
+  for (const slot of divisao.flat()) if (isometrico(slot) && !proprias[slot.slotId]) proprias[slot.slotId] = progressaoIsometrica(meso.semanas)
+  return proprias
 }
