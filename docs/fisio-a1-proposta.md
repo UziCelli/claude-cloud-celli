@@ -1,6 +1,6 @@
 # Físio — proposta A1: cruzar o treino real com as sugestões
 
-> **13/11/2026:** números aprovados pelo Victor e implementados (`src/lib/progressaoFisio.ts`, `sugestoesFisio` tipo `progressao`, pergunta de dor em 24 h no check-in, aviso descritivo ao aluno na aba Físio). Os testes rodam só antes de juntar (pedido do Victor). Passos 1 e 3 também feitos: o relato guarda o treino (`mesoId`, `semana`, `treino`, `slotId`; dor no mesmo treino pesa mais) e "Preparar proposta no meso" abre o editor com polimento só nos exercícios da região, semana seguinte, % padrão do editor (`propostaPolimento`, `features/fisio/propostaEditor.ts`). Pendentes só as decisões: "converse" com dor 6 ou 7; gestação.
+> **13/11/2026:** números aprovados pelo Victor e implementados (`src/lib/progressaoFisio.ts`, `sugestoesFisio` tipo `progressao`, pergunta de dor em 24 h no check-in, aviso descritivo ao aluno na aba Físio). Os testes rodam só antes de juntar (pedido do Victor). Passos 1 e 3 também feitos: o relato guarda o treino (`mesoId`, `semana`, `treino`, `slotId`; dor no mesmo treino pesa mais) e "Preparar proposta no meso" abre o editor com polimento só nos exercícios da região, semana seguinte, % padrão do editor (`propostaPolimento`, `features/fisio/propostaEditor.ts`). Decisões do Victor (13/11): "converse" com dor 6+; gestação exige liberação profissional (já travava o contexto de liberação).
 
 Origem: revisão do PR #161 (13/11/2026), item A1. Hoje as sugestões ao coach (`src/lib/sugestoesFisio.ts`) usam só relatos de dor, check-ins e sinais de perigo. A anamnese, as cargas, as repetições feitas, o volume e a progressão **não** entram no cálculo. Nada abaixo foi implementado.
 
@@ -53,7 +53,7 @@ Pedido: cruzar o **histórico de progressão** com os relatos de dor para avisar
 - Transformar texto de protocolo em dose clínica.
 
 ## Decisões suas antes de começar
-1. **Limiares.** A dica ao aluno manda parar em 6+, mas "converse com o aluno" só dispara em 7+. Alinhar os dois em 6? Os demais números (2 dores 4–6 em 14 dias; 3 check-ins com soma ≤ 7/15; queda de 30%) ficam?
-2. **Gestação.** Mantém o contexto de liberação travado quando a anamnese diz gestação?
+1. **Limiares.** ✅ Decidido (13/11): "converse com o aluno" dispara com dor 6+, igual à dica ao aluno. Os demais números (2 dores 4–6 em 14 dias; 3 check-ins com soma ≤ 7/15; queda de 30%) ficam?
+2. **Gestação.** ✅ Decidido (13/11): liberação profissional obrigatória (o contexto de liberação já vem travado).
 3. **Corte sugerido no passo 3.** Usar o mesmo % do polimento que você já usa no editor? Qual padrão (ex.: −30% de séries)?
 4. **Ordem.** Fazer os 3 passos ou só o 1 e o 2 por enquanto?

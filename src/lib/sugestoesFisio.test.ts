@@ -17,7 +17,8 @@ const rodar = (e: { dores?: RelatoDor[]; checkins?: Checkin[]; sinais?: SinalFis
 const tipos = (r: ReturnType<typeof rodar>) => r.map((s) => s.tipo).sort()
 
 describe('sugestoesFisio: conversar / encaminhar', () => {
-  it('1 relato ≥7 nos últimos 14 dias; sinal de perigo; nada com dor leve isolada', () => {
+  it('1 relato ≥6 nos últimos 14 dias; sinal de perigo; nada com dor leve isolada', () => {
+    expect(tipos(rodar({ dores: [dor(2, 6, 'lombar')] }))).toEqual(['conversar']) // 6 já conversa (decisão do Victor)
     expect(tipos(rodar({ dores: [dor(2, 7)] }))).toEqual(['conversar'])
     expect(rodar({ dores: [dor(20, 9)] })).toEqual([]) // antigo
     expect(tipos(rodar({ sinais: [{ alunoId: 'ana', id: 'o1', em: diasAtras(1).toMillis() }] }))).toEqual(['conversar'])

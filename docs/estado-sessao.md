@@ -11,7 +11,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Sugestões ao coach (Alertas, ficha e selo do menu): "considere polimento" / "converse ou encaminhe", com motivo; dispensar some até dado novo. Nunca aplica nada.
 - Anamnese na ficha Físio: bloco "Da anamnese", métodos relacionados primeiro, contexto de liberação travado (cirurgia 12 meses, gestação, osso/articulação), selo "já na anamnese"/"novo".
 - 13/11 manhã: corrigidos F1–F8 da revisão do PR (ver `docs/fisio-continuidade.md`). A1 em `docs/fisio-a1-proposta.md`.
-- **Para o Victor decidir:** gestação travando o contexto de liberação (conservador, não está na lista da pesquisa); números das sugestões (topo de `src/lib/sugestoesFisio.ts`). Decidir também o A1 (`docs/fisio-a1-proposta.md`).
+- Decisões do Victor (13/11): "converse" com dor 6+; gestação exige liberação profissional; números do A1 aprovados e implementados. Falta só juntar (testes rodam uma vez, ao marcar o PR como pronto).
 
 ## 12/11/2026 — Sistema Físio (EM ANDAMENTO, branch separada, NÃO juntar)
 - **Retomada Codex:** Victor reenviou o Markdown científico (igual ao corpo de `fisio-pesquisa.md`) e pediu continuidade coordenada por código/documentação. Ler `docs/fisio-continuidade.md` antes de mexer. Etapa 2b: orientação individual coach → aluno, liberação profissional registrada, relato de sinal e recolhimento. **Não é o botão geral “Senti dor” da Etapa 3.** Resultados e limites no documento de continuidade.

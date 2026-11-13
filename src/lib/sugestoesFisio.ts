@@ -67,7 +67,8 @@ function gatilhosConversar(ds: RelatoDor[], ss: SinalFisio[], cs: Checkin[], fim
   for (const c of cs.filter((c) => c.dor24h === false && fim - ms(c.em)! <= 14 * DIA))
     g.push({ motivo: 'A dor do treino anterior não passou em até 1 dia.', id: c.id, em: ms(c.em)! })
   const recentes = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA)
-  for (const d of [...recentes].reverse().filter((d) => d.intensidade >= 7))
+  // Dor 6+ (decisão do Victor, 13/11/2026: igual à dica ao aluno, que manda parar em 6).
+  for (const d of [...recentes].reverse().filter((d) => d.intensidade >= 6))
     g.push({ motivo: `Dor ${d.intensidade}/10 em ${local(d.articulacao)} (${d.exercicio}).`, ...ev(d) })
   // Mesma articulação com dor ≥4 em 3 dias diferentes, ou persistindo por mais de 14 dias (dentro da janela).
   for (const art of new Set(ds.map((d) => d.articulacao))) {
