@@ -20,6 +20,7 @@ import Logo from '@marca/Logo'
 import Entrar from './features/auth/Entrar'
 import BotaoSair, { useSair } from './features/auth/BotaoSair'
 import Inicio from './features/coach/inicio/Inicio'
+import { useSugestoesFisio } from './features/fisio/useSugestoes'
 import Alertas from './features/coach/alertas/Alertas'
 import NovoAluno from './features/coach/alunos/NovoAluno'
 import Alunos from './features/coach/alunos/Alunos'
@@ -202,7 +203,8 @@ function Menu({ rota }: { rota: string }) {
   const arquivados = useArquivados()
   // Mesma consulta do Início (o Firestore junta, sem leitura extra).
   const naoLidos = useFeedbacks().dados.filter((f) => !f.lido).length
-  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves).total
+  const fisio = useSugestoesFisio(alunos.dados as AlunoComId[], arquivados.chaves).visiveis.length
+  const selo = calcularAlertas(alunos.dados as AlunoComId[], mesos.dados, registros.dados, agora, arquivados.chaves).total + fisio
   const itens = [
     { id: 'inicio', rotulo: 'Início', href: '#/', Icone: IcCasa },
     { id: 'alunos', rotulo: 'Alunos', href: '#/alunos', Icone: IcGrupo },

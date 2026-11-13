@@ -21,7 +21,7 @@ const rodar = () =>
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
-const COLECOES = ['usuarios', 'mesos', 'registros', 'relatorios', 'notas', 'fotos', 'cardios', 'feedbacks', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores', 'logs', 'exclusoes']
+const COLECOES = ['usuarios', 'mesos', 'registros', 'relatorios', 'notas', 'fotos', 'cardios', 'feedbacks', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores', 'fisioCheckins', 'logs', 'exclusoes']
 const existe = async (p: string) => (await db.doc(p).get()).exists
 const login = async (uid: string) => {
   try { await auth.getUser(uid); return true } catch { return false }
@@ -44,12 +44,13 @@ async function semear(uid: string, papel: string, pedido: boolean) {
   await db.doc(`anamneses/an-${uid}`).set({ alunoId: uid, respostas: { lesoes: 'segredo' }, versao: 1 })
   await db.doc(`fisioOrientacoes/fi-${uid}`).set({ alunoId: uid, metodoId: 'M04', condicao: 'dado de saúde', sinalRelatado: true })
   await db.doc(`fisioDores/fd-${uid}`).set({ alunoId: uid, exercicio: 'Agachamento', articulacao: 'joelho', tipo: 'dor', intensidade: 7, momento: 'durante', texto: 'dado de saúde' })
+  await db.doc(`fisioCheckins/fc-${uid}`).set({ alunoId: uid, sono: 2, estresse: 2, cansaco: 2, alimentacao: 3 })
   await db.doc(`feedbacks/anon-${uid}`).set({ nota: 4, assunto: 'app', em: Timestamp.now() }) // anônimo: fica
   if (pedido) await db.doc(`exclusoes/${uid}`).set({ em: Timestamp.now() })
 }
 const tudoDe = async (uid: string) =>
   [`usuarios/${uid}`, `mesos/m-${uid}`, `registros/r-${uid}`, `relatorios/m-${uid}`, `notas/${uid}`, `fotos/${uid}`, `logs/l-${uid}`,
-   `cardios/${uid}_2026-10-01`, `cardios/${uid}_2026-10-02`, `feedbacks/f-${uid}`, `avaliacoes/av-${uid}`, `avaliacoes/av2-${uid}`, `anamneses/an-${uid}`, `fisioOrientacoes/fi-${uid}`, `fisioDores/fd-${uid}`]
+   `cardios/${uid}_2026-10-01`, `cardios/${uid}_2026-10-02`, `feedbacks/f-${uid}`, `avaliacoes/av-${uid}`, `avaliacoes/av2-${uid}`, `anamneses/an-${uid}`, `fisioOrientacoes/fi-${uid}`, `fisioDores/fd-${uid}`, `fisioCheckins/fc-${uid}`]
 
 beforeEach(async () => {
   for (const c of COLECOES) for (const d of (await db.collection(c).get()).docs) await d.ref.delete()

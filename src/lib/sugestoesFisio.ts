@@ -30,7 +30,7 @@ export function sugestoesFisio({ dores, checkins, sinais, agora }: Entrada): Sug
       .sort((a, b) => ms(a.em)! - ms(b.em)!)
     const cs = checkins.filter((c) => c.alunoId === aluno && ms(c.em) !== null).sort((a, b) => ms(a.em)! - ms(b.em)!)
     const sinal = sinais.find((s) => s.alunoId === aluno)
-    const conversar = motivoConversar(ds, sinal, fim)
+    const conversar = motivoConversar(aluno, ds, sinal, fim)
     if (conversar) saida.push({ alunoId: aluno, tipo: 'conversar', ...conversar })
     const polimento = motivoPolimento(ds, cs, fim)
     if (polimento) saida.push({ alunoId: aluno, tipo: 'polimento', ...polimento })
@@ -40,9 +40,8 @@ export function sugestoesFisio({ dores, checkins, sinais, agora }: Entrada): Sug
 
 const chave = (tipo: TipoSugestao, aluno: string, ultimoId: string) => `fisio_${tipo}_${aluno}_${ultimoId}`
 
-function motivoConversar(ds: RelatoDor[], sinal: { id: string } | undefined, fim: number) {
-  const aluno = ds[0]?.alunoId
-  if (sinal) return { motivo: 'Marcou um sinal de perigo numa orientação Físio.', chave: chave('conversar', aluno ?? 'x', sinal.id) }
+function motivoConversar(aluno: string, ds: RelatoDor[], sinal: { id: string } | undefined, fim: number) {
+  if (sinal) return { motivo: 'Marcou um sinal de perigo numa orientação Físio.', chave: chave('conversar', aluno, sinal.id) }
   const recentes = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA)
   const forte = [...recentes].reverse().find((d) => d.intensidade >= 7)
   if (forte) return { motivo: `Dor ${forte.intensidade}/10 em ${forte.articulacao === 'outro' ? 'outro local' : forte.articulacao} (${forte.exercicio}).`, chave: chave('conversar', forte.alunoId, forte.id) }

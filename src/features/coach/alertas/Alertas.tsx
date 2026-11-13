@@ -11,6 +11,8 @@ import { linkEmail, linkWhatsApp, primeiroNome } from '../../../lib/contato'
 import { saida, suave } from '../../../movimento'
 import { Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../../ui'
 import { LinhaAcima } from '../meso/SugestaoTempo'
+import { useSugestoesFisio } from '../../fisio/useSugestoes'
+import { mesoAtual } from '../../aluno/mesoAtual'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
 import { IcCheck, IcVoltar } from '../../../icones'
@@ -35,17 +37,20 @@ export function useAlertasCoach() {
   const registros = useLista<Reg>(useMemo(() => consultaRegistrosRecentes(agora), [chave]))
   const arquivados = useArquivados()
   const r = calcularAlertas(alunos.dados, mesos.dados, registros.dados, agora, arquivados.chaves)
-  const carregando = alunos.carregando || mesos.carregando || registros.carregando || arquivados.carregando
-  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache)
+  const fisio = useSugestoesFisio(alunos.dados, arquivados.chaves)
+  const carregando = alunos.carregando || mesos.carregando || registros.carregando || arquivados.carregando || fisio.carregando
+  const doServidor = ![alunos, mesos, registros, arquivados].some((l) => l.cache) && !fisio.cache
   // Uma vez por abertura da tela, com tudo carregado do servidor (o cache do aparelho pode estar incompleto,
   // e um alerta ainda não lido pareceria antigo).
   const limpou = useRef(false)
   useEffect(() => {
     if (carregando || !doServidor || limpou.current) return
     limpou.current = true
-    limparArquivadosAntigos(arquivados.docs, chavesAtuais(r), agora)
+    limparArquivadosAntigos(arquivados.docs, new Set([...chavesAtuais(r), ...fisio.todas.map((x) => x.chave)]), agora)
   })
-  return { ...r, carregando }
+  const nomes = new Map(alunos.dados.map((x) => [x.id, x.nome]))
+  const mesoDe = (id: string) => mesoAtual(mesos.dados.filter((d) => d.alunoId === id))?.doc.id
+  return { ...r, carregando, fisio: fisio.visiveis.map((x) => ({ ...x, aluno: nomes.get(x.alunoId) ?? 'Aluno', mesoId: mesoDe(x.alunoId) })) }
 }
 
 // A seção sai com animação quando o último cartão é arquivado (n vira 0).
@@ -121,6 +126,9 @@ const rotulo = {
   demorado: (x: AlertaDemorado) => `Treino ${x.treino} demorou (semana ${x.semana})`,
 }
 
+const TEXTO_FISIO = { polimento: 'Considere semana de polimento / reduzir volume', conversar: 'Converse com o aluno / considere encaminhar' }
+const linkBtn = classesBotao('vidro', 'md', 'inline-flex items-center justify-center')
+
 export default function Alertas() {
   const a = useAlertasCoach()
   const semInternet = useSemInternet()
@@ -138,7 +146,7 @@ export default function Alertas() {
         <p className="text-slate-400">Carregando…</p>
       ) : (
         <div className="space-y-6">
-          {a.total === 0 &&
+          {a.total + a.fisio.length === 0 &&
             (semInternet ? (
               <p className="text-slate-400">{TEXTO_SEM_INTERNET}</p>
             ) : (
@@ -175,6 +183,21 @@ export default function Alertas() {
                     : {x.minutos} min, previsto {x.previsto} min
                   </p>
                   <Acoes chave={x.chave} email={x.email} assunto={`Treino ${x.treino}`} texto={textoDemorado(x)} />
+                </div>
+              </Saindo>
+            ))}
+          </Grupo>
+          <Grupo titulo="Físio · sugestões" n={a.fisio.length} cor="text-violet-300">
+            {a.fisio.map((x) => (
+              <Saindo key={x.chave}>
+                <div className="mb-2 space-y-2 rounded-xl border-2 border-violet-500 bg-violet-950 p-4 text-violet-100">
+                  <p className="font-semibold">{x.aluno} — {TEXTO_FISIO[x.tipo]}</p>
+                  <p className="text-sm text-violet-200">{x.motivo}</p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <a className={linkBtn} href={`#/aluno/${x.alunoId}/fisio`}>Abrir ficha</a>
+                    {x.tipo === 'polimento' && <a className={linkBtn} href={x.mesoId ? `#/meso/${x.mesoId}` : `#/aluno/${x.alunoId}`}>Abrir o meso</a>}
+                    <Botao type="button" tipo="vidro" onClick={() => arquivarAlerta(x.chave).catch(() => {})}>Dispensar</Botao>
+                  </div>
                 </div>
               </Saindo>
             ))}

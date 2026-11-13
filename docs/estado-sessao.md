@@ -2,6 +2,14 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 13/11/2026 (madrugada) — Físio, rodada 4 (NÃO juntar; Victor dormindo, retomar com ele)
+- Feito: botão "Senti dor" visível; aba **Físio** do aluno (5ª aba); coach com "Treino | Físio" em Métodos.
+- Métodos no treino: o coach liga uma orientação (qualquer um dos 25) a até 10 exercícios; o aluno vê o selo "Físio · Mxx" no exercício.
+- Fim do treino: "Sentiu dor hoje?" + check-in (sono, estresse, cansaço, alimentação 1–5, "Pular" permitido). Coleção `fisioCheckins`.
+- Sugestões ao coach (Alertas, ficha e selo do menu): "considere polimento" / "converse ou encaminhe", com motivo; dispensar some até dado novo. Nunca aplica nada.
+- Anamnese na ficha Físio: bloco "Da anamnese", métodos relacionados primeiro, contexto de liberação travado (cirurgia 12 meses, gestação, osso/articulação), selo "já na anamnese"/"novo".
+- **Para o Victor decidir:** gestação travando o contexto de liberação (conservador, não está na lista da pesquisa); números das sugestões (topo de `src/lib/sugestoesFisio.ts`).
+
 ## 12/11/2026 — Sistema Físio (EM ANDAMENTO, branch separada, NÃO juntar)
 - **Retomada Codex:** Victor reenviou o Markdown científico (igual ao corpo de `fisio-pesquisa.md`) e pediu continuidade coordenada por código/documentação. Ler `docs/fisio-continuidade.md` antes de mexer. Etapa 2b: orientação individual coach → aluno, liberação profissional registrada, relato de sinal e recolhimento. **Não é o botão geral “Senti dor” da Etapa 3.** Resultados e limites no documento de continuidade.
 - Grande atualização: aluno relata dor no treino → dica pronta e segura na hora + coach avisado. Plano: `docs/plano-fisio.md`.

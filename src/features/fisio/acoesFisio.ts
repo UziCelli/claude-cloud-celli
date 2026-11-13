@@ -1,5 +1,6 @@
 import { addDoc, collection, doc, getDocFromServer, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
+import { COLECAO_CHECKINS, type CheckinForm } from '../../lib/checkin'
 import { COLECAO_DORES, validarDor, type DorForm } from '../../lib/dor'
 import { COLECAO_FISIO, validarOrientacao, type OrientacaoForm } from '../../lib/fisio'
 
@@ -27,3 +28,7 @@ export function relatarDor(uid: string, f: DorForm) {
 // Campo a campo (a regra só aceita estes). "Responder" também marca como visto.
 export const responderDor = (id: string, resposta: string) => updateDoc(doc(db, COLECAO_DORES, id), { resposta: resposta.trim(), respondidoEm: serverTimestamp(), vistoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
 export const marcarDorVista = (id: string) => updateDoc(doc(db, COLECAO_DORES, id), { vistoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
+
+// Check-in de recuperação do fim do treino: sem await (offline fica na fila). Só cria; nunca edita.
+export const registrarCheckin = (uid: string, f: CheckinForm) =>
+  addDoc(collection(db, COLECAO_CHECKINS), { alunoId: uid, sono: f.sono, estresse: f.estresse, cansaco: f.cansaco, alimentacao: f.alimentacao, em: serverTimestamp(), atualizadoEm: serverTimestamp() })

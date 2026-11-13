@@ -14,7 +14,11 @@ import { enviarOrientacao, marcarDorVista, recolherOrientacao, responderDor, sal
 import ConteudoMetodo from './ConteudoMetodo'
 import { type RelatoDor } from '../../lib/dor'
 import { descreverDor } from './FisioAluno'
-import { useDores } from './useDores'
+import { somaRecuperacao } from '../../lib/checkin'
+import { useArquivados } from '../coach/alertas/Alertas'
+import { useCheckins } from './useCheckins'
+import { corte30dias, useDores } from './useDores'
+import { sugestoesFisio } from '../../lib/sugestoesFisio'
 import { useOrientacoes } from './useOrientacoes'
 
 const rotuloResposta = (id: string, v: unknown) => PERGUNTAS.flatMap((e) => e.perguntas).flatMap((p) => ('opcoes' in p && p.id === id ? p.opcoes.filter((o) => o.id === v) : [])).map((o) => o.rotulo)[0]
@@ -25,6 +29,9 @@ const vazio = (): OrientacaoForm => ({ metodoId: '', condicao: '', recado: '', c
 export default function FisioCoach({ uid }: { uid: string }) {
   const lista = useOrientacoes(uid, true)
   const dores = useDores(uid)
+  const checkins = useCheckins(uid)
+  const arquivados = useArquivados().chaves
+  const sugestoes = useMemo(() => sugestoesFisio({ dores: dores.dados.filter((d) => (d.em?.toMillis() ?? Date.now()) >= corte30dias()), checkins: checkins.dados.filter((c) => (c.em?.toMillis() ?? Date.now()) >= corte30dias()), sinais: lista.dados.filter((o) => o.sinalRelatado && !o.recolhida), agora: new Date() }).filter((x) => !arquivados.has(x.chave)), [dores.dados, checkins.dados, lista.dados, arquivados])
   const offline = useSemInternet()
   const [f0, setF] = useState(vazio)
   const [exercicios, setExercicios] = useState<string[]>([])
@@ -116,6 +123,14 @@ export default function FisioCoach({ uid }: { uid: string }) {
     </Cartao>
     {offline && <Aviso>{enviando ? 'Sem internet. Aguardando sincronização para confirmar o envio.' : 'Sem internet. Conecte-se para enviar uma orientação.'}</Aviso>}
     {msg && <p role="status" className="text-sm">{msg}</p>}
+    <h2 className="font-semibold">Recuperação (check-ins)</h2>
+    {sugestoes.map((x) => <Aviso key={x.chave}>{x.tipo === 'polimento' ? 'Considere semana de polimento / reduzir volume.' : 'Converse com o aluno / considere encaminhar.'} {x.motivo}</Aviso>)}
+    {checkins.erro ? <Aviso>Não foi possível carregar os check-ins.</Aviso> : checkins.carregando ? <p>Carregando…</p> : checkins.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Nenhum check-in.'}</p> : <Cartao><ul className="divide-y divide-slate-800 text-sm">
+      {checkins.dados.map((c) => <li key={c.id} className="py-2">
+        <b>{c.em ? c.em.toDate().toLocaleDateString('pt-BR') : 'Agora'}</b> · Recuperação {somaRecuperacao(c)}/15
+        <div className="text-slate-300">Sono {c.sono} · Estresse {c.estresse} · Cansaço {c.cansaco} · Alimentação {c.alimentacao}</div>
+      </li>)}
+    </ul></Cartao>}
     <h2 className="font-semibold">Relatos de dor</h2>
     {dores.erro ? <Aviso>Não foi possível carregar os relatos de dor.</Aviso> : dores.carregando ? <p>Carregando…</p> : dores.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Nenhum relato de dor.'}</p> : dores.dados.map((d) => <Relato key={d.id} d={d} naAnamnese={noAnamnese.includes(d.articulacao)} />)}
     <h2 className="font-semibold">Histórico de orientações</h2>

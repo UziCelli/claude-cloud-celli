@@ -6,6 +6,8 @@
 
 > Etapa 3 (12/11/2026): botão "Senti dor" no treino, coleção `fisioDores`, dica por faixa 0–3 / 4–5 / 6+ (decisão do Victor) e resposta do coach. Os 10 métodos sem sinais próprios usam a lista geral de perigo (`ALERTA_GERAL`).
 
+> Rodada 4 (13/11/2026): aba Físio, selo Físio no treino (orientação com `exercicios`), check-in de recuperação no fim do treino (`fisioCheckins`), sugestões ao coach (`src/lib/sugestoesFisio.ts`) e cruzamentos com a anamnese. Desenho consultado com o Fable; detalhes em `docs/fisio-continuidade.md`.
+
 ## Contexto
 - Victor quer uma nova área **Físio** no app: o aluno relata dor/sensação no treino e recebe orientações curtas; o coach recebe o relato e manda orientação específica.
 - Base técnica: HSR (Heavy Slow Resistance), sobrecarga/ênfase excêntrica, redução de volume/carga e polimento (já existe `polimento()` em `src/engine/volume.ts`).

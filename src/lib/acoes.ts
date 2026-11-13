@@ -145,11 +145,11 @@ export async function darAcessoAoApp(idPresencial: string, a: { email: string; p
     await updateDoc(antigo, { migradoPara: uid })
   }
   await setDoc(doc(db, 'usuarios', uid), { ...perfilApp(p.nome, a.email, a.pagoAte), criadoEm: p.criadoEm ?? serverTimestamp() })
-  for (const col of ['mesos', 'registros', 'relatorios', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores']) {
+  for (const col of ['mesos', 'registros', 'relatorios', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores', 'fisioCheckins']) {
     // Do servidor (nunca do cache): offline dá erro antes de apagar o perfil antigo.
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', idPresencial)))).docs
     // As regras do relatório, da avaliação e da anamnese exigem atualizadoEm da hora do servidor; registros não (atualizadoEm deles é a janela de 14 dias).
-    const campos = ['relatorios', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores'].includes(col) ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
+    const campos = ['relatorios', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores', 'fisioCheckins'].includes(col) ? { alunoId: uid, atualizadoEm: serverTimestamp() } : { alunoId: uid }
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)
       for (const d of docs.slice(i, i + 400)) b.update(d.ref, campos)
@@ -236,7 +236,7 @@ export async function excluirMeso(mesoId: string) {
 export async function apagarAluno(uid: string) {
   await getDocFromServer(doc(db, 'usuarios', uid)) // offline: erro na hora (senão o pedido ficaria na fila e a tela esperando)
   await setDoc(doc(db, 'exclusoes', uid), { em: serverTimestamp() })
-  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores']) {
+  for (const col of ['registros', 'relatorios', 'mesos', 'cardios', 'feedbacks', 'avaliacoes', 'anamneses', 'fisioOrientacoes', 'fisioDores', 'fisioCheckins']) {
     const docs = (await getDocsFromServer(query(collection(db, col), where('alunoId', '==', uid)))).docs
     for (let i = 0; i < docs.length; i += 400) {
       const b = writeBatch(db)

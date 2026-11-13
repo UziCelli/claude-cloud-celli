@@ -401,6 +401,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const fecharFesta = useCallback(() => setFesta(null), [])
   const [verResumo, setVerResumo] = useState(false)
   const [fimLocal, setFimLocal] = useState<number | null>(null) // hora do "Concluir", até o servidor confirmar
+  const [checkinAberto, setCheckinAberto] = useState(false) // check-in só logo depois de "Concluir" ("Ver resumo" depois não pergunta de novo)
   const [confirmarFim, setConfirmarFim] = useState(false) // 2º toque no "Concluir": aluno pediu, concluía sem querer
 
   const naoEncontrado = (
@@ -499,6 +500,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     marcarRealizado(mesoId, uid, semana, treino, true, fimMs != null) // fim real desta sessão (inclusive offline, pendente) é mantido; fim de fora (planilha/antigo) é trocado por agora
     setFimLocal(Date.now())
     setConfirmarFim(false)
+    setCheckinAberto(true)
     abrirResumo()
   }
   // Desfazer logo depois de concluir (até 3 h do início): o treino volta a correr do início original, sem perder o tempo.
@@ -541,6 +543,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         quieto={quieto}
         voltar={sair}
         verTreino={() => setVerResumo(false)}
+        checkin={coach || !checkinAberto ? undefined : { uid, exercicios: [...new Set(sessao.exercicios.map((e) => e.slot.nome.trim()))] }}
       />
     )
 

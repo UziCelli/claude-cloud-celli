@@ -9,6 +9,7 @@ import { Botao, cascata, item } from '../../ui'
 import BotaoCompartilhar from '../evolucao/BotaoCompartilhar'
 import { gerarCartaoTreino, limitar, type DadosTreino } from '../evolucao/cartaoStory'
 import { reduzirFoto } from '../../lib/foto'
+import CheckinFim from '../fisio/CheckinFim'
 import ConviteFeedback from '../feedback/ConviteFeedback'
 import { IcCamera, IcSubir, IcTrofeu } from '../../icones'
 
@@ -43,6 +44,7 @@ export default function FimTreino({
   quieto,
   voltar,
   verTreino,
+  checkin,
 }: {
   nome: string | undefined
   duracaoMs: number | null
@@ -53,6 +55,7 @@ export default function FimTreino({
   quieto: boolean | null
   voltar: () => void
   verTreino: () => void
+  checkin?: { uid: string; exercicios: string[] } // só no app do aluno (não no presencial do coach)
 }) {
   const { volumeKg, recordes, subiram } = resumo
   const comp = volumeKg > 0 ? comparacaoToneladas(volumeKg) : null
@@ -189,6 +192,7 @@ export default function FimTreino({
             </Botao>
           </div>
         )}
+        {checkin && <CheckinFim {...checkin} />}
         <ConviteFeedback />
         <Botao tipo="primario" tamanho="lg" className="w-full" onClick={voltar}>
           Voltar para Hoje

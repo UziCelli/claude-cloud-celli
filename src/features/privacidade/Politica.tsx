@@ -54,6 +54,7 @@ export default function Politica() {
           <li>Anamnese (histórico de saúde): respostas sobre saúde, dores, rotina e treino, e se você tem menos de 18 anos, a autorização do responsável.</li>
           <li>Orientações Físio: condição informada, método e recado do coach, registro de liberação de médico/fisioterapeuta (nome, profissão, conselho/registro e data) e se você relatou algum sinal de alerta, com o horário do relato.</li>
           <li>Relatos de dor do treino (local, intensidade e texto), com a resposta do coach.</li>
+          <li>Check-in de recuperação do fim do treino (sono, estresse, cansaço e alimentação, em notas de 1 a 5).</li>
           <li>Sua opinião e depoimentos (nota, assunto e texto).</li>
           <li>Registros técnicos de erro (aparelho/navegador, tela, horário).</li>
         </Lista>
@@ -77,7 +78,7 @@ export default function Politica() {
           responsável legal precisa autorizar ao responder. Um "sim" em perguntas de saúde mostra um aviso para procurar um médico. Um "sim" em coração ou pressão, dor no peito, tontura ou desmaio, ou supervisão médica pausa o seu treino até o seu coach conversar com você e liberar.
         </p>
         <p>
-          Físio: só você e o seu coach veem as suas orientações. O coach registra uma liberação profissional existente quando exigida; o app não diagnostica nem emite liberação clínica.
+          Físio: só você e o seu coach veem as suas orientações. O coach registra uma liberação profissional existente quando exigida; o app não diagnostica nem emite liberação clínica. O mesmo vale para o check-in de recuperação do fim do treino (sono, estresse, cansaço e alimentação, em notas de 1 a 5).
           Ao relatar um sinal de alerta, você recebe a orientação de parar e procurar médico ou fisioterapeuta, e o relato aparece para o coach no app.
           O aviso ao coach depende da sincronização com a internet e não é um serviço de emergência. A cópia já carregada pode ficar no aparelho para consulta offline.
           Esses dados não são enviados para inteligência artificial e são apagados junto com a conta.
