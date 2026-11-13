@@ -2,10 +2,13 @@
 // Convenção: cargas.<slot>.sN = TOTAL (esq + dir + pc); lados.<slot>.sN = kg do lado ESQUERDO.
 // Célula com `lados` = formato novo. Célula sem `lados` num slot de 2 lados = antiga (só lida, nunca reescrita).
 import catalogo from '../data/exercicios.json'
+import idsDoisLados from '../data/doisLados.json'
 import type { Slot } from '../engine'
 import { norm } from './busca'
 
-const padrao = new Map(catalogo.flatMap((g) => g.exercicios.map((e) => [norm(e.nome), e.doisLados === true] as const)))
+// Ids do catálogo com 2 lados ficam em src/data/doisLados.json (fora do exercicios.json, que o extrator regrava inteiro).
+const ids = new Set<string>(idsDoisLados)
+const padrao = new Map(catalogo.flatMap((g) => g.exercicios.map((e) => [norm(e.nome), ids.has(e.id)] as const)))
 
 // Padrão do catálogo (pelo nome); exercício fora do catálogo = comum.
 export const doisLadosPadrao = (nome: string) => padrao.get(norm(nome.trim())) ?? false

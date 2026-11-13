@@ -99,7 +99,7 @@ Comece por aqui para achar onde mexer.
 - `Tutorial.tsx` — onboarding do aluno (7 passos + "Tudo pronto" com atalhos; abre 1x no 1º acesso; "Como usar" na aba Conta; título de boas-vindas em `marca.json` → `boasVindas`). Usa `features/onboarding/Onboarding.tsx`
 - `AvisoNotificacoes.tsx` — cartão persistente para permitir notificações (Hoje e Treino)
 - `src/lib/pesoCorporal.ts` (+ `pesoCorporal.test.ts`) — fração do peso do corpo e `corpoEhCarga` (marca automática)
-- `src/lib/lados.ts` (+ `lados.test.ts`) — carga por lado (2 halteres/articulado): `doisLados(slot)` (`slot.doisLados` vence o catálogo `exercicios.json`), `lerCelula` (total ↔ esq/dir/"anotado antes"), `totalLados`. Gravação: `registrarCargaLados` em `acoes.ts`; leitura: `docsParaLados` em `conversores.ts`; placeholder: `cargaAnterior(..., lados)` em `treino.ts`. Telas: `coach/semana/CampoLados.tsx` (usado por `Treino.tsx` e `SessaoCard.tsx`); interruptor no meso: `meso/TabDivisao.tsx`.
+- `src/lib/lados.ts` (+ `lados.test.ts`) — carga por lado (2 halteres/articulado): `doisLados(slot)` (`slot.doisLados` vence a lista `data/doisLados.json`), `lerCelula` (total ↔ esq/dir/"anotado antes"), `totalLados`. Gravação: `registrarCargaLados` em `acoes.ts`; leitura: `docsParaLados` em `conversores.ts`; placeholder: `cargaAnterior(..., lados)` em `treino.ts`. Telas: `coach/semana/CampoLados.tsx` (usado por `Treino.tsx` e `SessaoCard.tsx`); interruptor no meso: `meso/TabDivisao.tsx`.
 - `src/lib/metodoSeries.ts` — séries destacadas (borda rosa) a partir do rótulo do método
 - `EvolucaoAluno.tsx` — reexporta o painel de evolução
 - `mesoAtual.ts` — `mesoAtual()`: mesociclo em vigor (vários em andamento: vence o de `inicio` mais recente); `proximoMeso()`: o de início futuro mais próximo; `dataSP`, `diaCurto`, `DIAS_CURTO` (datas curtas)
@@ -212,6 +212,7 @@ Comece por aqui para achar onde mexer.
 
 ### `src/data/` — Dados estáticos
 - `exercicios.json` — catálogo de exercícios
+- `doisLados.json` — ids do catálogo com carga por lado (2 halteres/articulado), lido por `lib/lados.ts`. Fora do `exercicios.json` porque o extrator regrava aquele arquivo.
 - `anatomia.json` — articulações e músculos de cada exercício, por id (lido por `lib/anatomia.ts`; tabela para conferir em `docs/fisio-catalogo.md`)
 
 ### `tests/` · `e2e/` — Testes

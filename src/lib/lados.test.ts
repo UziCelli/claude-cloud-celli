@@ -47,3 +47,13 @@ describe('lerCelula / totalLados', () => {
     expect(ladosDiferentes([lerCelula(12, 6), lerCelula(10, null)])).toBe(false)
   })
 })
+
+describe('doisLados.json', () => {
+  it('todo id existe no catálogo (id errado = marca perdida em silêncio)', async () => {
+    const catalogo = (await import('../data/exercicios.json')).default
+    const ids = new Set(catalogo.flatMap((g) => g.exercicios.map((e) => e.id)))
+    const marcados = (await import('../data/doisLados.json')).default as string[]
+    expect(marcados.length).toBe(46)
+    expect(marcados.filter((id) => !ids.has(id))).toEqual([])
+  })
+})

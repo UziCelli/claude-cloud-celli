@@ -8,8 +8,12 @@ Pedido do Victor em 13/11/2026. Decisões dele (13/11/2026):
 
 Entregas: **A** = fases 1 + 2 (marcas `doisLados` + carga por lado). **B** = fase 3 (isométricos no catálogo + mecanismo de tempo). Os isométricos só entram no catálogo junto com o mecanismo, para ninguém prescrever prancha em reps.
 
+## Estado (13/11/2026)
+- **Entrega A: FEITA** no PR #166 (branch `ccr-a5bd671d-284cns`). Testes locais verdes; CI e junção pendentes no momento desta nota — confira o PR.
+- **Entrega B: NÃO COMEÇADA.** Próximo passo. Ver "Para o Codex continuar" no fim.
+
 ## Fase 1 — Catálogo (só dados)
-- `src/data/exercicios.json` ganha dois campos opcionais por exercício: `"doisLados": true` e `"isometrico": true`.
+- As marcas ficam **fora** do `exercicios.json`, em listas de ids: `src/data/doisLados.json` (feito) e `src/data/isometricos.json` (entrega B). Motivo: `tools/extrair_planilha.py` regrava o `exercicios.json` inteiro (mesmo motivo do `anatomia.json`). Um teste garante que todo id da lista existe no catálogo.
 - O slot continua ligado ao catálogo **pelo nome** (como hoje). Exercício fora do catálogo = comum.
 - Isométricos entram nos grupos musculares que já existem, com "Isométric(o/a)" no nome (a busca acha por "isom").
 
@@ -71,10 +75,28 @@ Testes: conversores (total ↔ lado, antigo intacto), e2e do aluno anotando 6 e 
 
 ## Riscos
 - Isométrico mal identificado entra no volume errado → teste com cada isométrico do catálogo.
-- Aparelho antigo com versão velha do app grava só o total, sem `porLado` → lido como "antigo", nada se perde.
+- Aparelho com versão velha do app grava só o total, sem `lados` → lido como "antigo" (`lerCelula`), nada se perde.
 - O app da Gislane usa o mesmo catálogo: as marcas valem para os dois.
 
 ## Pronto quando
 - typecheck, test, build e e2e verdes; revisor aprovou.
 - Aluno anota 6 por lado na Rosca Direta Halter e o volume conta 12 por rep.
 - Prancha prescrita 3 × 30 s, aluno cronometra, o coach vê o tempo sob tensão; volume da semana não muda.
+
+## Para o Codex continuar (entrega B — isometria)
+Leia antes: `CLAUDE.md` (regras do domínio, PRs, textos em pt-BR, `pt-topo`), `docs/mapa.md` ("Pontos sensíveis"), este plano, `docs/peso-corporal.md`.
+
+O que já existe e serve de modelo (entrega A):
+- Lista de ids fora do catálogo: `src/data/doisLados.json` + `src/lib/lados.ts` (`doisLadosPadrao`, `doisLados(slot)`: `Slot.doisLados` vence o catálogo). Faça igual: `src/data/isometricos.json` + `isometrico(slot)`.
+- Interruptor por exercício no meso: `src/features/coach/meso/TabDivisao.tsx` (`mudarLados`). Não precisa de interruptor de isometria (é do exercício, não varia).
+
+Passos (TDD; motor em `src/engine/` é puro, sem React/Firebase):
+1. Catálogo: incluir os isométricos da lista "Isométricos novos" no `src/data/exercicios.json`, cada um com id em slug (padrão dos ids atuais) **e linha no `src/data/anatomia.json`** (o `anatomia.test.ts` falha sem ela). Ids em `isometricos.json`. "Pegada Isométrica com Halteres" também em `doisLados.json` (ajuste o `toBe(46)` em `lados.test.ts`).
+2. Motor: `limiteDe` em `src/engine/volume.ts` usa 60 para slot isométrico (o motor não importa JSON do app: receba um `isIsometrico(nome)` ou um conjunto por parâmetro). `metricasExercicio`/`metricasSessao`/`metricasSemana` (`src/engine/metricas.ts`): isométrico fora de `movimentos` e `volume`; novo `tempoSobTensaoS` = soma dos segundos (feitos, senão prescritos). Atualize `docs/logica-planilha.md` se mudar fórmula.
+3. Slot isométrico novo no meso nasce com `progressaoExercicio[slotId]` = 3 × 30 s em todas as semanas (onde a divisão cria slot: `src/features/coach/meso/util.ts`).
+4. Telas: aluno (`src/features/aluno/Treino.tsx`) e coach (`src/features/coach/semana/SessaoCard.tsx`, `Preview.tsx`, `TabProgressao.tsx`) mostram "s" em vez de reps; "reps feitas" vira "segundos feitos" no mesmo campo `reps.<slotId>.s<n>` (`registrarReps` em `src/lib/acoes.ts`, sem regra nova no Firestore). Botão de cronômetro por série (veja `src/lib/descanso.ts`). Carga continua opcional.
+5. Onde aparece volume/movimentos: Monitoramento, gráfico de "Ajustar volume" (só não isométricos), relatório (`src/lib/relatorio.ts`), PDF (`src/lib/pdf.ts`), IA (`src/lib/iaTreino.ts`: dizer que isométrico é em segundos). Mostrar "tempo sob tensão" onde houver isométrico.
+6. Verificar: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:rules` (se mexer em regras), e2e novo (aluno faz prancha 3 × 30 s; volume da semana igual com e sem a prancha). Rode `graphify update .` e inclua `graphify-out/` (`git add -f`).
+7. Docs: linha nova em "Pontos sensíveis" do `docs/mapa.md`; atualizar "Estado" deste plano e `docs/estado-sessao.md`.
+
+Não decidir sozinho (perguntar ao Victor): mudar o limite de 60 s, contar isometria no volume, ou apagar/migrar qualquer dado já gravado.

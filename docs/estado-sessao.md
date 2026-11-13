@@ -5,7 +5,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 ## 13/11/2026 — Carga por lado (entrega A) e próximo: isometria (entrega B)
 - Plano completo: `docs/plano-lados-isometria.md` (decisões do Victor anotadas lá).
 - Entrega A (PR #166): 46 exercícios com `doisLados` no catálogo; interruptor "2 lados" por exercício no meso; aluno e coach anotam "kg cada lado" ou E | D; `cargas` = total, `lados` = esquerdo, na mesma escrita.
-- Próximo: entrega B = isométricos no catálogo + séries em segundos, cronômetro e "tempo sob tensão" (fase 3 do plano).
+- Próximo: entrega B = isométricos no catálogo + séries em segundos, cronômetro e "tempo sob tensão" (fase 3 do plano). Passo a passo para o Codex: seção "Para o Codex continuar" do plano.
 
 ## 13/11/2026 — Gráfico do volume e tipos de polimento
 - Progressão → Ajustar volume: gráfico do volume por semana (movimentos ou "% da S1"), linha tracejada = como está hoje, cheia = como vai ficar. Atualiza na hora.

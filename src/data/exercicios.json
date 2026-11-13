@@ -16,8 +16,7 @@
       },
       {
         "id": "agachamento-frontal-halter",
-        "nome": "Agachamento Frontal Halter",
-        "doisLados": true
+        "nome": "Agachamento Frontal Halter"
       },
       {
         "id": "agachamento-sumo-barra",
@@ -81,8 +80,7 @@
       },
       {
         "id": "terra-romeno-halter",
-        "nome": "Terra Romeno Halter",
-        "doisLados": true
+        "nome": "Terra Romeno Halter"
       },
       {
         "id": "terra-barra-hexagonal",
@@ -114,13 +112,11 @@
       },
       {
         "id": "cadeira-extensora-articulada-peso-acima",
-        "nome": "Cadeira Extensora Articulada (Peso Acima)",
-        "doisLados": true
+        "nome": "Cadeira Extensora Articulada (Peso Acima)"
       },
       {
         "id": "cadeira-extensora-articulada-peso-abaixo",
-        "nome": "Cadeira Extensora Articulada (Peso Abaixo)",
-        "doisLados": true
+        "nome": "Cadeira Extensora Articulada (Peso Abaixo)"
       },
       {
         "id": "passada",
@@ -140,8 +136,7 @@
       },
       {
         "id": "afundo-halter",
-        "nome": "Afundo Halter",
-        "doisLados": true
+        "nome": "Afundo Halter"
       },
       {
         "id": "avanco-barra",
@@ -149,8 +144,7 @@
       },
       {
         "id": "avanco-halter",
-        "nome": "Avanço Halter",
-        "doisLados": true
+        "nome": "Avanço Halter"
       },
       {
         "id": "retrocesso-barra",
@@ -158,8 +152,7 @@
       },
       {
         "id": "retrocesso-halter",
-        "nome": "Retrocesso Halter",
-        "doisLados": true
+        "nome": "Retrocesso Halter"
       },
       {
         "id": "elevacao-pelvica-maquina-tradicional",
@@ -203,8 +196,7 @@
       },
       {
         "id": "bulgaro-com-halter",
-        "nome": "Búlgaro com Halter",
-        "doisLados": true
+        "nome": "Búlgaro com Halter"
       }
     ]
   },
@@ -217,8 +209,7 @@
       },
       {
         "id": "stiff-halter",
-        "nome": "Stiff Halter",
-        "doisLados": true
+        "nome": "Stiff Halter"
       },
       {
         "id": "stiff-unilateral-barra",
@@ -332,8 +323,7 @@
       },
       {
         "id": "supino-reto-halter",
-        "nome": "Supino Reto Halter",
-        "doisLados": true
+        "nome": "Supino Reto Halter"
       },
       {
         "id": "supino-inclinado-barra",
@@ -341,8 +331,7 @@
       },
       {
         "id": "supino-inclinado-halter",
-        "nome": "Supino Inclinado Halter",
-        "doisLados": true
+        "nome": "Supino Inclinado Halter"
       },
       {
         "id": "supino-declinado-barra",
@@ -350,8 +339,7 @@
       },
       {
         "id": "supino-declinado-halter",
-        "nome": "Supino Declinado Halter",
-        "doisLados": true
+        "nome": "Supino Declinado Halter"
       },
       {
         "id": "supino-reto-maquina",
@@ -395,8 +383,7 @@
       },
       {
         "id": "peck-deck-articulado",
-        "nome": "Peck Deck Articulado",
-        "doisLados": true
+        "nome": "Peck Deck Articulado"
       },
       {
         "id": "crossover-no-cabo",
@@ -404,18 +391,15 @@
       },
       {
         "id": "crucifixo-reto-halter",
-        "nome": "Crucifixo Reto Halter",
-        "doisLados": true
+        "nome": "Crucifixo Reto Halter"
       },
       {
         "id": "crucifixo-inclinado-halter",
-        "nome": "Crucifixo Inclinado Halter",
-        "doisLados": true
+        "nome": "Crucifixo Inclinado Halter"
       },
       {
         "id": "crucifixo-declinado-halter",
-        "nome": "Crucifixo Declinado Halter",
-        "doisLados": true
+        "nome": "Crucifixo Declinado Halter"
       },
       {
         "id": "crucifixo-crossover",
@@ -452,8 +436,7 @@
       },
       {
         "id": "puxada-articulada-supinada",
-        "nome": "Puxada Articulada Supinada",
-        "doisLados": true
+        "nome": "Puxada Articulada Supinada"
       },
       {
         "id": "puxada-aberta-maquina",
@@ -461,18 +444,15 @@
       },
       {
         "id": "puxada-articulada-peso-acima",
-        "nome": "Puxada Articulada (Peso Acima)",
-        "doisLados": true
+        "nome": "Puxada Articulada (Peso Acima)"
       },
       {
         "id": "puxada-articulada-peso-abaixo",
-        "nome": "Puxada Articulada (Peso Abaixo)",
-        "doisLados": true
+        "nome": "Puxada Articulada (Peso Abaixo)"
       },
       {
         "id": "puxada-articulada-cross",
-        "nome": "Puxada Articulada Cross",
-        "doisLados": true
+        "nome": "Puxada Articulada Cross"
       },
       {
         "id": "remada-linear-45o-guiada",
@@ -480,8 +460,7 @@
       },
       {
         "id": "remada-alta-articulada-pronada",
-        "nome": "Remada Alta Articulada Pronada",
-        "doisLados": true
+        "nome": "Remada Alta Articulada Pronada"
       },
       {
         "id": "remada-sentada-aberta",
@@ -501,28 +480,23 @@
       },
       {
         "id": "remada-articulada-tradicional-aberta",
-        "nome": "Remada Articulada Tradicional Aberta",
-        "doisLados": true
+        "nome": "Remada Articulada Tradicional Aberta"
       },
       {
         "id": "remada-articulada-tradicional-fechada",
-        "nome": "Remada Articulada Tradicional Fechada",
-        "doisLados": true
+        "nome": "Remada Articulada Tradicional Fechada"
       },
       {
         "id": "remada-baixa-articulada-fechada",
-        "nome": "Remada Baixa Articulada Fechada",
-        "doisLados": true
+        "nome": "Remada Baixa Articulada Fechada"
       },
       {
         "id": "remada-baixa-articulada-aberta",
-        "nome": "Remada Baixa Articulada Aberta",
-        "doisLados": true
+        "nome": "Remada Baixa Articulada Aberta"
       },
       {
         "id": "remada-articulada-supinada",
-        "nome": "Remada Articulada Supinada",
-        "doisLados": true
+        "nome": "Remada Articulada Supinada"
       },
       {
         "id": "remada-tradicional-maquina-pegada-pronada-alta",
@@ -725,33 +699,27 @@
     "exercicios": [
       {
         "id": "elevacao-lateral-halter",
-        "nome": "Elevação Lateral Halter",
-        "doisLados": true
+        "nome": "Elevação Lateral Halter"
       },
       {
         "id": "elevacao-lateral-halter-sentado-a",
-        "nome": "Elevação Lateral Halter (sentado(a))",
-        "doisLados": true
+        "nome": "Elevação Lateral Halter (sentado(a))"
       },
       {
         "id": "elevacao-diagonal-halter",
-        "nome": "Elevação Diagonal Halter",
-        "doisLados": true
+        "nome": "Elevação Diagonal Halter"
       },
       {
         "id": "elevacao-diagonal-halter-sentado-a",
-        "nome": "Elevação Diagonal Halter (sentado(a))",
-        "doisLados": true
+        "nome": "Elevação Diagonal Halter (sentado(a))"
       },
       {
         "id": "elevacao-frontal-halter",
-        "nome": "Elevação Frontal Halter",
-        "doisLados": true
+        "nome": "Elevação Frontal Halter"
       },
       {
         "id": "elevacao-frontal-halter-sentado-a",
-        "nome": "Elevação Frontal Halter (sentado(a))",
-        "doisLados": true
+        "nome": "Elevação Frontal Halter (sentado(a))"
       },
       {
         "id": "elevacao-frontal-halter-alternado",
@@ -759,8 +727,7 @@
       },
       {
         "id": "elevacao-frontal-halter-com-giro",
-        "nome": "Elevação Frontal Halter com Giro",
-        "doisLados": true
+        "nome": "Elevação Frontal Halter com Giro"
       },
       {
         "id": "elevacao-frontal-halter-alternado-com-giro",
@@ -812,13 +779,11 @@
       },
       {
         "id": "desenvolvimento-com-halter-sentado",
-        "nome": "Desenvolvimento com Halter Sentado",
-        "doisLados": true
+        "nome": "Desenvolvimento com Halter Sentado"
       },
       {
         "id": "desenvolvimento-halter",
-        "nome": "Desenvolvimento Halter",
-        "doisLados": true
+        "nome": "Desenvolvimento Halter"
       },
       {
         "id": "desenvolvimento-maquina",
@@ -854,23 +819,19 @@
       },
       {
         "id": "encolhimento-halter",
-        "nome": "Encolhimento Halter",
-        "doisLados": true
+        "nome": "Encolhimento Halter"
       },
       {
         "id": "crucifixo-inverso-com-halter-em-pe",
-        "nome": "Crucifixo Inverso com Halter (em pé)",
-        "doisLados": true
+        "nome": "Crucifixo Inverso com Halter (em pé)"
       },
       {
         "id": "crucifixo-inverso-com-halter-sentado-a",
-        "nome": "Crucifixo Inverso com Halter (sentado(a))",
-        "doisLados": true
+        "nome": "Crucifixo Inverso com Halter (sentado(a))"
       },
       {
         "id": "crucifixo-inverso-com-halter-no-banco-inclinado-deitado-a",
-        "nome": "Crucifixo Inverso com Halter no Banco Inclinado (deitado(a))",
-        "doisLados": true
+        "nome": "Crucifixo Inverso com Halter no Banco Inclinado (deitado(a))"
       },
       {
         "id": "crucifixo-inverso-na-polia-alta-unilateral",
@@ -915,8 +876,7 @@
       },
       {
         "id": "rosca-punho-halter",
-        "nome": "Rosca Punho Halter",
-        "doisLados": true
+        "nome": "Rosca Punho Halter"
       },
       {
         "id": "rosca-punho-anilha",
@@ -940,8 +900,7 @@
       },
       {
         "id": "rosca-punho-inversa-halter",
-        "nome": "Rosca Punho Inversa Halter",
-        "doisLados": true
+        "nome": "Rosca Punho Inversa Halter"
       },
       {
         "id": "rosca-punho-inversa-anilha",
@@ -1002,8 +961,7 @@
       },
       {
         "id": "rosca-direta-halter",
-        "nome": "Rosca Direta Halter",
-        "doisLados": true
+        "nome": "Rosca Direta Halter"
       },
       {
         "id": "rosca-direta-cabo",
@@ -1043,8 +1001,7 @@
       },
       {
         "id": "rosca-inclinada-halter-deitado",
-        "nome": "Rosca Inclinada Halter Deitado",
-        "doisLados": true
+        "nome": "Rosca Inclinada Halter Deitado"
       },
       {
         "id": "rosca-inclinada-cabo-unilateral",
@@ -1056,8 +1013,7 @@
       },
       {
         "id": "rosca-com-giro-halter-simultanea",
-        "nome": "Rosca com Giro Halter Simultânea",
-        "doisLados": true
+        "nome": "Rosca com Giro Halter Simultânea"
       },
       {
         "id": "rosca-com-giro-halter-alternada",
@@ -1065,8 +1021,7 @@
       },
       {
         "id": "rosca-martelo-halter",
-        "nome": "Rosca Martelo Halter",
-        "doisLados": true
+        "nome": "Rosca Martelo Halter"
       },
       {
         "id": "rosca-martelo-cabo",
@@ -1111,8 +1066,7 @@
       },
       {
         "id": "triceps-testa-halter",
-        "nome": "Tríceps Testa Halter",
-        "doisLados": true
+        "nome": "Tríceps Testa Halter"
       },
       {
         "id": "triceps-frances-em-pe-halter",
