@@ -13,11 +13,11 @@ import { seriesDoRotulo } from '../../lib/metodoSeries'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
-import { cancelarTreino, marcarInicio, marcarRealizado, reabrirTreino, registrarCarga, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
+import { cancelarTreino, marcarInicio, marcarRealizado, reabrirTreino, registrarCarga, registrarCargaLados, registrarPc, registrarReps, salvarNota, salvarPeso } from '../../lib/acoes'
 import { duracaoTreino, fimDaSessao, TETO_TREINO_MS } from '../../lib/resumo'
 import type { Usuario } from '../../lib/acesso'
 import { corpoEhCarga, fracaoPC, preencherCorpo, rebasear } from '../../lib/pesoCorporal'
-import { docParaCargas, docParaMeso, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
+import { docParaCargas, docParaMeso, docsParaLados, docsParaRegistros, docsParaRegistrosReps, lerPc, type MesoSalvo, type NotasDoc, type RegistroDoc } from '../../lib/conversores'
 import { db } from '../../lib/firebase'
 import { useAnamnese } from '../anamnese/useAnamnese'
 import { TEXTO_SEM_INTERNET, useDoc, useLista, useSemInternet } from '../../lib/hooks'
@@ -34,6 +34,8 @@ import { BotaoVoltar } from '../../voltar'
 import { acimaDoLimite, fmtMin } from '../../lib/tempo'
 import { fmt, fmtData } from '../coach/semana/format'
 import LoadInput from '../coach/semana/LoadInput'
+import CampoLados, { BotaoLadosDiferentes } from '../coach/semana/CampoLados'
+import { doisLados, ladosDiferentes, lerCelula } from '../../lib/lados'
 import { AdicionarExercicio, EditarExercicio, FaixaAjustado } from '../coach/presencial/EditarTreino'
 
 type RegistroFlag = RegistroDoc & { realizado?: boolean; inicioEm?: unknown; realizadoEm?: { toMillis(): number } | null; pc?: Record<string, number> }
@@ -375,6 +377,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const semInternet = useSemInternet()
   const [explicar, setExplicar] = useState<Metodo | null>(null)
   // Chavinha do drop de cada série (`${slotId}-${serie}`). Sem escolha: aberto se o drop já tem algo anotado.
+  const [edAberto, setEdAberto] = useState<Record<string, boolean>>({}) // "lados diferentes" aberto, por exercício
   const [dropsAbertos, setDropsAbertos] = useState<Record<string, boolean>>({})
   const [inicioLocal, setInicioLocal] = useState<number | null>(null) // hora do toque, até o servidor confirmar
   const jaIniciou = useRef(false)
@@ -423,6 +426,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
 
   const cargas = docsParaRegistros(docsRegistros, meso) // totais normalizados (ver normalizarCargas)
   const repsFeitas = docsParaRegistrosReps(docsRegistros)
+  const ladosFeitos = docsParaLados(docsRegistros) // lado esquerdo (formato novo de 2 lados)
   const chave = `${semana}-${treino}`
   const cs = cargas[chave] ?? {}
   const rs = repsFeitas[chave] ?? {}
@@ -486,7 +490,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       const slot = e.slot.slotId
       if (!(slot in pcs)) registrarPc(mesoId, uid, semana, treino, slot, corpo)
       // Crua: série vazia só com reps feitas (que a leitura já conta como corpo) também é gravada.
-      for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo)) registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
+      for (const { coluna, kg } of preencherCorpo(cargasCruas[slot] ?? [], e.n, corpo))
+        if (doisLados(e.slot)) registrarCargaLados(mesoId, uid, semana, treino, slot, coluna, 0, 0, corpo) // 0 | 0 + corpo: ganha `lados`, não vira "anotado antes"
+        else registrarCarga(mesoId, uid, semana, treino, slot, coluna, kg)
     }
     limparTreino()
     avisarCoach('concluiu') // o Worker ignora quando quem conclui é o coach (presencial)
@@ -571,12 +577,16 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
           const letra = String.fromCharCode(65 + ordemGrupos.indexOf(gk))
           const colunasCargas = cs[e.slot.slotId] ?? []
           const colunasReps = rs[e.slot.slotId] ?? []
-          const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos, pcsPorRegistro) // só o extra, com o corpo do registro de origem
+          const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos, pcsPorRegistro, ladosFeitos) // só o extra, com o corpo do registro de origem
           const slot = e.slot.slotId
           const partes = e.rotulo ? e.rotulo.split('; ').map((p) => ({ p, mt: metodoDoRotulo(p) })) : []
           const gc = gk ? COR_METODO[gk.split('|')[0] as Metodo] : undefined
           const frac = fracaoPC(e.slot.nome)
+          const dois = doisLados(e.slot)
+          const colunasLados = ladosFeitos[chave]?.[slot] ?? []
           const { auto, corpo } = estadoCorpo(e)
+          const celula = (k: number) => lerCelula(colunasCargas[k], colunasLados[k], corpo)
+          const ed = dois && (edAberto[slot] || ladosDiferentes(colunasCargas.map((_, k) => celula(k))))
           // Troca do corpo ainda não confirmada pelo Firestore: um 2º toque rebasearia sobre cargas velhas.
           const trocandoPc = slot in pcLocal && pcLocal[slot] !== (pcs[slot] ?? 0)
           const gravaPc = (kg: number) => {
@@ -655,6 +665,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                 </div>
               </div>
               <Nota key={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} uid={uid} nome={e.slot.nome.trim()} texto={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
+              {dois && (
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-400">Anote os kg de cada lado (o app soma os dois).</span>
+                  {!ladosDiferentes(colunasCargas.map((_, k) => celula(k))) && <BotaoLadosDiferentes aberto={!!edAberto[slot]} onAlternar={() => setEdAberto((p) => ({ ...p, [slot]: !p[slot] }))} />}
+                </div>
+              )}
               <div className="space-y-2">
                 {(() => {
                 // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.
@@ -666,11 +682,15 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   const rotuloCol = dropStage ? `D${e.drops[k - e.n]?.etapa ?? k - e.n + 1}` : `S${k + 1}`
                   const chaveDrop = `${slot}-${k + 1}`
                   const temDrop = !dropStage && dropsDa(k + 1).length > 0
+                  const pv = (n: number) => fmt(volta ? cargaVolta(n) : n)
+                  const antE = dropStage ? anterior?.drops[k - e.n] : anterior?.series[k]
+                  const antD = dropStage ? anterior?.dir?.drops[k - e.n] : anterior?.dir?.series[k]
                   const placeholderKg = dropStage
-                    ? (e.cargaSugerida[k] ?? anterior?.drops[k - e.n] ?? null)
-                    : anterior?.series[k] != null
-                      ? fmt(volta ? cargaVolta(anterior.series[k]!) : anterior.series[k]!)
+                    ? (e.cargaSugerida[k] ?? (antE != null ? pv(antE) : null))
+                    : antE != null
+                      ? dois && antD != null && antD !== antE && !ed ? `${pv(antE)}/${pv(antD)}` : pv(antE)
                       : null
+                  const placeholderD = antD != null ? pv(antD) : null
                   // Uma faixa colorida por método que cobre esta série (etapas do drop = Dropset).
                   const cores = [...new Set(partes.filter(({ p, mt }) => mt && (dropStage ? mt === 'Dropset' : seriesDoRotulo(p, e.n).includes(k + 1))).map(({ mt }) => mt!))]
                   return (
@@ -684,24 +704,45 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                       )}
                       <span className={`text-xs ${cores[0] ? `font-bold ${COR_METODO[cores[0]].texto}` : 'text-slate-400'}`}>{rotuloCol}</span>
                       <span className="truncate text-xs text-slate-400">{repAlvo} reps</span>
+                      {(() => {
+                        // Efeitos comuns a toda carga gravada (total já com o corpo).
+                        const aposGravar = (total: number | null) => {
+                          if (auto && total != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
+                          if (temDrop && total != null && dropsAbertos[chaveDrop] === undefined) setDropsAbertos((p) => ({ ...p, [chaveDrop]: true })) // série feita: o drop vem logo depois
+                          if (comecou && !festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
+                            festejados.current.add(e.slot.nome)
+                            navigator.vibrate?.([80, 40, 120])
+                            setFesta({ n: festejados.current.size, texto: `Novo recorde! ${e.slot.nome}: ${fmt(total!)} kg` })
+                          }
+                        }
+                        return dois ? (
+                          <CampoLados
+                            className="min-w-0"
+                            disabled={travado}
+                            cel={celula(k)}
+                            ed={!!ed}
+                            placeholder={placeholderKg}
+                            placeholderD={placeholderD}
+                            onGravar={(esq, dir) => {
+                              registrarCargaLados(mesoId, uid, semana, treino, e.slot.slotId, k, esq, dir, corpo)
+                              aposGravar(esq == null || dir == null ? null : Math.round((esq + dir + corpo) * 100) / 100)
+                            }}
+                          />
+                        ) : (
                       <LoadInput
                         className="w-full min-w-0"
                         disabled={travado}
                         valor={colunasCargas[k] != null ? Math.max(0, Math.round((colunasCargas[k]! - corpo) * 100) / 100) : null}
                         placeholder={placeholderKg}
                         onSalvar={(v) => {
-                          if (auto && v != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
-                          if (temDrop && v != null && dropsAbertos[chaveDrop] === undefined) setDropsAbertos((p) => ({ ...p, [chaveDrop]: true })) // série feita: o drop vem logo depois
                           const total = v == null ? null : Math.round((v + corpo) * 100) / 100
                           registrarCarga(mesoId, uid, semana, treino, e.slot.slotId, k, total)
-                          if (comecou && !festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
-                            festejados.current.add(e.slot.nome)
-                            navigator.vibrate?.([80, 40, 120])
-                            setFesta({ n: festejados.current.size, texto: `Novo recorde! ${e.slot.nome}: ${fmt(total!)} kg` })
-                          }
+                          aposGravar(total)
                         }}
                       />
-                      <span className="text-xs text-slate-600">kg</span>
+                        )
+                      })()}
+                      <span className="text-xs text-slate-600">{dois ? (ed ? 'kg' : 'kg/lado') : 'kg'}</span>
                       <LoadInput
                         className="w-full min-w-0"
                         disabled={travado}

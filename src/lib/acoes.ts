@@ -57,6 +57,7 @@ import { inicioJanela } from './resumo'
 import { VERSAO_PRIVACIDADE } from './privacidade'
 import { problemaSenha } from './senha'
 import { desinscreverAvisos } from './push'
+import { totalLados } from './lados'
 import marca from '@marca/marca.json'
 
 // ---------- coach ----------
@@ -358,6 +359,27 @@ export const registrarCarga = (
   kg: number | null,
 ) => registro(mesoId, alunoId, semana, treino, { cargas: { [slotId]: { [`s${coluna + 1}`]: kg } } })
 
+// Exercício de 2 lados: total (esq + dir + corpo) em `cargas` e esquerdo em `lados`, na MESMA gravação
+// (nunca um sem o outro). esq ou dir null apaga os dois.
+export const registrarCargaLados = (
+  mesoId: string,
+  alunoId: string,
+  semana: number,
+  treino: number,
+  slotId: string,
+  coluna: number, // 0-based, como no motor
+  esq: number | null,
+  dir: number | null,
+  pc = 0,
+) => {
+  const apagar = esq == null || dir == null
+  const campo = `s${coluna + 1}`
+  return registro(mesoId, alunoId, semana, treino, {
+    cargas: { [slotId]: { [campo]: apagar ? null : totalLados(esq, dir, pc) } },
+    lados: { [slotId]: { [campo]: apagar ? null : esq } },
+  })
+}
+
 // Reps feitas (opcional): mesmo caminho campo a campo das cargas (reps.<slotId>.sN).
 export const registrarReps = (
   mesoId: string,
@@ -418,11 +440,11 @@ export const cancelarTreino = (
   mesoId: string,
   semana: number,
   treino: number,
-  atual: { cargas?: Record<string, object>; reps?: Record<string, object>; pc?: Record<string, unknown> } | undefined,
+  atual: { cargas?: Record<string, object>; reps?: Record<string, object>; lados?: Record<string, object>; pc?: Record<string, unknown> } | undefined,
 ) => {
   if (!atual) return
   const apagar: Record<string, unknown> = { inicioEm: deleteField(), atualizadoEm: serverTimestamp() }
-  for (const mapa of ['cargas', 'reps'] as const)
+  for (const mapa of ['cargas', 'reps', 'lados'] as const)
     for (const [slot, cols] of Object.entries(atual[mapa] ?? {}))
       for (const k of Object.keys(cols)) apagar[`${mapa}.${slot}.${k}`] = deleteField()
   for (const slot of Object.keys(atual.pc ?? {})) apagar[`pc.${slot}`] = deleteField()

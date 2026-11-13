@@ -5,6 +5,7 @@ import {
   docParaCargas,
   docParaMeso,
   docParaReps,
+  docsParaLados,
   docsParaRegistros,
   docsParaRegistrosReps,
   lerPc,
@@ -165,6 +166,22 @@ describe('reps feitas', () => {
 })
 
 // Peso do corpo: a célula guarda o TOTAL (extra + pc). Dados de versões antigas são lidos de forma robusta.
+describe('carga por lado (docsParaLados)', () => {
+  it('lê o esquerdo por série; total continua em cargas; célula sem lados fica sem esquerdo', () => {
+    const d = { semana: 1, treino: 1, cargas: { r: { s1: 12, s2: 10 } }, lados: { r: { s1: 6 } } }
+    expect(docsParaLados([d])).toEqual({ '1-1': { r: [6] } })
+    expect(docsParaRegistros([d])['1-1'].r).toEqual([12, 10]) // volume e recordes seguem o total
+  })
+  it('com peso do corpo, o total fica como gravado (esq + dir + corpo >= corpo)', () => {
+    const d = { semana: 1, treino: 1, cargas: { r: { s1: 92 } }, lados: { r: { s1: 6 } }, pc: { r: 80 } }
+    expect(docsParaRegistros([d])['1-1'].r).toEqual([92])
+    expect(docsParaLados([d])['1-1'].r).toEqual([6])
+  })
+  it('sem lados no documento: vazio', () => {
+    expect(docsParaLados([{ semana: 2, treino: 1, cargas: { r: { s1: 12 } } }])).toEqual({ '2-1': {} })
+  })
+})
+
 describe('normalizarCargas (peso do corpo)', () => {
   const pc = { a: 80 }
 

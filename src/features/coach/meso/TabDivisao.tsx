@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import CampoExercicio from './CampoExercicio'
+import { doisLados, doisLadosPadrao } from '../../../lib/lados'
 import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, trocarExercicio, type GrupoTroca } from './util'
 
 
@@ -85,6 +86,16 @@ export default function TabDivisao({
     onAtualizar({ divisao })
   }
 
+  // Só grava quando difere do catálogo; voltar ao padrão remove o campo.
+  function mudarLados(t: number, p: number, v: boolean) {
+    const slot = meso.divisao[t - 1]?.[p - 1]
+    if (!slot) return
+    const { doisLados: _, ...resto } = slot
+    const divisao = [...meso.divisao]
+    divisao[t - 1] = meso.divisao[t - 1].map((x, i) => (i === p - 1 ? (v === doisLadosPadrao(slot.nome) ? resto : { ...resto, doisLados: v }) : x))
+    onAtualizar({ divisao })
+  }
+
   const treinos = Array.from({ length: meso.frequencia }, (_, i) => i + 1)
   const posicoes = Array.from({ length: 10 }, (_, i) => i + 1)
 
@@ -112,7 +123,7 @@ export default function TabDivisao({
             if (p > arr.length + 1) return null
             const slot = arr[p - 1]
             return (
-              <li key={p} className="flex items-center gap-2 px-3 py-2">
+              <li key={p} className="flex flex-wrap items-center gap-2 px-3 py-2">
                 <span className="w-4 shrink-0 text-slate-500">{p}</span>
                 <CampoExercicio
                   key={slot?.slotId ?? `novo-${t}-${p}`}
@@ -139,6 +150,12 @@ export default function TabDivisao({
                   <button type="button" title="Remover" onClick={() => commit(t, p, '')} className="grid size-11 shrink-0 place-items-center text-lg text-slate-500 hover:text-red-400">
                     ×
                   </button>
+                )}
+                {slot && (
+                  <label className="flex min-h-11 basis-full items-center gap-2 pl-6 text-xs text-slate-400">
+                    <input type="checkbox" checked={doisLados(slot)} onChange={(e) => mudarLados(t, p, e.target.checked)} className="size-5" />
+                    2 lados (2 halteres / articulado)
+                  </label>
                 )}
               </li>
             )

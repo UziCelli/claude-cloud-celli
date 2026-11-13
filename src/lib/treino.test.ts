@@ -113,3 +113,32 @@ describe('cargaAnterior com treino ajustado no presencial', () => {
     expect(cargaAnterior(m, regs, 2, 1, 2)).toEqual({ series: [50, 52], drops: [] })
   })
 })
+
+describe('cargaAnterior com 2 lados', () => {
+  const meso: Meso = {
+    ...base,
+    divisao: [[slot('r', 'Rosca Direta Halter'), slot('s', 'Supino')]],
+    progressao: { principais: [[10, 10], [10, 10], [10, 10]], auxiliares: [] },
+  }
+  it('ignora célula antiga (sem lados): não dá para saber se era por lado ou total', () => {
+    expect(cargaAnterior(meso, { '1-1': { r: [12, 12] } }, 2, 1, 1)).toBeNull()
+    expect(cargaAnterior(meso, { '1-1': { r: [12, 12] } }, 2, 1, 1, undefined, {})).toBeNull()
+  })
+  it('célula nova: devolve o esquerdo e o direito por lado', () => {
+    const r = cargaAnterior(meso, { '1-1': { r: [12, 14] } }, 2, 1, 1, undefined, { '1-1': { r: [6, 6] } })
+    expect(r).toEqual({ series: [6, 6], drops: [], dir: { series: [6, 8], drops: [] } })
+  })
+  it('com corpo no registro de origem, o direito sai de total - corpo - esquerdo', () => {
+    const r = cargaAnterior(meso, { '1-1': { r: [92] } }, 2, 1, 1, { '1-1': { r: 80 } }, { '1-1': { r: [6] } })
+    expect(r!.series).toEqual([6])
+    expect(r!.dir!.series).toEqual([6])
+  })
+  it('pula a semana antiga e usa a anterior no formato novo', () => {
+    const r = cargaAnterior(meso, { '1-1': { r: [10] }, '2-1': { r: [20] } }, 3, 1, 1, undefined, { '1-1': { r: [5] } })
+    expect(r!.series).toEqual([5])
+  })
+  it('exercício comum não muda (sem dir)', () => {
+    expect(cargaAnterior(meso, { '1-1': { s: [50] } }, 2, 1, 2)).toEqual({ series: [50], drops: [] })
+  })
+})
+

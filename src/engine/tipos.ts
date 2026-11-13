@@ -34,6 +34,7 @@ export interface Slot {
   slotId: string
   nome: string
   pausaS?: number // pausa deste exercício; sem valor = pausa da posição (principais/auxiliares)
+  doisLados?: boolean // carga por lado (2 halteres/articulado); sem valor = padrão do catálogo (src/lib/lados.ts)
 }
 
 // Exercício de uma sessão editada na hora. `de` = posição do treino planejado cuja progressão (séries/reps)

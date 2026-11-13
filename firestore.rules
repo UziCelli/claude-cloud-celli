@@ -56,6 +56,7 @@ service cloud.firestore {
         && d.get('realizado', false) is bool
         && d.get('cargas', {}) is map
         && d.get('reps', {}) is map
+        && d.get('lados', {}) is map
         && d.get('pc', {}) is map;
     }
 
@@ -208,7 +209,7 @@ service cloud.firestore {
 
       allow create: if own(request.resource.data) && liberado()
         && request.resource.data.keys().hasOnly(
-             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'inicioEm', 'cargas', 'reps', 'pc', 'atualizadoEm'])
+             ['alunoId', 'mesoId', 'semana', 'treino', 'realizado', 'realizadoEm', 'inicioEm', 'cargas', 'reps', 'lados', 'pc', 'atualizadoEm'])
         && request.resource.data.semana is int
         && request.resource.data.treino is int
         && registroValido(request.resource.data)
@@ -228,10 +229,11 @@ service cloud.firestore {
 
       // Gravação campo a campo (merge): identidade do registro não muda.
       // reps = reps feitas (opcional), mesmo formato das cargas.
+      // lados = kg do lado esquerdo por série (exercício de 2 lados); cargas guarda o total. Mesma validação (map).
       // pc = kg do corpo usado por exercício (slotId → número; 0 = desligado).
       allow update: if own(resource.data) && liberado()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['realizado', 'realizadoEm', 'inicioEm', 'cargas', 'reps', 'pc', 'atualizadoEm'])
+             .hasOnly(['realizado', 'realizadoEm', 'inicioEm', 'cargas', 'reps', 'lados', 'pc', 'atualizadoEm'])
         && registroValido(request.resource.data)
         && request.resource.data.get('realizadoEm', null)
              in [resource.data.get('realizadoEm', null), null, request.time]
