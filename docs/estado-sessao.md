@@ -2,6 +2,13 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 13/11/2026 — Novidades do app (para os alunos)
+- Tela em 7 passos para quem já usa o app: Físio ("Senti dor"), carga por lado, avaliação física e anamnese, lembretes e anotações com data, telas mais rápidas e Pix no Início.
+- Último passo "Vem muito mais · Contamos com a sua ajuda": **Avaliar o app** (vai para Sua opinião, assunto App) e, se a marca tiver o link, "Avaliar o atendimento no Google".
+- Abre 1x por aparelho; aluno novo vê o tutorial e pula as novidades; reabre em Conta → "Novidades do app".
+- Próxima leva: trocar os passos e a `CHAVE_NOVIDADES` em `src/features/aluno/Novidades.tsx`.
+- **Pendência do Victor:** mandar o link "Avaliar no Google" da Gislane (sem ele, o app dela mostra só "Avaliar o app").
+
 ## 13/11/2026 — Carga por lado (entrega A) e próximo: isometria (entrega B)
 - Plano completo: `docs/plano-lados-isometria.md` (decisões do Victor anotadas lá).
 - Entrega A (PR #166): 46 exercícios com `doisLados` no catálogo; interruptor "2 lados" por exercício no meso; aluno e coach anotam "kg cada lado" ou E | D; `cargas` = total, `lados` = esquerdo, na mesma escrita.

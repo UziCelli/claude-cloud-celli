@@ -3,7 +3,7 @@ import { FirebaseError } from 'firebase/app'
 import { doc } from 'firebase/firestore'
 import marca from '@marca/marca.json'
 import { Avatar } from '../../avatar'
-import { IcBalao, IcLivro, IcPessoa, IcPrancheta, IcSair, IcSeta, IcSino } from '../../icones'
+import { IcBalao, IcEstrela, IcLivro, IcPessoa, IcPrancheta, IcSair, IcSeta, IcSino } from '../../icones'
 import { type Foto, type Usuario } from '../../lib/acesso'
 import { apagarFoto, recuperarSenha, sair, salvarFoto, salvarNome, salvarPeso, salvarSelo } from '../../lib/acoes'
 import { db } from '../../lib/firebase'
@@ -124,7 +124,7 @@ function Mensalidade({ uid, perfil }: { uid: string; perfil: Usuario }) {
 }
 
 // Aba Conta do aluno: perfil (foto, nome, selo), peso, avisos, segurança, ajuda e Sair.
-export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string; perfil: Usuario; abrirTutorial: () => void }) {
+export default function ContaAluno({ uid, perfil, abrirTutorial, abrirNovidades }: { uid: string; perfil: Usuario; abrirTutorial: () => void; abrirNovidades: () => void }) {
   const { dados: foto } = useDoc<Foto>(doc(db, 'fotos', uid))
   const arquivo = useRef<HTMLInputElement>(null)
   const [editando, setEditando] = useState(false)
@@ -227,6 +227,9 @@ export default function ContaAluno({ uid, perfil, abrirTutorial }: { uid: string
       <Quadro className="divide-y divide-white/10 !py-1">
         <button type="button" onClick={abrirTutorial} className="block w-full py-2">
           <Linha icone={<IcPrancheta className="size-5" />}>Como usar</Linha>
+        </button>
+        <button type="button" onClick={abrirNovidades} className="block w-full py-2">
+          <Linha icone={<IcEstrela className="size-5" />}>Novidades do app</Linha>
         </button>
         <a href="#/metodos" className="toque block py-2">
           <Linha icone={<IcLivro className="size-5" />}>Guia de métodos</Linha>
