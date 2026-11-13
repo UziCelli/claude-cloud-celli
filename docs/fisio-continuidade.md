@@ -51,3 +51,9 @@ Para retomar: buscar a branch `ccr-0e483d63-az3bo7`, ler este documento e o diff
 - `ALERTA_GERAL` nos 10 métodos sem sinais próprios (decisão do Victor). O teste de catálogo completo das regras pegou que `fisioExigeLiberacao` precisava incluir M08, M16, M20, M22 e M24; corrigido.
 - Etapa 3: coleção `fisioDores` (relato de dor por exercício: local, tipo, intensidade 0–10, momento, texto). Aluno só cria; coach marca visto, responde e transfere. Dica fixa por faixa (`src/lib/dor.ts`), sem chamar a dor de aceitável, conforme a nota acima sobre R1 em dor de origem desconhecida. Sem push.
 - `VERSAO_PRIVACIDADE` não foi trocada de novo: a versão desta branch ainda não foi publicada e cobre o PR inteiro.
+
+## 13/11/2026 (madrugada) — Claude: rodada 4 (pedido do Victor antes de dormir)
+
+- Ajustes dos prints (botão "Senti dor" visível; frase vazia do Físio do aluno) e os 6 pontos: métodos aplicados no treino (os 25), check-in de recuperação + "sentiu dor hoje?" no fim do treino, sugestões de polimento/conversar, cruzamentos com a anamnese, aba Físio.
+- Consulta ao Fable (desenho): a orientação ganha `exercicios` (não mexe em meso/motor); check-in com sono, estresse, cansaço (Hooper & McLean / Saw 2016) e alimentação só como contexto; números conservadores das sugestões; coach mantém 6 abas com "Treino | Físio" dentro de Métodos; aluno ganha a 5ª aba Físio.
+- Contexto de liberação pré-marcado e travado quando a anamnese diz cirurgia em 12 meses, gestação ou problema de osso/articulação/coluna (conservador; gestação não está na lista da pesquisa, decisão de segurança a confirmar com o Victor).
