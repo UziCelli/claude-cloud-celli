@@ -4,6 +4,7 @@ export const suave = { type: 'spring', visualDuration: 0.5, bounce: 0 } as const
 export const agil = { type: 'spring', visualDuration: 0.3, bounce: 0.15 } as const // toques, chaves, bolha das abas
 export const elastico = { type: 'spring', visualDuration: 0.5, bounce: 0.3 } as const // recordes, conquistas, fim de treino
 export const confete = { ...suave, visualDuration: 1.1 } as const // partículas que voam
+export const contagem = { ...suave, visualDuration: 1 } as const // número que conta até o valor (ganho do recorde)
 export const saida = { type: 'spring', visualDuration: 0.15, bounce: 0 } as const // o que some
 
 // Tempo da entrada de uma tela (mola `suave`, 0,5 s) com folga: trabalho pesado (PDF, imagem, histórico inteiro) espera isso.
