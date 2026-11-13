@@ -1,5 +1,5 @@
 // Alertas do coach e do aluno, calculados no aparelho a partir dos registros (sem dado novo). Funções puras.
-import { prescreverSessao, type Meso } from '../engine'
+import { isometrico, prescreverSessao, type Meso } from '../engine'
 import { diaSP } from './acesso'
 import { comVolta } from './agenda'
 import { docParaReps, normalizarCargas, type RegistroDoc } from './conversores'
@@ -34,6 +34,7 @@ export function repsAbaixo(meso: Meso, registros: RegistroAlerta[], agora: Date)
     const reps = docParaReps(r.reps)
     let achou = false
     for (const e of sessao.exercicios) {
+      if (isometrico(e.slot)) continue
       const id = e.slot.slotId
       e.reps.forEach((meta, k) => {
         const feito = reps[id]?.[k] ?? null

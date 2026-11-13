@@ -197,6 +197,34 @@
       {
         "id": "bulgaro-com-halter",
         "nome": "Búlgaro com Halter"
+      },
+      {
+        "id": "agachamento-isometrico-na-parede-cadeirinha",
+        "nome": "Agachamento Isométrico na Parede (cadeirinha)"
+      },
+      {
+        "id": "agachamento-isometrico-livre",
+        "nome": "Agachamento Isométrico Livre"
+      },
+      {
+        "id": "afundo-isometrico",
+        "nome": "Afundo Isométrico"
+      },
+      {
+        "id": "bulgaro-isometrico",
+        "nome": "Búlgaro Isométrico"
+      },
+      {
+        "id": "elevacao-pelvica-isometrica",
+        "nome": "Elevação Pélvica Isométrica"
+      },
+      {
+        "id": "elevacao-pelvica-unilateral-isometrica",
+        "nome": "Elevação Pélvica Unilateral Isométrica"
+      },
+      {
+        "id": "cadeira-extensora-isometrica",
+        "nome": "Cadeira Extensora Isométrica"
       }
     ]
   },
@@ -274,6 +302,14 @@
       {
         "id": "flexao-de-joelhos-em-pe-com-elastico",
         "nome": "Flexão de Joelhos em pé com Elástico"
+      },
+      {
+        "id": "mesa-flexora-isometrica",
+        "nome": "Mesa Flexora Isométrica"
+      },
+      {
+        "id": "ponte-de-posteriores-isometrica-calcanhar-no-banco",
+        "nome": "Ponte de Posteriores Isométrica (calcanhar no banco)"
       }
     ]
   },
@@ -311,6 +347,14 @@
       {
         "id": "monster-walk-elastico-no-pe",
         "nome": "Monster Walk Elástico no Pé"
+      },
+      {
+        "id": "prancha-copenhagen-isometrica",
+        "nome": "Prancha Copenhagen Isométrica"
+      },
+      {
+        "id": "aducao-isometrica-com-bola",
+        "nome": "Adução Isométrica com Bola"
       }
     ]
   },
@@ -412,6 +456,10 @@
       {
         "id": "flexao-de-bracos",
         "nome": "Flexão de Braços"
+      },
+      {
+        "id": "flexao-de-bracos-isometrica-meio-do-movimento",
+        "nome": "Flexão de Braços Isométrica (meio do movimento)"
       }
     ]
   },
@@ -549,6 +597,22 @@
       {
         "id": "barra-fixa-fechada",
         "nome": "Barra Fixa Fechada"
+      },
+      {
+        "id": "suspensao-na-barra-isometrica-dead-hang",
+        "nome": "Suspensão na Barra Isométrica (Dead Hang)"
+      },
+      {
+        "id": "suspensao-ativa-na-barra-isometrica-escapulas",
+        "nome": "Suspensão Ativa na Barra Isométrica (escápulas)"
+      },
+      {
+        "id": "barra-fixa-isometrica-queixo-acima-da-barra",
+        "nome": "Barra Fixa Isométrica (queixo acima da barra)"
+      },
+      {
+        "id": "remada-isometrica",
+        "nome": "Remada Isométrica"
       }
     ]
   },
@@ -582,6 +646,10 @@
       {
         "id": "panturrilha-sentado-unilateral",
         "nome": "Panturrilha Sentado Unilateral"
+      },
+      {
+        "id": "panturrilha-em-pe-isometrica",
+        "nome": "Panturrilha em Pé Isométrica"
       }
     ]
   },
@@ -691,6 +759,46 @@
       {
         "id": "perdigueiro-unilateral",
         "nome": "Perdigueiro Unilateral"
+      },
+      {
+        "id": "prancha-frontal-isometrica-cotovelos",
+        "nome": "Prancha Frontal Isométrica (cotovelos)"
+      },
+      {
+        "id": "prancha-frontal-isometrica-maos",
+        "nome": "Prancha Frontal Isométrica (mãos)"
+      },
+      {
+        "id": "prancha-lateral-isometrica",
+        "nome": "Prancha Lateral Isométrica"
+      },
+      {
+        "id": "prancha-invertida-isometrica",
+        "nome": "Prancha Invertida Isométrica"
+      },
+      {
+        "id": "canoa-isometrica-hollow-hold",
+        "nome": "Canoa Isométrica (Hollow Hold)"
+      },
+      {
+        "id": "superman-isometrico",
+        "nome": "Superman Isométrico"
+      },
+      {
+        "id": "perdigueiro-isometrico",
+        "nome": "Perdigueiro Isométrico"
+      },
+      {
+        "id": "pallof-press-isometrico-na-polia",
+        "nome": "Pallof Press Isométrico na Polia"
+      },
+      {
+        "id": "abdominal-em-l-isometrico-l-sit",
+        "nome": "Abdominal em L Isométrico (L-sit)"
+      },
+      {
+        "id": "dead-bug-isometrico",
+        "nome": "Dead Bug Isométrico"
       }
     ]
   },
@@ -860,6 +968,10 @@
       {
         "id": "crucifixo-inverso-peck-deck",
         "nome": "Crucifixo Inverso Peck Deck"
+      },
+      {
+        "id": "elevacao-lateral-isometrica",
+        "nome": "Elevação Lateral Isométrica"
       }
     ]
   },
@@ -949,6 +1061,10 @@
       {
         "id": "pronacao-maquina",
         "nome": "Pronação Máquina"
+      },
+      {
+        "id": "pegada-isometrica-com-halteres-farmer-hold",
+        "nome": "Pegada Isométrica com Halteres (Farmer Hold)"
       }
     ]
   },
@@ -1026,6 +1142,10 @@
       {
         "id": "rosca-martelo-cabo",
         "nome": "Rosca Martelo Cabo"
+      },
+      {
+        "id": "rosca-isometrica-a-90o",
+        "nome": "Rosca Isométrica a 90º"
       }
     ]
   },

@@ -141,6 +141,7 @@ export default function FimTreino({
             <p className="text-5xl font-black tabular-nums">{dur(duracaoMs)}</p>
           </m.div>
         )}
+        {(resumo.tempoSobTensaoS ?? 0) > 0 && <p className="text-lg font-bold text-marca-300">Tempo sob tensão: {resumo.tempoSobTensaoS} s</p>}
         {volumeKg > 0 && (
           <m.div variants={item} className="rounded-2xl bg-black/30 p-3">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Volume</p>

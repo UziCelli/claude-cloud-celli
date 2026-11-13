@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { evolucaoExercicio, type Meso, type Registros } from '../../../engine'
+import { isometrico, evolucaoExercicio, type Meso, type Registros } from '../../../engine'
 import { Barra, campoBase, Cartao } from '../../../ui'
 import { fmt } from './format'
 
@@ -43,7 +43,7 @@ export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Me
               <th className="p-2">Treino</th>
               <th className="p-2 text-right">Carga máx</th>
               <th className="p-2 text-right">Carga média</th>
-              <th className="p-2 text-right">Volume</th>
+              <th className="p-2 text-right">{isometrico({nome}) ? 'Tempo sob tensão' : 'Volume'}</th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +57,7 @@ export default function EvolucaoCoach({ meso, registros, reps = {} }: { meso: Me
                   <Barra key={nome} frac={(p.cargaMax ?? 0) / maxCarga} />
                 </td>
                 <td className="p-2 text-right">{fmt(p.cargaMedia)}</td>
-                <td className="p-2 text-right">{fmt(p.volume)}</td>
+                <td className="p-2 text-right">{isometrico({nome}) ? `${fmt(p.tempoSobTensaoS ?? 0)} s` : fmt(p.volume)}</td>
               </tr>
             ))}
           </tbody>

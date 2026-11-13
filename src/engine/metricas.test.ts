@@ -42,7 +42,7 @@ describe('metricasExercicio', () => {
   })
 
   it('sem cargas → null (não 0)', () => {
-    expect(metricasExercicio([10, 10], [])).toEqual({ movimentos: 20, cargaMedia: null, cargaMax: null, volume: null })
+    expect(metricasExercicio([10, 10], [])).toEqual({ movimentos: 20, tempoSobTensaoS: 0, cargaMedia: null, cargaMax: null, volume: null })
     expect(metricasExercicio([10, 10], [null, null]).volume).toBeNull()
   })
 
@@ -94,7 +94,7 @@ describe('metricasSessao / metricasSemana', () => {
   })
 
   it('semana vazia → nulls e status ""', () => {
-    expect(metricasSemana([])).toEqual({ movimentos: 0, cargaMedia: null, volume: null, sessoesAtivas: 0, status: '' })
+    expect(metricasSemana([])).toEqual({ movimentos: 0, tempoSobTensaoS: 0, cargaMedia: null, volume: null, sessoesAtivas: 0, status: '' })
   })
 })
 

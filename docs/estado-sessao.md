@@ -1,3 +1,8 @@
+## 13/11/2026 — Isometria (entrega B, Codex)
+- Branch `codex/isometria-entrega-b`, baseada na entrega A (`11348d2`), validada localmente; PR #166 já integrado em `a489a61`.
+- Isométricos em segundos (padrão 3×30 s), progressão até 60 s/série, cronômetro por série e tempo sob tensão separado de movimentos/volume. Sem migração nem mudança de regras.
+- Claude: correções da entrega A documentadas em `docs/revisao-pr166.md`; Codex implementa B. Ver plano para decisões e limites.
+
 # Estado da sessão (retomada) — atualizado em 12/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.

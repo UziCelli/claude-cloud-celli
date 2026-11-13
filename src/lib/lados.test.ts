@@ -53,7 +53,7 @@ describe('doisLados.json', () => {
     const catalogo = (await import('../data/exercicios.json')).default
     const ids = new Set(catalogo.flatMap((g) => g.exercicios.map((e) => e.id)))
     const marcados = (await import('../data/doisLados.json')).default as string[]
-    expect(marcados.length).toBe(46)
+    expect(marcados.length).toBe(47)
     expect(marcados.filter((id) => !ids.has(id))).toEqual([])
   })
 })
