@@ -600,9 +600,9 @@
     "semantic_hash": ""
   },
   "src/features/aluno/Treino.tsx": {
-    "mtime": 1794525788.9361932,
-    "seen": 1794529002.390652,
-    "ast_hash": "28d0e7fa05a78d2d8ab7299740faeefd",
+    "mtime": 1794531162.3622503,
+    "seen": 1794531389.5443702,
+    "ast_hash": "ffed842eed6780a003a6f9a6f04bc92d",
     "semantic_hash": ""
   },
   "src/features/aluno/Tutorial.tsx": {
@@ -2292,15 +2292,15 @@
     "semantic_hash": ""
   },
   "src/features/fisio/FisioAluno.tsx": {
-    "mtime": 1794530884.7938948,
-    "seen": 1794531032.0911658,
-    "ast_hash": "aff69a191f50dc61f7324daba3988c76",
+    "mtime": 1794531158.887876,
+    "seen": 1794531389.5445163,
+    "ast_hash": "f87672dc7ebaa50e68cb93951464ba42",
     "semantic_hash": ""
   },
   "src/features/fisio/FisioCoach.tsx": {
-    "mtime": 1794526242.1360805,
-    "seen": 1794529002.3907342,
-    "ast_hash": "21b922bc6aa082bca2bc87afc9e5d2e7",
+    "mtime": 1794531142.6794567,
+    "seen": 1794531389.544519,
+    "ast_hash": "2bc5909c9777d68375944007ff3b3042",
     "semantic_hash": ""
   },
   "src/features/fisio/GuiaFisio.tsx": {
@@ -2316,9 +2316,9 @@
     "semantic_hash": ""
   },
   "src/features/fisio/acoesFisio.ts": {
-    "mtime": 1794525788.9198408,
-    "seen": 1794529002.390737,
-    "ast_hash": "eb5d16309677e13324b6aa662a2b0219",
+    "mtime": 1794531096.1149576,
+    "seen": 1794531389.544527,
+    "ast_hash": "678c2a7cd8cda48dc3804c7e9706b0bf",
     "semantic_hash": ""
   },
   "src/features/fisio/useDores.ts": {
@@ -2433,6 +2433,18 @@
     "mtime": 1794530811.5238438,
     "seen": 1794531032.091306,
     "ast_hash": "5e52e1fe3d9eaa6d3121c2f9c363a411",
+    "semantic_hash": ""
+  },
+  "e2e/fisio-selo.spec.ts": {
+    "mtime": 1794531190.8334424,
+    "seen": 1794531389.5442033,
+    "ast_hash": "726a04df91af9ae12777e17f11768fbe",
+    "semantic_hash": ""
+  },
+  "src/features/fisio/SeletorExercicios.tsx": {
+    "mtime": 1794531096.1199007,
+    "seen": 1794531389.5445251,
+    "ast_hash": "4947b030a35f300ccaa5c7c54d093a09",
     "semantic_hash": ""
   }
 }

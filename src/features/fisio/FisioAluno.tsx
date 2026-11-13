@@ -50,6 +50,7 @@ function Orientacao({ o, pendente, pausado }: { o: OrientacaoFisio; pendente: bo
   return <Cartao>
     <h2 className="mb-3 font-semibold">{m.id} · {m.nome}</h2>
     <p className="mb-3 text-sm">Condição informada: {o.condicao}</p>
+    {o.exercicios.length > 0 && <p className="mb-3 text-sm text-slate-300">No seu treino em: {o.exercicios.join(', ')}</p>}
     {interrompida && <div className="mb-3" role="alert"><Aviso>Pare este exercício e procure médico ou fisioterapeuta. Não espere uma resposta do coach para buscar atendimento. O protocolo desta orientação foi ocultado.</Aviso></div>}
     {!interrompida && !pausado && o.recado && <p className="mb-3 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {o.recado}</p>}
     {o.liberacao && <p className="mb-3 text-xs text-slate-300">Liberação registrada pelo coach: {o.liberacao.profissional} · {o.liberacao.registro} · {o.liberacao.data}</p>}

@@ -11,6 +11,9 @@ import { avisarCoach } from '../../lib/push'
 import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
 import { seriesDoRotulo } from '../../lib/metodoSeries'
 import RelatarDor from '../fisio/RelatarDor'
+import ConteudoMetodo from '../fisio/ConteudoMetodo'
+import { useOrientacoes } from '../fisio/useOrientacoes'
+import { metodoFisio, orientacoesDoExercicio, type OrientacaoFisio } from '../../lib/fisio'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
@@ -371,6 +374,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const an = useAnamnese(uid)
+  const orientacoes = useOrientacoes(coach ? null : uid).dados
+  const [fisioAberto, setFisioAberto] = useState<OrientacaoFisio | null>(null)
   const pedirAnamnese = !coach && an.travar // coach/presencial nunca trava
   const descanso = useDescanso()
   const semInternet = useSemInternet()
@@ -561,6 +566,13 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
+      <AnimatePresence>{fisioAberto && metodoFisio(fisioAberto.metodoId) && (
+        <Modal rotulo={`Físio ${fisioAberto.metodoId}`} aoFechar={() => setFisioAberto(null)}>
+          {!fisioAberto.sinalRelatado && fisioAberto.recado && <p className="mb-3 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {fisioAberto.recado}</p>}
+          <ConteudoMetodo metodo={metodoFisio(fisioAberto.metodoId)!} protocolo={!fisioAberto.sinalRelatado} />
+          <Botao tipo="primario" tamanho="lg" className="mt-4 w-full" onClick={() => setFisioAberto(null)}>Fechar</Botao>
+        </Modal>
+      )}</AnimatePresence>
       {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
       <Novidades />
       {coach && meso.sessoes?.[chave] && <FaixaAjustado mesoId={mesoId} semana={semana} treino={treino} />}
@@ -656,6 +668,11 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                 </div>
               </div>
               <Nota key={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} uid={uid} nome={e.slot.nome.trim()} texto={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
+              {!coach && !an.pausado && orientacoesDoExercicio(orientacoes, e.slot.nome).map((o) => (
+                <button key={o.id} type="button" onClick={() => setFisioAberto(o)} className="mb-2 mr-2 min-h-11 rounded-full bg-teal-900 px-3 text-sm font-bold text-teal-100 ring-1 ring-teal-500">
+                  {o.sinalRelatado ? 'Físio pausado — fale com seu coach' : `Físio · ${o.metodoId}`}
+                </button>
+              ))}
               {!coach && <RelatarDor uid={uid} exercicio={e.slot.nome.trim()} />}
               <div className="space-y-2">
                 {(() => {
