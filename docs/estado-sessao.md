@@ -12,7 +12,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 ## 13/11/2026 — Sistema Físio juntado (PR #161)
 - Catálogo com articulações; 25 métodos Fisioterapia; orientações individuais; "Senti dor" ligado ao treino; check-in do fim do treino (um por sessão, inclui "a dor passou em 24 h?"); sugestões ao coach (converse com dor 6+ / progressão acima do planejado com dor na região / polimento) com "Preparar proposta no meso"; aba Físio do aluno.
 - Decisões do Victor: dor 6+ para "converse"; gestação exige liberação; números do A1 aprovados. Histórico detalhado no PR #161 e em `docs/fisio-continuidade.md`.
-- Testes: rodam uma vez, antes de juntar (PR em rascunho não roda CI). A prévia (`previa.yml`) é só manual.
+- Testes: rodam uma vez, antes de juntar (PR em rascunho não roda CI). A prévia do Físio foi removida depois do merge.
 - **Pendências do Victor:** conferir `docs/fisio-catalogo.md` (agachamentos com barra já sem ombro).
 
 
