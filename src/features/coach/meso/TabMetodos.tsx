@@ -1,3 +1,4 @@
+import { isometrico } from '../../../engine'
 import { useMemo, useState } from 'react'
 import { posicoesAdicionadas } from './util'
 import { emGrupo, linhasDoExercicio, METODOS, padraoMetodo, removerLinha, salvarLinha, semanasTexto, serieDoDrop, alternarSerieDropset, seriesDoExercicio, seriesTexto, totalCerto } from '../../../engine'
@@ -105,6 +106,7 @@ export default function TabMetodos({ meso, onAtualizar }: { meso: Meso; onAtuali
 
 function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, onFechar, onAtualizar }: { meso: Meso; treino: number; aberta: Aberta; nome: (p: number) => string; semanasDoExercicio?: number[]; outros: number[]; onFechar: () => void; onAtualizar: (patch: Partial<Meso>) => void }) {
   const { pos, linha } = aberta
+  const iso = isometrico({ nome: nome(pos) })
   // Exercício adicionado só existe em algumas semanas: o método só pode ir nelas.
   const todas = semanasDoExercicio ?? Array.from({ length: meso.semanas }, (_, i) => i + 1)
   const [r, setR] = useState<Rascunho>(linha ? { metodo: linha.metodo, semanas: linha.semanas.filter((w) => todas.includes(w)), modelo: linha.modelo, parceiros: linha.parceiros } : { metodo: null, semanas: todas, modelo: [], parceiros: [] })
@@ -158,7 +160,7 @@ function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, o
                   {Array.from({ length: etapas }, (_, i) => i + 1).map((e) => (
                     <div key={e} className="flex flex-wrap gap-2">
                       <CampoNum rotulo={`Carga etapa ${e} (kg)`} valor={m0.cargaEtapa?.[e - 1] ?? null} onChange={(v) => { const a = lista(m0.cargaEtapa); a[e - 1] = v ?? null; todos({ cargaEtapa: a }) }} />
-                      <CampoNum rotulo={`Reps etapa ${e}`} valor={m0.repsEtapa?.[e - 1] ?? null} onChange={(v) => { const a = lista(m0.repsEtapa); a[e - 1] = v ?? null; todos({ repsEtapa: a }) }} />
+                      <CampoNum rotulo={`${iso ? 'Segundos' : 'Reps'} etapa ${e}`} valor={m0.repsEtapa?.[e - 1] ?? null} onChange={(v) => { const a = lista(m0.repsEtapa); a[e - 1] = v ?? null; todos({ repsEtapa: a }) }} />
                     </div>
                   ))}
                 </div>
@@ -198,7 +200,7 @@ function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, o
                 {metodo === 'Clusterset' && (
                   <>
                     <CampoNum rotulo="Blocos" valor={m0.blocos ?? null} onChange={(v) => todos({ blocos: v })} />
-                    <CampoNum rotulo="Reps por bloco" valor={m0.repsPorBloco ?? null} onChange={(v) => todos({ repsPorBloco: v })} />
+                    <CampoNum rotulo={iso ? 'Segundos por bloco' : 'Reps por bloco'} valor={m0.repsPorBloco ?? null} onChange={(v) => todos({ repsPorBloco: v })} />
                   </>
                 )}
                 {metodo === 'Rest-pause' && (
@@ -207,7 +209,7 @@ function FolhaMetodo({ meso, treino, aberta, nome, semanasDoExercicio, outros, o
                     <CampoNum rotulo="Adicional" valor={m0.adicional ?? null} onChange={(v) => todos({ adicional: v })} />
                   </>
                 )}
-                <CampoNum rotulo="Reps padrão (opcional)" valor={m0.repsPadrao ?? null} onChange={(v) => todos({ repsPadrao: v })} />
+                <CampoNum rotulo={iso ? 'Segundos padrão (opcional)' : 'Reps padrão (opcional)'} valor={m0.repsPadrao ?? null} onChange={(v) => todos({ repsPadrao: v })} />
               </div>
             </Painel>
           </section>

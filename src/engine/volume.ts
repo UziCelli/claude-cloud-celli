@@ -1,3 +1,5 @@
+import { isometrico, linhaIsometrica, LIMITE_ISOMETRIA_S } from './isometria'
+import type { Slot } from './tipos'
 import { linhaPrescrita, prescreverSessao } from './sessao'
 import type { AlvoVolume, Meso } from './tipos'
 
@@ -7,7 +9,7 @@ const PCT_PADRAO = 5
 
 // Volume = movimentos = soma das reps das séries. `pct` em porcentagem (5 = +5%, -20 = -20%).
 // Sobe o nº de séries (até 6) enquanto a série passaria de `limite`; sobra vai para as primeiras séries.
-export function ajustarSeries(reps: Linha, pct: number, limite: number): Linha {
+export function ajustarSeries(reps: Linha, pct: number, limite: number, tetoAbsoluto = false): Linha {
   const atual = reps.filter((r): r is number => typeof r === 'number')
   let n = atual.length
   const saida: Linha = [null, null, null, null, null, null]
@@ -19,15 +21,15 @@ export function ajustarSeries(reps: Linha, pct: number, limite: number): Linha {
   while (Math.ceil(alvo / n) > limite && n < 6) n++
   const base = Math.floor(alvo / n)
   const sobra = alvo - base * n
-  for (let i = 0; i < n; i++) saida[i] = base + (i < sobra ? 1 : 0)
+  for (let i = 0; i < n; i++) saida[i] = tetoAbsoluto ? Math.min(limite, base + (i < sobra ? 1 : 0)) : base + (i < sobra ? 1 : 0)
   return saida
 }
 
-export const limiteDe = (m: Meso) => m.limiteReps ?? LIMITE_PADRAO
+export const limiteDe = (m: Meso, slot?: Slot) => slot && isometrico(slot) ? LIMITE_ISOMETRIA_S : m.limiteReps ?? LIMITE_PADRAO
 
 // Aplica `f` (recebe as linhas semana a semana, devolve as novas) aos exercícios do alvo. Devolve um meso novo.
 // Treino/exercício viram override em progressaoExercicio[slotId] (nasce como cópia da linha que o motor usa hoje).
-function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[]) => Linha[]): Meso {
+function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[], slot?: Slot) => Linha[]): Meso {
   const sequencia = (t: number, p: number) =>
     Array.from({ length: meso.semanas }, (_, w) => [...linhaPrescrita(meso, w + 1, t, p)])
   const posicaoDe = (slotId: string): [number, number] | undefined => {
@@ -37,17 +39,23 @@ function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[]) => Linha[]):
     }
   }
   const overrides = { ...meso.progressaoExercicio }
+  const slots = [...meso.divisao.flat(), ...Object.values(meso.trocas ?? {}), ...Object.values(meso.adicoes ?? {}).flat(), ...Object.values(meso.sessoes ?? {}).flatMap(s => s.exercicios)]
+  const slotDe = (id: string) => slots.find(s => s.slotId === id)
 
   if (alvo.tipo === 'todos') {
+    for (const slot of slots) if (isometrico(slot) && !overrides[slot.slotId]) {
+      const pos = posicaoDe(slot.slotId)
+      overrides[slot.slotId] = pos ? sequencia(...pos) : Array.from({ length: meso.semanas }, linhaIsometrica)
+    }
     for (const [slotId, linhas] of Object.entries(overrides)) {
       const pos = posicaoDe(slotId)
-      overrides[slotId] = f(pos ? sequencia(...pos) : Array.from({ length: meso.semanas }, (_, w) => [...(linhas[w] ?? [])]))
+      overrides[slotId] = f(pos ? sequencia(...pos) : Array.from({ length: meso.semanas }, (_, w) => [...(linhas[w] ?? [])]), slotDe(slotId))
     }
     const { principais, auxiliares, padrao } = meso.progressao
     return {
       ...meso,
       progressao: { principais: f(principais), auxiliares: f(auxiliares), ...(padrao && { padrao: f(padrao) }) },
-      ...(meso.progressaoExercicio && { progressaoExercicio: overrides }),
+      ...(Object.keys(overrides).length > 0 && { progressaoExercicio: overrides }),
     }
   }
 
@@ -63,7 +71,7 @@ function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[]) => Linha[]):
   for (const pos of alvos) {
     const slotId = pos && meso.divisao[pos[0] - 1]?.[pos[1] - 1]?.slotId
     if (!pos || !slotId) continue
-    overrides[slotId] = f(sequencia(...pos))
+    overrides[slotId] = f(sequencia(...pos), meso.divisao[pos[0] - 1][pos[1] - 1])
     mudou = true
   }
   return mudou ? { ...meso, progressaoExercicio: overrides } : meso
@@ -75,11 +83,11 @@ export function progressaoAutomatica(
   meso: Meso,
   { pct, de, ate, alvo, pausas = [] }: { pct: number; de: number; ate: number; alvo: AlvoVolume; pausas?: number[] },
 ): Meso {
-  const limite = limiteDe(meso)
-  return aplicar(meso, alvo, (linhas) => {
+  return aplicar(meso, alvo, (linhas, slot) => {
+    const limite = limiteDe(meso, slot)
     const novas = [...linhas]
     for (let w = Math.max(de, 2); w <= Math.min(ate, meso.semanas); w++) {
-      novas[w - 1] = pausas.includes(w) ? [...novas[w - 2]] : ajustarSeries(novas[w - 2], pct, limite)
+      novas[w - 1] = pausas.includes(w) ? [...novas[w - 2]] : ajustarSeries(novas[w - 2], pct, limite, !!slot && isometrico(slot))
     }
     return novas
   })
@@ -91,19 +99,19 @@ export function reduzirVolume(
   meso: Meso,
   { pct, de, ate, retorno = 2, alvo }: { pct: number; de: number; ate: number; retorno?: number; alvo: AlvoVolume },
 ): Meso {
-  const limite = limiteDe(meso)
   const prog = meso.progressaoPct ?? PCT_PADRAO
-  return aplicar(meso, alvo, (linhas) => {
+  return aplicar(meso, alvo, (linhas, slot) => {
+    const limite = limiteDe(meso, slot)
     const novas = [...linhas]
     const ref = linhas[Math.max(de - 1, 1) - 1]
     let w = Math.max(de, 1)
-    for (; w <= Math.min(ate, meso.semanas); w++) novas[w - 1] = ajustarSeries(ref, -pct, limite)
+    for (; w <= Math.min(ate, meso.semanas); w++) novas[w - 1] = ajustarSeries(ref, -pct, limite, !!slot && isometrico(slot))
     for (let k = 1; k <= retorno && w <= meso.semanas; k++, w++) {
-      novas[w - 1] = ajustarSeries(ref, (-pct * (retorno + 1 - k)) / (retorno + 1), limite)
+      novas[w - 1] = ajustarSeries(ref, (-pct * (retorno + 1 - k)) / (retorno + 1), limite, !!slot && isometrico(slot))
     }
     let anterior = ref
     for (; w <= meso.semanas; w++) {
-      anterior = novas[w - 1] = ajustarSeries(anterior, prog, limite)
+      anterior = novas[w - 1] = ajustarSeries(anterior, prog, limite, !!slot && isometrico(slot))
     }
     return novas
   })
@@ -129,15 +137,14 @@ export function polimento(
   { pct, semanas, alvo, tipo = 'degrau' }: { pct: number; semanas: number[]; alvo: AlvoVolume; tipo?: TipoPolimento },
 ): Meso {
   if (!semanas.length) return meso
-  const limite = limiteDe(meso)
-  return aplicar(meso, alvo, (linhas) =>
+  return aplicar(meso, alvo, (linhas, slot) =>
     linhas.map((l, i) => {
       if (i === 0 || !semanas.includes(i + 1)) return l
       let r = i // semana de referência (1-based)
       while (r > 1 && semanas.includes(r)) r--
       let fim = i + 1
       while (fim < linhas.length && semanas.includes(fim + 1)) fim++
-      return ajustarSeries(linhas[r - 1], -pct * fracaoPolimento(tipo, i + 1 - r, fim - r), limite)
+      return ajustarSeries(linhas[r - 1], -pct * fracaoPolimento(tipo, i + 1 - r, fim - r), limiteDe(meso, slot), !!slot && isometrico(slot))
     }),
   )
 }

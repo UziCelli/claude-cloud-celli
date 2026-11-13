@@ -3,7 +3,7 @@ import { collection, doc, query, where } from 'firebase/firestore'
 import { AnimatePresence, m, useReducedMotion } from 'motion/react'
 import { confete, elastico, saida, suave } from '../../movimento'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { metodosDaSessao, prescreverSessao, type Metodo } from '../../engine'
+import { isometrico, metricasSessao, metodosDaSessao, prescreverSessao, type Metodo } from '../../engine'
 import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
 import { limparTreino, marcarTreino } from '../../lib/inatividade'
 import { mmss, useDescanso } from '../../lib/descanso'
@@ -596,6 +596,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
           const ordem = membros.indexOf(e)
           const letra = String.fromCharCode(65 + ordemGrupos.indexOf(gk))
           const colunasCargas = cs[e.slot.slotId] ?? []
+          const iso = isometrico(e.slot)
           const colunasReps = rs[e.slot.slotId] ?? []
           const anterior = cargaAnterior(meso, cargas, semana, treino, e.pos, pcsPorRegistro, ladosFeitos) // só o extra, com o corpo do registro de origem
           const slot = e.slot.slotId
@@ -685,6 +686,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                 </div>
               </div>
               <Nota key={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} uid={uid} nome={e.slot.nome.trim()} texto={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
+              {iso && <p className="mb-2 text-xs text-slate-400">Tempo em segundos. Cronometre cada série e anote os segundos feitos. Carga opcional.</p>}
               {dois && (
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="text-xs text-slate-400">Anote os kg de cada lado (o app soma os dois).</span>
@@ -728,8 +730,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                           ))}
                         </span>
                       )}
-                      <span className={`text-xs ${cores[0] ? `font-bold ${COR_METODO[cores[0]].texto}` : 'text-slate-400'}`}>{rotuloCol}</span>
-                      <span className="truncate text-xs text-slate-400">{repAlvo} reps</span>
+                      {iso ? <button type="button" disabled={travado} aria-label={`Cronometrar ${e.slot.nome}, ${rotuloCol}, ${repAlvo} segundos`} aria-pressed={descanso.slot === `iso:${mesoId}:${semana}:${treino}:${slot}:${k}`} className="min-h-11 rounded text-xs font-bold text-marca-300 ring-1 ring-slate-700" onClick={() => descanso.alternar(repAlvo, `iso:${mesoId}:${semana}:${treino}:${slot}:${k}`)}>{rotuloCol} <IcPlay className="mx-auto size-3" /></button> : <span className={`text-xs ${cores[0] ? `font-bold ${COR_METODO[cores[0]].texto}` : 'text-slate-400'}`}>{rotuloCol}</span>}
+                      <span className="truncate text-xs text-slate-400">{repAlvo} {iso ? 's' : 'reps'}</span>
                       {(() => {
                         // Efeitos comuns a toda carga gravada (total já com o corpo).
                         const aposGravar = (total: number | null) => {
@@ -772,11 +774,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                       <LoadInput
                         className="w-full min-w-0"
                         disabled={travado}
+                        ariaLabel={`${e.slot.nome}, ${rotuloCol}, ${iso ? 'segundos feitos' : 'repetições feitas'}`}
                         valor={colunasReps[k] ?? null}
                         placeholder={repAlvo}
                         onSalvar={(v) => { registrarReps(mesoId, uid, semana, treino, e.slot.slotId, k, v) }}
                       />
-                      <span className="text-xs text-slate-600">feitas</span>
+                      <span className="text-xs text-slate-600">{iso ? 's feitos' : 'feitas'}</span>
                     </div>
                   )
                 }
@@ -873,6 +876,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         )}
       </div>
 
+      {sessao.exercicios.some(e => isometrico(e.slot)) && <p className="mb-4 rounded-xl bg-slate-900 p-3 text-sm" role="status">Tempo sob tensão: {metricasSessao(sessao, cs, rs).tempoSobTensaoS} s (feitos ou prescritos).</p>}
       <AnimatePresence>
       {descanso.visivel && (
         <m.div
@@ -893,7 +897,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
           </div>
           <div className="mx-auto flex max-w-md items-center justify-between">
             <div>
-              <div className="text-xs text-slate-400">Descanso</div>
+              <div className="text-xs text-slate-400">{descanso.slot?.startsWith('iso:') ? 'Isometria · série em andamento' : 'Descanso'}</div>
               <div className="font-display text-2xl font-bold tabular-nums">{mmss(descanso.restante)}</div>
             </div>
             <Botao onClick={descanso.parar}>Pular</Botao>

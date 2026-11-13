@@ -1,6 +1,18 @@
+## 13/11/2026 — Isometria (entrega B, Codex)
+- Branch `codex/isometria-entrega-b`, baseada na entrega A (`11348d2`), validada localmente; PR #166 já integrado em `a489a61`.
+- Isométricos em segundos (padrão 3×30 s), progressão até 60 s/série, cronômetro por série e tempo sob tensão separado de movimentos/volume. Sem migração nem mudança de regras.
+- Claude: correções da entrega A documentadas em `docs/revisao-pr166.md`; Codex implementa B. Ver plano para decisões e limites.
+
 # Estado da sessão (retomada) — atualizado em 12/11/2026
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
+
+## 13/11/2026 — Novidades do app (para os alunos)
+- Tela em 8 passos para quem já usa o app: Físio ("Senti dor"), carga por lado, isometria em segundos (PR #170), avaliação física e anamnese, lembretes e anotações com data, telas mais rápidas e Pix no Início.
+- Último passo "Vem muito mais · Contamos com a sua ajuda": **Avaliar o app** (vai para Sua opinião, assunto App) e, se a marca tiver o link, "Avaliar o atendimento no Google".
+- Abre 1x por aparelho; aluno novo vê o tutorial e pula as novidades; reabre em Conta → "Novidades do app".
+- Próxima leva: trocar os passos e a `CHAVE_NOVIDADES` em `src/features/aluno/Novidades.tsx`.
+- **Pendência do Victor:** mandar o link "Avaliar no Google" da Gislane (sem ele, o app dela mostra só "Avaliar o app").
 
 ## 13/11/2026 — Carga por lado (entrega A) e próximo: isometria (entrega B)
 - Plano completo: `docs/plano-lados-isometria.md` (decisões do Victor anotadas lá).

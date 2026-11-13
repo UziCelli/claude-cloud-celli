@@ -23,12 +23,16 @@ import { useAnamnese } from '../anamnese/useAnamnese'
 import AvaliacaoAluno from '../avaliacao/AvaliacaoAluno'
 import EnviarFeedback from '../feedback/EnviarFeedback'
 import Tutorial, { tutorialNaoVisto } from './Tutorial'
+import Novidades, { CHAVE_NOVIDADES, novidadesNaoVistas } from './Novidades'
+import { marcarVisto } from '../onboarding/Onboarding'
 
 export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario }) {
   const nome = perfil.nome
   const rota = useRota()
   const atraso = emAtraso(perfil, useHoje())
   const [tutorial, setTutorial] = useState(tutorialNaoVisto)
+  // Novidades: só para quem já conhece o app. Aluno novo vê o tutorial e as novidades ficam como vistas.
+  const [novidades, setNovidades] = useState(() => !tutorial && novidadesNaoVistas())
   const { pausado } = useAnamnese(uid)
   useEffect(() => {
     void inscreverAvisos()
@@ -45,7 +49,7 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   else if (rota === '/fisio') tela = <FisioAluno uid={uid} pausado={pausado} />
   else if (rota === '/feedback') tela = <EnviarFeedback uid={uid} nome={nome} />
   else if (rota === '/evolucao') tela = <EvolucaoAluno uid={uid} nome={nome} />
-  else if (rota === '/conta') tela = <ContaAluno uid={uid} perfil={perfil} abrirTutorial={() => setTutorial(true)} />
+  else if (rota === '/conta') tela = <ContaAluno uid={uid} perfil={perfil} abrirTutorial={() => setTutorial(true)} abrirNovidades={() => setNovidades(true)} />
 
   // PAR-Q grave: anamnese, conta (LGPD) e alertas Físio continuam acessíveis; FisioAluno oculta protocolos/recados durante a pausa.
   if (pausado && rota !== '/anamnese' && rota !== '/conta' && rota !== '/fisio')
@@ -71,7 +75,10 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
     <div className={`min-h-lvh ${comBarra ? 'pb-barra' : ''}`}>
       <Brilho />
       {atraso != null && <AvisoAtraso uid={uid} perfil={perfil} dias={atraso} />}
-      <AnimatePresence>{tutorial && <Tutorial nome={nome} fechar={() => setTutorial(false)} />}</AnimatePresence>
+      <AnimatePresence>
+        {tutorial && <Tutorial nome={nome} fechar={() => { marcarVisto(CHAVE_NOVIDADES); setTutorial(false) }} />}
+        {novidades && !tutorial && <Novidades nome={nome} fechar={() => setNovidades(false)} />}
+      </AnimatePresence>
       <div className="pt-topo">
         <AvisoIOS />
         <Tela chave={rota} abrir={interna}>{tela}</Tela>
