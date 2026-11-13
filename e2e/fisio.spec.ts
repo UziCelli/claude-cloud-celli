@@ -79,7 +79,7 @@ test('coach envia com revisão, aluno vê só a própria, relata offline e coach
   const outra = await outroCtx.newPage()
   await entrar(outra, 'bia.fisio@exemplo.com', /Olá, Bia/)
   await outra.goto('/#/fisio')
-  await expect(outra.getByText('Seu coach ainda não disponibilizou orientações aqui.')).toBeVisible()
+  await expect(outra.getByText(/Aqui aparecem as orientações do seu coach/)).toBeVisible()
   await outroCtx.close()
 })
 

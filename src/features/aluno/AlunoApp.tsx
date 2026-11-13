@@ -5,7 +5,7 @@ import { useHoje } from '../../lib/hooks'
 import { inscreverAvisos } from '../../lib/push'
 import { casar, useRota } from '../../rota'
 import { Tela } from '../../ui'
-import { IcCasa, IcGrafico, IcHaltere, IcPessoa } from '../../icones'
+import { IcCasa, IcFisio, IcGrafico, IcHaltere, IcPessoa } from '../../icones'
 import { BarraAbas, Brilho } from '../../vidro'
 import AvisoAtraso from './AvisoAtraso'
 import AvisoIOS from '../instalar/AvisoIOS'
@@ -62,8 +62,9 @@ export default function AlunoApp({ uid, perfil }: { uid: string; perfil: Usuario
   const abas = [
     { rotulo: 'Início', href: '#/', Icone: IcCasa, ativo: rota === '/' },
     { rotulo: 'Treino', href: '#/treino', Icone: IcHaltere, ativo: rota === '/treino' },
+    { rotulo: 'Físio', href: '#/fisio', Icone: IcFisio, ativo: rota === '/fisio' },
     { rotulo: 'Evolução', href: '#/evolucao', Icone: IcGrafico, ativo: rota === '/evolucao' },
-    { rotulo: 'Conta', href: '#/conta', Icone: IcPessoa, ativo: rota === '/conta' || rota === '/metodos' || rota === '/feedback' || rota === '/fisio' },
+    { rotulo: 'Conta', href: '#/conta', Icone: IcPessoa, ativo: rota === '/conta' || rota === '/metodos' || rota === '/feedback' },
   ]
 
   return (

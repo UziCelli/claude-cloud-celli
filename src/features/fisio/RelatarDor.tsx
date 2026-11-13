@@ -2,6 +2,7 @@ import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { articulacoesDo } from '../../lib/anatomia'
 import { ALERTA_DOR, dicaDaDor, validarDor, type DorForm, type LocalDor } from '../../lib/dor'
+import { IcFisio } from '../../icones'
 import { Aviso, Botao, Modal, campoBase } from '../../ui'
 import { relatarDor } from './acoesFisio'
 
@@ -26,7 +27,7 @@ export default function RelatarDor({ uid, exercicio }: { uid: string; exercicio:
   }
   const dica = enviado ? dicaDaDor(enviado.intensidade) : null
   return <>
-    <Botao tipo="fantasma" onClick={abrir} className="mb-3 inline-flex items-center gap-1.5 !px-2">Senti dor</Botao>
+    <Botao tipo="fantasma" onClick={abrir} className="mb-3 inline-flex min-h-11 items-center gap-1.5 !border !border-amber-400 !px-3 !text-amber-300"><IcFisio className="size-5" />Senti dor</Botao>
     <AnimatePresence>
       {aberto && <Modal rotulo="Senti dor" aoFechar={() => setAberto(false)}>
         <h2 className="mb-1 text-lg font-bold">Senti dor</h2>

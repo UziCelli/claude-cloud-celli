@@ -63,14 +63,16 @@ test('adicionar, juntar, editar e tirar métodos por exercício', async ({ page 
   await expect(page.getByRole('button', { name: /^Biset/ })).toHaveCount(0)
 })
 
-test('coach abre o guia de fisioterapia; aluno não vê o link', async ({ page, browser }) => {
+test('coach abre o guia de fisioterapia pelo seletor; aluno não vê o seletor e tem a aba Físio', async ({ page, browser }) => {
   await page.goto('/')
   await page.getByLabel('E-mail').fill(COACH.email)
   await page.getByLabel('Senha').fill(COACH.senha)
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()
   await page.goto('/#/metodos')
-  await page.getByText('Métodos Fisioterapia').click()
+  await expect(page.getByRole('link', { name: 'Treino', exact: true })).toHaveAttribute('aria-current', 'page')
+  await page.getByRole('link', { name: 'Físio', exact: true }).click()
+  await expect(page.getByRole('link', { name: 'Físio', exact: true })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByText('25 métodos')).toBeVisible()
   await page.getByRole('button', { name: 'Ombro', exact: true }).click()
   await expect(page.getByRole('heading', { name: /^M04 ·/ })).toBeVisible()
@@ -86,6 +88,9 @@ test('coach abre o guia de fisioterapia; aluno não vê o link', async ({ page, 
   await aluno.getByRole('button', { name: 'Entrar', exact: true }).click()
   await aluno.goto('/#/metodos')
   await expect(aluno.getByRole('heading', { name: 'Guia de métodos' })).toBeVisible()
-  await expect(aluno.getByText('Métodos Fisioterapia')).toHaveCount(0)
+  await expect(aluno.getByRole('link', { name: 'Físio', exact: true })).toHaveCount(1) // só a aba da barra
+  await expect(aluno.getByRole('navigation', { name: 'Tipo de guia' })).toHaveCount(0)
+  await aluno.getByRole('link', { name: 'Físio', exact: true }).click()
+  await expect(aluno.getByRole('heading', { name: /Físio/ })).toBeVisible()
   await ctx.close()
 })
