@@ -424,6 +424,11 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId == request.auth.uid
         && request.resource.data.semana <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.semanas
         && request.resource.data.treino <= get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.frequencia
+        // Só de treino concluído há até 12 h (P2 da revisão): o registro da mesma sessão é do aluno e está realizado.
+        // Offline: o "Concluir" grava o registro antes do check-in e a fila envia na ordem (realizadoEm vira a hora da sincronização).
+        && get(/databases/$(database)/documents/registros/$(id)).data.alunoId == request.auth.uid
+        && get(/databases/$(database)/documents/registros/$(id)).data.realizado == true
+        && request.time < get(/databases/$(database)/documents/registros/$(id)).data.realizadoEm + duration.value(12, 'h')
         && nota15(request.resource.data.sono) && nota15(request.resource.data.estresse)
         && nota15(request.resource.data.cansaco) && nota15(request.resource.data.alimentacao)
         && request.resource.data.em == request.time

@@ -301,7 +301,7 @@ Comece por aqui para achar onde mexer.
 
 ### `fisioCheckins/{mesoId}_s{WW}_t{T}` (rodada 4, 13/11/2026; um por sessão desde a revisão do PR)
 - `alunoId`, `mesoId`, `semana`, `treino`, `sono`, `estresse`, `cansaco`, `alimentacao` (inteiros 1–5; 1 = ruim, 5 = ótimo), `em`, `atualizadoEm`. Sem texto livre.
-- Check-in do fim do treino (Hooper & McLean / Saw 2016; alimentação só contexto). Aluno liberado só cria; coach com MFA lê, apaga e transfere (`migradoPara`). Lógica: `src/lib/checkin.ts`. LGPD: exclusão, Limpeza LGPD, transferência.
+- Check-in do fim do treino (Hooper & McLean / Saw 2016; alimentação só contexto). Só cria se `registros/{mesmo id}` for do aluno, `realizado` e concluído há até 12 h (fila offline envia o registro antes). Aluno liberado só cria; coach com MFA lê, apaga e transfere (`migradoPara`). Lógica: `src/lib/checkin.ts`. LGPD: exclusão, Limpeza LGPD, transferência.
 
 ### `usuarios/{uid}`
 - `papel`: 'coach' \| 'aluno'

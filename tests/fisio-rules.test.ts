@@ -20,6 +20,12 @@ beforeEach(async () => {
     const b = c.firestore() as unknown as Firestore
     await setDoc(doc(b, 'mesos', 'mA'), { alunoId: 'ana', semanas: 4, frequencia: 3 })
     await setDoc(doc(b, 'mesos', 'mB'), { alunoId: 'bia', semanas: 4, frequencia: 3 })
+    // Sessões concluídas há pouco (check-in exige registro concluído há até 12 h; P2 da revisão).
+    const fim = Timestamp.fromMillis(Date.now() - 3600_000)
+    for (const [id, alunoId, mesoId, semana, treino] of [['mA_s01_t1', 'ana', 'mA', 1, 1], ['mA_s01_t2', 'ana', 'mA', 1, 2], ['mA_s02_t3', 'ana', 'mA', 2, 3], ['mB_s01_t1', 'bia', 'mB', 1, 1]] as const)
+      await setDoc(doc(b, 'registros', id), { alunoId, mesoId, semana, treino, realizado: true, realizadoEm: fim })
+    await setDoc(doc(b, 'registros', 'mA_s01_t3'), { alunoId: 'ana', mesoId: 'mA', semana: 1, treino: 3, realizado: false })
+    await setDoc(doc(b, 'registros', 'mA_s02_t1'), { alunoId: 'ana', mesoId: 'mA', semana: 2, treino: 1, realizado: true, realizadoEm: Timestamp.fromMillis(Date.now() - 13 * 3600_000) })
     for (const uid of ['ana', 'bia', 'coach', 'bloq', 'vencida', 'presencial']) await setDoc(doc(b, 'usuarios', uid), {
       papel: uid === 'coach' ? 'coach' : 'aluno', status: uid === 'bloq' ? 'bloqueado' : 'ativo',
       pagoAte: Timestamp.fromMillis(Date.now() + (uid === 'vencida' ? -10 : 30) * 86400_000),
@@ -243,5 +249,18 @@ describe('check-in por sessão (F3 da revisão do PR)', () => {
     await assertFails(setDoc(ck('ana', 'mA_s01_t4'), novo({ treino: 4 }))) // além da frequência
     const { mesoId: _m, ...semMeso } = novo()
     await assertFails(setDoc(ck('ana', 'mA_s01_t1'), semMeso))
+  })
+})
+
+describe('check-in só de treino concluído (P2 da revisão incremental)', () => {
+  const ck = (id: string) => doc(db('ana'), 'fisioCheckins', id)
+  const novo = (semana: number, treino: number) => ({ alunoId: 'ana', mesoId: 'mA', semana, treino, sono: 4, estresse: 3, cansaco: 2, alimentacao: 5, em: serverTimestamp(), atualizadoEm: serverTimestamp() })
+  it('nega sem registro, com registro não concluído e com conclusão há mais de 12 h', async () => {
+    await assertFails(setDoc(ck('mA_s03_t1'), novo(3, 1))) // sem registro
+    await assertFails(setDoc(ck('mA_s01_t3'), novo(1, 3))) // registro não concluído
+    await assertFails(setDoc(ck('mA_s02_t1'), novo(2, 1))) // concluído há 13 h
+  })
+  it('aceita a sessão concluída há pouco', async () => {
+    await assertSucceeds(setDoc(ck('mA_s01_t1'), novo(1, 1)))
   })
 })
