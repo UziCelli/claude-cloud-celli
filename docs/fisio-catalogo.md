@@ -5,6 +5,7 @@ Base do botão "Senti dor": o pop-up mostra as **articulações** do exercício,
 Como conferir: leia por grupo e me diga só o que mudar (ex.: "Remada Cavalinho: tirar Lombar").
 
 ## Escolhas que eu fiz (confira primeiro)
+- **Agachamentos com barra nas costas:** sem Ombro (correção do Victor, 13/11/2026).
 - **Punho** entra em supinos, flexões, roscas, tríceps pulley/testa/paralela, desenvolvimento e olímpicos. Não entra em puxadas e remadas.
 - **Cervical** entra nos abdominais "de enrolar" (solo, declinado, cabo, máquina) e no encolhimento.
 - **Agachamento Sumô Cinto** sem Lombar (a carga fica no quadril, não nas costas).
@@ -19,16 +20,16 @@ Como conferir: leia por grupo e me diga só o que mudar (ex.: "Remada Cavalinho:
 
 | Exercício | Articulações | Músculos principais | Secundários |
 |---|---|---|---|
-| Agachamento Livre Barra | Joelho, Quadril, Lombar, Tornozelo, Ombro | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
+| Agachamento Livre Barra | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
 | Agachamento Livre Halter | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
 | Agachamento Frontal Barra | Joelho, Quadril, Lombar, Tornozelo, Punho | Quadríceps, Glúteos | Abdômen, Lombar (eretores) |
 | Agachamento Frontal Halter | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
-| Agachamento Sumô Barra | Joelho, Quadril, Lombar, Tornozelo, Ombro | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
+| Agachamento Sumô Barra | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
 | Agachamento Sumô Cinto | Quadril, Joelho, Tornozelo | Glúteos, Quadríceps, Adutores | — |
-| Agachamento Livre Banco | Joelho, Quadril, Lombar, Tornozelo, Ombro | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
+| Agachamento Livre Banco | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
 | Agachamento Halter Banco | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
 | Agachamento com Peso do Corpo | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
-| Agachamento no Smith | Joelho, Quadril, Lombar, Tornozelo, Ombro | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
+| Agachamento no Smith | Joelho, Quadril, Lombar, Tornozelo | Quadríceps, Glúteos | Adutores, Lombar (eretores) |
 | Agachamento Hack 35º | Joelho, Quadril, Lombar | Quadríceps, Glúteos | Adutores |
 | Agachamento Hack 45º | Joelho, Quadril, Lombar | Quadríceps, Glúteos | Adutores |
 | Agachamento Mini-Hack 45º | Joelho, Quadril, Lombar | Quadríceps, Glúteos | Adutores |
