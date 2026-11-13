@@ -98,7 +98,7 @@ test('fluxo completo do painel do coach', async ({ page }) => {
     await page.getByLabel('% por semana').fill('10')
     await page.getByLabel('Da semana').fill('2')
     await page.getByLabel('Até a semana').fill('2')
-    await expect(page.getByText('Movimentos')).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Movimentos' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Total' })).toBeVisible()
     await page.screenshot({ path: 'test-results/prints/41-ajustar-volume.png', fullPage: true })
     await page.getByRole('button', { name: 'Aplicar alterações' }).click()

@@ -2,27 +2,19 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
-- **Testes (pedido do Victor, 13/11):** só uma vez, antes de juntar. PR em rascunho não roda CI (`ci.yml`); prévia só manual (`previa.yml`). Sem testes locais a cada mudança.
+## 13/11/2026 — Gráfico do volume e tipos de polimento
+- Progressão → Ajustar volume: gráfico do volume por semana (movimentos ou "% da S1"), linha tracejada = como está hoje, cheia = como vai ficar. Atualiza na hora.
+- Leitura automática da subida (S1 até o pico): Linear, Acelerando (exponencial), Desacelerando (hiperbólica), Ondulada; ritmo Leve (< 2,5%/sem), Adequado, Agressivo (> 10%/sem em média ou salto > 15%). Limites em `RITMO` (`engine/volume.ts`).
+- Polimento com 4 tipos: Degrau (step, o de antes), Exponencial rápida, Exponencial lenta, Linear. O "%" é a queda da última semana; o tipo muda o caminho até lá. Com 1 semana, todos dão igual.
+- A voz (IA) continua usando o polimento degrau.
+- **Pendência do Victor:** conferir no celular se os limites do ritmo batem com o que ele usa.
 
-## 13/11/2026 (madrugada) — Físio, rodada 4 (NÃO juntar; Victor dormindo, retomar com ele)
-- Feito: botão "Senti dor" visível; aba **Físio** do aluno (5ª aba); coach com "Treino | Físio" em Métodos.
-- Métodos no treino: o coach liga uma orientação (qualquer um dos 25) a até 10 exercícios; o aluno vê o selo "Físio · Mxx" no exercício.
-- Fim do treino: "Sentiu dor hoje?" + check-in (sono, estresse, cansaço, alimentação 1–5, "Pular" permitido). Coleção `fisioCheckins`.
-- Sugestões ao coach (Alertas, ficha e selo do menu): "considere polimento" / "converse ou encaminhe", com motivo; dispensar some até dado novo. Nunca aplica nada.
-- Anamnese na ficha Físio: bloco "Da anamnese", métodos relacionados primeiro, contexto de liberação travado (cirurgia 12 meses, gestação, osso/articulação), selo "já na anamnese"/"novo".
-- 13/11 manhã: corrigidos F1–F8 da revisão do PR (ver `docs/fisio-continuidade.md`). A1 em `docs/fisio-a1-proposta.md`.
-- Decisões do Victor (13/11): "converse" com dor 6+; gestação exige liberação profissional; números do A1 aprovados e implementados. Falta só juntar (testes rodam uma vez, ao marcar o PR como pronto).
+## 13/11/2026 — Sistema Físio juntado (PR #161)
+- Catálogo com articulações; 25 métodos Fisioterapia; orientações individuais; "Senti dor" ligado ao treino; check-in do fim do treino (um por sessão, inclui "a dor passou em 24 h?"); sugestões ao coach (converse com dor 6+ / progressão acima do planejado com dor na região / polimento) com "Preparar proposta no meso"; aba Físio do aluno.
+- Decisões do Victor: dor 6+ para "converse"; gestação exige liberação; números do A1 aprovados. Histórico detalhado no PR #161 e em `docs/fisio-continuidade.md`.
+- Testes: rodam uma vez, antes de juntar (PR em rascunho não roda CI). A prévia (`previa.yml`) é só manual.
+- **Pendências do Victor:** conferir `docs/fisio-catalogo.md` (agachamentos com barra já sem ombro).
 
-## 12/11/2026 — Sistema Físio (EM ANDAMENTO, branch separada, NÃO juntar)
-- **Retomada Codex:** Victor reenviou o Markdown científico (igual ao corpo de `fisio-pesquisa.md`) e pediu continuidade coordenada por código/documentação. Ler `docs/fisio-continuidade.md` antes de mexer. Etapa 2b: orientação individual coach → aluno, liberação profissional registrada, relato de sinal e recolhimento. **Não é o botão geral “Senti dor” da Etapa 3.** Resultados e limites no documento de continuidade.
-- Grande atualização: aluno relata dor no treino → dica pronta e segura na hora + coach avisado. Plano: `docs/plano-fisio.md`.
-- **Não juntar na `main` até o Victor mandar** (exceção ao fluxo automático). PR em rascunho.
-- Etapa 1 feita: articulações e músculos dos 329 exercícios (`src/data/anatomia.json`, `src/lib/anatomia.ts`). Nada muda na tela ainda.
-- Etapa 2 feita: 25 métodos Fisioterapia + regras R1–R8 (`src/data/fisio.ts`), tela do coach em Métodos → "Métodos Fisioterapia". 60 PMIDs conferidos no PubMed.
-- 12/11 (noite): os 10 métodos sem sinais próprios usam a **lista geral de perigo** (`ALERTA_GERAL`, decisão do Victor) e podem ser enviados; regras exigem liberação em todo método com `liberacao`.
-- Etapa 3 pronta (botão "Senti dor" no treino, dica por faixa, histórico no Físio do aluno, resposta do coach na ficha, cartão âmbar "relatos de dor novos" no Início). Próximo: Victor testar no celular; juntar só quando ele mandar.
-- Prévia para testar no celular: workflow `previa.yml` (canal `fisio`, 7 dias; sobe as regras do Físio para produção, só acrescentam). O Victor precisa pôr o endereço da prévia na chave de navegador do Google Cloud (`docs/seguranca.md`).
-- **Pendências do Victor:** conferir `docs/fisio-catalogo.md`.
 
 ## 12/11/2026 — Feedbacks no celular
 - Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).

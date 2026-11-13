@@ -109,19 +109,83 @@ export function reduzirVolume(
   })
 }
 
-// Polimento: cada semana escolhida (2 em diante) cai `pct`% sobre a última semana normal antes dela.
+// Tipos de polimento (taper): como a queda se distribui nas semanas seguidas de polimento.
+// `pct` é sempre a queda da ÚLTIMA semana do bloco; o tipo muda o caminho até lá.
+export type TipoPolimento = 'degrau' | 'linear' | 'expRapida' | 'expLenta'
+const CURVA_EXP = { expRapida: 3, expLenta: 1.5 } // quanto maior, mais da queda vem logo na 1ª semana
+
+// Fração (0..1) da queda total na k-ésima semana (1..n) de um bloco de n semanas.
+export function fracaoPolimento(tipo: TipoPolimento, k: number, n: number): number {
+  if (tipo === 'degrau' || n <= 1) return 1
+  if (tipo === 'linear') return k / n
+  const c = CURVA_EXP[tipo]
+  return (1 - Math.exp((-c * k) / n)) / (1 - Math.exp(-c))
+}
+
+// Polimento: cada bloco de semanas seguidas (2 em diante) cai sobre a última semana normal antes dele.
 // A semana 1 não tem anterior e fica de fora. As outras não mudam; aplicar de novo dá o mesmo resultado.
-export function polimento(meso: Meso, { pct, semanas, alvo }: { pct: number; semanas: number[]; alvo: AlvoVolume }): Meso {
+export function polimento(
+  meso: Meso,
+  { pct, semanas, alvo, tipo = 'degrau' }: { pct: number; semanas: number[]; alvo: AlvoVolume; tipo?: TipoPolimento },
+): Meso {
   if (!semanas.length) return meso
   const limite = limiteDe(meso)
   return aplicar(meso, alvo, (linhas) =>
     linhas.map((l, i) => {
       if (i === 0 || !semanas.includes(i + 1)) return l
-      let r = i
+      let r = i // semana de referência (1-based)
       while (r > 1 && semanas.includes(r)) r--
-      return ajustarSeries(linhas[r - 1], -pct, limite)
+      let fim = i + 1
+      while (fim < linhas.length && semanas.includes(fim + 1)) fim++
+      return ajustarSeries(linhas[r - 1], -pct * fracaoPolimento(tipo, i + 1 - r, fim - r), limite)
     }),
   )
+}
+
+// Forma da subida do volume (semana 1 até o pico), para o coach ver se a progressão está exagerada.
+export type FormaProgressao = 'linear' | 'acelerando' | 'desacelerando' | 'ondulada' | 'sem-subida' | 'curta'
+export type AnaliseProgressao = {
+  forma: FormaProgressao
+  pico: number // índice (0 = semana 1) da 1ª vez que chega ao máximo
+  mediaPct: number // subida média por semana até o pico (composta)
+  maiorSalto: { semana: number; pct: number } | null
+  ritmo: 'leve' | 'adequado' | 'agressivo' | null
+  quedaFinal: number // % da última semana em relação ao pico (polimento); 0 = sem queda
+}
+// Limites do ritmo (% por semana). Ajuste aqui se o Victor quiser outro critério.
+export const RITMO = { leve: 2.5, agressivoMedia: 10, agressivoSalto: 15 }
+const um = (x: number) => Math.round(x * 10) / 10
+
+export function analisarProgressao(v: number[]): AnaliseProgressao {
+  const max = Math.max(0, ...v)
+  const pico = Math.max(0, v.indexOf(max))
+  const ultima = v[v.length - 1] ?? 0
+  const quedaFinal = max > 0 ? um((ultima / max - 1) * 100) : 0
+  const base = { pico, quedaFinal }
+  if (pico === 0) return { ...base, forma: 'sem-subida', mediaPct: 0, maiorSalto: null, ritmo: null }
+
+  const d = v.slice(1, pico + 1).map((x, i) => x - v[i])
+  let maiorSalto: AnaliseProgressao['maiorSalto'] = null
+  for (let i = 1; i <= pico; i++) {
+    if (v[i - 1] <= 0) continue
+    const pct = um((v[i] / v[i - 1] - 1) * 100)
+    if (!maiorSalto || pct > maiorSalto.pct) maiorSalto = { semana: i + 1, pct }
+  }
+  const mediaPct = v[0] > 0 ? um(((max / v[0]) ** (1 / pico) - 1) * 100) : 0
+  const ritmo =
+    v[0] <= 0 ? null : mediaPct > RITMO.agressivoMedia || (maiorSalto?.pct ?? 0) > RITMO.agressivoSalto ? 'agressivo' : mediaPct < RITMO.leve ? 'leve' : 'adequado'
+
+  let forma: FormaProgressao
+  if (d.some((x) => x < 0)) forma = 'ondulada'
+  else if (d.length < 2) forma = 'curta'
+  else {
+    const h = Math.floor(d.length / 2)
+    const media = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+    const a = media(d.slice(0, h))
+    const b = media(d.slice(d.length - h))
+    forma = b > a * 1.3 ? 'acelerando' : b < a * 0.7 ? 'desacelerando' : 'linear'
+  }
+  return { ...base, forma, mediaPct, maiorSalto, ritmo }
 }
 
 // Maior tempoMin entre os treinos de cada semana (índice 0 = semana 1).
