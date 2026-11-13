@@ -10,6 +10,7 @@ Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir d
 - Etapa 2 feita: 25 métodos Fisioterapia + regras R1–R8 (`src/data/fisio.ts`), tela do coach em Métodos → "Métodos Fisioterapia". 60 PMIDs conferidos no PubMed.
 - 12/11 (noite): os 10 métodos sem sinais próprios usam a **lista geral de perigo** (`ALERTA_GERAL`, decisão do Victor) e podem ser enviados; regras exigem liberação em todo método com `liberacao`.
 - Etapa 3 pronta (botão "Senti dor" no treino, dica por faixa, histórico no Físio do aluno, resposta do coach na ficha, cartão âmbar "relatos de dor novos" no Início). Próximo: Victor testar no celular; juntar só quando ele mandar.
+- Prévia para testar no celular: workflow `previa.yml` (canal `fisio`, 7 dias; sobe as regras do Físio para produção, só acrescentam). O Victor precisa pôr o endereço da prévia na chave de navegador do Google Cloud (`docs/seguranca.md`).
 - **Pendências do Victor:** conferir `docs/fisio-catalogo.md`.
 
 ## 12/11/2026 — Feedbacks no celular
