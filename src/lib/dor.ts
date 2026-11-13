@@ -9,9 +9,12 @@ export type LocalDor = ArticulacaoId | 'outro'
 export type TipoDor = 'dor' | 'sensacao'
 export type MomentoDor = 'durante' | 'fim'
 export type DorForm = { exercicio: string; articulacao: LocalDor; tipo: TipoDor; intensidade: number; momento: MomentoDor; texto: string }
+// A1: treino em que a dor apareceu (relatos antigos não têm).
+export type SessaoDor = { mesoId: string; semana: number; treino: number; slotId: string }
 export type RelatoDor = Omit<DorForm, 'texto'> & {
   id: string; alunoId: string; texto: string; em: Timestamp | null
   resposta: string | null; respondidoEm: Timestamp | null; vistoEm: Timestamp | null
+  sessao: SessaoDor | null
 }
 
 // Faixas decididas pelo Victor (12/11/2026), a partir da R1 da pesquisa. A dor tem origem desconhecida,
@@ -48,5 +51,7 @@ export function lerDor(id: string, valor: unknown): RelatoDor | null {
     id, alunoId: d.alunoId, exercicio: d.exercicio, articulacao: d.articulacao as LocalDor, tipo: d.tipo, intensidade: d.intensidade,
     momento: d.momento, texto: typeof d.texto === 'string' ? d.texto : '', em: tempo(d.em),
     resposta: typeof d.resposta === 'string' ? d.resposta : null, respondidoEm: tempo(d.respondidoEm), vistoEm: tempo(d.vistoEm),
+    sessao: typeof d.mesoId === 'string' && Number.isInteger(d.semana) && Number.isInteger(d.treino) && typeof d.slotId === 'string'
+      ? { mesoId: d.mesoId, semana: d.semana as number, treino: d.treino as number, slotId: d.slotId } : null,
   }
 }

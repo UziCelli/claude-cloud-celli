@@ -13,6 +13,7 @@ import { Aviso, Botao, classesBotao, Painel, Pagina, sobe, mexe } from '../../..
 import { LinhaAcima } from '../meso/SugestaoTempo'
 import { useSugestoesFisio } from '../../fisio/useSugestoes'
 import { TITULO_SUGESTAO } from '../../../lib/sugestoesFisio'
+import BotaoProposta from '../../fisio/BotaoProposta'
 import { mesoAtual } from '../../aluno/mesoAtual'
 import marca from '@marca/marca.json'
 import { calcularAlertas, chavesAtuais, type AlertaAbaixo, type AlertaAcima, type AlertaDemorado, type Reg } from './calcularAlertas'
@@ -51,8 +52,9 @@ export function useAlertasCoach() {
     limparArquivadosAntigos(arquivados.docs, new Set([...chavesAtuais(r), ...fisio.todas.map((x) => x.chave)]), agora)
   })
   const nomes = new Map(alunos.dados.map((x) => [x.id, x.nome]))
-  const mesoDe = (id: string) => mesoAtual(mesos.dados.filter((d) => d.alunoId === id))?.doc.id
-  return { ...r, carregando, erroBase, erroFisio: fisio.erro, fisio: fisio.visiveis.map((x) => ({ ...x, aluno: nomes.get(x.alunoId) ?? 'Aluno', mesoId: mesoDe(x.alunoId) })) }
+  const mesoDocDe = (id: string) => mesoAtual(mesos.dados.filter((d) => d.alunoId === id))?.doc
+  const mesoDe = (id: string) => mesoDocDe(id)?.id
+  return { ...r, carregando, erroBase, erroFisio: fisio.erro, fisio: fisio.visiveis.map((x) => ({ ...x, aluno: nomes.get(x.alunoId) ?? 'Aluno', mesoId: mesoDe(x.alunoId), mesoDoc: mesoDocDe(x.alunoId) })) }
 }
 
 // A seção sai com animação quando o último cartão é arquivado (n vira 0).
@@ -198,7 +200,7 @@ export default function Alertas() {
                   <p className="text-sm text-violet-200">{x.motivo}</p>
                   <div className="flex flex-wrap gap-2 pt-1">
                     <a className={linkBtn} href={`#/aluno/${x.alunoId}/fisio`}>Abrir ficha</a>
-                    {x.tipo === 'polimento' && <a className={linkBtn} href={x.mesoId ? `#/meso/${x.mesoId}` : `#/aluno/${x.alunoId}`}>Abrir o meso</a>}
+                    {(x.tipo === 'polimento' || x.tipo === 'progressao') && <BotaoProposta mesoDoc={x.mesoDoc} regiao={x.regiao} motivo={x.motivo} alunoId={x.alunoId} />}
                     <Botao type="button" tipo="vidro" onClick={() => arquivarAlerta(x.chave).catch(() => {})}>Dispensar</Botao>
                   </div>
                 </div>

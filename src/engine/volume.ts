@@ -54,7 +54,9 @@ function aplicar(meso: Meso, alvo: AlvoVolume, f: (linhas: Linha[]) => Linha[]):
   const alvos: ([number, number] | undefined)[] =
     alvo.tipo === 'treino'
       ? (meso.divisao[alvo.treino - 1] ?? []).map((_, i) => [alvo.treino, i + 1])
-      : [
+      : alvo.tipo === 'exercicios'
+        ? alvo.slotIds.map(posicaoDe)
+        : [
           'slotId' in alvo ? posicaoDe(alvo.slotId) : [alvo.treino, alvo.pos],
         ]
   let mudou = false

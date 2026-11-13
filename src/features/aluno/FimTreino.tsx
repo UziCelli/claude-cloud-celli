@@ -56,7 +56,7 @@ export default function FimTreino({
   quieto: boolean | null
   voltar: () => void
   verTreino: () => void
-  checkin?: { uid: string; exercicios: string[]; sessao: SessaoCheckin } // só no app do aluno (não no presencial do coach)
+  checkin?: { uid: string; exercicios: string[]; sessao: SessaoCheckin; slots: Record<string, string> } // só no app do aluno (não no presencial do coach)
 }) {
   const { volumeKg, recordes, subiram } = resumo
   const comp = volumeKg > 0 ? comparacaoToneladas(volumeKg) : null

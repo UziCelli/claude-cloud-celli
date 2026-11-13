@@ -545,7 +545,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         voltar={sair}
         verTreino={() => setVerResumo(false)}
         // Check-in só para treino concluído há pouco (até 12 h): resumo de treino antigo não pergunta (a hora gravada seria a de agora).
-        checkin={coach || fimMs == null || Date.now() - fimMs > 12 * 3600_000 ? undefined : { uid, sessao: { mesoId, semana, treino }, exercicios: [...new Set(sessao.exercicios.map((e) => e.slot.nome.trim()))] }}
+        checkin={coach || fimMs == null || Date.now() - fimMs > 12 * 3600_000 ? undefined : { uid, sessao: { mesoId, semana, treino }, exercicios: [...new Set(sessao.exercicios.map((e) => e.slot.nome.trim()))], slots: Object.fromEntries(sessao.exercicios.map((e) => [e.slot.nome.trim(), e.slot.slotId])) }}
       />
     )
 
@@ -680,7 +680,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   {o.sinalRelatado ? 'Físio pausado — fale com seu coach' : `Físio · ${o.metodoId}`}
                 </button>
               ))}
-              {!coach && <RelatarDor uid={uid} exercicio={e.slot.nome.trim()} />}
+              {!coach && <RelatarDor uid={uid} exercicio={e.slot.nome.trim()} sessao={{ mesoId, semana, treino }} slots={{ [e.slot.nome.trim()]: e.slot.slotId }} />}
               <div className="space-y-2">
                 {(() => {
                 // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.

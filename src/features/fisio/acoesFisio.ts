@@ -2,7 +2,7 @@ import { addDoc, collection, doc, getDocFromServer, serverTimestamp, setDoc, upd
 import { db } from '../../lib/firebase'
 import { registroId } from '../../lib/conversores'
 import { COLECAO_CHECKINS, type CheckinForm, type SessaoCheckin } from '../../lib/checkin'
-import { COLECAO_DORES, validarDor, type DorForm } from '../../lib/dor'
+import { COLECAO_DORES, validarDor, type DorForm, type SessaoDor } from '../../lib/dor'
 import { COLECAO_FISIO, validarOrientacao, type OrientacaoForm } from '../../lib/fisio'
 
 // Confirma rede antes de pôr uma publicação na fila. Nunca grava por cima de uma orientação existente.
@@ -20,11 +20,11 @@ export const salvarExerciciosFisio = (id: string, exercicios: string[]) => updat
 export const relatarSinalFisio = (id: string) => updateDoc(doc(db, COLECAO_FISIO, id), { sinalRelatado: true, sinalEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
 
 // Relato de dor: chamar SEM await (offline a promessa só resolve na sincronização; o treino nunca espera).
-export function relatarDor(uid: string, f: DorForm) {
+export function relatarDor(uid: string, f: DorForm, sessao: SessaoDor | null = null) {
   const erro = validarDor(f)
   if (erro) return Promise.reject(new Error(erro))
   const texto = f.texto.trim()
-  return addDoc(collection(db, COLECAO_DORES), { alunoId: uid, exercicio: f.exercicio, articulacao: f.articulacao, tipo: f.tipo, intensidade: f.intensidade, momento: f.momento, ...(texto ? { texto } : {}), em: serverTimestamp(), atualizadoEm: serverTimestamp() })
+  return addDoc(collection(db, COLECAO_DORES), { alunoId: uid, exercicio: f.exercicio, articulacao: f.articulacao, tipo: f.tipo, intensidade: f.intensidade, momento: f.momento, ...(texto ? { texto } : {}), ...(sessao ?? {}), em: serverTimestamp(), atualizadoEm: serverTimestamp() })
 }
 // Campo a campo (a regra só aceita estes). "Responder" também marca como visto.
 export const responderDor = (id: string, resposta: string) => updateDoc(doc(db, COLECAO_DORES, id), { resposta: resposta.trim(), respondidoEm: serverTimestamp(), vistoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })

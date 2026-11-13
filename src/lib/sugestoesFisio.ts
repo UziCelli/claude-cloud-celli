@@ -11,7 +11,8 @@ export const TITULO_SUGESTAO: Record<TipoSugestao, string> = {
   progressao: 'Progressão acima do planejado, com dor na região',
   polimento: 'Considere semana de polimento / reduzir volume',
 }
-export type SugestaoFisio = { alunoId: string; tipo: TipoSugestao; motivo: string; chave: string }
+// regiao: articulação da sugestão (null = corpo todo); usada para montar a proposta no editor (só os exercícios da região).
+export type SugestaoFisio = { alunoId: string; tipo: TipoSugestao; motivo: string; chave: string; regiao: string | null }
 export type SinalFisio = { alunoId: string; id: string; em: number | null } // orientação com sinal de perigo (em = sinalEm)
 
 const DIA = 86400_000
@@ -31,7 +32,7 @@ type Entrada = {
 type OrientacaoComSinal = { id: string; alunoId: string; sinalRelatado: boolean; recolhida: boolean; sinalEm: { toMillis(): number } | null; em: { toMillis(): number } | null }
 export const sinaisDasOrientacoes = (os: OrientacaoComSinal[]): SinalFisio[] =>
   os.filter((o) => o.sinalRelatado && !o.recolhida).map((o) => ({ alunoId: o.alunoId, id: o.id, em: ms(o.sinalEm ?? o.em) }))
-type Gatilho = { motivo: string; id: string; em: number } // motivo + evento que o disparou
+type Gatilho = { motivo: string; id: string; em: number; regiao?: string } // motivo + evento que o disparou
 
 // Uma sugestão por (aluno, tipo). O motivo é o da regra mais importante; a chave é a do evento MAIS RECENTE entre
 // todos os gatilhos, então uma sugestão dispensada (arquivados) volta com qualquer evento novo que também dispare.
@@ -49,7 +50,7 @@ export function sugestoesFisio({ dores, checkins, sinais, agora, progressao = []
     for (const [tipo, gatilhos] of [['conversar', gatilhosConversar(ds, ss, cs, fim)], ['progressao', gatilhosProgressao(ds, ps, prev, fim)], ['polimento', gatilhosPolimento(ds, cs, fim)]] as const) {
       if (!gatilhos.length) continue
       const ultimo = gatilhos.reduce((a, b) => (b.em > a.em ? b : a))
-      saida.push({ alunoId: aluno, tipo, motivo: gatilhos[0].motivo, chave: `fisio_${tipo}_${aluno}_${ultimo.id}` })
+      saida.push({ alunoId: aluno, tipo, motivo: gatilhos[0].motivo, chave: `fisio_${tipo}_${aluno}_${ultimo.id}`, regiao: gatilhos[0].regiao ?? null })
     }
   }
   const ordem: TipoSugestao[] = ['conversar', 'progressao', 'polimento']
@@ -92,7 +93,7 @@ function gatilhosPolimento(ds: RelatoDor[], cs: Checkin[], fim: number): Gatilho
   const recentes = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA && d.intensidade >= 4 && d.intensidade <= 6 && d.articulacao !== 'outro')
   for (const art of new Set(recentes.map((d) => d.articulacao))) {
     const m = recentes.filter((d) => d.articulacao === art)
-    if (m.length >= 2) g.push({ motivo: `${m.length} relatos de dor 4–6/10 em ${art} nos últimos 14 dias.`, ...ev(m[m.length - 1]) })
+    if (m.length >= 2) g.push({ motivo: `${m.length} relatos de dor 4–6/10 em ${art} nos últimos 14 dias.`, ...ev(m[m.length - 1]), regiao: art })
   }
   // Últimos 3 check-ins (todos nos últimos 14 dias) com recuperação ruim.
   const u = cs.slice(-3)
@@ -114,16 +115,21 @@ function gatilhosPolimento(ds: RelatoDor[], cs: Checkin[], fim: number): Gatilho
 }
 
 // A1: progressão acima do planejado só vira sugestão com dor (≥1) na mesma região nos últimos 14 dias.
+// Dor no mesmo treino em que o sinal apareceu > dor no próprio exercício > dor só na região.
 // Região com dor/lesão prévia na anamnese vem primeiro (fator individual mais forte; pesquisa de volume).
 function gatilhosProgressao(ds: RelatoDor[], ps: SinalProgressao[], prev: Set<string>, fim: number): Gatilho[] {
-  const g: (Gatilho & { previa: boolean })[] = []
+  const g: (Gatilho & { previa: boolean; peso: number })[] = []
   for (const p of ps) {
-    const dor = [...ds].reverse().find((d) => fim - ms(d.em)! <= 14 * DIA && d.intensidade >= 1 && p.articulacoes.includes(d.articulacao))
-    if (!dor) continue
+    const candidatas = ds.filter((d) => fim - ms(d.em)! <= 14 * DIA && d.intensidade >= 1 && p.articulacoes.includes(d.articulacao))
+    if (!candidatas.length) continue
+    const sessaoDe = (d: RelatoDor) => (d.sessao ? `${d.sessao.mesoId}_s${d.sessao.semana}_t${d.sessao.treino}` : null)
+    const peso = (d: RelatoDor) => (p.exercicio && sessaoDe(d) === p.id && d.exercicio === p.exercicio ? 2 : p.exercicio && d.exercicio === p.exercicio ? 1 : 0)
+    const dor = candidatas.reduce((a, b) => (peso(b) > peso(a) || (peso(b) === peso(a) && ms(b.em)! > ms(a.em)!) ? b : a))
+    const onde = peso(dor) === 2 ? ' no mesmo treino' : peso(dor) === 1 ? ' no próprio exercício' : ''
     const previa = prev.has(dor.articulacao)
-    const motivo = `${p.texto} Dor ${dor.intensidade}/10 em ${dor.articulacao}${previa ? ' (região já na anamnese)' : ''}.`
+    const motivo = `${p.texto} Dor ${dor.intensidade}/10 em ${dor.articulacao}${onde}${previa ? ' (região já na anamnese)' : ''}.`
     const ultimo = ms(dor.em)! > p.em ? { id: dor.id, em: ms(dor.em)! } : { id: p.id, em: p.em }
-    g.push({ motivo, ...ultimo, previa })
+    g.push({ motivo, ...ultimo, regiao: dor.articulacao, previa, peso: peso(dor) })
   }
-  return g.sort((a, b) => Number(b.previa) - Number(a.previa))
+  return g.sort((a, b) => Number(b.previa) - Number(a.previa) || b.peso - a.peso)
 }

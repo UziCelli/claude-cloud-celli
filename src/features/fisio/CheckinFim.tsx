@@ -14,7 +14,7 @@ type Estado = 'form' | 'enviando' | 'recebido' | 'ja' | 'erro' | 'pulado'
 
 // "Como você está?" no fim do treino do aluno: um por sessão (id = registroId). Some se a sessão já tem resposta
 // (servidor ou localStorage). Enviar mostra o andamento; Pular grava só o localStorage.
-export default function CheckinFim({ uid, exercicios, sessao }: { uid: string; exercicios: string[]; sessao: SessaoCheckin }) {
+export default function CheckinFim({ uid, exercicios, sessao, slots }: { uid: string; exercicios: string[]; sessao: SessaoCheckin; slots: Record<string, string> }) {
   const id = registroId(sessao.mesoId, sessao.semana, sessao.treino)
   const chave = `forca-checkin-${id}`
   const [estado, setEstado] = useState<Estado>('form')
@@ -54,7 +54,7 @@ export default function CheckinFim({ uid, exercicios, sessao }: { uid: string; e
         <button type="button" aria-pressed={dor === true} className={`${chip(dor === true)} flex-1`} onClick={() => setDor(true)}>Sim</button>
       </div>
     </fieldset>
-    {dor && <RelatarDor key={String(dor)} uid={uid} exercicios={exercicios} momentoInicial="fim" semBotao aoFechar={() => setDor(null)} />}
+    {dor && <RelatarDor key={String(dor)} uid={uid} exercicios={exercicios} sessao={sessao} slots={slots} momentoInicial="fim" semBotao aoFechar={() => setDor(null)} />}
     {doeuAntes && <fieldset><legend className="mb-1 text-sm">A dor do último treino passou em até 1 dia?</legend>
       <div className="flex gap-2">
         <button type="button" aria-pressed={dor24h === true} className={`${chip(dor24h === true)} flex-1`} onClick={() => setDor24h(true)}>Sim, passou</button>

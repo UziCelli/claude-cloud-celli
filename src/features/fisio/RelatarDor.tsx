@@ -12,7 +12,8 @@ const vazio = (exercicio: string): DorForm => ({ exercicio, articulacao: '' as L
 
 // "Senti dor" no treino. Grava sem esperar a internet e nunca toca nas cargas.
 // Fim do treino: `exercicios` deixa escolher o exercício; `semBotao` abre direto (quem chama controla); `momentoInicial` pré-marca o "Quando?".
-export default function RelatarDor({ uid, exercicio = '', exercicios, momentoInicial, semBotao, aoFechar }: { uid: string; exercicio?: string; exercicios?: string[]; momentoInicial?: DorForm['momento']; semBotao?: boolean; aoFechar?: () => void }) {
+// `sessao` + `slots` (nome → slotId): liga o relato ao treino exato (A1). Sem eles, o relato fica sem treino (como antes).
+export default function RelatarDor({ uid, exercicio = '', exercicios, momentoInicial, semBotao, aoFechar, sessao, slots }: { uid: string; exercicio?: string; exercicios?: string[]; momentoInicial?: DorForm['momento']; semBotao?: boolean; aoFechar?: () => void; sessao?: { mesoId: string; semana: number; treino: number }; slots?: Record<string, string> }) {
   const inicial = () => ({ ...vazio(exercicio), ...(momentoInicial ? { momento: momentoInicial } : {}) })
   const [aberto, setAberto] = useState(!!semBotao)
   const [f, setF] = useState(inicial)
@@ -26,7 +27,8 @@ export default function RelatarDor({ uid, exercicio = '', exercicios, momentoIni
     if (erroForm) return
     const dado = { ...f }
     setEnviado(dado)
-    relatarDor(uid, dado).catch(() => setErro(true)) // sem await: offline fica na fila e o treino segue
+    const slotId = slots?.[dado.exercicio.trim()]
+    relatarDor(uid, dado, sessao && slotId ? { ...sessao, slotId } : null).catch(() => setErro(true)) // sem await: offline fica na fila e o treino segue
   }
   const dica = enviado ? dicaDaDor(enviado.intensidade) : null
   return <>

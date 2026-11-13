@@ -9,7 +9,7 @@ const diasAtras = (n: number) => Timestamp.fromMillis(agora.getTime() - n * 8640
 let seq = 0
 const dor = (dias: number, intensidade: number, articulacao = 'joelho', extra: Partial<RelatoDor> = {}): RelatoDor => ({
   id: `d${++seq}`, alunoId: 'ana', exercicio: 'Agachamento Livre Barra', articulacao: articulacao as RelatoDor['articulacao'], tipo: 'dor',
-  intensidade, momento: 'durante', texto: '', em: diasAtras(dias), resposta: null, respondidoEm: null, vistoEm: null, ...extra,
+  intensidade, momento: 'durante', texto: '', em: diasAtras(dias), resposta: null, respondidoEm: null, vistoEm: null, sessao: null, ...extra,
 })
 const ck = (dias: number, sono: number, estresse = sono, cansaco = sono): Checkin => ({ id: `c${++seq}`, alunoId: 'ana', sono, estresse, cansaco, alimentacao: 3, em: diasAtras(dias), sessao: null, dor24h: null })
 const rodar = (e: { dores?: RelatoDor[]; checkins?: Checkin[]; sinais?: SinalFisio[] }) =>

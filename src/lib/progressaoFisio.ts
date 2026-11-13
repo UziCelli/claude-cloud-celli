@@ -98,3 +98,15 @@ export function sinaisProgressao(alunoId: string, mesos: Map<string, Meso>, regi
   }
   return sinais
 }
+
+// A1, passo 3: proposta de polimento para o editor (o coach revisa a prévia e aplica; nada muda sozinho).
+// Só os exercícios do meso que carregam a região (`regiao` null = todos) e só a semana seguinte à atual
+// (o polimento vale da semana 2 em diante). O % é o padrão do próprio editor.
+export function propostaPolimento(meso: Meso, regiao: string | null, semanaAtual: number) {
+  const semana = Math.max(2, semanaAtual + 1)
+  if (semana > meso.semanas) return null
+  const slots = meso.divisao.slice(0, meso.frequencia).flat()
+    .filter((s) => !regiao || ((anatomiaDo(s.nome)?.articulacoes ?? []) as string[]).includes(regiao))
+  if (!slots.length) return null
+  return { slotIds: [...new Set(slots.map((s) => s.slotId))], nomes: [...new Set(slots.map((s) => s.nome.trim()))], semanas: [semana] }
+}

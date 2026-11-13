@@ -17,6 +17,7 @@ import { descreverDor } from './FisioAluno'
 import { somaRecuperacao } from '../../lib/checkin'
 import { useArquivados } from '../coach/alertas/Alertas'
 import { useCheckins } from './useCheckins'
+import BotaoProposta from './BotaoProposta'
 import { alunosComDorRecente, useProgressao } from './useProgressao'
 import { useDores } from './useDores'
 import { sinaisDasOrientacoes, sugestoesFisio, TITULO_SUGESTAO } from '../../lib/sugestoesFisio'
@@ -127,7 +128,7 @@ export default function FisioCoach({ uid }: { uid: string }) {
     {offline && <Aviso>{enviando ? 'Sem internet. Aguardando sincronização para confirmar o envio.' : 'Sem internet. Conecte-se para enviar uma orientação.'}</Aviso>}
     {msg && <p role="status" className="text-sm">{msg}</p>}
     <h2 className="font-semibold">Recuperação (check-ins)</h2>
-    {sugestoes.map((x) => <Aviso key={x.chave}>{TITULO_SUGESTAO[x.tipo]}. {x.motivo}</Aviso>)}
+    {sugestoes.map((x) => <Aviso key={x.chave}>{TITULO_SUGESTAO[x.tipo]}. {x.motivo}{(x.tipo === 'polimento' || x.tipo === 'progressao') && <span className="mt-2 block"><BotaoProposta mesoDoc={mesoAtual(mesos.dados)?.doc} regiao={x.regiao} motivo={x.motivo} alunoId={uid} /></span>}</Aviso>)}
     {checkins.erro ? <Aviso>Não foi possível carregar os check-ins.</Aviso> : checkins.carregando ? <p>Carregando…</p> : checkins.dados.length === 0 ? <p className="text-sm text-slate-400">{offline ? TEXTO_SEM_INTERNET : 'Nenhum check-in.'}</p> : <Cartao><ul className="divide-y divide-slate-800 text-sm">
       {checkins.dados.map((c) => <li key={c.id} className="py-2">
         <b>{c.em ? c.em.toDate().toLocaleDateString('pt-BR') : 'Agora'}</b> · Recuperação {somaRecuperacao(c)}/15

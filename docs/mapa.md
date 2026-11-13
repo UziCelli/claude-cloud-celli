@@ -58,7 +58,7 @@ Comece por aqui para achar onde mexer.
 - `treino.ts` — `buscarTreino()`, `carregarRegistros()`: dados do Firestore
 - `resumo.ts` — resumo semanal: totais de volume/força
 - `checkin.ts` (+ teste) — check-in de recuperação: `PERGUNTAS_CHECKIN`, `checkinValido`, `somaRecuperacao` (sono+estresse+cansaço), `lerCheckin`
-- `progressaoFisio.ts` (+ teste) — A1: `sinaisProgressao` (reps acima, carga subindo com reps abaixo, salto de volume da região ≥1,3×); só vira sugestão com dor na região (`sugestoesFisio` tipo `progressao`). Dados: `features/fisio/useProgressao.ts`
+- `progressaoFisio.ts` (+ teste) — A1 (também `propostaPolimento`: exercícios da região + semana seguinte, para o editor via `features/fisio/propostaEditor.ts` e `BotaoProposta.tsx`; motor aceita alvo `exercicios`): `sinaisProgressao` (reps acima, carga subindo com reps abaixo, salto de volume da região ≥1,3×); só vira sugestão com dor na região (`sugestoesFisio` tipo `progressao`). Dados: `features/fisio/useProgressao.ts`
 - `sugestoesFisio.ts` (+ teste) — `sugestoesFisio({dores, checkins, sinais, agora})`: "considere polimento" / "converse ou encaminhe" com motivo e `chave` para dispensar (arquivados); só sugestão ao coach
 - `dor.ts` (+ `dor.test.ts`) — relato de dor do treino: `dicaDaDor(intensidade)` (faixas do Victor 0–3 / 4–5 / 6+, nunca chama a dor de aceitável), `ALERTA_DOR`, `validarDor`, `lerDor`
 - `anatomia.ts` (+ `anatomia.test.ts`) — sistema Físio (Etapa 1): `ARTICULACOES` (mesmos ids da anamnese), `MUSCULOS`, `anatomiaDo(nome)`, `articulacoesDo(nome)` (fora do catálogo = todas)

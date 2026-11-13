@@ -268,3 +268,18 @@ describe('check-in só de treino concluído (P2 da revisão incremental)', () =>
     await assertSucceeds(setDoc(ck('mA_s01_t1'), { ...novo(1, 1), dor24h: false }))
   })
 })
+
+describe('relato de dor ligado ao treino (A1)', () => {
+  const dor = (id: string) => doc(db('ana'), 'fisioDores', id)
+  const base = { alunoId: 'ana', exercicio: 'Agachamento Livre Barra', articulacao: 'joelho', tipo: 'dor', intensidade: 4, momento: 'durante', em: serverTimestamp(), atualizadoEm: serverTimestamp() }
+  it('aceita sem treino (como antes) e com o treino inteiro do próprio meso', async () => {
+    await assertSucceeds(setDoc(dor('s1'), base))
+    await assertSucceeds(setDoc(dor('s2'), { ...base, mesoId: 'mA', semana: 1, treino: 1, slotId: 'a' }))
+  })
+  it('nega treino incompleto, meso de outro aluno, tipos errados e campos de treino sem meso', async () => {
+    for (const extra of [
+      { mesoId: 'mA', semana: 1, treino: 1 }, { mesoId: 'mB', semana: 1, treino: 1, slotId: 'a' }, { mesoId: 'mX', semana: 1, treino: 1, slotId: 'a' },
+      { mesoId: 'mA', semana: '1', treino: 1, slotId: 'a' }, { mesoId: 'mA', semana: 1, treino: 1, slotId: 'x'.repeat(61) }, { semana: 1, slotId: 'a' },
+    ]) await assertFails(setDoc(dor('x'), { ...base, ...extra }))
+  })
+})

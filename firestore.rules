@@ -374,7 +374,14 @@ service cloud.firestore {
       allow read: if isCoach() || (own(resource.data) && liberado());
       allow delete: if isCoach();
       allow create: if own(request.resource.data) && liberado()
-        && request.resource.data.keys().hasOnly(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'texto', 'em', 'atualizadoEm'])
+        && request.resource.data.keys().hasOnly(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'texto', 'mesoId', 'semana', 'treino', 'slotId', 'em', 'atualizadoEm'])
+        // A1: treino do relato (opcional; relatos antigos não têm). Se vier, vem inteiro e o meso é do próprio aluno.
+        && (!('mesoId' in request.resource.data)
+            || (request.resource.data.keys().hasAll(['mesoId', 'semana', 'treino', 'slotId'])
+                && request.resource.data.semana is int && request.resource.data.treino is int
+                && request.resource.data.slotId is string && request.resource.data.slotId.size() <= 60
+                && get(/databases/$(database)/documents/mesos/$(request.resource.data.mesoId)).data.alunoId == request.auth.uid))
+        && (('mesoId' in request.resource.data) || !request.resource.data.keys().hasAny(['semana', 'treino', 'slotId']))
         && request.resource.data.keys().hasAll(['alunoId', 'exercicio', 'articulacao', 'tipo', 'intensidade', 'momento', 'em', 'atualizadoEm'])
         && textoFisio(request.resource.data.exercicio, 120)
         && request.resource.data.articulacao in ['ombro', 'cotovelo', 'punho', 'cervical', 'lombar', 'quadril', 'joelho', 'tornozelo', 'outro']

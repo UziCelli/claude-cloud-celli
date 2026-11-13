@@ -44,7 +44,7 @@ describe('sinaisProgressao', () => {
 })
 
 describe('sugestoesFisio com progressão (A1)', () => {
-  const dor = (art: string, dias: number, intensidade = 4): RelatoDor => ({ id: `d${dias}`, alunoId: 'ana', exercicio: 'Agachamento Livre Barra', articulacao: art as RelatoDor['articulacao'], tipo: 'dor', intensidade, momento: 'durante', texto: '', em: ha(dias), resposta: null, respondidoEm: null, vistoEm: null })
+  const dor = (art: string, dias: number, intensidade = 4): RelatoDor => ({ id: `d${dias}`, alunoId: 'ana', exercicio: 'Agachamento Livre Barra', articulacao: art as RelatoDor['articulacao'], tipo: 'dor', intensidade, momento: 'durante', texto: '', em: ha(dias), resposta: null, respondidoEm: null, vistoEm: null, sessao: null })
   const prog = sinaisProgressao('ana', mesos, [reg(1, 9, 60, 8), reg(2, 5, 60, 10), reg(3, 1, 60, 11)], agora)
   const rodar = (dores: RelatoDor[], anamnese = new Map<string, string[]>()) => sugestoesFisio({ dores, checkins: [], sinais: [], agora, progressao: prog, anamnese })
   it('só vira sugestão com dor na mesma região nos últimos 14 dias', () => {
@@ -61,5 +61,17 @@ describe('sugestoesFisio com progressão (A1)', () => {
   it('dor que não passou em 24 h (check-in) gera "converse"', () => {
     const ck = { id: 'c1', alunoId: 'ana', sono: 4, estresse: 4, cansaco: 4, alimentacao: 4, em: ha(1), sessao: null, dor24h: false }
     expect(sugestoesFisio({ dores: [], checkins: [ck], sinais: [], agora })[0].motivo).toMatch(/não passou em até 1 dia/)
+  })
+})
+
+describe('propostaPolimento (A1, passo 3)', () => {
+  it('só os exercícios da região e a semana seguinte; null fora do meso', async () => {
+    const { propostaPolimento } = await import('./progressaoFisio')
+    const m: Meso = { ...meso, frequencia: 1, divisao: [[{ slotId: 'a', nome: 'Agachamento Livre Barra' }, { slotId: 'b', nome: 'Supino Reto Barra' }]] }
+    expect(propostaPolimento(m, 'joelho', 3)).toMatchObject({ slotIds: ['a'], semanas: [4] })
+    expect(propostaPolimento(m, null, 3)?.slotIds).toEqual(['a', 'b'])
+    expect(propostaPolimento(m, 'joelho', 1)?.semanas).toEqual([2])
+    expect(propostaPolimento(m, 'joelho', m.semanas)).toBeNull()
+    expect(propostaPolimento(m, 'punho', 3)?.slotIds).toEqual(['b']) // supino carrega o punho
   })
 })
