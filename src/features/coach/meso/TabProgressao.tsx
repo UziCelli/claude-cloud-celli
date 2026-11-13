@@ -1,13 +1,21 @@
 import { useMemo, useState } from 'react'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
-import { polimento, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
-import type { AlvoVolume, Meso } from '../../../engine'
+import { analisarProgressao, polimento, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
+import type { AlvoVolume, Meso, TipoPolimento } from '../../../engine'
+import GraficoVolume from './GraficoVolume'
 import { Botao, campoBase, Cartao, CampoNumero } from '../../../ui'
 
 type Previa = { mov: number; tempo: number }[]
 type Modo = 'prog' | 'red' | 'pol'
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',')
+
+const TIPOS_POL: Record<TipoPolimento, [string, string]> = {
+  degrau: ['Degrau (step)', 'Corta tudo de uma vez e mantém até o fim.'],
+  expRapida: ['Exponencial rápida', 'A maior parte da queda já na 1ª semana; depois cai pouco.'],
+  expLenta: ['Exponencial lenta', 'Cai bem no começo, mas de forma mais suave que a rápida.'],
+  linear: ['Linear', 'Cai o mesmo tanto a cada semana até chegar ao total.'],
+}
 
 // Movimentos (reps prescritas) e tempo (maior treino) de cada semana.
 function resumo(meso: Meso): Previa {
@@ -79,6 +87,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
   const [reducaoPol, setReducaoPol] = useState('40')
   const [pausas, setPausas] = useState<number[]>([])
   const [semPol, setSemPol] = useState<number[]>([meso.semanas])
+  const [tipoPol, setTipoPol] = useState<TipoPolimento>('degrau')
   const [de, setDe] = useState('2')
   const [ate, setAte] = useState(String(meso.semanas))
   const [retorno, setRetorno] = useState('2')
@@ -98,9 +107,10 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
         ? progressaoAutomatica(meso, { pct: pctSemana, de: +de, ate: +ate, alvo, pausas })
         : modo === 'red'
           ? reduzirVolume(meso, { pct: Number(reducao) || 0, de: +de, ate: +ate, retorno: +retorno, alvo })
-          : polimento(meso, { pct: Number(reducaoPol) || 0, semanas: semPol, alvo })
-    return { antes: resumo(meso), depois: resumo(novo), novo, igual: JSON.stringify(novo) === JSON.stringify(meso) }
-  }, [meso, modo, pctSemana, reducao, reducaoPol, pausas, semPol, de, ate, retorno, onde, treino, slotId])
+          : polimento(meso, { pct: Number(reducaoPol) || 0, semanas: semPol, alvo, tipo: tipoPol })
+    const depois = resumo(novo)
+    return { antes: resumo(meso), depois, novo, igual: JSON.stringify(novo) === JSON.stringify(meso), analise: analisarProgressao(depois.map((x) => x.mov)) }
+  }, [meso, modo, pctSemana, reducao, reducaoPol, pausas, semPol, tipoPol, de, ate, retorno, onde, treino, slotId])
 
   // Chips de semana (como o seletor de séries do drop set): um clique liga/desliga.
   const alternar = (lista: number[], w: number) => (lista.includes(w) ? lista.filter((x) => x !== w) : [...lista, w].sort((a, b) => a - b))
@@ -136,7 +146,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
           <select value={modo} onChange={(e) => setModo(e.target.value as Modo)} className={sel}>
             <option value="prog">Progressão</option>
             <option value="red">Reduzir com volta gradual</option>
-            <option value="pol">Polimento (semana leve)</option>
+            <option value="pol">Polimento (semanas finais)</option>
           </select>
         </label>
         <CampoNumero rotulo="% por semana" min={0} valor={pctSemana} onConfirmar={(n) => onAtualizar({ progressaoPct: n })} />
@@ -149,11 +159,23 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
         )}
         {modo === 'pol' && (
           <>
-            <CampoNumero rotulo="% de redução do volume" min={0} max={90} valor={+reducaoPol || 0} onConfirmar={(n) => setReducaoPol(String(n))} />
+            <label className={`${rot} col-span-2`}>
+              Tipo de polimento
+              <select value={tipoPol} onChange={(e) => setTipoPol(e.target.value as TipoPolimento)} className={sel}>
+                {Object.entries(TIPOS_POL).map(([v, [nome]]) => (
+                  <option key={v} value={v}>{nome}</option>
+                ))}
+              </select>
+              <span className="text-xs text-slate-500">{TIPOS_POL[tipoPol][1]}</span>
+            </label>
+            <CampoNumero rotulo="% de redução na última semana" min={0} max={90} valor={+reducaoPol || 0} onConfirmar={(n) => setReducaoPol(String(n))} />
             <div className={`${rot} col-span-2`}>
               Semanas de polimento
               {chipsSemana(Array.from({ length: meso.semanas - 1 }, (_, i) => i + 2), semPol, (w) => setSemPol(alternar(semPol, w)))}
-              <span className="text-xs text-slate-500">O volume cai em relação à semana anterior ao polimento. As cargas continuam as mesmas.</span>
+              <span className="text-xs text-slate-500">
+                O volume cai em relação à semana anterior ao polimento. As cargas continuam as mesmas.
+                {tipoPol !== 'degrau' && semPol.length < 2 && ' Marque 2 ou mais semanas seguidas para ver a diferença entre os tipos.'}
+              </span>
             </div>
           </>
         )}
@@ -199,6 +221,7 @@ function AjustarVolume({ meso, onAtualizar }: { meso: Meso; onAtualizar: (patch:
           </label>
         )}
       </div>
+      <GraficoVolume antes={previa.antes.map((x) => x.mov)} depois={previa.depois.map((x) => x.mov)} analise={previa.analise} />
       <table className="mt-3 w-full text-sm">
         <thead>
           <tr className="text-left text-slate-400">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ajustarSeries, polimento, progressaoAutomatica, reduzirVolume, tempoPorSemana } from './volume'
+import { ajustarSeries, analisarProgressao, fracaoPolimento, polimento, progressaoAutomatica, reduzirVolume, tempoPorSemana } from './volume'
 import { prescreverSessao } from './sessao'
 import type { Meso, Slot } from './tipos'
 
@@ -294,5 +294,120 @@ describe('polimento', () => {
 
   it('sem semanas escolhidas não muda nada', () => {
     expect(polimento(mesoBase(), { pct: 40, semanas: [], alvo: { tipo: 'todos' } })).toEqual(mesoBase())
+  })
+})
+
+describe('fracaoPolimento (quanto da queda total cada semana já tem)', () => {
+  it('degrau: a queda inteira desde a 1ª semana', () => {
+    expect([1, 2, 3].map((k) => fracaoPolimento('degrau', k, 3))).toEqual([1, 1, 1])
+  })
+
+  it('linear: partes iguais', () => {
+    expect([1, 2, 3].map((k) => fracaoPolimento('linear', k, 3))).toEqual([1 / 3, 2 / 3, 1])
+  })
+
+  it('a última semana sempre chega à queda total', () => {
+    for (const t of ['degrau', 'linear', 'expRapida', 'expLenta'] as const) expect(fracaoPolimento(t, 4, 4)).toBeCloseTo(1)
+  })
+
+  it('1ª semana: degrau > exp. rápida > exp. lenta > linear', () => {
+    const f = (t: Parameters<typeof fracaoPolimento>[0]) => fracaoPolimento(t, 1, 3)
+    expect(f('degrau')).toBeGreaterThan(f('expRapida'))
+    expect(f('expRapida')).toBeGreaterThan(f('expLenta'))
+    expect(f('expLenta')).toBeGreaterThan(f('linear'))
+  })
+
+  it('com 1 semana todos os tipos são iguais', () => {
+    for (const t of ['degrau', 'linear', 'expRapida', 'expLenta'] as const) expect(fracaoPolimento(t, 1, 1)).toBeCloseTo(1)
+  })
+})
+
+describe('polimento por tipo', () => {
+  // referência = semana 5 (24 movimentos); polimento nas semanas 6–8, queda final de 50%
+  const pol = (tipo: Parameters<typeof fracaoPolimento>[0]) =>
+    polimento(mesoBase(), { pct: 50, semanas: [6, 7, 8], alvo: { tipo: 'todos' }, tipo }).progressao.principais.map(movs).slice(5)
+
+  it('sem tipo = degrau (como antes)', () => {
+    expect(polimento(mesoBase(), { pct: 50, semanas: [6, 7, 8], alvo: { tipo: 'todos' } })).toEqual(
+      polimento(mesoBase(), { pct: 50, semanas: [6, 7, 8], alvo: { tipo: 'todos' }, tipo: 'degrau' }),
+    )
+    expect(pol('degrau')).toEqual([12, 12, 12])
+  })
+
+  it('linear: 24 -> 20, 16, 12', () => {
+    expect(pol('linear')).toEqual([20, 16, 12])
+  })
+
+  it('exponenciais: caem mais no começo e terminam em 12', () => {
+    const rap = pol('expRapida')
+    const len = pol('expLenta')
+    expect(rap[2]).toBe(12)
+    expect(len[2]).toBe(12)
+    expect(rap[0]).toBeLessThan(len[0])
+    expect(len[0]).toBeLessThan(20)
+  })
+
+  it('aplicar duas vezes dá o mesmo resultado', () => {
+    const uma = polimento(mesoBase(), { pct: 50, semanas: [6, 7, 8], alvo: { tipo: 'todos' }, tipo: 'expRapida' })
+    expect(polimento(uma, { pct: 50, semanas: [6, 7, 8], alvo: { tipo: 'todos' }, tipo: 'expRapida' })).toEqual(uma)
+  })
+
+  it('blocos separados contam cada um do zero', () => {
+    const m = polimento(mesoBase(), { pct: 50, semanas: [3, 4, 7, 8], alvo: { tipo: 'todos' }, tipo: 'linear' })
+    expect(m.progressao.principais.map(movs)).toEqual([24, 24, 18, 12, 24, 24, 18, 12])
+  })
+})
+
+describe('analisarProgressao', () => {
+  it('linear: sobe o mesmo tanto toda semana', () => {
+    const a = analisarProgressao([100, 110, 120, 130, 140])
+    expect(a.forma).toBe('linear')
+    expect(a.pico).toBe(4)
+    expect(a.maiorSalto).toEqual({ semana: 2, pct: 10 })
+  })
+
+  it('acelerando: cada semana sobe mais (exponencial)', () => {
+    expect(analisarProgressao([100, 102, 106, 114, 130]).forma).toBe('acelerando')
+  })
+
+  it('desacelerando: sobe muito no começo e achata (hiperbólica)', () => {
+    expect(analisarProgressao([100, 130, 145, 152, 155]).forma).toBe('desacelerando')
+  })
+
+  it('ondulada: desce antes do pico', () => {
+    expect(analisarProgressao([100, 110, 105, 120]).forma).toBe('ondulada')
+  })
+
+  it('sem subida e poucas semanas', () => {
+    expect(analisarProgressao([100, 100, 90]).forma).toBe('sem-subida')
+    expect(analisarProgressao([100, 110, 80]).forma).toBe('curta')
+  })
+
+  it('ignora o polimento depois do pico e mede a queda', () => {
+    const a = analisarProgressao([100, 110, 120, 130, 140, 70])
+    expect(a.forma).toBe('linear')
+    expect(a.pico).toBe(4)
+    expect(a.quedaFinal).toBe(-50)
+  })
+
+  it('pico = primeira vez que chega ao máximo (platô no fim não vira desacelerando)', () => {
+    expect(analisarProgressao([100, 110, 120, 130, 130]).pico).toBe(3)
+  })
+
+  it('ritmo: média por semana (composta) e classificação', () => {
+    const lin = analisarProgressao([100, 105, 110, 116, 122])
+    expect(lin.mediaPct).toBeCloseTo(5.1, 1)
+    expect(lin.ritmo).toBe('adequado')
+    expect(analisarProgressao([100, 101, 102, 103]).ritmo).toBe('leve')
+    expect(analisarProgressao([100, 112, 125, 140]).ritmo).toBe('agressivo')
+    // média ok, mas um salto grande
+    expect(analisarProgressao([100, 101, 102, 120, 121]).ritmo).toBe('agressivo')
+  })
+
+  it('volume zero não quebra', () => {
+    expect(analisarProgressao([0, 0, 0]).forma).toBe('sem-subida')
+    expect(analisarProgressao([]).forma).toBe('sem-subida')
+    // S1 vazia e depois sobe: sem base para o ritmo
+    expect(analisarProgressao([0, 20, 40]).ritmo).toBeNull()
   })
 })

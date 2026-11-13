@@ -2,6 +2,13 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 13/11/2026 — Gráfico do volume e tipos de polimento
+- Progressão → Ajustar volume: gráfico do volume por semana (movimentos ou "% da S1"), linha tracejada = como está hoje, cheia = como vai ficar. Atualiza na hora.
+- Leitura automática da subida (S1 até o pico): Linear, Acelerando (exponencial), Desacelerando (hiperbólica), Ondulada; ritmo Leve (< 2,5%/sem), Adequado, Agressivo (> 10%/sem em média ou salto > 15%). Limites em `RITMO` (`engine/volume.ts`).
+- Polimento com 4 tipos: Degrau (step, o de antes), Exponencial rápida, Exponencial lenta, Linear. O "%" é a queda da última semana; o tipo muda o caminho até lá. Com 1 semana, todos dão igual.
+- A voz (IA) continua usando o polimento degrau.
+- **Pendência do Victor:** conferir no celular se os limites do ritmo batem com o que ele usa.
+
 ## 12/11/2026 — Feedbacks no celular
 - Aba **Opiniões** na barra do celular, com selo de não lidos (também no menu lateral).
 - Botão **Copiar texto** em todo feedback: copia entre aspas, com nota, assunto e tipo, sem o nome do aluno.
