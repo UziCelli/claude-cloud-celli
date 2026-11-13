@@ -7,6 +7,11 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+## 13/11/2026 — Redesenho 2027 (só rascunho, nada implementado)
+- Pasta `docs/redesenho/`: retrato do app do aluno hoje (com prints), proposta de direção (treino "um exercício por vez"), prévia nas 3 versões (VFITCOACH, Gislane, SaaS) e mapa do que o SaaS exige.
+- Comece pelo `docs/redesenho/README.md`. As decisões em aberto são do Victor; nada começa sem o ok dele.
+- O redesenho do treino só começa depois da isometria (entrega B) juntada.
+
 ## 13/11/2026 — Carga por lado (entrega A) e próximo: isometria (entrega B)
 - Plano completo: `docs/plano-lados-isometria.md` (decisões do Victor anotadas lá).
 - Entrega A (PR #166): 46 exercícios com `doisLados` no catálogo; interruptor "2 lados" por exercício no meso; aluno e coach anotam "kg cada lado" ou E | D; `cargas` = total, `lados` = esquerdo, na mesma escrita.

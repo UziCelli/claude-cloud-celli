@@ -6,6 +6,7 @@ Comece por aqui para achar onde mexer.
 
 | Tarefa | Arquivo(s) |
 |--------|-----------|
+| Redesenho 2027 e SaaS (rascunho, nada implementado) | `docs/redesenho/` (comece pelo `README.md`: retrato atual, proposta, prévias e decisões em aberto) |
 | Mudar acesso/bloqueio por pagamento | `firestore.rules` + `src/lib/acesso.ts` + `tests/rules.test.ts` |
 | Texto/tela de login (Entrar) | `src/features/auth/Entrar.tsx` |
 | QR Code de cadastro (coach mostra, aluno cai no cadastro) | `src/lib/cadastro.ts` (link `/cadastro` da marca) + `src/features/coach/alunos/QrCadastro.tsx` (botão no `Inicio.tsx`) + `Entrar.tsx` (`viaQr`) + `BoasVindas.tsx` (`CartaoInstalar`) + `App.tsx` (tira `/cadastro` do endereço ao logar) |
