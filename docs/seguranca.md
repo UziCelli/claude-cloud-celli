@@ -35,7 +35,6 @@ Tudo grátis (plano Spark). Faça na ordem. Peça ao Claude para guiar qualquer 
 
 ## 4. Restringir a chave da API
 - Google Cloud → **APIs e serviços** → **Credenciais** → chave de navegador do Firebase → **Restrições de aplicativo: sites** → adicione `app.vfitcoachapp.com/*`, `forca--app.web.app/*` e `forca--app.firebaseapp.com/*`. (feito)
-- Prévia do Físio (`previa.yml`, 13/11/2026): o endereço do canal (`https://forca--app--fisio-….web.app/*`) também precisa entrar nessa lista enquanto durar o teste; tirar depois de juntar.
 - (Ficou de fora por ora) Em **Restrições de API**, deixe só: Identity Toolkit, Token Service, Cloud Firestore e Firebase App Check.
 
 ## 5. Auditoria 02/10/2026 (segurança + LGPD)
