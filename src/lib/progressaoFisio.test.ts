@@ -49,7 +49,7 @@ describe('sugestoesFisio com progressão (A1)', () => {
   const rodar = (dores: RelatoDor[], anamnese = new Map<string, string[]>()) => sugestoesFisio({ dores, checkins: [], sinais: [], agora, progressao: prog, anamnese })
   it('só vira sugestão com dor na mesma região nos últimos 14 dias', () => {
     expect(rodar([]).filter((s) => s.tipo === 'progressao')).toEqual([])
-    expect(rodar([dor('ombro', 2)]).filter((s) => s.tipo === 'progressao')).toEqual([])
+    expect(rodar([dor('cotovelo', 2)]).filter((s) => s.tipo === 'progressao')).toEqual([]) // agachamento com barra também carrega o ombro: cotovelo é região de fora
     expect(rodar([dor('joelho', 2)]).find((s) => s.tipo === 'progressao')?.motivo).toMatch(/reps 2 ou mais acima/)
     expect(rodar([dor('joelho', 20)]).filter((s) => s.tipo === 'progressao')).toEqual([])
   })
