@@ -411,3 +411,18 @@ describe('analisarProgressao', () => {
     expect(analisarProgressao([0, 20, 40]).ritmo).toBeNull()
   })
 })
+
+describe('alvo de vários exercícios (proposta Físio)', () => {
+  it('polimento só nos exercícios escolhidos; os outros não mudam', () => {
+    const base = mesoBase()
+    const ids = base.divisao[0].slice(0, 2).map((s) => s.slotId)
+    const m = polimento(base, { pct: 40, semanas: [base.semanas], alvo: { tipo: 'exercicios', slotIds: ids } })
+    expect(Object.keys(m.progressaoExercicio ?? {}).sort()).toEqual([...ids].sort())
+    expect(m.progressao).toEqual(base.progressao)
+  })
+  it('lista vazia ou ids que não existem: meso igual', () => {
+    const base = mesoBase()
+    expect(polimento(base, { pct: 40, semanas: [base.semanas], alvo: { tipo: 'exercicios', slotIds: [] } })).toEqual(base)
+    expect(polimento(base, { pct: 40, semanas: [base.semanas], alvo: { tipo: 'exercicios', slotIds: ['nao-existe'] } })).toEqual(base)
+  })
+})

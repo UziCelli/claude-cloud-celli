@@ -10,6 +10,11 @@ import { mmss, useDescanso } from '../../lib/descanso'
 import { avisarCoach } from '../../lib/push'
 import { dispensarNota, notaDispensada } from '../../lib/notasMetodo'
 import { seriesDoRotulo } from '../../lib/metodoSeries'
+import RelatarDor from '../fisio/RelatarDor'
+import ConteudoMetodo from '../fisio/ConteudoMetodo'
+import BotaoSinal from '../fisio/BotaoSinal'
+import { useOrientacoes } from '../fisio/useOrientacoes'
+import { metodoFisio, metodoLiberavel, orientacoesDoExercicio } from '../../lib/fisio'
 import IconeMetodo from '../metodos/IconeMetodo'
 import AvisoNotificacoes from './AvisoNotificacoes'
 import FimTreino from './FimTreino'
@@ -372,6 +377,9 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const [pcLocal, setPcLocal] = useState<Record<string, number>>({}) // vale até o Firestore confirmar
   const { dados: perfil } = useDoc<Usuario>(doc(db, 'usuarios', uid))
   const an = useAnamnese(uid)
+  const orient = useOrientacoes(coach ? null : uid)
+  const orientacoes = orient.dados
+  const [fisioId, setFisioId] = useState<string | null>(null) // só o id: a orientação é lida da lista a cada render (recolher/sinal chegam sem recarregar)
   const pedirAnamnese = !coach && an.travar // coach/presencial nunca trava
   const descanso = useDescanso()
   const semInternet = useSemInternet()
@@ -529,6 +537,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
   const notaInicial = [...new Set(sessao.exercicios.flatMap((e) => (e.rotulo ? e.rotulo.split('; ') : []).map(metodoDoRotulo)))].filter((x): x is Metodo => x != null && !notaDispensada(x))
   const adaptadoEm = (dados as { adaptadoEm?: { toMillis(): number } }).adaptadoEm?.toMillis() // docParaMeso não traz adaptadoEm
 
+  const fisioAberto = orientacoes.find((o) => o.id === fisioId)
   if (verResumo)
     return (
       <FimTreino
@@ -541,6 +550,8 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
         quieto={quieto}
         voltar={sair}
         verTreino={() => setVerResumo(false)}
+        // Check-in só para treino concluído há pouco (até 12 h): resumo de treino antigo não pergunta (a hora gravada seria a de agora).
+        checkin={coach || fimMs == null || Date.now() - fimMs > 12 * 3600_000 ? undefined : { uid, sessao: { mesoId, semana, treino }, exercicios: [...new Set(sessao.exercicios.map((e) => e.slot.nome.trim()))], slots: Object.fromEntries(sessao.exercicios.map((e) => [e.slot.nome.trim(), e.slot.slotId])) }}
       />
     )
 
@@ -566,6 +577,15 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
+      <AnimatePresence>{fisioAberto && metodoFisio(fisioAberto.metodoId) && (
+        <Modal rotulo={`Físio ${fisioAberto.metodoId}`} aoFechar={() => setFisioId(null)}>
+          <BotaoSinal id={fisioAberto.id} sinalRelatado={fisioAberto.sinalRelatado} pendente={orient.pendente}>{(interrompida) => <>
+            {!interrompida && fisioAberto.recado && <p className="mb-3 whitespace-pre-wrap rounded-xl bg-slate-800 p-3 text-sm">Seu coach: {fisioAberto.recado}</p>}
+            <ConteudoMetodo metodo={metodoFisio(fisioAberto.metodoId)!} protocolo={!interrompida && !an.pausado && metodoLiberavel(fisioAberto.metodoId)} />
+          </>}</BotaoSinal>
+          <Botao tipo="primario" tamanho="lg" className="mt-4 w-full" onClick={() => setFisioId(null)}>Fechar</Botao>
+        </Modal>
+      )}</AnimatePresence>
       {adaptadoEm != null && <AvisoAdaptado chave={`forca-adaptado-${mesoId}-${adaptadoEm}`} />}
       <Novidades />
       {coach && meso.sessoes?.[chave] && <FaixaAjustado mesoId={mesoId} semana={semana} treino={treino} />}
@@ -671,6 +691,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                   {!ladosDiferentes(colunasCargas.map((_, k) => celula(k))) && <BotaoLadosDiferentes aberto={!!edAberto[slot]} onAlternar={() => setEdAberto((p) => ({ ...p, [slot]: !p[slot] }))} />}
                 </div>
               )}
+              {!coach && !an.pausado && orientacoesDoExercicio(orientacoes, e.slot.nome).map((o) => (
+                <button key={o.id} type="button" onClick={() => setFisioId(o.id)} className="mb-2 mr-2 min-h-11 rounded-full bg-teal-900 px-3 text-sm font-bold text-teal-100 ring-1 ring-teal-500">
+                  {o.sinalRelatado ? 'Físio pausado — fale com seu coach' : `Físio · ${o.metodoId}`}
+                </button>
+              ))}
+              {!coach && <RelatarDor uid={uid} exercicio={e.slot.nome.trim()} sessao={{ mesoId, semana, treino }} slots={{ [e.slot.nome.trim()]: e.slot.slotId }} />}
               <div className="space-y-2">
                 {(() => {
                 // Colunas do drop pendurado na série s (1-based); drop sem série (exercício sem séries) vai para o fim.

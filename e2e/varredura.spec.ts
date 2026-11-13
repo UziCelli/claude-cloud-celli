@@ -144,6 +144,9 @@ for (const largura of [1280, 390]) {
     await page.goto('/#/metodos')
     await expect(page.getByRole('heading').first()).toBeVisible()
     await confere('coach-metodos')
+    await page.goto('/#/fisio')
+    await expect(page.getByRole('heading', { name: 'Métodos Fisioterapia' })).toBeVisible()
+    await confere('coach-fisio')
 
     // Aluno (contexto limpo, para não herdar a sessão do coach)
     const ctx2 = await browser.newContext({ viewport: { width: largura, height: largura > 500 ? 800 : 844 }, locale: 'pt-BR' })

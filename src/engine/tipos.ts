@@ -84,6 +84,7 @@ export type AlvoVolume =
   | { tipo: 'treino'; treino: number }
   | { tipo: 'exercicio'; treino: number; pos: number }
   | { tipo: 'exercicio'; slotId: string }
+  | { tipo: 'exercicios'; slotIds: string[] } // vários exercícios (proposta Físio: os que carregam a região com dor)
 
 export type Cargas = Record<string /* slotId */, (number | null)[]> // índice = coluna: séries e depois etapas do dropset
 export type Registros = Record<string /* `${semana}-${treino}` */, Cargas>
