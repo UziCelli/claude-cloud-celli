@@ -12,6 +12,9 @@ import type { Icone } from '../../icones'
 
 export type Passo = { rotulo: string; titulo: ReactNode; texto: ReactNode; ilustracao: ReactNode }
 export type Atalho = { Icone: Icone; texto: string; href: string }
+// Último passo: por padrão é o "Tudo pronto"; as Novidades trocam pelo pedido de avaliação.
+export type Fim = { rotulo: string; titulo: string; texto: ReactNode; botao: string }
+const FIM: Fim = { rotulo: 'Tudo pronto', titulo: 'Agora é com você!', texto: 'Por onde quer começar?', botao: 'Começar' }
 
 // Sem armazenamento (ou no e2e) não abre sozinho, para não repetir em laço.
 export function naoVisto(chave: string): boolean {
@@ -21,7 +24,7 @@ export function naoVisto(chave: string): boolean {
     return false
   }
 }
-function marcarVisto(chave: string) {
+export function marcarVisto(chave: string) {
   try {
     localStorage.setItem(chave, '1')
   } catch {
@@ -53,11 +56,13 @@ export default function Onboarding({
   passos,
   atalhos,
   fechar,
+  fim = FIM,
 }: {
   chave: string
   passos: Passo[]
   atalhos: Atalho[]
   fechar: () => void
+  fim?: Fim
 }) {
   // O último passo é o "Tudo pronto": os passos + 1.
   const total = passos.length + 1
@@ -137,7 +142,7 @@ export default function Onboarding({
             className="flex flex-1 touch-pan-y flex-col justify-center pb-4"
           >
             {ultimo ? (
-              <Pronto id={`onboarding-titulo-${i}`} atalhos={atalhos} sair={sair} />
+              <Pronto id={`onboarding-titulo-${i}`} atalhos={atalhos} sair={sair} fim={fim} />
             ) : (
               <>
                 <div aria-hidden>{p.ilustracao}</div>
@@ -157,7 +162,7 @@ export default function Onboarding({
             <Botao type="button" tipo="vidro" tamanho="lg" onClick={() => ir(i - 1)} className="text-[15px]!">Voltar</Botao>
           )}
           <Botao type="button" tipo="primario" tamanho="lg" onClick={ultimo ? sair : () => ir(i + 1)} className="flex flex-1 items-center justify-center gap-2">
-            {ultimo ? 'Começar' : 'Próximo'} {!ultimo && <IcSeta className="size-5" />}
+            {ultimo ? fim.botao : 'Próximo'} {!ultimo && <IcSeta className="size-5" />}
           </Botao>
         </div>
         {/* Sempre o mesmo lugar (o botão principal não pula de posição); no último passo fica só o espaço. */}
@@ -169,7 +174,7 @@ export default function Onboarding({
 }
 
 // Último passo: comemoração + atalhos para a primeira ação (cada atalho fecha e já leva para a tela).
-function Pronto({ id, atalhos, sair }: { id: string; atalhos: Atalho[]; sair: () => void }) {
+function Pronto({ id, atalhos, sair, fim }: { id: string; atalhos: Atalho[]; sair: () => void; fim: Fim }) {
   return (
     <>
       <div aria-hidden className="grid place-items-center">
@@ -184,13 +189,13 @@ function Pronto({ id, atalhos, sair }: { id: string; atalhos: Atalho[]; sair: ()
           </svg>
         </m.span>
       </div>
-      <p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.18em] text-marca-300">Tudo pronto</p>
-      <h2 id={id} className="mt-1.5 text-center font-display text-[28px] font-extrabold leading-[1.1] text-white">Agora é com você!</h2>
-      <p className="mt-2 text-center text-base text-slate-200">Por onde quer começar?</p>
+      <p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.18em] text-marca-300">{fim.rotulo}</p>
+      <h2 id={id} className="mt-1.5 text-center font-display text-[28px] font-extrabold leading-[1.1] text-white">{fim.titulo}</h2>
+      <p className="mt-2 text-center text-base text-slate-200">{fim.texto}</p>
       <ul className="mt-5 space-y-2.5">
         {atalhos.map(({ Icone, texto, href }) => (
           <li key={href}>
-            <a href={href} onClick={sair} className="vidro-escuro flex min-h-14 items-center gap-3 rounded-2xl px-3.5 py-2 text-base font-semibold text-white ring-1 ring-white/10">
+            <a href={href} onClick={sair} {...(href.startsWith('http') && { target: '_blank', rel: 'noopener noreferrer' })} className="vidro-escuro flex min-h-14 items-center gap-3 rounded-2xl px-3.5 py-2 text-base font-semibold text-white ring-1 ring-white/10">
               <IconeQuadrado><Icone className="size-5" /></IconeQuadrado>
               <span className="flex-1">{texto}</span>
               <IcSeta className="size-5 text-slate-400" />

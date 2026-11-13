@@ -76,3 +76,18 @@ test('onboarding do coach', async ({ page }) => {
   await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Conta' }).click()
   await percorrer(page, `Seu painel ${marca.doNome}`, 9, { texto: 'Cadastrar um aluno', url: /#\/alunos\/novo$/ })
 })
+
+test('novidades do aluno: termina pedindo a avaliação do app', async ({ page }) => {
+  await entrar(page, ALUNO.email, ALUNO.senha)
+  await expect(page.getByText('Olá, Tati')).toBeVisible()
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('link', { name: 'Conta' }).click()
+  const dialogo = page.getByRole('dialog')
+  await page.getByRole('button', { name: 'Novidades do app' }).click()
+  await expect(dialogo.getByRole('heading', { name: 'O app ficou maior' })).toBeVisible()
+  for (let n = 1; n < 8; n++) await dialogo.getByRole('button', { name: 'Próximo' }).click()
+  await expect(dialogo.getByRole('heading', { name: 'Contamos com a sua ajuda' })).toBeVisible()
+  if (marca.avaliarGoogle) await expect(dialogo.getByRole('link', { name: 'Avaliar o atendimento no Google' })).toHaveAttribute('target', '_blank')
+  await dialogo.getByRole('link', { name: /Avaliar o app/ }).click()
+  await expect(dialogo).toBeHidden()
+  await expect(page).toHaveURL(/#\/feedback$/)
+})
