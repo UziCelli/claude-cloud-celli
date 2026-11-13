@@ -6,9 +6,8 @@ name: Prévia (Físio)
 # precisa conter a main, senão regras mais novas da main seriam desfeitas. O próximo "Publicar" da main
 # volta às regras da main (aí a prévia para de salvar o Físio; é só rodar esta de novo).
 # O endereço da prévia precisa estar na chave de navegador do Google Cloud (docs/seguranca.md), senão o login falha.
+# Só manual (Actions → "Prévia (Físio)" → Run workflow): não roda a cada envio (pedido do Victor, 13/11/2026).
 on:
-  push:
-    branches: [ccr-0e483d63-az3bo7]
   workflow_dispatch:
 
 concurrency:

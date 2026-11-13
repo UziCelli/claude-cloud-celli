@@ -2,6 +2,8 @@
 
 Leia antes: `CLAUDE.md`, `docs/mapa.md`. Branch de trabalho: recriada a partir da `main` a cada entrega. Os PRs até o #126 (avaliação física) estão juntados e publicados.
 
+- **Testes (pedido do Victor, 13/11):** só uma vez, antes de juntar. PR em rascunho não roda CI (`ci.yml`); prévia só manual (`previa.yml`). Sem testes locais a cada mudança.
+
 ## 13/11/2026 (madrugada) — Físio, rodada 4 (NÃO juntar; Victor dormindo, retomar com ele)
 - Feito: botão "Senti dor" visível; aba **Físio** do aluno (5ª aba); coach com "Treino | Físio" em Métodos.
 - Métodos no treino: o coach liga uma orientação (qualquer um dos 25) a até 10 exercícios; o aluno vê o selo "Físio · Mxx" no exercício.
