@@ -3,7 +3,7 @@ import type { Meso, Registros, Slot } from '../../../engine'
 import { Aviso, Botao, campoBase, Cartao, Msg } from '../../../ui'
 import CampoExercicio from './CampoExercicio'
 import { doisLados, doisLadosPadrao } from '../../../lib/lados'
-import { agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, trocarExercicio, type GrupoTroca } from './util'
+import { comProgressaoIsometrica, agruparTrocas, aplicarAdicao, aplicarTroca, copiarTreino, grupoTemCarga, removerGrupo, semanasComHistorico, trocarExercicio, type GrupoTroca } from './util'
 
 
 export default function TabDivisao({
@@ -48,7 +48,7 @@ export default function TabDivisao({
       if (!nome) return
       const divisao = [...meso.divisao]
       divisao[t - 1] = [...arr, { slotId: crypto.randomUUID(), nome }]
-      onAtualizar({ divisao })
+      onAtualizar({ divisao, progressaoExercicio: comProgressaoIsometrica(meso, divisao) })
       return
     }
 
@@ -67,8 +67,8 @@ export default function TabDivisao({
 
     if (nome === atual.nome) return
 
-    const { divisao, trocas, preservou } = trocarExercicio(meso, registros, t, p, nome)
-    onAtualizar({ divisao, trocas })
+    const { divisao, trocas, preservou, progressaoExercicio } = trocarExercicio(meso, registros, t, p, nome)
+    onAtualizar({ divisao, trocas, progressaoExercicio })
     if (preservou) {
       setAviso(
         `"${atual.nome}" foi trocado por "${nome}" no treino ${t}, posição ${p}. As semanas já com carga registrada continuam mostrando "${atual.nome}".`,

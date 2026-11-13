@@ -10,7 +10,9 @@ export default function LoadInput({
   onSalvar,
   className = 'w-16',
   disabled = false,
+  ariaLabel,
 }: {
+  ariaLabel?: string
   disabled?: boolean
   valor: number | null
   placeholder?: number | string | null
@@ -38,6 +40,7 @@ export default function LoadInput({
   return (
     <div className={`relative ${className}`}>
     <input
+      aria-label={ariaLabel}
       type="text"
       inputMode="decimal"
       autoComplete="off"

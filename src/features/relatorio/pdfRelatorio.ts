@@ -30,6 +30,8 @@ export async function gerarPdfRelatorio({ r, aluno, comentario }: EntradaPdf): P
     { valor: r.tempoMedioMin == null ? '—' : `${r.tempoMedioMin} min`, rotulo: 'tempo médio' },
   ])
 
+  if ((r.tempoSobTensaoS ?? 0) > 0) { f.y += 36; f.texto(`Tempo sob tensão: ${r.tempoSobTensaoS} s`, M, sans(28), TEXTO) }
+
   if (r.porSemana.length) {
     f.titulo('Semana a semana')
     for (const s of r.porSemana) {
@@ -40,7 +42,7 @@ export async function gerarPdfRelatorio({ r, aluno, comentario }: EntradaPdf): P
       f.y += 20
       f.barra(s.previstos ? s.feitos / s.previstos : 0, C.m500)
       f.y += 38
-      f.texto(`${volumeTexto(s.volumeKg)} · ${s.movimentos} movimentos`, M, sans(26), MUDO)
+      f.texto(`${volumeTexto(s.volumeKg)} · ${s.movimentos} movimentos${(s.tempoSobTensaoS ?? 0) > 0 ? ` · ${s.tempoSobTensaoS} s isometria` : ''}`, M, sans(26), MUDO)
       f.y += 10
     }
   }

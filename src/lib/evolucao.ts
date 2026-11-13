@@ -1,7 +1,7 @@
 // Painel de evolução do aluno e ranking do coach. Funções puras: tudo sai de mesos e registros
 // (definições em docs/plano-evolucao.md). Cargas sempre via docsParaRegistros (peso do corpo).
 import type { Timestamp } from 'firebase/firestore'
-import { metricasExercicio, prescreverSessao, repsEfetivas, type Meso, type Registros } from '../engine'
+import { isometrico, metricasExercicio, prescreverSessao, repsEfetivas, type Meso, type Registros } from '../engine'
 import { diaSP } from './acesso'
 import { docsParaRegistros, docsParaRegistrosReps, type RegistroDoc } from './conversores'
 
@@ -15,7 +15,7 @@ export type RegistroEvolucao = RegistroDoc & {
 export type MesoEvolucao = { id: string; meso: Meso; nome?: string }
 export type TreinoFeito = { mesoId: string; semana: number; treino: number; dia: number | null }
 // conta = false: correção (carga sem Concluir); entra no histórico de cargas, mas não conta como treino.
-export type Ocorrencia = TreinoFeito & { conta: boolean; cargaMax: number | null; volume: number | null; movimentos: number }
+export type Ocorrencia = TreinoFeito & { conta: boolean; cargaMax: number | null; volume: number | null; movimentos: number; tempoSobTensaoS?: number }
 export type Evolucao = { nome: string; de: number; ate: number; kg: number; pct: number }
 export type Conquista = {
   id: string
@@ -99,8 +99,8 @@ function ocorrencias(mesos: MesoEvolucao[], feitos: Feito[]): Record<string, Oco
     }
     const k = `${semana}-${treino}`
     for (const e of prescreverSessao(l.meso, semana, treino)?.exercicios ?? []) {
-      const { cargaMax, volume, movimentos } = metricasExercicio(repsEfetivas(e.reps, l.reps[k]?.[e.slot.slotId]), l.cargas[k]?.[e.slot.slotId] ?? [])
-      ;(out[e.slot.nome] ??= []).push({ mesoId, semana, treino, dia, conta, cargaMax, volume, movimentos })
+      const { cargaMax, volume, movimentos, tempoSobTensaoS } = metricasExercicio(repsEfetivas(e.reps, l.reps[k]?.[e.slot.slotId]), l.cargas[k]?.[e.slot.slotId] ?? [], isometrico(e.slot))
+      ;(out[e.slot.nome] ??= []).push({ mesoId, semana, treino, dia, conta, cargaMax, volume, movimentos, ...(tempoSobTensaoS > 0 && { tempoSobTensaoS }) })
     }
   }
   return out
@@ -266,13 +266,15 @@ export function recordeAnterior(historico: Record<string, Ocorrencia[]>, nome: s
 
 // Tela de fim de treino: volume, recordes e cargas que subiram, contra os treinos anteriores a este (ordem do histórico).
 export function resumoTreino(historico: Record<string, Ocorrencia[]>, atual: { mesoId: string; semana: number; treino: number }) {
-  const r = { volumeKg: 0, recordes: [] as { nome: string; kg: number; antes: number }[], subiram: [] as { nome: string; antes: number; agora: number }[] }
+  const r: { volumeKg: number; tempoSobTensaoS?: number; recordes: {nome: string; kg: number; antes: number}[]; subiram: {nome: string; antes: number; agora: number}[] } = { volumeKg: 0, recordes: [] as { nome: string; kg: number; antes: number }[], subiram: [] as { nome: string; antes: number; agora: number }[] }
   const deste = (o: Ocorrencia) => o.mesoId === atual.mesoId && o.semana === atual.semana && o.treino === atual.treino
   for (const [nome, os] of Object.entries(historico)) {
     const i = os.findIndex(deste)
     if (i < 0) continue
     const agoras = os.filter(deste)
     r.volumeKg += soma(agoras.map((o) => o.volume ?? 0))
+    const tensao = soma(agoras.map((o) => o.tempoSobTensaoS ?? 0))
+    if (tensao > 0) r.tempoSobTensaoS = (r.tempoSobTensaoS ?? 0) + tensao
     const agora = Math.max(0, ...cargasPositivas(agoras))
     const antes = cargasPositivas(os.slice(0, i))
     if (!agora || !antes.length) continue

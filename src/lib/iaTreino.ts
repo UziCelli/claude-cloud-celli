@@ -2,7 +2,7 @@
 // "deload na semana 4", "dropset na última série do supino") em ações sobre o meso: divisão, progressão e métodos.
 // Parte pura (sem rede, sem Firebase): o pedido ao Haiku e a leitura/limpeza da resposta. A chamada fica em ia.ts.
 import catalogo from '../data/exercicios.json'
-import { METODOS, semanasTexto, type Metodo } from '../engine'
+import { isometrico, METODOS, semanasTexto, type Metodo } from '../engine'
 
 export const MODELO_IA = 'claude-haiku-5-5'
 export const MAX_TEXTO = 2000
@@ -54,7 +54,7 @@ export const FERRAMENTA = {
             por: { type: 'string', description: 'Para substituir: o exercício que entra.' },
             exercicio: { type: 'string', description: 'Para progressao, volume e metodo: o exercício, como está na lista (ou a posição). Precisa do treino.' },
             semanas: { type: 'array', items: { type: 'integer' }, description: 'Para progressao e metodo: as semanas (1, 2…). Vazio = todas.' },
-            reps: { type: 'array', items: { type: 'integer' }, description: 'Para progressao: repetições de cada série, em ordem (3x12 = [12, 12, 12]). No máximo 6 séries.' },
+            reps: { type: 'array', items: { type: 'integer' }, description: 'Para progressao: repetições de cada série, em ordem (3x12 = [12, 12, 12]). Em isometria são segundos (3×30 s = [30, 30, 30], máximo 60 s). No máximo 6 séries.' },
             modo: { type: 'string', enum: ['progredir', 'reduzir', 'polimento'], description: 'Para volume.' },
             pct: { type: 'number', description: 'Para volume: a porcentagem (progredir = % por semana; reduzir e polimento = quanto cai).' },
             de_semana: { type: 'integer', description: 'Para volume: primeira semana.' },
@@ -86,7 +86,7 @@ DIVISÃO (exercícios de cada treino):
 - Se ele falar vários treinos, faça uma ação por treino.
 
 PROGRESSÃO (séries e repetições):
-- progressao: "3x12" = reps [12, 12, 12]; "12, 10 e 8" = [12, 10, 8]; "4 séries de 10" = [10, 10, 10, 10]. No máximo 6 séries, reps de 1 a 50.
+- progressao: "3x12" = reps [12, 12, 12]; "12, 10 e 8" = [12, 10, 8]; "4 séries de 10" = [10, 10, 10, 10]. No máximo 6 séries, reps de 1 a 50 (isometria: segundos de 1 a 60). Para exercícios isométricos do catálogo, reps significa SEGUNDOS por série (padrão 3×30 s, máximo 60 s); nunca contar segundos como movimentos ou volume de carga. Para prescrever isometria, preencha treino e exercicio com o nome completo do catálogo, mesmo quando o pedido usar a posição. Se não houver prescrição explícita, mantenha 3×30 s na isometria.
   Sem treino = progressão padrão (vale para todos os exercícios sem progressão própria). Com treino e sem exercício = todos os exercícios daquele treino. Com treino e exercício = só aquele exercício.
   semanas: as que ele falou ("nas semanas 1 a 3" = [1, 2, 3]); se não falou, deixe vazio (= todas). Se ele der reps diferentes por semana, faça uma ação por grupo de semanas.
 - volume: ajuste em porcentagem, como a aba Progressão.
@@ -185,7 +185,7 @@ export function lerResposta(corpo: unknown, divisao: string[][]): Proposta {
       }
       const alvo = { ...(t != null && { treino: t }), ...(exercicio && { exercicio }) }
       if (item.acao === 'progressao') {
-        const reps = inteiros(item.reps, 1, 50).slice(0, 6)
+        const reps = inteiros(item.reps, 1, typeof item.exercicio === 'string' && isometrico({ nome: item.exercicio }) ? 60 : 50).slice(0, 6)
         if (!reps.length) {
           avisos.push('Não entendi as séries e repetições. Diga, por exemplo, "3x12".')
           continue

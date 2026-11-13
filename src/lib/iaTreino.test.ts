@@ -171,3 +171,9 @@ describe('descreverAcao', () => {
     expect(corpoPedido('x', DIV, 6).messages[0].content).toContain('O meso tem 6 semanas.')
   })
 })
+
+it('isometria aceita 60 segundos; exercícios comuns conservam teto de 50 repetições', () => {
+  const nome='Prancha Frontal Isométrica (cotovelos)'
+  const r=lerResposta(resposta([{acao:'progressao',treino:1,exercicio:nome,reps:[60,60,60]},{acao:'progressao',treino:1,exercicio:'Supino',reps:[60]}]),[[nome,'Supino']])
+  expect(r.acoes).toEqual([{tipo:'progressao',treino:1,exercicio:nome,semanas:[],reps:[60,60,60]}])
+})

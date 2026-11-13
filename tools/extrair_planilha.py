@@ -447,6 +447,21 @@ def main():
     # Write exercicios.json
     output_dir = Path("src/data")
     output_dir.mkdir(parents=True, exist_ok=True)
+    catalogo_atual = output_dir / "exercicios.json"
+    ids_isometricos = output_dir / "isometricos.json"
+    if catalogo_atual.exists() and ids_isometricos.exists():
+        ids_iso = set(json.loads(ids_isometricos.read_text(encoding="utf-8")))
+        atuais = json.loads(catalogo_atual.read_text(encoding="utf-8"))
+        ja_tem = {e["id"] for g in exercicios for e in g["exercicios"]}
+        for grupo in atuais:
+            extras = [e for e in grupo["exercicios"] if e["id"] in ids_iso and e["id"] not in ja_tem]
+            if not extras:
+                continue
+            destino = next((g for g in exercicios if g["grupo"] == grupo["grupo"]), None)
+            if destino is None:
+                destino = {"grupo": grupo["grupo"], "exercicios": []}
+                exercicios.append(destino)
+            destino["exercicios"].extend(extras)
     with open(output_dir / "exercicios.json", 'w', encoding='utf-8') as f:
         json.dump(exercicios, f, ensure_ascii=False, indent=2)
     print("Written src/data/exercicios.json")

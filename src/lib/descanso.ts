@@ -220,7 +220,8 @@ export function useDescanso() {
     const fim = Date.now() + segundos * 1000
     setFimEm(fim)
     agendarSons(segundos)
-    agendarPush(fim)
+    if (s.startsWith('iso:')) cancelarPush()
+    else agendarPush(fim)
   }
   const parar = () => {
     cancelarSons()
@@ -241,7 +242,7 @@ export function useDescanso() {
       const fim = Date.now() + pausado * 1000
       setFimEm(fim)
       agendarSons(pausado)
-      agendarPush(fim)
+      if (!s.startsWith('iso:')) agendarPush(fim)
       setPausado(null)
     } else iniciar(segundos, s)
   }

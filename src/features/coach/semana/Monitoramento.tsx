@@ -35,6 +35,7 @@ export default function Monitoramento({ meso, registros, reps = {} }: { meso: Me
   return (
     <Cartao>
       <h2 className="mb-3 font-semibold">Monitoramento</h2>
+      <p className="mb-3 text-sm text-marca-300">Tempo sob tensão: {semanas.reduce((s, x) => s + x.tempoSobTensaoS, 0)} s no ciclo (feitos ou prescritos).</p>
       <div className="overflow-x-auto">
       <table className="w-full text-left text-xs">
         <thead className="border-b border-slate-800 text-slate-400">
@@ -51,7 +52,7 @@ export default function Monitoramento({ meso, registros, reps = {} }: { meso: Me
           {semanas.map((s) => (
             <tr key={s.semana} className="border-b border-slate-800 last:border-0">
               <td className="p-2">{s.semana}</td>
-              <td className="p-2 text-right">{fmt(s.movimentos)}</td>
+              <td className="p-2 text-right">{fmt(s.movimentos)}{s.tempoSobTensaoS > 0 && <div className="text-marca-300">{fmt(s.tempoSobTensaoS)} s de isometria</div>}</td>
               <td className="p-2 text-right">{fmt(s.cargaMedia)}</td>
               <td className="p-2 text-right">{fmt(s.volume)}</td>
               <td className="p-2 text-right">{s.sessoesAtivas}</td>

@@ -9,8 +9,8 @@ Pedido do Victor em 13/11/2026. Decisões dele (13/11/2026):
 Entregas: **A** = fases 1 + 2 (marcas `doisLados` + carga por lado). **B** = fase 3 (isométricos no catálogo + mecanismo de tempo). Os isométricos só entram no catálogo junto com o mecanismo, para ninguém prescrever prancha em reps.
 
 ## Estado (13/11/2026)
-- **Entrega A: FEITA** no PR #166 (branch `ccr-a5bd671d-284cns`). Testes locais verdes; CI e junção pendentes no momento desta nota — confira o PR.
-- **Entrega B: NÃO COMEÇADA.** Próximo passo. Ver "Para o Codex continuar" no fim.
+- **Entrega A: FEITA** no PR #166 (branch `ccr-a5bd671d-284cns`). Testes locais verdes; integrada em `a489a61`; revisão posterior em `docs/revisao-pr166.md`.
+- **Entrega B: IMPLEMENTADA na branch `codex/isometria-entrega-b`, validada localmente; publicação/CI pendentes.** A entrega A/PR #166 foi integrada em `a489a61`. Ver `docs/revisao-pr166.md` para as correções da A que ficam com o Claude.
 
 ## Fase 1 — Catálogo (só dados)
 - As marcas ficam **fora** do `exercicios.json`, em listas de ids: `src/data/doisLados.json` (feito) e `src/data/isometricos.json` (entrega B). Motivo: `tools/extrair_planilha.py` regrava o `exercicios.json` inteiro (mesmo motivo do `anatomia.json`). Um teste garante que todo id da lista existe no catálogo.
@@ -100,3 +100,16 @@ Passos (TDD; motor em `src/engine/` é puro, sem React/Firebase):
 7. Docs: linha nova em "Pontos sensíveis" do `docs/mapa.md`; atualizar "Estado" deste plano e `docs/estado-sessao.md`.
 
 Não decidir sozinho (perguntar ao Victor): mudar o limite de 60 s, contar isometria no volume, ou apagar/migrar qualquer dado já gravado.
+
+## Entrega B — decisões e histórico (Codex, 13/11/2026)
+
+- Base da implementação: `11348d2` (entrega A). 30 exercícios novos com anatomia e ids em `isometricos.json`; Farmer Hold também em `doisLados.json`.
+- Identificação no motor: lista pura de nomes canônicos em `engine/isometria.ts`, sem React, Firebase ou JSON do app. Teste exige correspondência exata entre nomes, ids e catálogo; não existe interruptor de isometria. Isso evita passar um classificador por dezenas de chamadas do motor.
+- Progressão própria 3×30 s; sem personalização, o motor usa esse mesmo padrão, inclusive em trocas/adições/edições do dia. Ao ultrapassar 60 s, a progressão aumenta séries até o limite de seis já existente no editor. Com seis séries de 60 s, o tempo satura em 360 s, sem ultrapassar 60 s nem alterar cargas registradas.
+- `reps.<slot>.sN` guarda segundos feitos; `cargas` continua opcional. Sem mudança de regras ou migração. Métricas usam feitos quando informados (incluindo zero), senão prescritos; duração separada de movimentos e volume.
+- Cronômetro por série reaproveita descanso (som, vibração, tela acesa, persistência por conta). Não grava execução automaticamente: aluno confirma os segundos no campo. Isometria não agenda o push de “Descanso acabou”, para não mandar aviso com sentido errado.
+- Aluno, coach, prévia, progressão, métodos, monitoramento, evolução do coach, fim de treino, relatório/PDF e prompt de IA distinguem as unidades. Alertas de reps abaixo da meta ignoram isometria.
+- Extrator da planilha preserva os isométricos existentes ao reconstruir o catálogo. Não há exportação de treino para planilha nesta versão do aplicativo.
+- Histórico enxuto: um registro desta entrega e o parecer da A; revisões seguintes devem usar o diff do último SHA revisado.
+
+Validação local da B: typecheck; 74 arquivos/1.111 testes unitários; build VFIT e Gislane; nove e2e afetados passaram (cronômetro, lados, peso corporal e novo teste isometria). O e2e novo mede 30 segundos reais, grava 25/30/35 s offline, reconecta e confere coach com tensão de 90 s, carga opcional de 5 kg e nenhum volume para prancha. Supino continua com volume 240. Tela de 360 px conferida visualmente. Regras não foram alteradas. Grafo atualizado sem LLM.

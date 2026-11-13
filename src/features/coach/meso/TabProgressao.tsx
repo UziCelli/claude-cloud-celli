@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { PropostaFisio } from '../../fisio/propostaEditor'
 import { acimaDoLimite, fmtMin } from '../../../lib/tempo'
-import { analisarProgressao, polimento, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
+import { isometrico, linhaIsometrica, progressaoIsometrica, analisarProgressao, polimento, prescreverSessao, progressaoAutomatica, reduzirVolume, tempoPorSemana } from '../../../engine'
 import type { AlvoVolume, Meso, TipoPolimento } from '../../../engine'
 import GraficoVolume from './GraficoVolume'
 import { Botao, campoBase, Cartao, CampoNumero } from '../../../ui'
@@ -24,7 +24,7 @@ function resumo(meso: Meso): Previa {
   return tempos.map((tempo, i) => ({
     tempo,
     mov: Array.from({ length: meso.frequencia }, (_, t) =>
-      (prescreverSessao(meso, i + 1, t + 1)?.exercicios ?? []).reduce((s, e) => s + e.reps.reduce((a, b) => a + b, 0), 0),
+      (prescreverSessao(meso, i + 1, t + 1)?.exercicios ?? []).reduce((s, e) => s + (isometrico(e.slot) ? 0 : e.reps.reduce((a, b) => a + b, 0)), 0),
     ).reduce((a, b) => a + b, 0),
   }))
 }
@@ -56,7 +56,8 @@ export default function TabProgressao({ meso, onAtualizar, proposta = null }: { 
           <h3 className="font-semibold">Treino {t + 1}</h3>
           {slots.length === 0 && <p className="text-sm text-slate-500">Sem exercícios.</p>}
           {slots.map((slot) => {
-            const propria = proprias[slot.slotId]
+            const iso = isometrico(slot)
+            const propria = proprias[slot.slotId] ?? (iso ? progressaoIsometrica(meso.semanas) : undefined)
             if (!propria)
               return (
                 <div key={slot.slotId} className="flex items-center justify-between gap-2 border-t border-slate-800 pt-2 first:border-0 first:pt-0">
@@ -70,9 +71,10 @@ export default function TabProgressao({ meso, onAtualizar, proposta = null }: { 
               <TabelaProgressao
                 key={slot.slotId}
                 titulo={slot.nome}
-                linhas={padrao.map((_, w) => deSemana(propria, w))}
+                unidade={iso ? 's' : 'reps'}
+                linhas={Array.from({length: meso.semanas}, (_, w) => propria[w] ?? (iso ? linhaIsometrica() : deSemana(propria, w)))}
                 onLinhas={(l) => setProprio(slot.slotId, l)}
-                acao={{ rotulo: 'Voltar ao padrão', fazer: () => confirm('Isso apaga a personalização deste exercício. Continuar?') && voltarPadrao(slot.slotId) }}
+                acao={{ rotulo: iso ? 'Restaurar 3 × 30 s' : 'Voltar ao padrão', fazer: () => confirm('Isso apaga a personalização deste exercício. Continuar?') && (iso ? setProprio(slot.slotId, progressaoIsometrica(meso.semanas)) : voltarPadrao(slot.slotId)) }}
               />
             )
           })}
@@ -224,6 +226,7 @@ function AjustarVolume({ meso, onAtualizar, proposta }: { meso: Meso; onAtualiza
           </label>
         )}
       </div>
+      <p className="mt-3 text-xs text-slate-400">Isometria progride em segundos, até 60 s por série e 6 séries. O gráfico de movimentos inclui apenas exercícios com repetições.</p>
       <GraficoVolume antes={previa.antes.map((x) => x.mov)} depois={previa.depois.map((x) => x.mov)} analise={previa.analise} />
       <table className="mt-3 w-full text-sm">
         <thead>
@@ -267,22 +270,24 @@ function TabelaProgressao({
   linhas,
   onLinhas,
   acao,
+  unidade = 'reps',
 }: {
   titulo: string
+  unidade?: 'reps' | 's'
   linhas: (number | null)[][]
   onLinhas: (linhas: (number | null)[][]) => void
   acao: { rotulo: string; fazer: () => void }
 }) {
   const setCelula = (w: number, s: number, val: number | null) => {
     const tab = linhas.map((r) => [...r])
-    tab[w - 1][s - 1] = val
+    tab[w - 1][s - 1] = val == null ? null : Math.min(unidade === 's' ? 60 : Infinity, Math.max(1, Math.round(val)))
     onLinhas(tab)
   }
   const copiarAnterior = (w: number) => onLinhas(linhas.map((r, i) => (i === w - 1 ? [...linhas[w - 2]] : r)))
   return (
     <Cartao>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold">{titulo}</h3>
+        <h3 className="font-semibold">{titulo} · {unidade === 's' ? 'segundos por série (até 60 s)' : 'reps'}</h3>
         <Botao onClick={acao.fazer}>{acao.rotulo}</Botao>
       </div>
       <div className="overflow-x-auto">
@@ -320,6 +325,9 @@ function TabelaProgressao({
                   <td key={j}>
                     <input
                       type="number"
+                      min={1}
+                      max={unidade === 's' ? 60 : undefined}
+                      aria-label={`${titulo}, semana ${w}, série ${j + 1}, ${unidade}`}
                       value={v ?? ''}
                       onChange={(e) => setCelula(w, j + 1, e.target.value === '' ? null : Number(e.target.value))}
                       className={`${campoBase} w-11 px-0 py-1 text-center md:w-16 md:px-2 md:text-left outline-none focus:border-marca-500`}

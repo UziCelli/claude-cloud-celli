@@ -1,3 +1,4 @@
+import { isometrico, linhaIsometrica, LIMITE_ISOMETRIA_S } from './isometria'
 import type { AplicacaoMetodo, ExercicioPrescrito, Meso, Sessao, SlotSessao } from './tipos'
 
 // MAX da planilha: campos vazios valem 0 e MAX de nada é 0.
@@ -37,10 +38,12 @@ function extraTempo(m: AplicacaoMetodo): number {
 // Linha de reps de um exercício na semana: a própria (por slotId do slot da divisão, também numa troca),
 // senão a padrão, senão o legado (principais pos 1–2, auxiliares 3–10).
 export function linhaPrescrita(meso: Meso, semana: number, treino: number, pos: number): (number | null)[] {
-  const slotId = meso.divisao[treino - 1]?.[pos - 1]?.slotId
-  const proprias = meso.progressaoExercicio?.[slotId ?? ''] ?? meso.progressaoExercicio?.[`${treino}-${pos}`]
+  const slot = meso.divisao[treino - 1]?.[pos - 1]
+  const iso = slot != null && isometrico(slot)
+  const proprias = meso.progressaoExercicio?.[slot?.slotId ?? ''] ?? meso.progressaoExercicio?.[`${treino}-${pos}`]
   return (
     proprias?.[semana - 1] ??
+    (iso ? linhaIsometrica() : undefined) ??
     meso.progressao.padrao?.[semana - 1] ??
     (pos <= 2 ? meso.progressao.principais : meso.progressao.auxiliares)[semana - 1] ??
     []
@@ -74,7 +77,10 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
   const exercicios = slotsDaSessao(meso, semana, treino).map(({ de, ...slot }, i): ExercicioPrescrito => {
     const pos = i + 1
     // Exercício novo (sem `de`): progressão padrão, senão a dos auxiliares.
-    const linha = de != null ? linhaPrescrita(meso, semana, treino, de) : (meso.progressao.padrao ?? meso.progressao.auxiliares)[semana - 1] ?? []
+    const planejado = de != null ? meso.divisao[treino - 1]?.[de - 1] : undefined
+    const iso = isometrico(slot)
+    const mesmaUnidade = planejado && isometrico(planejado) === iso
+    const linha = (iso ? meso.progressaoExercicio?.[slot.slotId]?.[semana - 1] : undefined) ?? (mesmaUnidade ? linhaPrescrita(meso, semana, treino, de!) : iso ? linhaIsometrica() : (meso.progressao.padrao ?? meso.progressao.auxiliares)[semana - 1] ?? [])
     const base = (k: number) => linha[k - 1] ?? 0
     const n = linha.filter((r) => typeof r === 'number').length
     const linhas = doTreino.filter((m) => m.exercicio === pos)
@@ -111,6 +117,7 @@ export function prescreverSessao(meso: Meso, semana: number, treino: number): Se
       }
     }
 
+    if (iso) for (let k = 0; k < reps.length; k++) reps[k] = Math.min(LIMITE_ISOMETRIA_S, Math.max(1, reps[k]))
     const rotulo = linhas.map((m) => `${m.metodo} [${sufixo(m)}]`).join('; ')
     const pausaS = slot.pausaS ?? (de != null && de <= 2 ? (meso.pausaPrincipaisS ?? meso.pausaS) : meso.pausaS)
     return { pos, slot, n, reps, rotulo, cargaSugerida, pausaS, drops }

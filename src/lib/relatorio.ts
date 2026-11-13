@@ -16,11 +16,12 @@ export type RelatorioCiclo = {
   previstos: number // até a semana atual (ciclo terminado: todas)
   aderenciaPct: number // 0..100, inteiro
   semanasCompletas: number
-  porSemana: { semana: number; feitos: number; previstos: number; volumeKg: number; movimentos: number }[]
+  porSemana: { semana: number; feitos: number; previstos: number; volumeKg: number; movimentos: number; tempoSobTensaoS?: number }[]
   evolucoes: Evolucao[] // top 5 do ciclo
   recordes: { nome: string; kg: number; semana: number; treino: number }[] // contra todo o histórico do aluno
   volumeKg: number
   movimentos: number
+  tempoSobTensaoS?: number
   tempoMedioMin: number | null // realizadoEm − inicioEm; duração acima do teto (duracaoTreino: 3 h, esqueceu de concluir) não conta
 }
 
@@ -64,6 +65,7 @@ export function relatorioCiclo(mesos: MesoEvolucao[], registros: RegistroEvoluca
         previstos: meso.frequencia,
         volumeKg: arred(soma(os.map((o) => o.volume ?? 0))),
         movimentos: soma(os.map((o) => o.movimentos)),
+        ...(os.some(o => o.tempoSobTensaoS) && {tempoSobTensaoS: soma(os.map((o) => o.tempoSobTensaoS ?? 0))}),
       }
     }),
     evolucoes: painel.topEvolucao,
@@ -72,6 +74,7 @@ export function relatorioCiclo(mesos: MesoEvolucao[], registros: RegistroEvoluca
       .map((o) => ({ nome: o.nome, kg: o.cargaMax!, semana: o.semana, treino: o.treino })),
     volumeKg: painel.volumeKg,
     movimentos: soma(doCiclo.map((o) => o.movimentos)),
+    ...(doCiclo.some(o => o.tempoSobTensaoS) && {tempoSobTensaoS: soma(doCiclo.map((o) => o.tempoSobTensaoS ?? 0))}),
     tempoMedioMin: tempos.length ? Math.round(soma(tempos) / tempos.length) : null,
   }
 }
