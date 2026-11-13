@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ALERTA_GERAL, METODOS_FISIO } from '../data/fisio'
-import { lerOrientacao, metodoLiberavel, validarOrientacao, type OrientacaoForm } from './fisio'
+import { contextoPelaAnamnese, doresDaAnamnese, lerOrientacao, metodoLiberavel, metodosRelacionados, orientacoesDoExercicio, validarOrientacao, type OrientacaoForm } from './fisio'
 
 const form = (m = 'M04'): OrientacaoForm => ({ metodoId: m, condicao: 'Queixa informada pelo aluno', recado: 'Fazer somente com supervisão.', contextoLiberacao: false, liberacao: null, alertasRevisados: true })
 const liberacao = { profissional: 'Fisioterapeuta de exemplo', registro: 'CREFITO exemplo', data: '2026-11-10' }
@@ -39,5 +39,33 @@ describe('orientações Físio', () => {
       expect(lerOrientacao('id', d)).toBeNull()
     }
     expect(lerOrientacao('id', { ...doc, sinalRelatado: true })?.sinalRelatado).toBe(true)
+  })
+})
+
+describe('rodada 4: selo no treino e cruzamentos com a anamnese', () => {
+  const base = { id: 'o', alunoId: 'ana', ...form(), recolhida: false, sinalRelatado: false, em: null, exercicios: ['Agachamento Livre Barra'] }
+  it('lerOrientacao lê exercicios (lista de textos) e trata ausente como vazio', () => {
+    const doc = { alunoId: 'ana', ...form(), recolhida: false, sinalRelatado: false }
+    expect(lerOrientacao('o', doc)?.exercicios).toEqual([])
+    expect(lerOrientacao('o', { ...doc, exercicios: ['Leg Press 45', 5, ''] })?.exercicios).toEqual(['Leg Press 45'])
+  })
+  it('orientacoesDoExercicio: compara sem acento/caixa e ignora recolhidas', () => {
+    expect(orientacoesDoExercicio([base], '  agachamento livre barra ')).toHaveLength(1)
+    expect(orientacoesDoExercicio([base], 'Leg Press 45')).toHaveLength(0)
+    expect(orientacoesDoExercicio([{ ...base, recolhida: true }], 'Agachamento Livre Barra')).toHaveLength(0)
+  })
+  it('metodosRelacionados: só ordena, pelas articulações que são queixa', () => {
+    const { relacionados, outros } = metodosRelacionados(['joelho', 'punho'])
+    expect(relacionados.every((m) => m.queixas.includes('joelho'))).toBe(true)
+    expect(relacionados.length + outros.length).toBe(METODOS_FISIO.length)
+    expect(metodosRelacionados([]).relacionados).toEqual([])
+  })
+  it('doresDaAnamnese e contextoPelaAnamnese (conservador)', () => {
+    expect(doresDaAnamnese({ dores: ['joelho', 'outra'] })).toEqual(['joelho'])
+    expect(doresDaAnamnese(null)).toEqual([])
+    expect(contextoPelaAnamnese({ cirurgia12m: true })).toMatch(/cirurgia/)
+    expect(contextoPelaAnamnese({ gestante: 'sim' })).toMatch(/gestação/)
+    expect(contextoPelaAnamnese({ ossoArticulacao: true })).toMatch(/osso/)
+    expect(contextoPelaAnamnese({ gestante: 'nao', cirurgia12m: false })).toBeNull()
   })
 })

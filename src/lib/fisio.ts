@@ -1,5 +1,7 @@
 import type { Timestamp } from 'firebase/firestore'
-import { METODOS_FISIO } from '../data/fisio'
+import { METODOS_FISIO, type MetodoFisio } from '../data/fisio'
+import type { Respostas } from './anamnese'
+import { norm } from './busca'
 
 export const COLECAO_FISIO = 'fisioOrientacoes'
 export const CONTEXTOS_LIBERACAO = 'Pós-cirúrgico, lesão aguda, osteoporose, fibromialgia ou dor irradiada'
@@ -18,6 +20,7 @@ export type OrientacaoFisio = OrientacaoForm & {
   recolhida: boolean
   sinalRelatado: boolean
   em: Timestamp | null
+  exercicios: string[] // nomes do catálogo onde o aluno vê o selo Físio no treino (rodada 4)
 }
 
 export const metodoFisio = (id: string) => METODOS_FISIO.find((m) => m.id === id)
@@ -55,5 +58,41 @@ export function lerOrientacao(id: string, valor: unknown): OrientacaoFisio | nul
   if (d.liberacao !== null && !liberacao) return null
   if (precisaLiberacao({ metodoId: d.metodoId, contextoLiberacao: d.contextoLiberacao }) && !liberacao) return null
   const em = d.em && typeof (d.em as Timestamp).toMillis === 'function' ? d.em as Timestamp : null
-  return { id, alunoId: d.alunoId, metodoId: d.metodoId, condicao: d.condicao, recado: d.recado, contextoLiberacao: d.contextoLiberacao, liberacao, alertasRevisados: true, recolhida: d.recolhida, sinalRelatado: d.sinalRelatado, em }
+  return { id, alunoId: d.alunoId, metodoId: d.metodoId, condicao: d.condicao, recado: d.recado, contextoLiberacao: d.contextoLiberacao, liberacao, alertasRevisados: true, recolhida: d.recolhida, sinalRelatado: d.sinalRelatado, em,
+    exercicios: Array.isArray(d.exercicios) ? d.exercicios.filter((e): e is string => typeof e === 'string' && e.trim() !== '').slice(0, MAX_EXERCICIOS) : [] }
+}
+
+// ---- Rodada 4: selo Físio no treino e cruzamentos com a anamnese (docs/plano-fisio.md) ----
+
+export const MAX_EXERCICIOS = 10 // o mesmo limite de firestore.rules (exerciciosFisio)
+
+// Orientações ativas (não recolhidas) que marcam este exercício. Nome comparado sem acento/caixa/espaço.
+export const orientacoesDoExercicio = (orientacoes: OrientacaoFisio[], nome: string) => {
+  const n = norm(nome.trim())
+  return orientacoes.filter((o) => !o.recolhida && o.exercicios.some((e) => norm(e.trim()) === n))
+}
+
+// Ids iguais nos três lugares: articulação (anatomia/anamnese) = queixa do método.
+const ARTICULACAO_QUEIXA = ['lombar', 'ombro', 'joelho', 'quadril', 'tornozelo', 'cervical']
+
+// Ordem do formulário de orientação: primeiro os métodos ligados às queixas do aluno (anamnese + relatos),
+// depois os demais. Só ordena: o rótulo da tela é "relacionado", nunca "recomendado".
+export function metodosRelacionados(articulacoes: readonly string[]): { relacionados: MetodoFisio[]; outros: MetodoFisio[] } {
+  const q = new Set(articulacoes.filter((a) => ARTICULACAO_QUEIXA.includes(a)))
+  const relacionados = METODOS_FISIO.filter((m) => m.queixas.some((x) => q.has(x)))
+  return { relacionados, outros: METODOS_FISIO.filter((m) => !relacionados.includes(m)) }
+}
+
+// Articulações que o aluno marcou como dor na anamnese (sem "outra").
+export const doresDaAnamnese = (r: Respostas | null | undefined): string[] =>
+  Array.isArray(r?.dores) ? (r.dores as string[]).filter((d) => d !== 'outra') : []
+
+// Motivo para pré-marcar e travar o contexto de liberação (pós-cirúrgico etc.) a partir da anamnese mais recente.
+// Conservador: na dúvida, exige o registro profissional.
+export function contextoPelaAnamnese(r: Respostas | null | undefined): string | null {
+  if (!r) return null
+  if (r.cirurgia12m === true) return 'A anamnese informa cirurgia nos últimos 12 meses.'
+  if (r.gestante === 'sim') return 'A anamnese informa gestação.'
+  if (r.ossoArticulacao === true) return 'A anamnese informa problema de osso, articulação ou coluna que piora com exercício.'
+  return null
 }

@@ -149,3 +149,75 @@ describe('relatos de dor (fisioDores): segurança', () => {
     await assertSucceeds(updateDoc(dor('coach'), { alunoId: 'ana', ...agora }))
   })
 })
+
+// Rodada 4: exercícios ligados à orientação (o selo Físio no treino) e check-in de recuperação.
+describe('orientações: exercícios ligados', () => {
+  const ex = ['Agachamento Livre Barra', 'Leg Press 45']
+  it('coach cria com exercícios e depois troca só a lista (campo a campo), preservando o sinal', async () => {
+    await assertSucceeds(setDoc(ref('coach', 'com'), { ...form(), exercicios: ex }))
+    await setDoc(ref('coach'), form())
+    await assertSucceeds(updateDoc(ref('coach'), { exercicios: ex, atualizadoEm: serverTimestamp() }))
+    await assertSucceeds(updateDoc(ref('ana'), { sinalRelatado: true, sinalEm: serverTimestamp(), atualizadoEm: serverTimestamp() }))
+    await assertSucceeds(updateDoc(ref('coach'), { exercicios: [], atualizadoEm: serverTimestamp() }))
+    expect((await getDoc(ref('coach'))).data()?.sinalRelatado).toBe(true)
+  })
+  it('nega lista inválida, junto com outro campo, por aluno, sem 2º fator ou em orientação recolhida', async () => {
+    await setDoc(ref('coach'), form())
+    for (const exercicios of ['Agachamento', [''], ['   '], ['x'.repeat(121)], [5], Array(11).fill('Leg Press 45')])
+      await assertFails(updateDoc(ref('coach'), { exercicios, atualizadoEm: serverTimestamp() }))
+    await assertFails(updateDoc(ref('coach'), { exercicios: ex, recado: 'outro', atualizadoEm: serverTimestamp() }))
+    await assertFails(updateDoc(ref('coach'), { exercicios: ex }))
+    await assertFails(updateDoc(ref('ana'), { exercicios: ex, atualizadoEm: serverTimestamp() }))
+    await assertFails(updateDoc(doc(db('coach', false), 'fisioOrientacoes', 'o'), { exercicios: ex, atualizadoEm: serverTimestamp() }))
+    await assertFails(setDoc(ref('coach', 'ruim'), { ...form(), exercicios: [''] }))
+    await updateDoc(ref('coach'), { recolhida: true, atualizadoEm: serverTimestamp() })
+    await assertFails(updateDoc(ref('coach'), { exercicios: ex, atualizadoEm: serverTimestamp() }))
+  })
+})
+
+describe('check-in de recuperação (fisioCheckins): segurança', () => {
+  const ck = (uid?: string, id = 'c') => doc(db(uid), 'fisioCheckins', id)
+  const novo = (extra: object = {}) => ({ alunoId: 'ana', sono: 4, estresse: 3, cansaco: 2, alimentacao: 5, em: serverTimestamp(), atualizadoEm: serverTimestamp(), ...extra })
+  const existente = (alunoId = 'ana') => env.withSecurityRulesDisabled((c) =>
+    setDoc(doc(c.firestore() as unknown as Firestore, 'fisioCheckins', 'c'), { ...novo({ alunoId }), em: Timestamp.now(), atualizadoEm: Timestamp.now() }))
+  const agora = { atualizadoEm: serverTimestamp() }
+
+  it('aluno liberado cria o próprio e lê pelo id e pela consulta', async () => {
+    await assertSucceeds(setDoc(ck('ana', 'a1'), novo()))
+    await assertSucceeds(setDoc(ck('ana', 'a2'), novo({ sono: 1, estresse: 5, cansaco: 1, alimentacao: 1 })))
+    await assertSucceeds(getDoc(ck('ana', 'a1')))
+    await assertSucceeds(getDocs(query(collection(db('ana'), 'fisioCheckins'), where('alunoId', '==', 'ana'))))
+  })
+  it('nega fora de 1–5, não inteiro, campo faltando ou a mais, texto livre e horas forjadas', async () => {
+    for (const extra of [{ sono: 0 }, { sono: 6 }, { estresse: 2.5 }, { cansaco: '3' }, { alimentacao: null }, { obs: 'cansado' }, { hack: true },
+      { em: Timestamp.fromMillis(Date.now() - 86400_000) }, { atualizadoEm: Timestamp.fromMillis(Date.now() + 86400_000) }])
+      await assertFails(setDoc(ck('ana', 'x'), novo(extra)))
+    const { alimentacao: _a, ...semAlimentacao } = novo()
+    await assertFails(setDoc(ck('ana', 'x'), semAlimentacao))
+  })
+  it('ninguém cria em nome de outro; bloqueado, vencido e sem login não criam nem leem', async () => {
+    await assertFails(setDoc(ck('bia', 'x'), novo()))
+    await assertFails(setDoc(ck('coach', 'x'), novo()))
+    for (const uid of ['bloq', 'vencida']) await assertFails(setDoc(ck(uid, 'x'), novo({ alunoId: uid })))
+    await assertFails(setDoc(ck(undefined, 'x'), novo()))
+    await existente()
+    for (const uid of [undefined, 'bia', 'bloq', 'vencida']) await assertFails(getDoc(ck(uid)))
+    await assertFails(getDocs(collection(db('ana'), 'fisioCheckins')))
+  })
+  it('aluno não altera nem apaga; coach com 2º fator lê, lista e apaga; não altera respostas', async () => {
+    await existente()
+    await assertFails(updateDoc(ck('ana'), { sono: 5, ...agora }))
+    await assertFails(deleteDoc(ck('ana')))
+    await assertSucceeds(getDoc(ck('coach')))
+    await assertSucceeds(getDocs(collection(db('coach'), 'fisioCheckins')))
+    await assertFails(updateDoc(ck('coach'), { sono: 5, ...agora }))
+    await assertFails(getDoc(doc(db('coach', false), 'fisioCheckins', 'c')))
+    await assertFails(deleteDoc(doc(db('coach', false), 'fisioCheckins', 'c')))
+    await assertSucceeds(deleteDoc(ck('coach')))
+  })
+  it('transferência só para o destino registrado do presencial', async () => {
+    await existente('presencial')
+    await assertFails(updateDoc(ck('coach'), { alunoId: 'bia', ...agora }))
+    await assertSucceeds(updateDoc(ck('coach'), { alunoId: 'ana', ...agora }))
+  })
+})
