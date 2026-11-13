@@ -6,13 +6,15 @@ Pedido do Victor em 13/11/2026. Decisões dele (13/11/2026):
 - Isometria: **separada** — "tempo sob tensão" (soma dos segundos); não entra em movimentos nem no volume de carga.
 - Progressão da isometria: mesmo +% por semana, **máximo 60 s por série** (passou disso, vira mais uma série).
 
+Entregas: **A** = fases 1 + 2 (marcas `doisLados` + carga por lado). **B** = fase 3 (isométricos no catálogo + mecanismo de tempo). Os isométricos só entram no catálogo junto com o mecanismo, para ninguém prescrever prancha em reps.
+
 ## Fase 1 — Catálogo (só dados)
 - `src/data/exercicios.json` ganha dois campos opcionais por exercício: `"doisLados": true` e `"isometrico": true`.
 - O slot continua ligado ao catálogo **pelo nome** (como hoje). Exercício fora do catálogo = comum.
 - Isométricos entram nos grupos musculares que já existem, com "Isométric(o/a)" no nome (a busca acha por "isom").
 
 ### Marcados como `doisLados` (proposta — Victor confere)
-- Quadríceps e Glúteos: Agachamento Frontal Halter, Terra Romeno Halter, Afundo Halter, Avanço Halter, Retrocesso Halter, Búlgaro com Halter.
+- Quadríceps e Glúteos: Agachamento Frontal Halter, Terra Romeno Halter, Afundo Halter, Avanço Halter, Retrocesso Halter, Búlgaro com Halter, Cadeira Extensora Articulada (Peso Acima e Peso Abaixo).
 - Posterior: Stiff Halter.
 - Peitorais: Supino Reto/Inclinado/Declinado Halter, Crucifixo Reto/Inclinado/Declinado Halter, Peck Deck Articulado.
 - Dorsais: Puxada Articulada (Supinada, Peso Acima, Peso Abaixo, Cross), Remada Alta Articulada Pronada, Remada Articulada Tradicional (Aberta, Fechada), Remada Baixa Articulada (Aberta, Fechada), Remada Articulada Supinada.
@@ -24,12 +26,16 @@ Pedido do Victor em 13/11/2026. Decisões dele (13/11/2026):
 ### Ficam SEM marca (um halter só, ou um lado de cada vez)
 Terra Sumô com Halter, Elevação Pélvica Halter, Stiff Unilateral Halter, Flexão de Joelhos com Halter, Pull Over Halter, Remada Unilateral (serrote), Abdominal Oblíquo Halter, todos os "Alternado", Rosca Concentrada, Tríceps Francês (em pé e sentado), Elevação Pélvica Máquina Articulada, tudo que tem "Unilateral" no nome.
 
-### Dúvidas para o Victor
-- Agachamento Livre Halter e Agachamento Halter Banco: 1 halter (taça) ou 2?
-- Rosca Scott Halter: os dois braços juntos ou um de cada vez?
-- Cadeira Extensora Articulada (Peso Acima/Abaixo): braços independentes com anilha de cada lado?
-- Supinação/Pronação com Halter: os dois punhos juntos?
-- Stiff no Smith com Halter: o halter conta como carga extra?
+### Respostas do Victor (13/11/2026)
+- Agachamento Livre Halter e Agachamento Halter Banco: geralmente 1 halter → **sem marca**.
+- Rosca Scott Halter: pode ser 1 ou 2 → **sem marca**; o coach liga "2 lados" naquele exercício do meso quando for com 2 (ver abaixo).
+- Cadeira Extensora Articulada (Peso Acima e Peso Abaixo): cada lado tem sua anilha → **`doisLados`**.
+- Supinação/Pronação com Halter: rotação de reabilitação, não muda → **sem marca**.
+- Stiff no Smith com Halter: o Smith só apoia, a carga é o halter → **sem marca** (o aluno anota só o halter).
+
+### Ajuste por exercício no meso
+- O catálogo dá o padrão. O coach pode ligar/desligar "2 lados" em um exercício do meso (`Slot.doisLados?: boolean`, vence o catálogo).
+- Serve para os casos que variam (Rosca Scott, agachamento com 2 halteres, exercício fora do catálogo).
 
 ### Isométricos novos (proposta — Victor confere)
 - Abdome e Lombar: Prancha Frontal Isométrica (cotovelos), Prancha Frontal Isométrica (mãos), Prancha Lateral Isométrica, Prancha Invertida Isométrica, Canoa Isométrica (Hollow Hold), Superman Isométrico, Perdigueiro Isométrico, Pallof Press Isométrico na Polia, Abdominal em L Isométrico (L-sit), Dead Bug Isométrico.
@@ -45,10 +51,13 @@ Terra Sumô com Halter, Elevação Pélvica Halter, Stiff Unilateral Halter, Fle
 
 ## Fase 2 — Carga por lado
 Dados (sem perder nenhuma carga já gravada):
-- `cargas.<slotId>.s<n>` continua guardando o **total** (os dois lados somados), como no peso do corpo. Assim volume, recordes, evolução e relatórios não mudam.
-- Novo: `lados.<slotId>.s<n> = [esq, dir]` só quando os lados forem diferentes; e `porLado.<slotId> = true` marca o registro feito no formato novo. Gravação campo a campo, igual a hoje.
-- Registro antigo (sem `porLado`): fica como está, nunca reescrito. Não dá para saber se o aluno anotou 6 ou 12; a tela mostra o número como "anotado antes". O placeholder "semana passada" só usa registros no formato novo.
-- Com peso do corpo (`pc`): total = 2 × lado + pc.
+- `cargas.<slotId>.s<n>` continua guardando o **total** (esq + dir, + `pc` se houver), como no peso do corpo. Assim volume, recordes, evolução e relatórios não mudam.
+- Novo mapa `lados.<slotId>.s<n>` = kg do lado **esquerdo** (número). Direito = total − pc − esq. Lados iguais: esq = metade.
+  - Gravado **na mesma escrita** que a carga (um `setDoc merge` com `cargas` e `lados` juntos). Nunca um sem o outro.
+  - A presença de `lados.<slotId>.s<n>` marca a célula como formato novo.
+- Célula antiga (carga sem `lados`): fica como está, nunca reescrita. Não dá para saber se o aluno anotou 6 ou 12; a tela mostra o número inteiro como "anotado antes". O placeholder "semana passada" só usa células no formato novo.
+- `firestore.rules`: `lados` entra nas listas de campos permitidos do registro, com a mesma validação das `cargas` (TDD no emulador).
+- `cancelarTreino` apaga também `lados`. `rebasear` (peso do corpo) não mexe em `lados` (o esquerdo não muda quando o pc muda).
 
 Telas: `Treino.tsx` (aluno) e `SessaoCard.tsx`/`LoadInput` (coach) — campo "kg cada lado", botão "lados diferentes" (E | D). Placeholder e resumo mostram por lado.
 
