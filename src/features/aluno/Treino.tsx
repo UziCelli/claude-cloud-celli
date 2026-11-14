@@ -306,7 +306,7 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
   if (inicio == null) return <Botao tipo="primario" aria-label="Iniciar treino" tamanho="lg" className="borda-brilho mb-3 flex w-full items-center justify-center gap-2 shadow-lg shadow-marca-500/40" onClick={onIniciar}><BrilhoBorda /><IcPlay className="size-5" /> Iniciar treino</Botao>
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <p role="timer" className="flex items-center gap-2 whitespace-nowrap text-sm text-slate-400">
+      <p role="timer" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400">
         <span aria-hidden className={`h-2 w-2 rounded-full bg-emerald-400 ${quieto ? '' : 'animate-pulse'}`} />
         Treino em andamento · <span data-testid="relogio-treino" className="font-semibold tabular-nums text-slate-100">{agora - inicio > TETO_TREINO_MS ? 'mais de 3 h' : hms(agora - inicio)}</span>
         <span className="text-slate-500">· previsto {previsto}</span>
@@ -569,7 +569,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     <main className="mx-auto max-w-md px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
       <AvisoNotificacoes />
       <BotaoVoltar aoVoltar={sair} />
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-lg font-bold">Treino {treino}</h1>
           <p className="text-xs text-slate-400">
@@ -642,18 +642,18 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
             gravaPc(Math.round(peso * frac * 10) / 10)
           }
           return (
-            <m.div key={e.slot.slotId} variants={item} className={`relative rounded-xl border bg-slate-900 p-4 ${gc ? gc.borda : 'border-slate-800'}`}>
+            <m.div key={e.slot.slotId} variants={item} className={`relative rounded-xl border bg-gradient-to-b from-slate-900 to-slate-900/90 p-4 shadow-[0_4px_20px_rgb(0_0_0/0.12)] ${gc ? gc.borda : 'border-slate-700/70'}`} data-treino-cartao>
               {gk && ordem > 0 && <span aria-hidden className={`absolute -top-4 left-6 h-4 w-0.5 ${gc?.faixa}`} />}
               {gk && (
                 <div className={`mb-2 text-xs font-semibold ${gc?.texto}`}>
                   {gk.split('|')[0]} {membros.map((_, k) => <span key={k}>{k > 0 && ' / '}<span className={k === ordem ? 'text-slate-100' : ''}>{letra}{k + 1}</span></span>)}
                 </div>
               )}
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-semibold">{e.slot.nome}</div>
+              <div className="mb-3 space-y-2.5">
+                <div className="break-words text-base font-semibold leading-snug tracking-tight" data-treino-nome>{e.slot.nome}</div>
+                <div className="flex flex-wrap items-center gap-2">
                   {e.rotulo && (
-                    <div className="mt-1 flex flex-wrap gap-1.5">
+                    <div className="flex min-w-0 flex-wrap gap-2">
                       {e.rotulo.split('; ').map((parte, ip) => {
                         const mt = metodoDoRotulo(parte)
                         return (
@@ -661,38 +661,38 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                             key={`${ip}-${parte}`}
                             disabled={!mt}
                             onClick={() => mt && setExplicar(mt)}
-                            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold ring-1 ${mt ? COR_METODO[mt].selo : 'bg-slate-700 text-slate-100 ring-slate-500'}`}
+                            className={`inline-flex min-h-11 max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${mt ? COR_METODO[mt].selo : 'bg-slate-700 text-slate-100 ring-slate-500'}`}
                           >
                             {mt && <IconeMetodo metodo={mt} tamanho={20} />}
-                            {parte} <IcInfo className="size-4" />
+                            <span>{parte}</span> <IcInfo className="size-3.5 shrink-0" />
                           </button>
                         )
                       })}
                     </div>
                   )}
-                </div>
-                <div className="flex shrink-0 gap-1">
-                  {coach && <EditarExercicio meso={meso} mesoId={mesoId} semana={semana} treino={treino} pos={e.pos} nome={e.slot.nome} n={e.n} temCarga={colunasCargas.some((v) => v != null)} />}
-                  <Botao aria-label="Som do cronômetro" className="min-w-11" onClick={descanso.alternarSom}>
-                    {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
-                  </Botao>
-                  {(!gk || ordem === membros.length - 1) && (
-                    <>
-                  <Botao
-                    tipo={descanso.slot === slot ? 'primario' : undefined}
-                    aria-label={descanso.slot === slot ? `${descanso.rodando ? 'Pausar' : 'Continuar'} ${mmss(descanso.restante)}` : `Descansar ${e.pausaS} s`}
-                    className="inline-flex items-center gap-1"
-                    onClick={() => descanso.alternar(e.pausaS, slot)}
-                  >
-                    {descanso.slot === slot ? <>{descanso.rodando ? <IcPausa className="size-4" /> : <IcPlay className="size-4" />} {mmss(descanso.restante)}</> : <><IcPlay className="size-4" /> {e.pausaS} s</>}
-                  </Botao>
-                  {descanso.slot === slot && (
-                    <Botao aria-label="Reiniciar" className="min-w-11" onClick={() => descanso.iniciar(e.pausaS, slot)}>
-                      <IcReiniciar className="size-4" />
+                  <div className="ml-auto flex shrink-0 flex-wrap justify-end gap-1.5" data-treino-controles>
+                    {coach && <EditarExercicio meso={meso} mesoId={mesoId} semana={semana} treino={treino} pos={e.pos} nome={e.slot.nome} n={e.n} temCarga={colunasCargas.some((v) => v != null)} />}
+                    <Botao aria-label="Som do cronômetro" className="min-w-11" onClick={descanso.alternarSom}>
+                      {descanso.som ? <IcSino className="size-5" /> : <IcSinoMudo className="size-5" />}
                     </Botao>
-                  )}
-                    </>
-                  )}
+                    {(!gk || ordem === membros.length - 1) && (
+                      <>
+                    <Botao
+                      tipo={descanso.slot === slot ? 'primario' : undefined}
+                      aria-label={descanso.slot === slot ? `${descanso.rodando ? 'Pausar' : 'Continuar'} ${mmss(descanso.restante)}` : `Descansar ${e.pausaS} s`}
+                      className="inline-flex items-center gap-1"
+                      onClick={() => descanso.alternar(e.pausaS, slot)}
+                    >
+                      {descanso.slot === slot ? <>{descanso.rodando ? <IcPausa className="size-4" /> : <IcPlay className="size-4" />} {mmss(descanso.restante)}</> : <><IcPlay className="size-4" /> {e.pausaS} s</>}
+                    </Botao>
+                    {descanso.slot === slot && (
+                      <Botao aria-label="Reiniciar" className="min-w-11" onClick={() => descanso.iniciar(e.pausaS, slot)}>
+                        <IcReiniciar className="size-4" />
+                      </Botao>
+                    )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               <Nota key={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} uid={uid} nome={e.slot.nome.trim()} texto={textoNota(notas?.exercicios?.[e.slot.nome.trim()])} em={msDaNota(notas?.datas?.[e.slot.nome.trim()])} />
@@ -826,7 +826,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                 })()}
               </div>
               {/* Logo abaixo das séries: o app soma o peso do corpo ao extra digitado. */}
-              <label className="mt-3 flex items-start gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200">
+              <label className="mt-4 flex min-h-11 items-start gap-2.5 rounded-xl border border-slate-700/70 bg-slate-950/30 px-3 py-3 text-sm text-slate-200">
                 <input type="checkbox" checked={!!corpo} disabled={trocandoPc || travado} onChange={alternarPc} className="mt-0.5 h-5 w-5 shrink-0" />
                 <span>
                   <b>Feito com o peso do corpo</b>

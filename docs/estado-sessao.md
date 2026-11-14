@@ -1,3 +1,9 @@
+## 14/11/2026 — Refino visual do treino (Codex)
+- PR novo: **Redesing para o final de 26**, branch `codex/refino-visual-treino`.
+- Ajuste pontual, separado do redesenho 2027 do PR #171: lista vertical e funções mantidas. Nome do exercício ocupa a largura do cartão; selos de método ficam em uma linha; edição, sino e descanso se alinham à direita e descem juntos quando falta espaço.
+- Acabamento discreto nos cartões e no quadro de peso corporal; cabeçalho e relógio permitem quebra em telas estreitas.
+- Teste `e2e/treino-layout.spec.ts`: reproduz Stiff Barra/Clusterset e Elevação Pélvica Máquina Tradicional/Rest-pause, aluno e presencial, 320/360/390/430 px. Revisão cruzada do Claude pendente; não juntar antes do OK.
+
 ## 13/11/2026 — Isometria (entrega B, Codex)
 - Branch `codex/isometria-entrega-b`, baseada na entrega A (`11348d2`), validada localmente; PR #166 já integrado em `a489a61`.
 - Isométricos em segundos (padrão 3×30 s), progressão até 60 s/série, cronômetro por série e tempo sob tensão separado de movimentos/volume. Sem migração nem mudança de regras.
