@@ -62,13 +62,19 @@ O Victor não revisa código: a revisão é nossa e o merge também, **sem pedir
 2. Revisar o diff com o agente `revisor` e corrigir o que ele apontar. Não levar código ao Victor.
 3. Commit, push, PR e `subscribe_pr_activity`.
 4. Acompanhar o CI com um laço em segundo plano (`gh api …/check-runs`), **sem criar rotinas** (`send_later`/triggers).
-5. CI verde: marcar como pronto e juntar sozinho (`merge_pull_request` com `expectedHeadSha`).
+5. Marcar como pronto (PR em rascunho não roda o CI). Com CI verde **e o OK da revisão cruzada** (abaixo), juntar sozinho (`merge_pull_request` com `expectedHeadSha`).
 6. Depois de juntar:
    - conferir os jobs `deploy` e `gislane` do "Publicar";
    - recriar a branch a partir da `main`;
    - avisar o Victor em 2–3 tópicos (o que mudou e se já está no ar).
 7. CI vermelho: corrigir e repetir. Se a falha não for nossa, explicar ao Victor em linguagem simples.
 - **Perguntar antes de juntar** só quando a mudança apagar ou migrar dados que já estão em produção, ou tiver custo em dinheiro.
+
+### Revisão cruzada Claude ↔ Codex (Victor, 13/11/2026)
+- Todo PR do Claude é revisado pelo Codex, e todo PR do Codex é revisado pelo Claude. **O PR só é juntado depois do OK do outro.**
+- O OK é um comentário no PR começando com "Revisão cruzada: OK". Problema apontado = corrigir e pedir nova revisão.
+- Ao abrir o PR, avisar o Victor em uma linha que ele está esperando a revisão do Codex (é o Victor quem aciona o outro agente).
+- Ao revisar o PR do outro: ler o diff contra o plano, `CLAUDE.md` e "Pontos sensíveis" do `docs/mapa.md`; comentar no PR o que corrigir, ou o OK.
 
 ## Plugins (ativados em `.claude/settings.json`)
 - **Superpowers**: fluxo brainstorming → writing-plans → subagent-driven-development; TDD; systematic-debugging.

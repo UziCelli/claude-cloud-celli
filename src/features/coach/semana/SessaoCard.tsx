@@ -191,7 +191,7 @@ export default function SessaoCard({
                     <td key={k} className="p-2 text-center">
                       <RepsFeitas iso={isometrico(e.slot)} alvo={e.reps[k]} feita={rs[k]} />
                       {dois ? (
-                        <CampoLados className={ed ? 'w-36' : 'w-16'} cel={cel(k)} ed={!!ed} onGravar={gravarLados(k)} />
+                        <CampoLados className={ed ? 'w-20' : 'w-16'} cel={cel(k)} ed={!!ed} onGravar={gravarLados(k)} />
                       ) : (
                         <LoadInput
                           valor={extra(cs[k])}
@@ -215,7 +215,7 @@ export default function SessaoCard({
                           {e.drops[j] && <div className="text-[10px] font-semibold text-rose-300">S{e.drops[j].serie}·D{e.drops[j].etapa}</div>}
                           <RepsFeitas iso={isometrico(e.slot)} alvo={e.reps[coluna]} feita={rs[coluna]} />
                           {dois ? (
-                            <CampoLados className={ed ? 'w-36' : 'w-16'} cel={cel(coluna)} ed={!!ed} placeholder={e.cargaSugerida[coluna] ?? null} onGravar={gravarLados(coluna)} />
+                            <CampoLados className={ed ? 'w-20' : 'w-16'} cel={cel(coluna)} ed={!!ed} placeholder={e.cargaSugerida[coluna] ?? null} onGravar={gravarLados(coluna)} />
                           ) : (
                             <LoadInput
                               valor={extra(cs[coluna])}
