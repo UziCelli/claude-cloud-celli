@@ -32,7 +32,7 @@ test('treino: nomes, métodos e controles não se sobrepõem no aluno e no prese
       : `/#/treino/${mesoId}/1/1`)
     const dialog = page.getByRole('dialog', { name: 'Métodos deste treino' })
     await dialog.getByRole('button', { name: 'Não mostrar de novo' }).click()
-    await page.getByRole('button', { name: 'Iniciar treino', exact: true }).click()
+    if (!coach) await page.getByRole('button', { name: 'Iniciar treino', exact: true }).click()
     const cartoes = page.locator('[data-treino-cartao]')
     await expect(cartoes).toHaveCount(2)
     for (const width of [320, 360, 390, 430]) {

@@ -2604,9 +2604,9 @@
     "semantic_hash": ""
   },
   "e2e/treino-layout.spec.ts": {
-    "mtime": 1794662277.6041205,
-    "seen": 1794662353.4123735,
-    "ast_hash": "508b46cdbb9b65a11c8534673914dd26",
+    "mtime": 1794662572.2521293,
+    "seen": 1794662654.3975275,
+    "ast_hash": "2e3fd6acf70b41d3ba821384d71587db",
     "semantic_hash": ""
   },
   "package-lock.json": {
