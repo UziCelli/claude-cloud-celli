@@ -1,7 +1,7 @@
 import { textoNota } from '../../lib/notas'
 import { collection, doc, query, where } from 'firebase/firestore'
-import { AnimatePresence, m, useReducedMotion } from 'motion/react'
-import { confete, elastico, saida, suave } from '../../movimento'
+import { AnimatePresence, animate, m, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import { contagem, elastico, saida, suave } from '../../movimento'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { isometrico, metricasSessao, metodosDaSessao, prescreverSessao, type Metodo } from '../../engine'
 import { COR_METODO, METODOS, metodoDoRotulo } from '../../data/metodos'
@@ -316,22 +316,36 @@ function RelogioTreino({ inicio, fim, realizado, quieto, previsto, onIniciar, on
   )
 }
 
-const CONFETE = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#facc15', '#a78bfa']
+type Festa = { n: number; exercicio: string; kg: number; ganho: number }
 
-// Aviso de recorde: some sozinho em ~5 s (o pai troca a `key` a cada recorde).
+// Aviso de recorde sem caixa: "Recorde!" + o ganho contando de 0 até "+3 kg". Some sozinho em 4 s (o pai troca a `key` a cada recorde).
 // Fica a 30% da área visível: no iPhone o app passa por baixo da barra de status (black-translucent) e,
 // com o teclado aberto, `fixed top` sai da tela; o visualViewport diz onde está a parte que se vê.
-function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolean | null; fechar: () => void }) {
-  const [topo, setTopo] = useState<number | null>(null)
+// Sem engasgo (13/11/2026): `transform` em string (GPU/WAAPI; `y`/`scale` soltos engasgavam no Android),
+// posição certa já no 1º quadro (antes pulava no meio da mola), sem confete, e a contagem escreve
+// direto no DOM (MotionValue, sem re-render do React).
+const topoVisivel = () => {
+  const vv = window.visualViewport
+  return vv ? vv.offsetTop + vv.height * 0.3 : null
+}
+function FestaRecorde({ festa, quieto, fechar }: { festa: Festa; quieto: boolean | null; fechar: () => void }) {
+  const [topo, setTopo] = useState(topoVisivel)
+  const inteiro = Number.isInteger(festa.ganho)
+  const ganho = useMotionValue(quieto ? festa.ganho : 0)
+  const texto = useTransform(ganho, (v) => `+${fmt(inteiro ? Math.round(v) : Math.round(v * 10) / 10)} kg`)
   useEffect(() => {
-    const t = setTimeout(fechar, 5000)
+    const t = setTimeout(fechar, 4000)
     return () => clearTimeout(t)
   }, [fechar])
   useEffect(() => {
+    if (quieto) return
+    const c = animate(ganho, festa.ganho, { ...contagem, delay: 0.2 })
+    return () => c.stop()
+  }, [ganho, festa.ganho, quieto])
+  useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
-    const pos = () => setTopo(vv.offsetTop + vv.height * 0.3)
-    pos()
+    const pos = () => setTopo(topoVisivel())
     vv.addEventListener('resize', pos)
     vv.addEventListener('scroll', pos)
     return () => {
@@ -343,25 +357,21 @@ function FestaRecorde({ texto, quieto, fechar }: { texto: string; quieto: boolea
     <m.div
       role="status"
       style={topo == null ? undefined : { top: topo }}
-      initial={{ opacity: 0, y: quieto ? 0 : -16, scale: quieto ? 1 : 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, transition: saida }}
+      initial={{ opacity: 0, ...mexe('translateY(24px) scale(0.92)') }}
+      animate={{ opacity: 1, transform: 'translateY(0px) scale(1)' }}
+      exit={{ opacity: 0, ...mexe('translateY(-32px) scale(1)'), transition: suave }}
       transition={elastico}
-      className="pointer-events-none fixed inset-x-4 top-[calc(env(safe-area-inset-top)+25vh)] z-40 mx-auto max-w-sm rounded-2xl border-2 border-amber-400 bg-slate-900 px-5 py-4 text-center text-base font-bold text-amber-200 shadow-2xl shadow-amber-500/20"
+      className="pointer-events-none fixed inset-x-4 top-[calc(env(safe-area-inset-top)+25vh)] z-40 mx-auto max-w-sm text-center [text-shadow:0_2px_16px_rgb(2_6_23/0.9)]"
     >
-      {!quieto &&
-        CONFETE.map((cor, i) => (
-          <m.span
-            key={i}
-            aria-hidden
-            className="absolute left-1/2 top-1/2 h-2 w-2 rounded-sm"
-            style={{ backgroundColor: cor }}
-            initial={{ x: 0, y: 0, opacity: 1 }}
-            animate={{ x: (i - 2.5) * 44, y: i % 2 ? 56 : -40, rotate: i * 120, opacity: 0 }}
-            transition={confete}
-          />
-        ))}
-      {texto}
+      <span className="sr-only">Novo recorde! {festa.exercicio}: {fmt(festa.kg)} kg, mais {fmt(festa.ganho)} kg</span>
+      {/* Halo, não caixa: escurece o que está atrás e some nas pontas, para o texto ler sobre qualquer tela. */}
+      <span aria-hidden className="absolute -inset-x-6 -inset-y-14 -z-10 bg-[radial-gradient(closest-side,rgb(2_6_23/0.92)_50%,transparent)]" />
+      <span aria-hidden className="block">
+        <span className="block text-sm font-bold uppercase tracking-[0.3em] text-amber-300">Recorde!</span>
+        <m.span className="block text-6xl font-black tabular-nums leading-tight text-amber-200">{texto}</m.span>
+        <span className="block text-base font-bold text-slate-100">pra conta</span>
+        <span className="mt-0.5 block text-xs text-slate-300">{festa.exercicio} · {fmt(festa.kg)} kg</span>
+      </span>
     </m.div>
   )
 }
@@ -402,7 +412,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
     [todosMesos, todosRegistros],
   )
   const festejados = useRef(new Set<string>())
-  const [festa, setFesta] = useState<{ n: number; texto: string } | null>(null)
+  const [festa, setFesta] = useState<Festa | null>(null)
   const fecharFesta = useCallback(() => setFesta(null), [])
   const [verResumo, setVerResumo] = useState(false)
   const [fimLocal, setFimLocal] = useState<number | null>(null) // hora do "Concluir", até o servidor confirmar
@@ -574,7 +584,7 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
       {!comecou && !realizado && (coach
         ? <p className="mb-3 text-sm text-slate-400">Sem iniciar: as cargas ficam salvas, mas o treino não conta como feito.</p>
         : <p className="mb-3 text-sm text-amber-300">{pedirAnamnese ? 'Responda a anamnese para liberar o treino.' : 'Toque em Iniciar treino para anotar as cargas.'}</p>)}
-      <AnimatePresence>{festa && <FestaRecorde key={festa.n} texto={festa.texto} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
+      <AnimatePresence>{festa && <FestaRecorde key={festa.n} festa={festa} quieto={quieto} fechar={fecharFesta} />}</AnimatePresence>
       <NotaMetodos metodos={notaInicial} />
       <AnimatePresence>{explicar && <ExplicacaoMetodo metodo={explicar} fechar={() => setExplicar(null)} />}</AnimatePresence>
       <AnimatePresence>{fisioAberto && metodoFisio(fisioAberto.metodoId) && (
@@ -737,10 +747,12 @@ export default function Treino({ uid, mesoId, semana, treino, base = '', coach }
                         const aposGravar = (total: number | null) => {
                           if (auto && total != null) gravaPc(corpo) // fixa a escolha antes da 1ª carga
                           if (temDrop && total != null && dropsAbertos[chaveDrop] === undefined) setDropsAbertos((p) => ({ ...p, [chaveDrop]: true })) // série feita: o drop vem logo depois
-                          if (comecou && !festejados.current.has(e.slot.nome) && ehRecorde(recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino }), total)) {
+                          const anterior = recordeAnterior(historico, e.slot.nome, { mesoId, semana, treino })
+                          const ganho = Math.round(((total ?? 0) - (anterior ?? 0)) * 10) / 10 // abaixo de 0,05 kg (peso do corpo) não festeja "+0 kg"
+                          if (comecou && !festejados.current.has(e.slot.nome) && ehRecorde(anterior, total) && ganho > 0) {
                             festejados.current.add(e.slot.nome)
                             navigator.vibrate?.([80, 40, 120])
-                            setFesta({ n: festejados.current.size, texto: `Novo recorde! ${e.slot.nome}: ${fmt(total!)} kg` })
+                            setFesta({ n: festejados.current.size, exercicio: e.slot.nome, kg: total!, ganho })
                           }
                         }
                         return dois ? (
